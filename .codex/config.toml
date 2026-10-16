@@ -1,0 +1,4 @@
+[mcp_servers.angular-cli]
+command = "node"
+args = ["node_modules/@angular/cli/bin/ng.js", "mcp"]
+cwd = "D:/projects/game-atlas/frontend"
