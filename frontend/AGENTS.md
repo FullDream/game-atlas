@@ -22,9 +22,3 @@
 
 
 <!-- nx configuration end-->
-
-## Angular MCP
-
-- Use the `angular-cli` MCP server for Angular best practices and documentation when working on this frontend.
-- Its configuration is in `../.codex/config.toml`; the server runs from the `frontend` directory using the locally installed Angular CLI.
-- This is an Nx workspace. Continue running build, test, lint, and serve tasks through Nx.
