@@ -20,5 +20,10 @@
 - DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
-
 <!-- nx configuration end-->
+
+## UI and styling
+
+- Use Tailwind CSS v4 for styling. PostCSS is configured in `.postcssrc.json`; global styles and the Spartan theme are in `apps/web/src/styles.css`.
+- Spartan UI dependencies and theme are configured. `components.json` defines the destination and import alias for any future Helm components.
+- Reuse existing project components and library APIs. Generate Helm components only when explicitly requested.
