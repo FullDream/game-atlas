@@ -1,0 +1,22 @@
+{
+	"name": "games-feature-catalog",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/games/feature-catalog/src",
+	"prefix": "lib",
+	"projectType": "library",
+	"tags": ["type:feature", "scope:web"],
+	"targets": {
+		"test": {
+			"executor": "@angular/build:unit-test",
+			"inputs": ["default", "^production", "{workspaceRoot}/apps/web/project.json"],
+			"options": {
+				"buildTarget": "web:build:development",
+				"tsConfig": "libs/games/feature-catalog/tsconfig.spec.json",
+				"watch": false
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

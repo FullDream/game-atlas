@@ -12,12 +12,17 @@ but neither Node.js nor ASP.NET Core is required by the deployed website.
 `main.server.ts`, `app.config.server.ts` and `@angular/ssr` remain build-time
 prerendering infrastructure; there is no production request handler.
 
-The home page is prerendered by the existing `RenderMode.Prerender` catch-all.
+The home catalog page is prerendered by the existing `RenderMode.Prerender` catch-all.
 Client hydration and event replay remain enabled. Public assets go in
 `apps/web/public` and are copied into the deployment directory. Published map
 content will be loaded from static JSON files in that directory.
 
-When game and map features exist, add their lazy routes to `app.routes.ts`.
+The catalog is lazy-loaded at `/` from `games-feature-catalog`. Its JSON is served
+at build time by the app's prerender-only HTTP backend and transferred to the
+browser through Angular's HTTP cache. Rebuild HTML and JSON together on publish.
+There are no game-detail or map routes yet.
+
+When game-detail and map features exist, add their lazy routes to `app.routes.ts`.
 Parameterized routes need explicit server-route entries before the catch-all,
 with `getPrerenderParams()` reading the published content manifest at build time.
 Do not rely on the local editor API for production builds. Choose client or no
@@ -51,8 +56,8 @@ available during prerendering. These packages are not installed yet.
 
 ## Planned libraries
 
-Create libraries only when a feature needs them; these directories do not exist
-yet and are not a required initial scaffold:
+The two `games` libraries exist. The `maps` and `progress` directories remain
+plans, not a required initial scaffold; create libraries only when needed:
 
 ```text
 libs/

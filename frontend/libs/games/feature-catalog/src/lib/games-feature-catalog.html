@@ -1,0 +1,107 @@
+<div class="min-h-dvh bg-background text-foreground">
+	<header class="border-b border-border/60">
+		<div class="mx-auto flex max-w-6xl items-center gap-3 px-6 py-6 sm:px-8">
+			<span
+				class="flex size-9 items-center justify-center rounded-lg border border-emerald-300/20 bg-emerald-300/5 text-emerald-200"
+				aria-hidden="true"
+			>
+				<svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.5">
+					<circle cx="12" cy="12" r="9" />
+					<path d="m16 8-2.5 5.5L8 16l2.5-5.5z" />
+				</svg>
+			</span>
+			<span class="text-lg font-semibold tracking-tight">Game Atlas</span>
+		</div>
+	</header>
+
+	<main id="main-content" class="mx-auto max-w-6xl px-6 py-12 sm:px-8 sm:py-16">
+		<p class="mb-3 text-xs font-medium tracking-[0.2em] text-emerald-300 uppercase">Find your bearings</p>
+		<h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">Games</h1>
+		<p class="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
+			A place for your worlds, maps, and discoveries.
+		</p>
+
+		<section aria-label="Game catalog" class="mt-10 sm:mt-12" [attr.aria-busy]="catalog.games.isLoading()">
+			@if (catalog.games.isLoading()) {
+			<div role="status" class="rounded-xl border border-border bg-card p-8 text-muted-foreground">
+				<span
+					class="mr-3 inline-block size-2 rounded-full bg-emerald-300 motion-safe:animate-pulse"
+					aria-hidden="true"
+				></span>
+				Loading games…
+			</div>
+			} @else if (catalog.games.error()) {
+			<div role="alert" class="rounded-xl border border-border bg-card p-8">
+				<h2 class="text-lg font-semibold">Couldn't load the games</h2>
+				<p class="mt-2 text-sm text-muted-foreground">
+					Please try again. Your catalog may be temporarily unavailable.
+				</p>
+				<button
+					type="button"
+					(click)="catalog.games.reload()"
+					class="mt-5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+				>
+					Try again
+				</button>
+			</div>
+			} @else if (catalog.games.hasValue()) { @let games = catalog.games.value(); @if (games.length === 0) {
+			<div role="status" class="rounded-xl border border-dashed border-border p-10 text-center">
+				<h2 class="text-lg font-semibold">No games yet</h2>
+				<p class="mt-2 text-sm text-muted-foreground">Published games will appear here when they're ready.</p>
+			</div>
+			} @else {
+			<ul class="grid list-none gap-6 sm:grid-cols-2 lg:grid-cols-3">
+				@for (game of games; track game.id) {
+				<li class="min-w-0">
+					<article
+						[attr.aria-labelledby]="'game-' + game.id"
+						class="h-full overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-emerald-300/30"
+						data-testid="game-card"
+					>
+						<div class="relative aspect-[8/5] overflow-hidden border-b border-border bg-muted">
+							@if (game.coverUrl) {
+							<img
+								[ngSrc]="game.coverUrl"
+								[alt]="game.title + ' cover illustration'"
+								[priority]="$first"
+								fill
+								sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+							/>
+							} @else {
+							<div
+								class="flex h-full items-center justify-center text-muted-foreground"
+								aria-hidden="true"
+							>
+								<svg
+									viewBox="0 0 24 24"
+									class="size-12"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1"
+								>
+									<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zm6-3v15m6-12v15" />
+								</svg>
+							</div>
+							}
+						</div>
+						<div class="p-6">
+							<h2 [id]="'game-' + game.id" class="text-xl font-semibold tracking-tight">
+								{{ game.title }}
+							</h2>
+							@if (game.description) {
+							<p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ game.description }}</p>
+							} @if (game.mapsCount !== undefined) {
+							<p class="mt-5 text-xs font-medium text-emerald-200">
+								{{ game.mapsCount }} {{ game.mapsCount === 1 ? 'map' : 'maps' }}
+							</p>
+							}
+							<p class="mt-3 text-xs text-muted-foreground">Map pages are coming soon.</p>
+						</div>
+					</article>
+				</li>
+				}
+			</ul>
+			} }
+		</section>
+	</main>
+</div>

@@ -1,0 +1,22 @@
+{
+	"name": "games-data-access",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/games/data-access/src",
+	"prefix": "lib",
+	"projectType": "library",
+	"tags": ["type:data-access", "scope:shared"],
+	"targets": {
+		"test": {
+			"executor": "@angular/build:unit-test",
+			"inputs": ["default", "^production", "{workspaceRoot}/apps/web/project.json"],
+			"options": {
+				"buildTarget": "web:build:development",
+				"tsConfig": "libs/games/data-access/tsconfig.spec.json",
+				"watch": false
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

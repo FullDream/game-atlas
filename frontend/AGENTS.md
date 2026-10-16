@@ -35,6 +35,12 @@
 - The public web app uses `outputMode: "static"`. Keep prerendering and hydration; do not introduce a production Node.js server or depend on the editor API.
 - Initialize browser-only packages with dynamic imports in browser render hooks such as `afterNextRender()`.
 - Add future parameterized prerender routes only with their features and a published-manifest-backed `getPrerenderParams()`.
+- Catalog JSON is in `apps/web/public/content/games.json`; rebuild on publication to keep prerendered HTML and static JSON consistent.
+
+## Entity identifiers
+
+- Use stable lowercase UUID v4 identifiers for all entities, separate from URL slugs. Preserve existing IDs on content updates and publication.
+- New browser-side entities must use `crypto.randomUUID()`. Do not use slugs, indices or incremental integers as identifiers.
 
 ## UI and styling
 
