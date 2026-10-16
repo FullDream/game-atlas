@@ -28,6 +28,13 @@
 - The future `editor` application should use `type:app` and `scope:editor`. Its libraries use the matching type and `scope:editor`.
 - Keep web and editor libraries isolated; put reusable libraries in `scope:shared`. Shared libraries must only depend on other shared libraries.
 - Follow the dependency directions in `eslint.config.mjs`; scope and type constraints both apply.
+- Prefer non-buildable internal libraries. See `docs/frontend-architecture.md` for the planned structure and tag rules; create libraries only when needed.
+
+## Static web output
+
+- The public web app uses `outputMode: "static"`. Keep prerendering and hydration; do not introduce a production Node.js server or depend on the editor API.
+- Initialize browser-only packages with dynamic imports in browser render hooks such as `afterNextRender()`.
+- Add future parameterized prerender routes only with their features and a published-manifest-backed `getPrerenderParams()`.
 
 ## UI and styling
 

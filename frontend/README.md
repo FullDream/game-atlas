@@ -1,5 +1,9 @@
 # GameAtlas
 
+See [frontend architecture and static deployment](docs/frontend-architecture.md)
+for the MVP architecture, planned libraries, browser-only integration guidance,
+validation commands and static hosting requirements.
+
 <a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
 
 ✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
