@@ -22,6 +22,13 @@
 
 <!-- nx configuration end-->
 
+## Module boundaries
+
+- Tag each project with a type (`type:app`, `type:feature`, `type:ui`, `type:data-access`, or `type:util`) and a scope (`scope:web`, `scope:editor`, or `scope:shared`). Do not use `type:shell`.
+- The future `editor` application should use `type:app` and `scope:editor`. Its libraries use the matching type and `scope:editor`.
+- Keep web and editor libraries isolated; put reusable libraries in `scope:shared`. Shared libraries must only depend on other shared libraries.
+- Follow the dependency directions in `eslint.config.mjs`; scope and type constraints both apply.
+
 ## UI and styling
 
 - Use Tailwind CSS v4 for styling. PostCSS is configured in `.postcssrc.json`; global styles and the Spartan theme are in `apps/web/src/styles.css`.
