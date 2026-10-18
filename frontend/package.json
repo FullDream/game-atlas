@@ -39,6 +39,7 @@
 		"@playwright/test": "^1.37.0",
 		"@schematics/angular": "~22.1.0",
 		"@spartan-ng/cli": "^1.8.0",
+		"@stylistic/eslint-plugin": "^5.10.0",
 		"@swc/helpers": "~0.5.18",
 		"@tailwindcss/postcss": "^4.3.3",
 		"@types/node": "^22.0.0",

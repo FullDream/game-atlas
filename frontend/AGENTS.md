@@ -47,3 +47,66 @@
 - Use Tailwind CSS v4 for styling. PostCSS is configured in `.postcssrc.json`; global styles and the Spartan theme are in `apps/web/src/styles.css`.
 - Spartan UI dependencies and theme are configured. `components.json` defines the destination and import alias for any future Helm components.
 - Reuse existing project components and library APIs. Generate Helm components only when explicitly requested.
+
+## Code Style
+
+Follow the existing Prettier and ESLint configuration.
+
+### Formatting
+
+- Do not use statement-ending semicolons unless required for JavaScript correctness.
+- Use single quotes in TypeScript.
+- Separate logical sections with blank lines.
+- Add a blank line after a group of variable declarations.
+- Add a blank line before `return` when it follows another statement.
+- Separate independent control-flow blocks with blank lines.
+- Do not add unnecessary blank lines inside empty or trivial blocks.
+
+### Naming
+
+- Use descriptive camelCase names for variables, functions, and methods.
+- Use PascalCase for classes, interfaces, and types.
+- Do not use Hungarian notation (`strName`, `bEnabled`, `arrItems`, `IUserService`).
+- Do not prefix private members with underscores.
+- Prefer ECMAScript `#private` members over TypeScript `private`, following the existing ESLint rules.
+- Do not use abbreviated names unless they are widely understood.
+
+### Quality
+
+- Prefer readable code over clever or overly compact expressions.
+- Keep functions focused and reasonably small.
+- Do not introduce unnecessary abstractions.
+- Do not add comments that merely restate the code.
+- Run Prettier and ESLint on changed files before completing a task.
+
+### Angular classes
+
+Order class members in the following groups:
+
+1. Signal inputs (`input()` and `input.required()`).
+2. Outputs (`output()` and `outputFromObservable()`).
+3. Model inputs (`model()` and `model.required()`).
+4. Injected dependencies (`inject()`).
+5. Ordinary properties and variables.
+6. Reactive state: signals, signal forms, computed values, linked signals, resources, and signal queries.
+7. Constructor.
+8. Methods and accessors.
+
+Within each property group, prefer this order:
+
+1. Public `readonly` properties (omit the `public` keyword).
+2. Public mutable properties (no access modifier).
+3. `protected readonly` properties.
+4. `protected` mutable properties.
+5. `readonly #private` properties.
+6. Mutable `#private` properties.
+
+- Order methods and accessors by visibility: public, protected, then `#private`.
+- Initialization dependencies take precedence over member ordering. Declare a backing field before a public or protected property initialized from it, including transitive dependencies. Never reorder fields in a way that changes initialization behavior.
+- Use `protected` for members used only by the component's template; keep members needed by consumers public.
+- Use the component host as its outer container; do not add a redundant wrapper element in the template. Bind container classes, styles, attributes, and event handlers directly through the `host` metadata in `@Component`, rather than `@HostBinding()` or `@HostListener()`. Give the host an appropriate semantic ARIA role for the component's purpose, respecting any native element semantics.
+- Inputs, outputs, and models must always be public and `readonly`, including when used in templates. Use the function-based APIs rather than `@Input()` or `@Output()`.
+- Register signal effects (`effect()` and `afterRenderEffect()`) in constructors, not field initializers or other methods.
+- Prefer `inject()` fields for dependency injection and `@Service()` for ordinary services. Use `@Injectable()` for specialized cases such as constructor-based injection or provider configurations that require it.
+- Use Signal Forms from `@angular/forms/signals`. Do not introduce reactive forms or template-driven forms (`ReactiveFormsModule`, `FormsModule`, `FormControl`, `FormGroup`, `FormBuilder`, or `ngModel`).
+- Prettier handles formatting; use standard ESLint rules and plugins for automated checks. Member ordering, public visibility of inputs/outputs/models, template-only visibility, effect placement, and specialized service choices are agent and code-review conventions; do not add custom lint rules for them.

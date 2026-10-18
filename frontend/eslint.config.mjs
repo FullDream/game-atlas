@@ -1,5 +1,7 @@
 import nx from '@nx/eslint-plugin'
 import enforceEsPrivate from 'eslint-plugin-enforce-es-private'
+import stylistic from '@stylistic/eslint-plugin'
+import angular from 'angular-eslint'
 
 const typeDependencies = {
 	'type:app': ['type:feature', 'type:ui', 'type:data-access', 'type:util'],
@@ -46,7 +48,47 @@ export default [
 	},
 	{
 		files: ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts'],
+		plugins: {
+			'@angular-eslint': angular.tsPlugin,
+		},
 		rules: {
+			'@angular-eslint/prefer-signals': 'error',
+			'@angular-eslint/prefer-output-readonly': 'error',
+			'@angular-eslint/prefer-output-emitter-ref': 'error',
+			'@angular-eslint/prefer-inject': 'error',
+			'no-restricted-imports': [
+				'error',
+				{
+					paths: [
+						{
+							name: '@angular/forms',
+							importNames: [
+								'FormsModule',
+								'ReactiveFormsModule',
+								'FormControl',
+								'FormGroup',
+								'FormArray',
+								'FormRecord',
+								'FormBuilder',
+								'NonNullableFormBuilder',
+								'UntypedFormControl',
+								'UntypedFormGroup',
+								'UntypedFormArray',
+								'UntypedFormBuilder',
+								'NgModel',
+								'NgForm',
+								'NgModelGroup',
+								'FormControlDirective',
+								'FormControlName',
+								'FormGroupDirective',
+								'FormGroupName',
+								'FormArrayName',
+							],
+							message: 'Use Signal Forms from @angular/forms/signals.',
+						},
+					],
+				},
+			],
 			'@typescript-eslint/naming-convention': [
 				'error',
 				{
@@ -62,6 +104,38 @@ export default [
 				'error',
 				{
 					allowExpressions: true,
+				},
+			],
+		},
+	},
+	{
+		files: ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts', '**/*.js', '**/*.jsx', '**/*.cjs', '**/*.mjs'],
+		plugins: {
+			'@stylistic': stylistic,
+		},
+
+		rules: {
+			'@stylistic/padding-line-between-statements': [
+				'error',
+				{
+					blankLine: 'always',
+					prev: ['const', 'let'],
+					next: '*',
+				},
+				{
+					blankLine: 'any',
+					prev: ['const', 'let'],
+					next: ['const', 'let'],
+				},
+				{
+					blankLine: 'always',
+					prev: '*',
+					next: 'return',
+				},
+				{
+					blankLine: 'always',
+					prev: ['if', 'for', 'while', 'switch', 'try'],
+					next: '*',
 				},
 			],
 		},
