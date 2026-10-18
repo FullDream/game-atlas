@@ -20,9 +20,11 @@ class PrerenderCatalogBackend extends HttpBackend {
 	readonly #network = inject(FetchBackend)
 
 	override handle(request: HttpRequest<unknown>): Observable<HttpEvent<unknown>> {
-		return request.method === 'GET' && request.url === '/content/games.json'
-			? of(new HttpResponse({ body: games }))
-			: this.#network.handle(request)
+		if (request.method === 'GET' && request.url === '/content/games.json') {
+			return of(new HttpResponse({ body: games }))
+		}
+
+		return this.#network.handle(request)
 	}
 }
 

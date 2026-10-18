@@ -15,11 +15,13 @@ describe('App', () => {
 
 	it('opens the lazy catalog at the home route', async () => {
 		const fixture = TestBed.createComponent(App)
+
 		await TestBed.inject(Router).navigateByUrl('/')
 		TestBed.tick()
 		TestBed.inject(HttpTestingController).expectOne('/content/games.json').flush([])
 		await fixture.whenStable()
 		const compiled = fixture.nativeElement as HTMLElement
+
 		expect(compiled.querySelector('h1')?.textContent).toBe('Games')
 		expect(compiled.textContent).toContain('No games yet')
 		TestBed.inject(HttpTestingController).verify()

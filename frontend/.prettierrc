@@ -10,5 +10,13 @@
 	"arrowParens": "avoid",
 	"tailwindStylesheet": "./apps/web/src/styles.css",
 	"tailwindFunctions": ["hlm", "cva", "classes"],
-	"plugins": ["prettier-plugin-tailwindcss"]
+	"plugins": ["prettier-plugin-tailwindcss"],
+	"overrides": [
+		{
+			"files": ["apps/*/src/app/**/*.html", "libs/**/*.html"],
+			"options": {
+				"parser": "angular"
+			}
+		}
+	]
 }

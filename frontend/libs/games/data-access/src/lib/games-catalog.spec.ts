@@ -9,20 +9,20 @@ const game = { id: 'a3c5d8e1-7b42-4f90-9a16-2e6d8c4b1f73', slug: 'elden-ring', t
 
 describe('GamesCatalog', () => {
 	let catalog: GamesCatalog
-	let http: HttpTestingController
+	let httpTestingController: HttpTestingController
 
 	beforeEach(() => {
 		TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] })
-		http = TestBed.inject(HttpTestingController)
+		httpTestingController = TestBed.inject(HttpTestingController)
 		catalog = TestBed.inject(GamesCatalog)
 		TestBed.tick()
 	})
 
-	afterEach(() => http.verify())
+	afterEach(() => httpTestingController.verify())
 
 	it('loads games from the published JSON and exposes loading state', async () => {
 		expect(catalog.games.isLoading()).toBe(true)
-		http.expectOne({ method: 'GET', url: '/content/games.json' }).flush([game])
+		httpTestingController.expectOne({ method: 'GET', url: '/content/games.json' }).flush([game])
 		await TestBed.inject(ApplicationRef).whenStable()
 		expect(catalog.games.isLoading()).toBe(false)
 		expect(catalog.games.value()).toEqual([game])
@@ -30,28 +30,30 @@ describe('GamesCatalog', () => {
 	})
 
 	it('accepts an empty catalog', async () => {
-		http.expectOne('/content/games.json').flush([])
+		httpTestingController.expectOne('/content/games.json').flush([])
 		await TestBed.inject(ApplicationRef).whenStable()
 		expect(catalog.games.hasValue()).toBe(true)
 		expect(catalog.games.value()).toEqual([])
 	})
 
 	it('exposes request failures and retries on demand', async () => {
-		http.expectOne('/content/games.json').flush('Unavailable', { status: 503, statusText: 'Service Unavailable' })
+		httpTestingController
+			.expectOne('/content/games.json')
+			.flush('Unavailable', { status: 503, statusText: 'Service Unavailable' })
 		await TestBed.inject(ApplicationRef).whenStable()
 		expect(catalog.games.error()).toBeDefined()
 		expect(catalog.games.hasValue()).toBe(false)
 		catalog.games.reload()
 		TestBed.tick()
 		expect(catalog.games.isLoading()).toBe(true)
-		http.expectOne('/content/games.json').flush([game])
+		httpTestingController.expectOne('/content/games.json').flush([game])
 		await TestBed.inject(ApplicationRef).whenStable()
 		expect(catalog.games.error()).toBeUndefined()
 		expect(catalog.games.value()).toEqual([game])
 	})
 
 	it('turns invalid content into an error rather than rendering broken cards', async () => {
-		http.expectOne('/content/games.json').flush([{ ...game, id: 'elden-ring' }])
+		httpTestingController.expectOne('/content/games.json').flush([{ ...game, id: 'elden-ring' }])
 		await TestBed.inject(ApplicationRef).whenStable()
 		expect(catalog.games.error()).toBeDefined()
 	})
