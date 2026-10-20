@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GameAtlas.Api/GameAtlas.Api.csproj" />
+    <Project Path="src/GameAtlas.Application/GameAtlas.Application.csproj" />
+    <Project Path="src/GameAtlas.Domain/GameAtlas.Domain.csproj" />
+    <Project Path="src/GameAtlas.Infrastructure/GameAtlas.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GameAtlas.Domain.Tests/GameAtlas.Domain.Tests.csproj" />
+    <Project Path="tests/GameAtlas.Application.Tests/GameAtlas.Application.Tests.csproj" />
+    <Project Path="tests/GameAtlas.IntegrationTests/GameAtlas.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path=".editorconfig" />
+  </Folder>
+</Solution>

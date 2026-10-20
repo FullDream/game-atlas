@@ -1,0 +1,198 @@
+root = true
+
+[*.cs]
+
+# ----------------------------
+# General
+# ----------------------------
+
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+max_line_length = 120
+
+
+# ----------------------------
+# var
+# ----------------------------
+
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+
+
+# ----------------------------
+# Namespaces
+# ----------------------------
+
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_style_prefer_top_level_statements = true:suggestion
+
+
+# ----------------------------
+# Expression bodies
+# ----------------------------
+
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_constructors = when_on_single_line:suggestion
+csharp_style_expression_bodied_operators = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_indexers = true:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+csharp_style_expression_bodied_lambdas = when_on_single_line:suggestion
+csharp_style_expression_bodied_local_functions = when_on_single_line:suggestion
+
+
+# ----------------------------
+# Modern C#
+# ----------------------------
+
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+csharp_style_prefer_pattern_matching = true:suggestion
+csharp_style_prefer_not_pattern = true:suggestion
+csharp_style_prefer_extended_property_pattern = true:suggestion
+csharp_style_prefer_null_check_over_type_check = true:suggestion
+csharp_style_prefer_range_operator = true:suggestion
+csharp_style_prefer_index_operator = true:suggestion
+
+dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
+dotnet_style_prefer_auto_properties = true:suggestion
+dotnet_style_object_initializer = true:suggestion
+dotnet_style_collection_initializer = true:suggestion
+dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
+dotnet_style_prefer_simplified_interpolation = true:suggestion
+dotnet_style_readonly_field = true:suggestion
+
+
+# ----------------------------
+# this.
+# ----------------------------
+
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+
+
+# ----------------------------
+# Braces
+# ----------------------------
+
+csharp_prefer_braces = when_multiline:suggestion
+
+
+# ----------------------------
+# Usings
+# ----------------------------
+
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+csharp_using_directive_placement = outside_namespace:suggestion
+
+
+# ----------------------------
+# Naming styles
+# ----------------------------
+
+dotnet_naming_style.camel_case.capitalization = camel_case
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+dotnet_naming_style.interface_style.required_prefix = I
+dotnet_naming_style.interface_style.capitalization = pascal_case
+
+
+# ----------------------------
+# Constants: PascalCase
+# ----------------------------
+
+dotnet_naming_rule.constants_rule.severity = suggestion
+dotnet_naming_rule.constants_rule.symbols = constants
+dotnet_naming_rule.constants_rule.style = pascal_case
+
+dotnet_naming_symbols.constants.applicable_kinds = field
+dotnet_naming_symbols.constants.required_modifiers = const
+
+
+# ----------------------------
+# Private fields: camelCase
+# ----------------------------
+
+dotnet_naming_rule.private_fields_rule.severity = suggestion
+dotnet_naming_rule.private_fields_rule.symbols = private_fields
+dotnet_naming_rule.private_fields_rule.style = camel_case
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+
+# ----------------------------
+# Interfaces: IFoo
+# ----------------------------
+
+dotnet_naming_rule.interfaces_rule.severity = suggestion
+dotnet_naming_rule.interfaces_rule.symbols = interfaces
+dotnet_naming_rule.interfaces_rule.style = interface_style
+
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+
+
+# ----------------------------
+# Types: PascalCase
+# ----------------------------
+
+dotnet_naming_rule.types_rule.severity = suggestion
+dotnet_naming_rule.types_rule.symbols = types
+dotnet_naming_rule.types_rule.style = pascal_case
+
+dotnet_naming_symbols.types.applicable_kinds = class, struct, enum
+
+
+# ----------------------------
+# Rider / ReSharper
+# ----------------------------
+
+resharper_csharp_keep_existing_linebreaks = false
+
+
+# Method declarations
+
+resharper_csharp_wrap_parameters_style = chop_if_long
+resharper_csharp_wrap_before_declaration_lpar = false
+resharper_csharp_wrap_after_declaration_lpar = true
+resharper_csharp_wrap_before_declaration_rpar = false
+resharper_csharp_keep_existing_declaration_parens_arrangement = false
+
+
+# Method calls
+
+resharper_csharp_wrap_arguments_style = chop_if_long
+resharper_csharp_wrap_before_invocation_lpar = false
+resharper_csharp_wrap_after_invocation_lpar = true
+resharper_csharp_wrap_before_invocation_rpar = false
+
+
+# Object initializers
+
+resharper_csharp_place_simple_initializer_on_single_line = false
+
+
+# Chained method calls
+
+resharper_csharp_wrap_chained_method_calls = chop_if_long
+resharper_csharp_wrap_before_first_method_call = true
+resharper_csharp_wrap_after_dot_in_method_calls = false
+resharper_csharp_wrap_after_property_in_chained_method_calls = true
+
+
+# Expression-bodied members
+
+resharper_csharp_keep_existing_expr_member_arrangement = false
+resharper_csharp_wrap_before_arrow_with_expressions = false

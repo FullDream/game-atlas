@@ -1,1 +1,36 @@
-.idea/workspace.xml
+# .NET build and publish output
+[Bb]in/
+[Oo]bj/
+[Aa]rtifacts/
+
+# Visual Studio and Rider local settings
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.sln.iml
+*.DotSettings.user
+
+# Test results and code coverage
+[Tt]est[Rr]esults/
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet packages and generated package files
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nupkg
+*.snupkg
+
+# Local publish settings (may contain credentials)
+*.pubxml
+*.publishsettings
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+!.env.sample
