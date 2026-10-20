@@ -6,6 +6,42 @@
       "sourceType": "github",
       "skillPath": "skills/conventional-commit/SKILL.md",
       "computedHash": "f29c9486cede6c7b2df0cfb0a2e4aa67446552b991bcf17d1b309e903171f03d"
+    },
+    "architecture": {
+      "source": "managedcode/dotnet-skills",
+      "sourceType": "github",
+      "skillPath": "catalog/Platform/Architecture/skills/architecture/SKILL.md",
+      "computedHash": "c516771ec9aa24e207cd3f4f92b45957bd8e8a476c9f828b518b49f8975dd6d3"
+    },
+    "aspnet-core": {
+      "source": "managedcode/dotnet-skills",
+      "sourceType": "github",
+      "skillPath": "catalog/Frameworks/ASP.NET-Core/skills/aspnet-core/SKILL.md",
+      "computedHash": "221e162256ec362d7d79505843d4302345e87dd22876b6731366faa42ece042d"
+    },
+    "efcore-patterns": {
+      "source": "aaronontheweb/dotnet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/efcore-patterns/SKILL.md",
+      "computedHash": "007f3fe823890219dc4e0fdb3a27ec66cc4502067273e39eb94b51a9e6f4a52a"
+    },
+    "modern-csharp": {
+      "source": "managedcode/dotnet-skills",
+      "sourceType": "github",
+      "skillPath": "catalog/Tools/Modern-CSharp/skills/modern-csharp/SKILL.md",
+      "computedHash": "2dd67a980b7b6ddd3e356ecd2aacd77535f2494dbe86cb4cfc955b519a233b3b"
+    },
+    "optimizing-ef-core-queries": {
+      "source": "managedcode/dotnet-skills",
+      "sourceType": "github",
+      "skillPath": "catalog/Libraries/Official-DotNet-Data/skills/optimizing-ef-core-queries/SKILL.md",
+      "computedHash": "b3c7a8dd5b161676b3cebc52894d4b2a92388e76a48664ec17544efcfa0f4930"
+    },
+    "xunit": {
+      "source": "managedcode/dotnet-skills",
+      "sourceType": "github",
+      "skillPath": "catalog/Testing/xUnit/skills/xunit/SKILL.md",
+      "computedHash": "31bdaa86b49bc4ecf0dd0b39d97129e8b65f5b7bacc6913dbf3091cab99c985e"
     }
   }
 }
