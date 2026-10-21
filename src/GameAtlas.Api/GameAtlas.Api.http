@@ -1,6 +1,6 @@
 @GameAtlas_Api_HostAddress = http://localhost:5041
 
-GET {{GameAtlas_Api_HostAddress}}/weatherforecast/
+GET {{GameAtlas_Api_HostAddress}}/openapi/v1.json
 Accept: application/json
 
 ###
