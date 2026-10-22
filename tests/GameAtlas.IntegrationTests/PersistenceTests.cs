@@ -2,6 +2,7 @@ using GameAtlas.Application;
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Infrastructure;
 using GameAtlas.Infrastructure.Persistence;
+using GameAtlas.Domain.Games;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +30,7 @@ public class PersistenceTests
 			ValidateOnBuild = true,
 			ValidateScopes = true
 		});
+
 		await using var scope = provider.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var applicationContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
@@ -36,7 +38,11 @@ public class PersistenceTests
 		Assert.Same(context, applicationContext);
 		Assert.NotNull(scope.ServiceProvider.GetRequiredService<IMediator>());
 		Assert.True(context.Database.IsSqlite());
-		Assert.Empty(context.Model.GetEntityTypes());
+		var gameType = context.Model.FindEntityType(typeof(Game));
+
+		Assert.NotNull(gameType);
+		Assert.Empty(gameType.GetForeignKeys());
+		Assert.Contains(gameType.GetIndexes(), index => index.IsUnique && index.Properties.Single().Name == "Slug");
 
 		await context.Database.OpenConnectionAsync();
 		await using var command = context.Database.GetDbConnection().CreateCommand();

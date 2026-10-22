@@ -1,5 +1,6 @@
 using GameAtlas.Api;
 using GameAtlas.Api.Results;
+using GameAtlas.Api.Games;
 using GameAtlas.Application;
 using GameAtlas.Infrastructure;
 using Scalar.AspNetCore;
@@ -13,6 +14,9 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
 if (app.Environment.IsDevelopment())
 {
 	app.MapOpenApi();
@@ -23,4 +27,8 @@ app.UseHttpsRedirection();
 
 var api = app.MapGroup("").WithOutcomeResults();
 
+api.MapGames();
+
 app.Run();
+
+public partial class Program;

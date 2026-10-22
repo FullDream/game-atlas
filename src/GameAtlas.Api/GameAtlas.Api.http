@@ -1,6 +1,21 @@
-@GameAtlas_Api_HostAddress = http://localhost:5041
+@GameAtlas_Api_HostAddress = https://localhost:7241
 
 GET {{GameAtlas_Api_HostAddress}}/openapi/v1.json
 Accept: application/json
+
+###
+
+# Apply migrations first, then run the API with --launch-profile https.
+# Repeating this request returns 409 because the slug is unique.
+POST {{GameAtlas_Api_HostAddress}}/games
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Elden Ring",
+  "slug": "elden-ring",
+  "image": "elden-ring-cover",
+  "mapId": null
+}
 
 ###

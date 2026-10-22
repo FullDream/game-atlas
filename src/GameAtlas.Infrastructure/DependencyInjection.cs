@@ -20,7 +20,9 @@ public static class DependencyInjection
 		services.AddDbContext<ApplicationDbContext>(options => options
 			.UseSqlite(connectionString, sqlite => sqlite.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
 			.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+
 		services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+		services.AddSingleton<IPersistenceFailureClassifier, SqlitePersistenceFailureClassifier>();
 
 		return services;
 	}

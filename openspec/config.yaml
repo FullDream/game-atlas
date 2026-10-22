@@ -6,8 +6,8 @@ context: |
   Backend:
   - ASP.NET Core
   - EF Core
-  - SqlLite,  PostgreSQL in the future
-  - Monolith
+  - SQLite initially; PostgreSQL is a future addition, not part of the initial scope
+  - Layered monolith initially; consider separate modules when feature areas grow
   - DDD, Vertical Slice Architecture, and pragmatic Clean Architecture
 
   Architectural principles:
@@ -17,6 +17,8 @@ context: |
   - Do not introduce microservices.
   - Keep implementations simple.
   - Do not invent business requirements.
+  - Follow AGENTS.md for implementation conventions, including feature organization,
+    persistence access, mapping, validation, error handling, and migration execution.
 
 rules:
   proposal:

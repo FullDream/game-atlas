@@ -5,6 +5,10 @@ using GameAtlas.Api.OpenApi.Optional;
 using GameAtlas.Api.OpenApi.Validation;
 using GameAtlas.Api.Serialization;
 using GameAtlas.Api.Serialization.Optional;
+using GameAtlas.Api.Errors;
+using GameAtlas.Api.Games;
+using GameAtlas.Application.Games.CreateGame;
+using Microsoft.AspNetCore.Routing;
 
 namespace GameAtlas.Api;
 
@@ -12,6 +16,10 @@ public static class DependencyInjection
 {
 	public static IServiceCollection AddApi(this IServiceCollection services)
 	{
+		services.AddProblemDetails();
+		services.AddExceptionHandler<GameSlugConflictExceptionHandler>();
+		services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = false);
+		services.AddOpenApiValidationSource<CreateGameRequest, CreateGame>();
 		services.ConfigureHttpJsonOptions(options =>
 		{
 			options.SerializerOptions.AddOptionalSupport();
@@ -21,6 +29,7 @@ public static class DependencyInjection
 			options.SerializerOptions.DictionaryKeyPolicy = new SegmentedNamingPolicy(JsonNamingPolicy.CamelCase);
 			options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
 		});
+
 		services.AddValidatorsFromAssemblyContaining<FluentValidationSchemaTransformer>(includeInternalTypes: true);
 		services.AddOpenApiValidation();
 		services.AddOpenApi(options =>
