@@ -9,7 +9,7 @@ public sealed class ListGamesValidation : AbstractValidator<ListGames>
 		RuleFor(query => query.Offset).GreaterThanOrEqualTo(0);
 		RuleFor(query => query.Limit).InclusiveBetween(1, 100);
 		RuleFor(query => query.SortBy)
-			.Must(value => value is null || IsOneOf(value, "name", "createdAt", "updatedAt"))
+			.IsInEnum()
 			.WithErrorCode(ListGamesErrors.InvalidSortBy.Code)
 			.WithMessage(ListGamesErrors.InvalidSortBy.Message);
 
@@ -20,11 +20,8 @@ public sealed class ListGamesValidation : AbstractValidator<ListGames>
 			.WithMessage(ListGamesErrors.SortByRequired.Message);
 
 		RuleFor(query => query.SortDirection)
-			.Must(value => value is null || IsOneOf(value, "asc", "desc"))
+			.IsInEnum()
 			.WithErrorCode(ListGamesErrors.InvalidSortDirection.Code)
 			.WithMessage(ListGamesErrors.InvalidSortDirection.Message);
 	}
-
-	private static bool IsOneOf(string value, params string[] options) =>
-		options.Contains(value, StringComparer.OrdinalIgnoreCase);
 }

@@ -1,5 +1,6 @@
 using GameAtlas.Application.Behaviors;
 using GameAtlas.Application.Common.Pagination;
+using GameAtlas.Application.Common.Sorting;
 using GameAtlas.Application.Games;
 using GameAtlas.Application.Games.ListGames;
 using GameAtlas.Domain.Result;
@@ -10,10 +11,10 @@ public class ListGamesValidationTests
 {
 	[Theory]
 	[InlineData(0, 1, null, null)]
-	[InlineData(0, 100, "Name", "ASC")]
-	[InlineData(2, 20, "CreatedAt", "dEsC")]
-	[InlineData(0, 20, "updatedAt", null)]
-	public async Task AcceptsSupportedOptions(int offset, int limit, string? sortBy, string? direction)
+	[InlineData(0, 100, GameSortBy.Name, SortDirection.Asc)]
+	[InlineData(2, 20, GameSortBy.CreatedAt, SortDirection.Desc)]
+	[InlineData(0, 20, GameSortBy.UpdatedAt, null)]
+	public async Task AcceptsSupportedOptions(int offset, int limit, GameSortBy? sortBy, SortDirection? direction)
 	{
 		var result = await new ListGamesValidation().ValidateAsync(new ListGames(offset, limit,
 			SortBy: sortBy, SortDirection: direction));
@@ -26,15 +27,13 @@ public class ListGamesValidationTests
 	[InlineData(0, 0, null, null, "Limit")]
 	[InlineData(0, -1, null, null, "Limit")]
 	[InlineData(0, 101, null, null, "Limit")]
-	[InlineData(0, 20, "slug", null, "SortBy")]
-	[InlineData(0, 20, "0", null, "SortBy")]
-	[InlineData(0, 20, "", null, "SortBy")]
-	[InlineData(0, 20, " ", null, "SortBy")]
-	[InlineData(0, 20, null, "asc", "SortBy")]
-	[InlineData(0, 20, "name", "", "SortDirection")]
-	[InlineData(0, 20, "name", " ", "SortDirection")]
-	[InlineData(0, 20, "name", "sideways", "SortDirection")]
-	public async Task RejectsInvalidOptions(int offset, int limit, string? sortBy, string? direction, string property)
+	[InlineData(0, 20, (GameSortBy)(-1), null, "SortBy")]
+	[InlineData(0, 20, (GameSortBy)99, null, "SortBy")]
+	[InlineData(0, 20, null, SortDirection.Asc, "SortBy")]
+	[InlineData(0, 20, GameSortBy.Name, (SortDirection)(-1), "SortDirection")]
+	[InlineData(0, 20, GameSortBy.Name, (SortDirection)99, "SortDirection")]
+	public async Task RejectsInvalidOptions(
+		int offset, int limit, GameSortBy? sortBy, SortDirection? direction, string property)
 	{
 		var result = await new ListGamesValidation().ValidateAsync(new ListGames(offset, limit,
 			SortBy: sortBy, SortDirection: direction));
@@ -47,7 +46,7 @@ public class ListGamesValidationTests
 	public async Task BehaviorAggregatesErrorsAndSkipsHandler()
 	{
 		var behavior = new ValidationBehavior<ListGames, Result<PaginatedResult<GameDto>>>([new ListGamesValidation()]);
-		var result = await behavior.Handle(new ListGames(-1, 0, SortBy: "bad", SortDirection: "bad"),
+		var result = await behavior.Handle(new ListGames(-1, 0, SortBy: (GameSortBy)(-1), SortDirection: (SortDirection)(-1)),
 			(_, _) => throw new InvalidOperationException("Handler must not run."), CancellationToken.None);
 
 		Assert.True(result.IsFailure);

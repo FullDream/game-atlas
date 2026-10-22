@@ -1,5 +1,6 @@
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Common.Pagination;
+using GameAtlas.Application.Common.Sorting;
 using GameAtlas.Domain.Games;
 using GameAtlas.Domain.Result;
 using Mediator;
@@ -24,14 +25,14 @@ public sealed class ListGamesHandler(IApplicationDbContext context)
 		}
 
 		var total = await query.CountAsync(cancellationToken);
-		var ordered = (request.SortBy?.ToLowerInvariant(), request.SortDirection?.ToLowerInvariant() ?? "asc") switch
+		var ordered = (request.SortBy, request.SortDirection ?? SortDirection.Asc) switch
 		{
-			("name", "asc") => query.OrderBy(game => game.Name),
-			("name", "desc") => query.OrderByDescending(game => game.Name),
-			("createdat", "asc") => query.OrderBy(game => game.CreatedAt),
-			("createdat", "desc") => query.OrderByDescending(game => game.CreatedAt),
-			("updatedat", "asc") => query.OrderBy(game => game.UpdatedAt),
-			("updatedat", "desc") => query.OrderByDescending(game => game.UpdatedAt),
+			(GameSortBy.Name, SortDirection.Asc) => query.OrderBy(game => game.Name),
+			(GameSortBy.Name, SortDirection.Desc) => query.OrderByDescending(game => game.Name),
+			(GameSortBy.CreatedAt, SortDirection.Asc) => query.OrderBy(game => game.CreatedAt),
+			(GameSortBy.CreatedAt, SortDirection.Desc) => query.OrderByDescending(game => game.CreatedAt),
+			(GameSortBy.UpdatedAt, SortDirection.Asc) => query.OrderBy(game => game.UpdatedAt),
+			(GameSortBy.UpdatedAt, SortDirection.Desc) => query.OrderByDescending(game => game.UpdatedAt),
 			_ => null
 		};
 

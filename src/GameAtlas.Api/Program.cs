@@ -1,4 +1,5 @@
 using GameAtlas.Api;
+using GameAtlas.Api.Http;
 using GameAtlas.Api.Results;
 using GameAtlas.Api.Games;
 using GameAtlas.Application;
@@ -25,7 +26,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var api = app.MapGroup("").WithOutcomeResults();
+var api = app.MapGroup("").WithOutcomeResults().WithCaseInsensitiveEnumQueryParameters();
 
 api.MapGames();
 

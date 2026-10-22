@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using GameAtlas.Application.Common.Sorting;
+using GameAtlas.Application.Games;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GameAtlas.Api.Games;
@@ -15,8 +17,8 @@ public sealed class ListGamesRequest
 	public string? Search { get; init; }
 
 	[FromQuery, Description("name, createdAt, or updatedAt (case-insensitive). Omit for unspecified order.")]
-	public string? SortBy { get; init; }
+	public GameSortBy? SortBy { get; init; }
 
 	[FromQuery, Description("asc or desc (case-insensitive). Requires sortBy; defaults to asc with sortBy.")]
-	public string? SortDirection { get; init; }
+	public SortDirection? SortDirection { get; init; }
 }

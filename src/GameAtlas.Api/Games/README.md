@@ -16,7 +16,9 @@ The HTTP 200 response is `{ "items": [], "limit": 20, "offset": 0, "total": 0 }`
 
 SQLite search ignores ASCII letter case. Cyrillic input is allowed but matching across Cyrillic letter cases is not guaranteed. Without sortBy the API adds no ordering, so page order is unspecified and may vary. Explicit sorting occurs before pagination, with Id used to break ties. Name ordering follows SQLite's default collation. Count and page are separate reads; concurrent changes may affect their consistency.
 
-Invalid ranges, sorting tokens, or a direction without a field return 422 validation ProblemDetails; explicitly empty sorting values are invalid. Non-integer or overflowing pagination values return 400 ProblemDetails. Unexpected storage errors use the built-in safe 500 response. See `GameAtlas.Api.http` for default, search, and sorted examples.
+Invalid pagination ranges, undefined sorting enum values, or a direction without a field return 422 validation ProblemDetails. Inputs that cannot bind to integers or enums, including unknown enum names and empty sorting values, return 400 ProblemDetails. Unexpected storage errors use the built-in safe 500 response. See `GameAtlas.Api.http` for default, search, and sorted examples.
+
+API requests and Application queries use nullable GameSortBy and SortDirection enums with ASP.NET Core binding. A shared endpoint convention normalizes query enum names before binding to accept them case-insensitively. OpenAPI lists camelCase names. Standard enum parsing also accepts surrounding whitespace, numeric values, and comma-separated names when they resolve to defined values. GameSortBy values 0, 1, and 2 mean Name, CreatedAt, and UpdatedAt; SortDirection values 0 and 1 mean Asc and Desc.
 
 ## Update game
 

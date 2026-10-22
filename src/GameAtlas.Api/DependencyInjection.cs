@@ -1,12 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
+using GameAtlas.Api.Errors;
+using GameAtlas.Api.Games;
 using GameAtlas.Api.OpenApi.Optional;
+using GameAtlas.Api.OpenApi.Parameters;
 using GameAtlas.Api.OpenApi.Validation;
 using GameAtlas.Api.Serialization;
 using GameAtlas.Api.Serialization.Optional;
-using GameAtlas.Api.Errors;
-using GameAtlas.Api.Games;
 using GameAtlas.Application.Games.CreateGame;
 using GameAtlas.Application.Games.ListGames;
 using GameAtlas.Application.Games.UpdateGame;
@@ -39,6 +40,7 @@ public static class DependencyInjection
 		services.AddOpenApi(options =>
 		{
 			options.AddOptionalSupport();
+			options.AddOperationTransformer<CamelCaseQueryParametersTransformer>();
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
 		});
 

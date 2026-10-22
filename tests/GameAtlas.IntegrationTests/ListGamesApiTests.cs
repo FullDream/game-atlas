@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Net;
 using System.Text.Json;
+using GameAtlas.Application.Common.Sorting;
+using GameAtlas.Application.Games;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -59,13 +61,20 @@ public class ListGamesApiTests
 
 	[Theory]
 	[InlineData("name", "asc")]
-	[InlineData("name", "desc")]
-	[InlineData("createdAt", "asc")]
 	[InlineData("createdAt", "desc")]
 	[InlineData("updatedAt", "asc")]
-	[InlineData("updatedAt", "desc")]
+	[InlineData("NAME", "DESC")]
+	[InlineData("Name", "Asc")]
+	[InlineData("Name", "Desc")]
+	[InlineData("CreatedAt", "Asc")]
+	[InlineData("CreatedAt", "Desc")]
+	[InlineData("UpdatedAt", "Asc")]
+	[InlineData("UpdatedAt", "Desc")]
 	[InlineData("Name", null)]
-	[InlineData("CreatedAt", "DESC")]
+	[InlineData("0", "0")]
+	[InlineData("1", "1")]
+	[InlineData("Name,CreatedAt", "Asc")]
+	[InlineData(" Name ", "Desc")]
 	public async Task SortsBeforePaginationAndKeepsTotal(string field, string? direction)
 	{
 		var capture = new CommandCapture();
@@ -81,12 +90,12 @@ public class ListGamesApiTests
 
 		using var response = await client.GetAsync(url);
 		var page = await ReadPageAsync(response);
-		var descending = string.Equals(direction, "desc", StringComparison.OrdinalIgnoreCase);
-		IOrderedEnumerable<Game> expected = field.ToLowerInvariant() switch
+		var descending = direction is not null && Enum.Parse<SortDirection>(direction, ignoreCase: true) == SortDirection.Desc;
+		IOrderedEnumerable<Game> expected = Enum.Parse<GameSortBy>(field, ignoreCase: true) switch
 		{
-			"name" => descending ? games.OrderByDescending(game => game.Name, StringComparer.Ordinal)
+			GameSortBy.Name => descending ? games.OrderByDescending(game => game.Name, StringComparer.Ordinal)
 				: games.OrderBy(game => game.Name, StringComparer.Ordinal),
-			"createdat" => descending ? games.OrderByDescending(game => game.CreatedAt)
+			GameSortBy.CreatedAt => descending ? games.OrderByDescending(game => game.CreatedAt)
 				: games.OrderBy(game => game.CreatedAt),
 			_ => descending ? games.OrderByDescending(game => game.UpdatedAt) : games.OrderBy(game => game.UpdatedAt)
 		};
@@ -147,14 +156,17 @@ public class ListGamesApiTests
 	[InlineData("limit=0", 422, "limit")]
 	[InlineData("limit=-1", 422, "limit")]
 	[InlineData("limit=101", 422, "limit")]
-	[InlineData("sortBy=slug", 422, "sortBy")]
-	[InlineData("sortBy=0", 422, "sortBy")]
-	[InlineData("sortBy=", 422, "sortBy")]
-	[InlineData("sortBy=%20", 422, "sortBy")]
-	[InlineData("sortBy=name&sortDirection=sideways", 422, "sortDirection")]
-	[InlineData("sortBy=name&sortDirection=", 422, "sortDirection")]
-	[InlineData("sortBy=name&sortDirection=%20", 422, "sortDirection")]
-	[InlineData("sortDirection=asc", 422, "sortBy")]
+	[InlineData("sortBy=slug", 400, null)]
+	[InlineData("sortBy=99", 422, "sortBy")]
+	[InlineData("sortBy=-1", 422, "sortBy")]
+	[InlineData("sortBy=", 400, null)]
+	[InlineData("sortBy=%20", 400, null)]
+	[InlineData("sortBy=Name&sortDirection=sideways", 400, null)]
+	[InlineData("sortBy=Name&sortDirection=99", 422, "sortDirection")]
+	[InlineData("sortBy=Name&sortDirection=-1", 422, "sortDirection")]
+	[InlineData("sortBy=Name&sortDirection=", 400, null)]
+	[InlineData("sortBy=Name&sortDirection=%20", 400, null)]
+	[InlineData("sortDirection=Asc", 422, "sortBy")]
 	[InlineData("offset=bad", 400, null)]
 	[InlineData("limit=2147483648", 400, null)]
 	[InlineData("limit=1.5", 400, null)]

@@ -26,6 +26,7 @@
 - Keep endpoints thin and group a resource's operations in its `Endpoints.cs` file. Place mapping extension methods in separate files in the consuming layer. Return HTTP results through the existing `OutcomeResult` integration.
 - Implement mappings as extension methods in the layer that uses them, near the relevant feature. Preserve inward dependency direction; Domain must not depend on API DTOs or infrastructure.
 - Keep DTO declarations and mapping extension classes in separate files.
+- Use camelCase for HTTP query parameter names while keeping C# property names in PascalCase. Apply query-name casing globally through the OpenAPI configuration; do not repeat `FromQuery.Name` solely to change casing.
 - Persist domain entities directly with EF Core when the domain and persistence models match. Introduce separate persistence models only when needed.
 - Use `IApplicationDbContext` directly for persistence access from Application for now. Do not add a repository layer or generic repositories.
 
@@ -52,4 +53,4 @@
 
 - Use SQLite initially. PostgreSQL is a future addition; do not introduce a second provider preemptively.
 - Keep EF Core migrations in Infrastructure, without a separate migrations project. Apply them explicitly through EF CLI rather than automatically at API startup.
-- Store enums as strings in the database and serialize them as strings in the API.
+- Store enums as strings in the database and serialize them as camelCase strings in the API. Document query enum values in camelCase and accept names case-insensitively through the shared endpoint convention; keep request properties strongly typed as enums.

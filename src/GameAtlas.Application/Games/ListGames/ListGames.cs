@@ -1,4 +1,5 @@
 using GameAtlas.Application.Common.Pagination;
+using GameAtlas.Application.Common.Sorting;
 using GameAtlas.Domain.Result;
 using Mediator;
 
@@ -8,5 +9,5 @@ public sealed record ListGames(
 	int Offset = 0,
 	int Limit = 20,
 	string? Search = null,
-	string? SortBy = null,
-	string? SortDirection = null) : IQuery<Result<PaginatedResult<GameDto>>>;
+	GameSortBy? SortBy = null,
+	SortDirection? SortDirection = null) : IQuery<Result<PaginatedResult<GameDto>>>;

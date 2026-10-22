@@ -155,7 +155,7 @@ The list SHALL accept optional search, trim its surrounding whitespace, and trea
 - **AND** matching across different Cyrillic letter cases is not promised
 
 ### Requirement: Optional game list sorting
-The list SHALL accept sortBy values name, createdAt, or updatedAt and sortDirection values asc or desc, ignoring their letter case. With sortBy and no sortDirection, direction SHALL default to asc. Explicit sorting SHALL precede pagination. When sortBy is omitted, no explicit ordering SHALL be applied and result order SHALL be unspecified.
+The list SHALL accept sortBy names name, createdAt, or updatedAt and sortDirection names asc or desc, case-insensitively. Other standard enum forms SHALL be accepted when their resulting values are defined. With sortBy and no direction, direction SHALL default to asc. Explicit sorting SHALL precede pagination. With sortBy omitted, no explicit ordering SHALL be applied and order SHALL be unspecified.
 
 #### Scenario: Sort names ascending by default
 - **WHEN** sortBy is name and sortDirection is omitted
@@ -167,8 +167,13 @@ The list SHALL accept sortBy values name, createdAt, or updatedAt and sortDirect
 - **AND** timestamp sorting compares the full stored UTC instants
 
 #### Scenario: Case-insensitive sorting options
-- **WHEN** a client sends sortBy=CreatedAt and sortDirection=DESC
-- **THEN** the response uses descending creation-time ordering
+- **WHEN** a client sends sortBy=NAME and sortDirection=DESC
+- **THEN** the sorting options are accepted as name and desc
+
+#### Scenario: Standard enum representations
+- **WHEN** a client uses a standard enum representation that resolves to a defined sorting value
+- **THEN** that value is accepted, including surrounding whitespace, defined numeric values, and comma-separated names
+- **AND** sortBy numeric values 0, 1, and 2 mean Name, CreatedAt, and UpdatedAt, while sortDirection values 0 and 1 mean Asc and Desc
 
 #### Scenario: No explicit sorting
 - **WHEN** both sorting parameters are omitted
@@ -176,7 +181,7 @@ The list SHALL accept sortBy values name, createdAt, or updatedAt and sortDirect
 - **AND** the API does not promise insertion order or stable ordering across requests
 
 ### Requirement: Validate list query parameters
-Negative offset, limit outside 1 through 100, unsupported sortBy or sortDirection, and sortDirection supplied without sortBy SHALL produce HTTP 422 validation ProblemDetails with field errors. Query values that cannot bind to integers SHALL produce HTTP 400 ProblemDetails. Invalid requests SHALL NOT return a successful page.
+Negative offset, limit outside 1 through 100, undefined sorting enum values, and sortDirection supplied without sortBy SHALL produce HTTP 422 validation ProblemDetails with field errors. Query values that cannot bind to integers or sorting enums, including unknown enum names and empty sorting values, SHALL produce HTTP 400 ProblemDetails. Invalid requests SHALL NOT return a successful page.
 
 #### Scenario: Invalid pagination ranges
 - **WHEN** offset is negative, limit is zero or negative, or limit exceeds 100
@@ -184,6 +189,10 @@ Negative offset, limit outside 1 through 100, unsupported sortBy or sortDirectio
 
 #### Scenario: Unknown sorting options
 - **WHEN** sortBy is `slug`, or sortDirection is `sideways`
+- **THEN** the response is HTTP 400 ProblemDetails
+
+#### Scenario: Undefined sorting enum values
+- **WHEN** sortBy or sortDirection is a parseable integer such as 99 that does not identify a defined enum value
 - **THEN** the response is HTTP 422 validation ProblemDetails identifying the invalid sorting fields
 
 #### Scenario: Direction without a field
@@ -192,7 +201,7 @@ Negative offset, limit outside 1 through 100, unsupported sortBy or sortDirectio
 
 #### Scenario: Empty sorting options
 - **WHEN** sortBy or sortDirection is explicitly supplied as an empty or whitespace-only value
-- **THEN** the response is HTTP 422 validation ProblemDetails for the supplied invalid option
+- **THEN** the response is HTTP 400 ProblemDetails
 
 #### Scenario: Non-integer pagination input
 - **WHEN** offset or limit contains a non-integer or a value outside the supported integer range
