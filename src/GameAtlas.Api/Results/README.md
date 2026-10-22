@@ -26,6 +26,12 @@ var api = app.MapGroup("").WithOutcomeResults();
 and their `Task<>` / `ValueTask<>` wrappers. Explicit endpoint response statuses are preserved.
 Metadata conventions live in `GameAtlas.Api.OpenApi.Results`.
 
+Both Minimal API and MVC conventions automatically document HTTP 500 as
+`application/problem+json` with a `ProblemDetails` body. Do not repeat this metadata
+on individual endpoints. Explicit response metadata still takes precedence.
+This documents unexpected failures handled by the host's exception middleware;
+it does not convert exceptions into domain results.
+
 ## MVC
 
 MVC support is opt-in:

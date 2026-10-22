@@ -1,4 +1,5 @@
 @GameAtlas_Api_HostAddress = https://localhost:7241
+@gameId = 019a0000-0000-7000-8000-000000000001
 
 # Default page: offset=0, limit=20, no explicit order.
 GET {{GameAtlas_Api_HostAddress}}/games
@@ -32,6 +33,50 @@ Accept: application/json
   "name": "Elden Ring",
   "slug": "elden-ring",
   "image": "elden-ring-cover",
+  "mapId": null
+}
+
+###
+
+# Replace gameId with the id returned by creation. Omitted fields retain their values.
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}
+Content-Type: application/merge-patch+json
+Accept: application/json
+
+{
+  "name": "Elden Ring Updated",
+  "image": "updated-cover"
+}
+
+###
+
+# application/json uses the same merge-patch semantics.
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "status": "published"
+}
+
+###
+
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}
+Content-Type: application/merge-patch+json
+Accept: application/json
+
+{
+  "status": "draft"
+}
+
+###
+
+# Clear the map without changing other fields.
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}
+Content-Type: application/json
+Accept: application/json
+
+{
   "mapId": null
 }
 

@@ -135,6 +135,9 @@ public sealed class FluentValidationSchemaTransformer(IOpenApiValidationSourceRe
 	private static void RemoveNull(OpenApiSchema schema)
 	{
 		schema.Type &= ~JsonSchemaType.Null;
+
+		if (schema.Enum is not null)
+			schema.Enum = schema.Enum.Where(value => value is not null).ToList();
 	}
 
 	private static void ApplyKnownValidator(IPropertyValidator validator, OpenApiSchema schema)

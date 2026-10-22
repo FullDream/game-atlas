@@ -15,7 +15,8 @@ internal sealed record OutcomeResultResponseMetadata(int StatusCode, Type Type, 
 		new(403, typeof(ProblemDetails), "application/problem+json"),
 		new(404, typeof(ProblemDetails), "application/problem+json"),
 		new(409, typeof(ValidationProblemDetails), "application/problem+json"),
-		new(422, typeof(ValidationProblemDetails), "application/problem+json")
+		new(422, typeof(ValidationProblemDetails), "application/problem+json"),
+		new(500, typeof(ProblemDetails), "application/problem+json")
 	];
 
 	internal static IReadOnlyList<OutcomeResultResponseMetadata> GetResponses(
@@ -24,7 +25,7 @@ internal sealed record OutcomeResultResponseMetadata(int StatusCode, Type Type, 
 		bool hasRoutePlaceholders)
 	{
 		if (returnType.IsGenericType && (returnType.GetGenericTypeDefinition() == typeof(Task<>) ||
-		                                 returnType.GetGenericTypeDefinition() == typeof(ValueTask<>)))
+										 returnType.GetGenericTypeDefinition() == typeof(ValueTask<>)))
 			returnType = returnType.GetGenericArguments()[0];
 
 		var isGeneric = returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(OutcomeResult<>);
@@ -44,7 +45,7 @@ internal sealed record OutcomeResultResponseMetadata(int StatusCode, Type Type, 
 			if (methods.Contains("GET"))
 			{
 				if (response.StatusCode == 409 || (response.StatusCode == 404 && !hasRoutePlaceholders &&
-				                                   payloadType is not null && IsCollection(payloadType)))
+												   payloadType is not null && IsCollection(payloadType)))
 					continue;
 			}
 			else if (methods.Contains("POST") && !hasRoutePlaceholders)
@@ -64,6 +65,6 @@ internal sealed record OutcomeResultResponseMetadata(int StatusCode, Type Type, 
 	private static bool IsCollection(Type payload) =>
 		payload.IsArray ||
 		(payload.IsGenericType && (payload.GetGenericTypeDefinition() == typeof(IEnumerable<>) ||
-		                           payload.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))) ||
+								   payload.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))) ||
 		typeof(IEnumerable).IsAssignableFrom(payload);
 }

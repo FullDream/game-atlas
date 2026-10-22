@@ -18,6 +18,16 @@ SQLite search ignores ASCII letter case. Cyrillic input is allowed but matching 
 
 Invalid ranges, sorting tokens, or a direction without a field return 422 validation ProblemDetails; explicitly empty sorting values are invalid. Non-integer or overflowing pagination values return 400 ProblemDetails. Unexpected storage errors use the built-in safe 500 response. See `GameAtlas.Api.http` for default, search, and sorted examples.
 
+## Update game
+
+PATCH `/games/{id}` requires no authentication. Both `application/merge-patch+json` and `application/json` use identical JSON Merge Patch semantics; `charset=utf-8` is accepted with either. PUT is not supported. Other request media types, including `application/json-patch+json` and `text/plain`, return 415 ProblemDetails.
+
+Supply at least one of `name`, `slug`, `image`, `mapId`, or `status`. Omitted fields retain their values. Explicit `mapId: null` clears the map identifier; null for any other mutable field returns 422. Metadata uses the same trimming, length, and slug rules as creation. Map existence is not checked. Status accepts string values `draft` and `published`; publication and returning to draft have no extra prerequisites.
+
+Success returns 200 with the complete GameDto. The server preserves `id` and `createdAt` and changes `updatedAt` only when at least one normalized value changes. A nonempty patch with existing values returns the current game without saving or touching its timestamp. An empty object returns 422. Unknown fields and client-supplied `id`, `createdAt`, or `updatedAt` return 400, even alongside valid changes. JSON bodies must be objects; malformed JSON, incompatible value types, invalid GUIDs, and unknown or numeric status representations return 400. Errors use ProblemDetails.
+
+A valid patch for a missing game returns 404; it never creates a game. Keeping the current slug is allowed. A slug owned by another game returns 409, including when the unique constraint detects a race during saving. Any failed patch leaves all stored game fields unchanged. Unexpected storage failures return safe 500 responses. Concurrent updates have no ETag or version check in this version.
+
 ## Create game
 
 Apply SQLite migrations before starting the API (see Infrastructure/Persistence/README.md). POST `/games` requires no authentication yet. Run the example in `GameAtlas.Api.http` using the API's HTTPS launch profile.

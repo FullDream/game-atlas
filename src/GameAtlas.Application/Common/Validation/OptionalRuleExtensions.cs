@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using FluentValidation;
 using GameAtlas.Domain;
 
@@ -9,7 +9,8 @@ public static class OptionalRuleExtensions
 	public static void OptionalRuleFor<T, TProperty>(
 		this AbstractValidator<T> validator,
 		Expression<Func<T, Optional<TProperty>>> propertySelector,
-		Func<IRuleBuilderInitial<T, TProperty>, IRuleBuilderOptions<T, TProperty>> configure)
+		Func<IRuleBuilderInitial<T, TProperty>, IRuleBuilderOptions<T, TProperty>> configure,
+		Expression<Func<TProperty, TProperty>>? normalize = null)
 	{
 		ArgumentNullException.ThrowIfNull(validator);
 		ArgumentNullException.ThrowIfNull(propertySelector);
@@ -18,9 +19,12 @@ public static class OptionalRuleExtensions
 		if (propertySelector.Body is not MemberExpression memberExpression)
 			throw new ArgumentException("The selector must access an Optional member.", nameof(propertySelector));
 
-		var valueSelector = Expression.Lambda<Func<T, TProperty>>(
-			Expression.Property(memberExpression, nameof(Optional<TProperty>.Value)),
-			propertySelector.Parameters);
+		Expression value = Expression.Property(memberExpression, nameof(Optional<TProperty>.Value));
+
+		if (normalize is not null)
+			value = Expression.Invoke(normalize, value);
+
+		var valueSelector = Expression.Lambda<Func<T, TProperty>>(value, propertySelector.Parameters);
 
 		var selector = propertySelector.Compile();
 
