@@ -29,6 +29,15 @@
 - Persist domain entities directly with EF Core when the domain and persistence models match. Introduce separate persistence models only when needed.
 - Use `IApplicationDbContext` directly for persistence access from Application for now. Do not add a repository layer or generic repositories.
 
+## HTTP updates
+
+- Use PATCH with `Content-Type: application/merge-patch+json` for resource updates, following JSON Merge Patch (RFC 7396: https://www.rfc-editor.org/rfc/rfc7396). Do not use PUT in this project. Reject unsupported update media types with HTTP 415.
+- Make every mutable field optional in update requests. Use the existing `Optional<T>` to distinguish an omitted field from an explicitly supplied value, including `null`. Optional presence does not make a domain field nullable.
+- Leave omitted fields unchanged. Apply supplied values; `null` removes or clears a value only when the resource permits it. Reject `null` for required fields with HTTP 422. Use nullable wrapped types when necessary to preserve explicit `null` for validation, including value types such as enums.
+- Merge supplied object members recursively. Replace arrays as a whole rather than merging their elements.
+- Require resource update bodies to be JSON objects. Reject malformed JSON, incompatible JSON types, and unknown or read-only fields with HTTP 400. Reject an empty object with HTTP 422 because at least one mutable field must be supplied.
+- Validate all supplied changes and the resulting domain state before saving. Apply a patch atomically; a failed patch must not persist partial changes.
+
 ## Validation and errors
 
 - Define errors in separate static classes next to the feature that owns them. Keep domain errors in Domain and application-only errors in Application. Use static readonly members for fixed errors and factory methods for parameterized errors.

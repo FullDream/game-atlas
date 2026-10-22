@@ -17,6 +17,13 @@ context: |
   - Do not introduce microservices.
   - Keep implementations simple.
   - Do not invent business requirements.
+  - Use PATCH with application/merge-patch+json (RFC 7396) for resource updates;
+    do not use PUT. All mutable request fields are optional: omission preserves
+    the current value, explicit null clears only nullable fields, objects merge
+    recursively, and arrays are replaced as a whole.
+  - Follow the HTTP updates conventions in AGENTS.md, including Optional<T>,
+    atomic updates, and rejection of empty patches, unknown or read-only fields,
+    and unsupported media types.
   - Follow AGENTS.md for implementation conventions, including feature organization,
     persistence access, mapping, validation, error handling, and migration execution.
 
