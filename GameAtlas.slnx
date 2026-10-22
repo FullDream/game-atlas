@@ -14,5 +14,8 @@
     <File Path=".gitignore" />
     <File Path=".editorconfig" />
     <File Path="AGENTS.md" />
+    <File Path="openspec/changes/archive/.gitkeep" />
+    <File Path="openspec/config.yaml" />
+    <File Path="openspec/specs/.gitkeep" />
   </Folder>
 </Solution>

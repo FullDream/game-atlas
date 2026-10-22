@@ -1,32 +1,30 @@
 schema: spec-driven
 
-# Project context (optional)
-# Add only constraints that should guide OpenSpec artifacts and workflows.
-# Include constraints an agent cannot infer by reading the code.
-# Keep general project documentation and discoverable codebase facts out.
-# Example:
-#   context: |
-#     Designs and tasks must cover Windows, macOS, and Linux
-#     Write all artifacts in Spanish
+context: |
+  GameAtlas is a platform for interactive video game maps.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always state what is out of scope
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Backend:
+  - ASP.NET Core
+  - EF Core
+  - SqlLite,  PostgreSQL in the future
+  - Monolith
+  - DDD, Vertical Slice Architecture, and pragmatic Clean Architecture
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+  Architectural principles:
+  - Separate domain logic from infrastructure.
+  - Avoid generic repositories.
+  - Avoid unnecessary abstractions.
+  - Do not introduce microservices.
+  - Keep implementations simple.
+  - Do not invent business requirements.
+
+rules:
+  proposal:
+    - Keep changes small and focused.
+    - Explicitly state what is out of scope.
+  design:
+    - Explain significant architectural decisions.
+    - Prefer existing patterns over new abstractions.
+  tasks:
+    - Break implementation into small verifiable tasks.
+    - Do not include unrelated improvements.
