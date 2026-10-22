@@ -1,6 +1,6 @@
 using GameAtlas.Domain.Games;
 
-namespace GameAtlas.Application.Games.CreateGame;
+namespace GameAtlas.Application.Games;
 
 internal static class GameMappingExtensions
 {

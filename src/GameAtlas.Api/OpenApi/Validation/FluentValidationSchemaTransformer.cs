@@ -15,6 +15,17 @@ public sealed class FluentValidationSchemaTransformer(IOpenApiValidationSourceRe
 		OpenApiSchemaTransformerContext context,
 		CancellationToken cancellationToken)
 	{
+		if (context.ParameterDescription?.ModelMetadata is { ContainerType: { } contractType, PropertyName: { } name })
+		{
+			var sourceType = validationSourceResolver.Resolve(contractType);
+			var sourceValidatorType = typeof(IValidator<>).MakeGenericType(sourceType);
+
+			if (context.ApplicationServices.GetService(sourceValidatorType) is IValidator sourceValidator)
+				ApplyRules(sourceValidator, name, schema);
+
+			return Task.CompletedTask;
+		}
+
 		if (schema.Type?.HasFlag(JsonSchemaType.Object) != true || schema.Properties is not { Count: > 0 })
 		{
 			return Task.CompletedTask;
@@ -29,8 +40,6 @@ public sealed class FluentValidationSchemaTransformer(IOpenApiValidationSourceRe
 			return Task.CompletedTask;
 		}
 
-		var descriptor = validator.CreateDescriptor();
-
 		foreach (var jsonProperty in context.JsonTypeInfo.Properties)
 		{
 			if (jsonProperty.AttributeProvider is not PropertyInfo propertyInfo)
@@ -44,18 +53,19 @@ public sealed class FluentValidationSchemaTransformer(IOpenApiValidationSourceRe
 			if (propertySchema is not OpenApiSchema mutableSchema)
 				continue;
 
-			var rules = descriptor.GetRulesForMember(propertyInfo.Name);
-
-			foreach (var rule in rules)
-			{
-				foreach (var component in rule.Components)
-				{
-					ApplyValidator(component.Validator, mutableSchema);
-				}
-			}
+			ApplyRules(validator, propertyInfo.Name, mutableSchema);
 		}
 
 		return Task.CompletedTask;
+	}
+
+	private static void ApplyRules(IValidator validator, string propertyName, OpenApiSchema schema)
+	{
+		foreach (var rule in validator.CreateDescriptor().GetRulesForMember(propertyName))
+		{
+			foreach (var component in rule.Components)
+				ApplyValidator(component.Validator, schema);
+		}
 	}
 
 	private static void ApplyValidator(IPropertyValidator validator, OpenApiSchema schema)
@@ -132,42 +142,63 @@ public sealed class FluentValidationSchemaTransformer(IOpenApiValidationSourceRe
 		if (validator is IBetweenValidator range)
 			ApplyRange(range, schema, validator is not IInclusiveBetweenValidator);
 
+		if (validator is IComparisonValidator { MemberToCompare: null } comparison)
+		{
+			switch (comparison.Comparison)
+			{
+				case Comparison.GreaterThan:
+				case Comparison.GreaterThanOrEqual:
+					ApplyBound(schema, TryToDecimal(comparison.ValueToCompare),
+						comparison.Comparison == Comparison.GreaterThan, true);
+					break;
+				case Comparison.LessThan:
+				case Comparison.LessThanOrEqual:
+					ApplyBound(schema, TryToDecimal(comparison.ValueToCompare),
+						comparison.Comparison == Comparison.LessThan, false);
+					break;
+			}
+		}
+
 		if (validator is IEmailValidator && schema.Type?.HasFlag(JsonSchemaType.String) == true)
 			schema.Format = "email";
 	}
 
 	private static void ApplyRange(IBetweenValidator validator, OpenApiSchema schema, bool exclusive)
 	{
-		if (TryToDecimal(validator.From) is { } minimum && ShouldReplaceBound(
-				schema.ExclusiveMinimum ?? schema.Minimum,
-				schema.ExclusiveMinimum is not null,
-				minimum,
-				exclusive,
-				true))
+		ApplyBound(schema, TryToDecimal(validator.From), exclusive, true);
+		ApplyBound(schema, TryToDecimal(validator.To), exclusive, false);
+	}
+
+	private static void ApplyBound(OpenApiSchema schema, decimal? bound, bool exclusive, bool lowerBound)
+	{
+		if (bound is not { } value)
+			return;
+
+		var current = lowerBound ? schema.ExclusiveMinimum ?? schema.Minimum : schema.ExclusiveMaximum ?? schema.Maximum;
+		var currentExclusive = lowerBound ? schema.ExclusiveMinimum is not null : schema.ExclusiveMaximum is not null;
+
+		if (!ShouldReplaceBound(current, currentExclusive, value, exclusive, lowerBound))
+			return;
+
+		if (lowerBound)
 		{
 			schema.ExclusiveMinimum = null;
 			schema.Minimum = null;
 
 			if (exclusive)
-				schema.ExclusiveMinimum = minimum.ToString(CultureInfo.InvariantCulture);
+				schema.ExclusiveMinimum = value.ToString(CultureInfo.InvariantCulture);
 			else
-				schema.Minimum = minimum.ToString(CultureInfo.InvariantCulture);
+				schema.Minimum = value.ToString(CultureInfo.InvariantCulture);
 		}
-
-		if (TryToDecimal(validator.To) is { } maximum && ShouldReplaceBound(
-				schema.ExclusiveMaximum ?? schema.Maximum,
-				schema.ExclusiveMaximum is not null,
-				maximum,
-				exclusive,
-				false))
+		else
 		{
 			schema.ExclusiveMaximum = null;
 			schema.Maximum = null;
 
 			if (exclusive)
-				schema.ExclusiveMaximum = maximum.ToString(CultureInfo.InvariantCulture);
+				schema.ExclusiveMaximum = value.ToString(CultureInfo.InvariantCulture);
 			else
-				schema.Maximum = maximum.ToString(CultureInfo.InvariantCulture);
+				schema.Maximum = value.ToString(CultureInfo.InvariantCulture);
 		}
 	}
 

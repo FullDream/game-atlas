@@ -1,6 +1,7 @@
 using FluentValidation;
 using GameAtlas.Application.Behaviors;
 using GameAtlas.Application.Games.CreateGame;
+using GameAtlas.Application.Games;
 using GameAtlas.Domain.Result;
 
 namespace GameAtlas.Application.Tests;

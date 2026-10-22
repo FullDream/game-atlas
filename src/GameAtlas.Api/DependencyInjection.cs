@@ -8,6 +8,7 @@ using GameAtlas.Api.Serialization.Optional;
 using GameAtlas.Api.Errors;
 using GameAtlas.Api.Games;
 using GameAtlas.Application.Games.CreateGame;
+using GameAtlas.Application.Games.ListGames;
 using Microsoft.AspNetCore.Routing;
 
 namespace GameAtlas.Api;
@@ -20,6 +21,7 @@ public static class DependencyInjection
 		services.AddExceptionHandler<GameSlugConflictExceptionHandler>();
 		services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = false);
 		services.AddOpenApiValidationSource<CreateGameRequest, CreateGame>();
+		services.AddOpenApiValidationSource<ListGamesRequest, ListGames>();
 		services.ConfigureHttpJsonOptions(options =>
 		{
 			options.SerializerOptions.AddOptionalSupport();

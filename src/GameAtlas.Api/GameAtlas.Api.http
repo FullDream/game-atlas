@@ -1,5 +1,22 @@
 @GameAtlas_Api_HostAddress = https://localhost:7241
 
+# Default page: offset=0, limit=20, no explicit order.
+GET {{GameAtlas_Api_HostAddress}}/games
+Accept: application/json
+
+###
+
+# Search a literal substring; Total counts all matches before pagination.
+GET {{GameAtlas_Api_HostAddress}}/games?offset=0&limit=20&search=ring
+Accept: application/json
+
+###
+
+GET {{GameAtlas_Api_HostAddress}}/games?offset=0&limit=20&sortBy=createdAt&sortDirection=desc
+Accept: application/json
+
+###
+
 GET {{GameAtlas_Api_HostAddress}}/openapi/v1.json
 Accept: application/json
 

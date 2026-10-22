@@ -1,4 +1,24 @@
-# Create Game
+# Games
+
+## List games
+
+GET `/games` requires no authentication and includes all statuses, including Draft. Optional query parameters:
+
+| Parameter | Default | Accepted values |
+| --- | --- | --- |
+| offset | 0 | Integer >= 0 |
+| limit | 20 | Integer from 1 to 100 |
+| search | None | Literal name substring; surrounding whitespace is trimmed |
+| sortBy | None | name, createdAt, updatedAt (case-insensitive) |
+| sortDirection | asc when sortBy is supplied | asc, desc (case-insensitive); requires sortBy |
+
+The HTTP 200 response is `{ "items": [], "limit": 20, "offset": 0, "total": 0 }`. Each item has the complete game shape shown below for creation. Total counts search matches before pagination; an offset beyond the matches returns an empty array with the actual Total. Empty search means no filter. Percent, underscore, and backslash are literal search characters, not wildcard syntax.
+
+SQLite search ignores ASCII letter case. Cyrillic input is allowed but matching across Cyrillic letter cases is not guaranteed. Without sortBy the API adds no ordering, so page order is unspecified and may vary. Explicit sorting occurs before pagination, with Id used to break ties. Name ordering follows SQLite's default collation. Count and page are separate reads; concurrent changes may affect their consistency.
+
+Invalid ranges, sorting tokens, or a direction without a field return 422 validation ProblemDetails; explicitly empty sorting values are invalid. Non-integer or overflowing pagination values return 400 ProblemDetails. Unexpected storage errors use the built-in safe 500 response. See `GameAtlas.Api.http` for default, search, and sorted examples.
+
+## Create game
 
 Apply SQLite migrations before starting the API (see Infrastructure/Persistence/README.md). POST `/games` requires no authentication yet. Run the example in `GameAtlas.Api.http` using the API's HTTPS launch profile.
 

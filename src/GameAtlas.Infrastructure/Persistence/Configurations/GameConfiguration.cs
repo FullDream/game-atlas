@@ -1,5 +1,6 @@
 using GameAtlas.Domain.Games;
 using GameAtlas.Application.Games;
+using GameAtlas.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,5 +18,7 @@ public sealed class GameConfiguration : IEntityTypeConfiguration<Game>
 		builder.HasIndex(game => game.Slug).IsUnique();
 		builder.Property(game => game.Image).HasMaxLength(GameMetadataLimits.ImageMaxLength).IsRequired();
 		builder.Property(game => game.Status).HasConversion<string>().IsRequired();
+		builder.Property(game => game.CreatedAt).HasConversion<UtcTimestampConverter>();
+		builder.Property(game => game.UpdatedAt).HasConversion<UtcTimestampConverter>();
 	}
 }

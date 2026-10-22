@@ -26,3 +26,9 @@ dotnet ef database update <PreviousMigration> --project src/GameAtlas.Infrastruc
 For the initial migration, the previous target is `0`. This drops the Games table and deletes its data. Never delete or recreate an existing database to fix migration errors without checking its contents and obtaining authorization for any data loss. Existing databases created without migrations may need an explicit reconciliation plan.
 
 PostgreSQL is not configured yet. SQLite migrations must not be assumed to work unchanged with a future provider.
+
+## Timestamp ordering
+
+`OrderableGameTimestamps` records explicit UTC string conversions for CreatedAt and UpdatedAt so SQLite can sort them before pagination. It changes model metadata only: both migration directions are empty and existing TEXT values remain untouched. The invariant format is `yyyy-MM-dd HH:mm:ss.FFFFFFFzzz`, matching the original SQLite binding, including fractional-second precision. Domain and API values remain DateTimeOffset.
+
+Apply with the same `dotnet ef database update` command above. To roll back only this metadata migration, target `20261022182530_InitialGames`; its Down does not remove game data. Do not target `0` unless intentionally deleting the Games table. Reconsider this provider-specific conversion when adding PostgreSQL.
