@@ -6,6 +6,13 @@ namespace GameAtlas.Infrastructure.Persistence;
 
 public sealed class SqlitePersistenceFailureClassifier : IPersistenceFailureClassifier
 {
+	public bool IsCategoryNameConflict(Exception exception) =>
+		exception is DbUpdateException
+		{
+			InnerException: SqliteException { SqliteErrorCode: 19, SqliteExtendedErrorCode: 2067 } sqlite
+		} && sqlite.Message ==
+		"SQLite Error 19: 'UNIQUE constraint failed: Categories.CategoryGroupId, Categories.NormalizedName'.";
+
 	public bool IsCategoryGroupNameConflict(Exception exception) =>
 		exception is DbUpdateException
 		{

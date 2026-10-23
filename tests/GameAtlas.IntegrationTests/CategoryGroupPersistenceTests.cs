@@ -19,7 +19,7 @@ public class CategoryGroupPersistenceTests
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-			var previous = context.Database.GetMigrations().Last(name => !name.EndsWith("_CategoryGroups"));
+			const string previous = "20261022195257_OrderableGameTimestamps";
 
 			await context.GetService<IMigrator>().MigrateAsync(previous);
 			context.Games.Add(game);

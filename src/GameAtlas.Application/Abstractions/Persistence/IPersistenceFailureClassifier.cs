@@ -4,4 +4,5 @@ public interface IPersistenceFailureClassifier
 {
 	bool IsGameSlugConflict(Exception exception);
 	bool IsCategoryGroupNameConflict(Exception exception);
+	bool IsCategoryNameConflict(Exception exception);
 }

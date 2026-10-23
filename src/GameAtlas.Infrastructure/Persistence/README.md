@@ -33,6 +33,29 @@ PostgreSQL is not configured yet. SQLite migrations must not be assumed to work 
 
 Apply with the `dotnet ef database update` command above before running the updated API. To roll back this migration, target `20261022195257_OrderableGameTimestamps`. Rolling back drops all category groups but preserves Games; back up valuable data and stop writes first. Deleting a game now also permanently deletes its groups, including through the existing direct SQL deletion path.
 
+## Categories
+
+`20261023114301_Categories` adds Categories with a required cascading CategoryGroups foreign key,
+a unique `(CategoryGroupId, NormalizedName)` index, and a nonunique `(CategoryGroupId, Order)` index.
+Existing games and groups remain unchanged; no backfill is needed. Marker counts are not stored.
+Category ownership follows its current group, including after a transfer. Deleting a group or game
+physically deletes its current categories.
+
+Apply explicitly before running the updated API:
+
+```powershell
+dotnet ef database update 20261023114301_Categories --project src/GameAtlas.Infrastructure --startup-project src/GameAtlas.Api
+```
+
+To roll back, stop writes, back up valuable data, deploy the preceding application version, and run:
+
+```powershell
+dotnet ef database update 20261023100000_CategoryGroups --project src/GameAtlas.Infrastructure --startup-project src/GameAtlas.Api
+```
+
+Rollback drops Categories and all category data while preserving existing games and groups.
+Do not apply either command to a persistent database merely to validate the migration; use disposable test databases.
+
 ## Timestamp ordering
 
 `OrderableGameTimestamps` records explicit UTC string conversions for CreatedAt and UpdatedAt so SQLite can sort them before pagination. It changes model metadata only: both migration directions are empty and existing TEXT values remain untouched. The invariant format is `yyyy-MM-dd HH:mm:ss.FFFFFFFzzz`, matching the original SQLite binding, including fractional-second precision. Domain and API values remain DateTimeOffset.

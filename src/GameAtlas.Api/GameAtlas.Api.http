@@ -120,3 +120,48 @@ Content-Type: application/merge-patch+json
 DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}
 
 ###
+
+# Replace categoryGroupId with a group of gameId. Default order appends within this group.
+POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories
+Content-Type: application/json
+
+{
+  "name": "Chests",
+  "icon": "/icons/chest.svg",
+  "color": "#ff8800"
+}
+
+###
+
+# Full ordered array; markersCount is currently always zero.
+GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories
+
+###
+
+# Replace categoryId with a returned category ID. Only supplied fields change.
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
+Content-Type: application/merge-patch+json
+
+{
+  "name": "Rare chests",
+  "order": 10,
+  "color": "#ABCDEF"
+}
+
+###
+
+# Transfer to another group of the same game. Preserve order unless explicitly supplied.
+# After success, use destinationCategoryGroupId in subsequent category routes.
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
+Content-Type: application/json
+
+{
+  "categoryGroupId": "{{destinationCategoryGroupId}}"
+}
+
+###
+
+# Physical category deletion: 204, then 404 on repeat. No survivor renumbering.
+DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
+
+###

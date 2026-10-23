@@ -1,8 +1,9 @@
 using GameAtlas.Api;
+using GameAtlas.Api.Categories;
 using GameAtlas.Api.CategoryGroups;
+using GameAtlas.Api.Games;
 using GameAtlas.Api.Http;
 using GameAtlas.Api.Results;
-using GameAtlas.Api.Games;
 using GameAtlas.Application;
 using GameAtlas.Infrastructure;
 using Scalar.AspNetCore;
@@ -31,6 +32,7 @@ var api = app.MapGroup("").WithOutcomeResults().WithCaseInsensitiveEnumQueryPara
 
 api.MapGames();
 api.MapCategoryGroups();
+api.MapCategories();
 
 app.Run();
 

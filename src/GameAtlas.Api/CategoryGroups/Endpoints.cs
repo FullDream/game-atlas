@@ -13,15 +13,15 @@ public static class Endpoints
 	{
 		var groups = group.MapGroup("/games/{gameId}/category-groups").WithTags("Category groups");
 
+		groups.MapGet("", ListCategoryGroupsAsync)
+			.WithName("ListCategoryGroups").WithSummary("List category groups")
+			.WithDescription("Returns all groups ordered by order, createdAt, and id, without pagination.");
+
 		groups.MapPost("", CreateCategoryGroupAsync)
 			.WithName("CreateCategoryGroup").WithSummary("Create category group")
 			.WithDescription("Creates a group with an optional positive integer order; omission appends to the list. " +
 				"Names must be unique within the game, " +
 				"ignoring letter case and surrounding whitespace. Returns the complete stored group.");
-
-		groups.MapGet("", ListCategoryGroupsAsync)
-			.WithName("ListCategoryGroups").WithSummary("List category groups")
-			.WithDescription("Returns all groups ordered by order, createdAt, and id, without pagination.");
 
 		groups.MapPatch("/{id}", UpdateCategoryGroupAsync)
 			.WithName("UpdateCategoryGroup").WithSummary("Update category group")
@@ -38,13 +38,13 @@ public static class Endpoints
 		return groups;
 	}
 
-	private static async Task<OutcomeResult<CategoryGroupDto>> CreateCategoryGroupAsync(
-		Guid gameId, CreateCategoryGroupRequest request, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(request.ToCommand(gameId), cancellationToken);
-
 	private static async Task<OutcomeResult<IReadOnlyCollection<CategoryGroupDto>>> ListCategoryGroupsAsync(
 		Guid gameId, IMediator mediator, CancellationToken cancellationToken) =>
 		await mediator.Send(new ListCategoryGroups(gameId), cancellationToken);
+
+	private static async Task<OutcomeResult<CategoryGroupDto>> CreateCategoryGroupAsync(
+		Guid gameId, CreateCategoryGroupRequest request, IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(request.ToCommand(gameId), cancellationToken);
 
 	private static async Task<OutcomeResult<CategoryGroupDto>> UpdateCategoryGroupAsync(
 		Guid gameId, Guid id, UpdateCategoryGroupRequest request, IMediator mediator, CancellationToken cancellationToken) =>
