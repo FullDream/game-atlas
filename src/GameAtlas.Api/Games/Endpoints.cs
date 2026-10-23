@@ -3,6 +3,7 @@ using GameAtlas.Api.Results;
 using GameAtlas.Application.Common.Pagination;
 using GameAtlas.Application.Games;
 using GameAtlas.Application.Games.CreateGame;
+using GameAtlas.Application.Games.DeleteGame;
 using Mediator;
 
 namespace GameAtlas.Api.Games;
@@ -34,6 +35,12 @@ public static class Endpoints
 				"Unchanged values preserve updatedAt. Returns the complete stored game.")
 			.WithMergePatch<UpdateGameRequest>();
 
+		games.MapDelete("/{id}", DeleteGameAsync)
+			.WithName("DeleteGame")
+			.WithSummary("Delete game")
+			.WithDescription("Permanently deletes a draft or published game. Returns 204 without a body. " +
+				"Missing games, including repeated deletion, return 404. The deleted slug becomes reusable.");
+
 		return games;
 	}
 
@@ -48,4 +55,8 @@ public static class Endpoints
 	private static async Task<OutcomeResult<GameDto>> UpdateGameAsync(
 		Guid id, UpdateGameRequest request, IMediator mediator, CancellationToken cancellationToken) =>
 		await mediator.Send(request.ToCommand(id), cancellationToken);
+
+	private static async Task<OutcomeResult> DeleteGameAsync(
+		Guid id, IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(new DeleteGame(id), cancellationToken);
 }

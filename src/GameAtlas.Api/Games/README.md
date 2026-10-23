@@ -1,5 +1,13 @@
 # Games
 
+## Delete game
+
+DELETE `/games/{id}` requires no authentication or request body. It permanently removes a draft or published game and returns HTTP 204 with no response body after the deletion is persisted. Other games remain unchanged. Images and maps are not deleted: their values are currently scalar metadata, not owned resources.
+
+A missing game, including a repeated deletion or an unknown valid GUID, returns HTTP 404 ProblemDetails. An identifier that cannot be parsed as a GUID returns 400 ProblemDetails. Unexpected storage failures return a safe 500 response without internal details.
+
+Deleted games disappear from list items and totals, and a valid PATCH to their identifier returns 404. Their slugs become available for creation or updating another game under the existing validation and uniqueness rules. Deletion has no restoration mechanism or additional schema migration. See `GameAtlas.Api.http` for an example.
+
 ## List games
 
 GET `/games` requires no authentication and includes all statuses, including Draft. Optional query parameters:

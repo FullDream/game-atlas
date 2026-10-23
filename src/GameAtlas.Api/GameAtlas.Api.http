@@ -81,3 +81,9 @@ Accept: application/json
 }
 
 ###
+
+# Permanently delete a draft or published game. Success: 204 with no body; repeating: 404.
+# The slug becomes available for creation or updating another game.
+DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}
+
+###
