@@ -27,6 +27,12 @@ For the initial migration, the previous target is `0`. This drops the Games tabl
 
 PostgreSQL is not configured yet. SQLite migrations must not be assumed to work unchanged with a future provider.
 
+## Category groups
+
+`CategoryGroups` adds the CategoryGroups table with a required Games foreign key and database cascade deletion, a unique `(GameId, NormalizedName)` index, and an ordered-read `(GameId, Order)` index. Existing Games data is preserved and no backfill is required. Name keys use invariant uppercase normalization computed by the domain, including Latin and Cyrillic casing; public responses keep the trimmed display spelling.
+
+Apply with the `dotnet ef database update` command above before running the updated API. To roll back this migration, target `20261022195257_OrderableGameTimestamps`. Rolling back drops all category groups but preserves Games; back up valuable data and stop writes first. Deleting a game now also permanently deletes its groups, including through the existing direct SQL deletion path.
+
 ## Timestamp ordering
 
 `OrderableGameTimestamps` records explicit UTC string conversions for CreatedAt and UpdatedAt so SQLite can sort them before pagination. It changes model metadata only: both migration directions are empty and existing TEXT values remain untouched. The invariant format is `yyyy-MM-dd HH:mm:ss.FFFFFFFzzz`, matching the original SQLite binding, including fractional-second precision. Domain and API values remain DateTimeOffset.

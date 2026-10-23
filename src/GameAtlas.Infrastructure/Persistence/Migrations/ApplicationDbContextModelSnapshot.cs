@@ -17,6 +17,45 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.13");
 
+            modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("GameId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UpdatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId", "NormalizedName")
+                        .IsUnique();
+
+                    b.HasIndex("GameId", "Order");
+
+                    b.ToTable("CategoryGroups", (string)null);
+                });
+
             modelBuilder.Entity("GameAtlas.Domain.Games.Game", b =>
                 {
                     b.Property<Guid>("Id")
@@ -58,6 +97,15 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Games", (string)null);
+                });
+
+            modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
+                {
+                    b.HasOne("GameAtlas.Domain.Games.Game", null)
+                        .WithMany()
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

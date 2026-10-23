@@ -3,6 +3,7 @@ using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Infrastructure;
 using GameAtlas.Infrastructure.Persistence;
 using GameAtlas.Domain.Games;
+using GameAtlas.Domain.CategoryGroups;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +13,36 @@ namespace GameAtlas.IntegrationTests;
 
 public class PersistenceTests
 {
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task ApplicationTransactionPersistsOnlyAfterExplicitCommit(bool commit)
+	{
+		await using var factory = new GameApiFactory();
+
+		await factory.MigrateAsync();
+		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+
+		await using (var scope = factory.Services.CreateAsyncScope())
+		{
+			var context = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+			await using var transaction = await context.BeginTransactionAsync();
+			var group = CategoryGroup.Create(game.Id, "Resources", 1);
+
+			Assert.True(group.IsSuccess);
+			context.CategoryGroups.Add(group.Value);
+			await context.SaveChangesAsync();
+			Assert.Equal(1, await context.CategoryGroups.CountAsync());
+
+			if (commit)
+				await transaction.CommitAsync();
+		}
+
+		var stored = await CategoryGroupTestData.LoadAsync(factory, game.Id);
+
+		Assert.Equal(commit ? 1 : 0, stored.Length);
+	}
+
 	[Fact]
 	public async Task RegisteredContextUsesSqliteAndSharesTheScopedInstance()
 	{

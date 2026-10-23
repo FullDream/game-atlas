@@ -1,5 +1,6 @@
 @GameAtlas_Api_HostAddress = https://localhost:7241
 @gameId = 019a0000-0000-7000-8000-000000000001
+@categoryGroupId = 019a0000-0000-7000-8000-000000000002
 
 # Default page: offset=0, limit=20, no explicit order.
 GET {{GameAtlas_Api_HostAddress}}/games
@@ -84,6 +85,38 @@ Accept: application/json
 
 # Permanently delete a draft or published game. Success: 204 with no body; repeating: 404.
 # The slug becomes available for creation or updating another game.
+# Its category groups are also permanently deleted.
 DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}
+
+###
+
+# Replace gameId with an existing game's id. A new group is appended to its list.
+POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups
+Content-Type: application/json
+
+{
+  "name": "Resources"
+}
+
+###
+
+# All groups in display order, without pagination.
+GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups
+
+###
+
+# Replace categoryGroupId with an id returned by creation or listing.
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}
+Content-Type: application/merge-patch+json
+
+{
+  "name": "Collectibles",
+  "order": 10
+}
+
+###
+
+# Physical deletion: 204; repeat deletion: 404. Survivor positions are preserved.
+DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}
 
 ###

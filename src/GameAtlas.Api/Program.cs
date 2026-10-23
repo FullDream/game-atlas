@@ -1,4 +1,5 @@
 using GameAtlas.Api;
+using GameAtlas.Api.CategoryGroups;
 using GameAtlas.Api.Http;
 using GameAtlas.Api.Results;
 using GameAtlas.Api.Games;
@@ -29,6 +30,7 @@ app.UseHttpsRedirection();
 var api = app.MapGroup("").WithOutcomeResults().WithCaseInsensitiveEnumQueryParameters();
 
 api.MapGames();
+api.MapCategoryGroups();
 
 app.Run();
 

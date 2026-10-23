@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
+using GameAtlas.Api.CategoryGroups;
 using GameAtlas.Api.Errors;
 using GameAtlas.Api.Games;
 using GameAtlas.Api.OpenApi.Optional;
@@ -11,6 +12,8 @@ using GameAtlas.Api.Serialization.Optional;
 using GameAtlas.Application.Games.CreateGame;
 using GameAtlas.Application.Games.ListGames;
 using GameAtlas.Application.Games.UpdateGame;
+using GameAtlas.Application.CategoryGroups.CreateCategoryGroup;
+using GameAtlas.Application.CategoryGroups.UpdateCategoryGroup;
 using Microsoft.AspNetCore.Routing;
 
 namespace GameAtlas.Api;
@@ -21,10 +24,13 @@ public static class DependencyInjection
 	{
 		services.AddProblemDetails();
 		services.AddExceptionHandler<GameSlugConflictExceptionHandler>();
+		services.AddExceptionHandler<CategoryGroupNameConflictExceptionHandler>();
 		services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = false);
 		services.AddOpenApiValidationSource<CreateGameRequest, CreateGame>();
 		services.AddOpenApiValidationSource<ListGamesRequest, ListGames>();
 		services.AddOpenApiValidationSource<UpdateGameRequest, UpdateGame>();
+		services.AddOpenApiValidationSource<CreateCategoryGroupRequest, CreateCategoryGroup>();
+		services.AddOpenApiValidationSource<UpdateCategoryGroupRequest, UpdateCategoryGroup>();
 		services.ConfigureHttpJsonOptions(options =>
 		{
 			options.SerializerOptions.AddOptionalSupport();
