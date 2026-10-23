@@ -47,7 +47,7 @@ cannot override these values. Id and createdAt are immutable. Duplicate marker n
 ## Media union
 
 The exact, case-sensitive discriminator values are image, youtubeVideo, and video. Type may appear anywhere
-inside an object. OpenAPI documents oneOf with all three discriminator mappings for requests and responses.
+inside an object. OpenAPI documents anyOf with all three discriminator mappings for requests and responses.
 
 Images require url and positive 32-bit integer width/height. Alt defaults to the empty string when omitted,
 is preserved as supplied, and cannot be null. YouTube videos require an 11-character videoId containing only ASCII

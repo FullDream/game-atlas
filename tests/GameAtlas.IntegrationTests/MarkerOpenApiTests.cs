@@ -78,11 +78,12 @@ public class MarkerOpenApiTests
 		foreach (var owner in new[] { create, patch, dto })
 		{
 			var media = Resolve(root, owner.GetProperty("properties").GetProperty("media").GetProperty("items"));
-			var variants = media.GetProperty("oneOf").EnumerateArray().ToArray();
+			var variants = media.GetProperty("anyOf").EnumerateArray().ToArray();
 			var discriminator = media.GetProperty("discriminator");
 			var mappings = discriminator.GetProperty("mapping");
 
-			Assert.False(media.TryGetProperty("anyOf", out _));
+			Assert.False(media.TryGetProperty("oneOf", out _));
+			Assert.Contains(media.GetProperty("required").EnumerateArray(), value => value.GetString() == "type");
 			Assert.Equal("type", discriminator.GetProperty("propertyName").GetString());
 			Assert.Equal(3, variants.Length);
 			Assert.Equal(new[] { "image", "video", "youtubeVideo" },
@@ -102,7 +103,7 @@ public class MarkerOpenApiTests
 		}
 
 		var requestMedia = Resolve(root, create.GetProperty("properties").GetProperty("media").GetProperty("items"));
-		var requestVariants = requestMedia.GetProperty("oneOf").EnumerateArray()
+		var requestVariants = requestMedia.GetProperty("anyOf").EnumerateArray()
 			.Select(value => Resolve(root, value)).ToArray();
 		var image = requestVariants.Single(value => value.GetProperty("properties").TryGetProperty("width", out _));
 		var imageProperties = image.GetProperty("properties");

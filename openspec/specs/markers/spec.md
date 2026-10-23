@@ -209,7 +209,7 @@ Successful marker mutations SHALL be durable. Category checks, position changes,
 - **AND** the response is safe HTTP 500 without internal details
 
 ### Requirement: Document marker operations and discriminated media
-OpenAPI SHALL expose ListMarkers, CreateMarker, UpdateMarker, and DeleteMarker in GET/POST/PATCH/DELETE order. It SHALL describe complete DTOs, GUID paths, position semantics, validation bounds, media items as oneOf with a type discriminator mapping to exactly image/youtubeVideo/video, both PATCH media types, and applicable ProblemDetails failures. Existing API contracts SHALL remain compatible except actual marker counts.
+OpenAPI SHALL expose ListMarkers, CreateMarker, UpdateMarker, and DeleteMarker in GET/POST/PATCH/DELETE order. It SHALL describe complete DTOs, GUID paths, position semantics, validation bounds, media items as anyOf with a required type discriminator mapping to exactly image/youtubeVideo/video, both PATCH media types, and applicable ProblemDetails failures. Existing API contracts SHALL remain compatible except actual marker counts.
 
 #### Scenario: Discover the contract
 - **WHEN** a client reads OpenAPI

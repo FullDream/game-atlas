@@ -74,7 +74,6 @@ public static class DependencyInjection
 			options.AddOptionalSupport();
 			options.AddOperationTransformer<CamelCaseQueryParametersTransformer>();
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
-			options.AddDocumentTransformer<MarkerDocumentTransformer>();
 		});
 
 		return services;
