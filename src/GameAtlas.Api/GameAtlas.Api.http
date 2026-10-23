@@ -133,7 +133,7 @@ Content-Type: application/json
 
 ###
 
-# Full ordered array; markersCount is currently always zero.
+# Full ordered array with current marker counts.
 GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories
 
 ###
@@ -163,5 +163,69 @@ Content-Type: application/json
 
 # Physical category deletion: 204, then 404 on repeat. No survivor renumbering.
 DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
+
+###
+
+# Complete marker list, including ordered media. No pagination or category filters.
+GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers
+
+###
+
+# Creation returns 200. Replace categoryId with a category belonging to gameId.
+POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers
+Content-Type: application/json
+
+{
+  "categoryId": "{{categoryId}}",
+  "name": "Chest",
+  "description": "Behind the waterfall",
+  "position": { "x": -120.5, "y": 200 },
+  "media": [
+    { "type": "image", "url": "/images/chest.webp", "width": 640, "height": 480 },
+    { "type": "youtubeVideo", "videoId": "Ab_cd-Ef012" },
+    { "type": "video", "url": "/videos/chest.mp4", "preview": "/images/preview.jpg" }
+  ]
+}
+
+###
+
+# Recursive object merge: update only x, preserving y and omitted media.
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers/{{markerId}}
+Content-Type: application/merge-patch+json; charset=utf-8
+
+{
+  "position": { "x": 200 }
+}
+
+###
+
+# Complete media replacement. Alt defaults to ""; video preview defaults to null.
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers/{{markerId}}
+Content-Type: application/json
+
+{
+  "media": [
+    { "type": "image", "url": "/images/new.png", "width": 800, "height": 600 },
+    { "type": "video", "url": "/videos/new.webm" }
+  ]
+}
+
+###
+
+# Transfer within the same game, clear description, and remove all media.
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers/{{markerId}}
+Content-Type: application/merge-patch+json
+
+{
+  "categoryId": "{{destinationCategoryId}}",
+  "description": null,
+  "media": []
+}
+
+###
+
+# Physical deletion: empty 204, then 404 on repeat. Deletes media rows, never referenced files.
+# Deleting the current category, group, or game also cascades through marker/media rows.
+DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers/{{markerId}}
 
 ###

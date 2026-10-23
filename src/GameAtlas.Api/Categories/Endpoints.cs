@@ -16,13 +16,13 @@ public static class Endpoints
 		categories.MapGet("", ListCategoriesAsync)
 			.WithName("ListCategories").WithSummary("List categories")
 			.WithDescription("Returns all categories ordered by order, createdAt, and id, without pagination. " +
-				"Each category has a read-only markersCount of 0 until markers are implemented.");
+				"Each category includes its current read-only markersCount.");
 
 		categories.MapPost("", CreateCategoryAsync)
 			.WithName("CreateCategory").WithSummary("Create category")
 			.WithDescription("Creates a category with a group-unique name, icon reference, #RGB or #RRGGBB color, " +
 				"and optional positive order. Omitted order appends to the group. " +
-				"Image formats are not restricted; markersCount is 0.");
+				"Image formats are not restricted; a new category has markersCount 0.");
 
 		categories.MapPatch("/{id}", UpdateCategoryAsync)
 			.WithName("UpdateCategory").WithSummary("Update category")

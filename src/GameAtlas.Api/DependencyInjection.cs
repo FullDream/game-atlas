@@ -1,10 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using FluentValidation;
 using GameAtlas.Api.Categories;
 using GameAtlas.Api.CategoryGroups;
 using GameAtlas.Api.Errors;
 using GameAtlas.Api.Games;
+using GameAtlas.Api.Markers;
+using GameAtlas.Api.Markers.Media;
 using GameAtlas.Api.OpenApi.Optional;
 using GameAtlas.Api.OpenApi.Parameters;
 using GameAtlas.Api.OpenApi.Validation;
@@ -17,6 +20,13 @@ using GameAtlas.Application.CategoryGroups.UpdateCategoryGroup;
 using GameAtlas.Application.Games.CreateGame;
 using GameAtlas.Application.Games.ListGames;
 using GameAtlas.Application.Games.UpdateGame;
+using GameAtlas.Application.Markers;
+using GameAtlas.Application.Markers.CreateMarker;
+using GameAtlas.Application.Markers.Media;
+using GameAtlas.Application.Markers.Media.Image;
+using GameAtlas.Application.Markers.Media.Video;
+using GameAtlas.Application.Markers.Media.YouTubeVideo;
+using GameAtlas.Application.Markers.UpdateMarker;
 using Microsoft.AspNetCore.Routing;
 
 namespace GameAtlas.Api;
@@ -37,9 +47,19 @@ public static class DependencyInjection
 		services.AddOpenApiValidationSource<UpdateCategoryGroupRequest, UpdateCategoryGroup>();
 		services.AddOpenApiValidationSource<CreateCategoryRequest, CreateCategory>();
 		services.AddOpenApiValidationSource<UpdateCategoryRequest, UpdateCategory>();
+		services.AddOpenApiValidationSource<CreateMarkerRequest, CreateMarker>();
+		services.AddOpenApiValidationSource<UpdateMarkerRequest, UpdateMarker>();
+		services.AddOpenApiValidationSource<PositionRequest, PositionInput>();
+		services.AddOpenApiValidationSource<PositionPatchRequest, PositionPatch>();
+		services.AddOpenApiValidationSource<ImageMediaRequest, ImageMediaInput>();
+		services.AddOpenApiValidationSource<YouTubeVideoMediaRequest, YouTubeVideoMediaInput>();
+		services.AddOpenApiValidationSource<VideoMediaRequest, VideoMediaInput>();
 		services.ConfigureHttpJsonOptions(options =>
 		{
 			options.SerializerOptions.AddOptionalSupport();
+			options.SerializerOptions.TypeInfoResolver = options.SerializerOptions.TypeInfoResolver?
+				.WithAddedModifier(MarkerMediaJsonTypeInfoModifier.Modify);
+
 			options.SerializerOptions.AllowOutOfOrderMetadataProperties = true;
 			options.SerializerOptions.Converters.Add(
 				new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
@@ -54,6 +74,7 @@ public static class DependencyInjection
 			options.AddOptionalSupport();
 			options.AddOperationTransformer<CamelCaseQueryParametersTransformer>();
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
+			options.AddDocumentTransformer<MarkerDocumentTransformer>();
 		});
 
 		return services;

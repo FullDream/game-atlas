@@ -49,6 +49,6 @@ public sealed class CreateCategoryHandler(IApplicationDbContext context)
 		await context.SaveChangesAsync(cancellationToken);
 		await transaction.CommitAsync(cancellationToken);
 
-		return category.ToDto();
+		return category.ToDto(markersCount: 0);
 	}
 }

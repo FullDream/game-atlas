@@ -47,8 +47,11 @@ public sealed class UpdateCategoryHandler(IApplicationDbContext context)
 		if (result.Value)
 			await context.SaveChangesAsync(cancellationToken);
 
+		var markersCount = await context.Markers.CountAsync(marker => marker.CategoryId == category.Id,
+			cancellationToken);
+
 		await transaction.CommitAsync(cancellationToken);
 
-		return category.ToDto();
+		return category.ToDto(markersCount);
 	}
 }

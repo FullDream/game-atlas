@@ -30,8 +30,10 @@ An existing group without categories returns `[]`.
 }
 ```
 
-The server generates UUID v7 and equal UTC timestamps at creation. `markersCount` is read-only and always zero
-until marker functionality is introduced; no counter is stored. Internal normalized names and a redundant game ID
+The server generates UUID v7 and equal UTC timestamps at creation. `markersCount` is the current number of owned
+markers, computed from committed rows in every response; no counter is stored. New categories have zero markers.
+Marker creation, deletion, and transfers update the next observed count without changing category timestamps.
+Internal normalized names and a redundant game ID
 are not exposed. The route determines membership at creation; extra creation properties do not override server values.
 
 ## Creation and validation

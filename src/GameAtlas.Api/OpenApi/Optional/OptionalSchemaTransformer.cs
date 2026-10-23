@@ -1,6 +1,7 @@
+using System.Reflection;
+using GameAtlas.Domain;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
-using GameAtlas.Domain;
 
 namespace GameAtlas.Api.OpenApi.Optional;
 
@@ -26,6 +27,14 @@ internal sealed class OptionalSchemaTransformer : IOpenApiSchemaTransformer
 			cancellationToken);
 
 		ReplaceSchema(schema, valueSchema);
+
+		if (valueType.IsValueType || context.JsonPropertyInfo?.AttributeProvider is not PropertyInfo property)
+			return;
+
+		var valueNullability = new NullabilityInfoContext().Create(property).GenericTypeArguments[0];
+
+		if (valueNullability.ReadState == NullabilityState.Nullable)
+			schema.Type |= JsonSchemaType.Null;
 	}
 
 	private static void RemoveOptionalPropertiesFromRequired(

@@ -18,7 +18,7 @@ public sealed class ListCategoriesHandler(IApplicationDbContext context)
 		var categories = await context.Categories.AsNoTracking()
 			.Where(category => category.CategoryGroupId == query.GroupId)
 			.OrderBy(category => category.Order).ThenBy(category => category.CreatedAt).ThenBy(category => category.Id)
-			.ToDto()
+			.ToDto(context.Markers)
 			.ToArrayAsync(cancellationToken);
 
 		return categories;

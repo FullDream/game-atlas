@@ -26,7 +26,7 @@ public sealed class FluentValidationSchemaTransformer(IOpenApiValidationSourceRe
 			return Task.CompletedTask;
 		}
 
-		if (schema.Type?.HasFlag(JsonSchemaType.Object) != true || schema.Properties is not { Count: > 0 })
+		if (schema.Properties is not { Count: > 0 })
 		{
 			return Task.CompletedTask;
 		}

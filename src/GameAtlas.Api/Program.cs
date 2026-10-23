@@ -3,6 +3,7 @@ using GameAtlas.Api.Categories;
 using GameAtlas.Api.CategoryGroups;
 using GameAtlas.Api.Games;
 using GameAtlas.Api.Http;
+using GameAtlas.Api.Markers;
 using GameAtlas.Api.Results;
 using GameAtlas.Application;
 using GameAtlas.Infrastructure;
@@ -33,6 +34,7 @@ var api = app.MapGroup("").WithOutcomeResults().WithCaseInsensitiveEnumQueryPara
 api.MapGames();
 api.MapCategoryGroups();
 api.MapCategories();
+api.MapMarkers();
 
 app.Run();
 

@@ -56,6 +56,26 @@ dotnet ef database update 20261023100000_CategoryGroups --project src/GameAtlas.
 Rollback drops Categories and all category data while preserving existing games and groups.
 Do not apply either command to a persistent database merely to validate the migration; use disposable test databases.
 
+## Markers
+
+`20261023145510_Markers` adds Markers with required category ownership, inline PositionX/PositionY
+columns, and the MarkerMedia table with string TPH discriminators and ordered internal child identities.
+Deleting a category, group, or game cascades to its current markers and media rows. Referenced files
+are never removed. Existing parent data is preserved; category marker counts are computed, not stored.
+
+```powershell
+dotnet ef database update 20261023145510_Markers --project src/GameAtlas.Infrastructure --startup-project src/GameAtlas.Api
+```
+
+To roll back, stop writes, back up valuable data, deploy the preceding application version, and run:
+
+```powershell
+dotnet ef database update 20261023114301_Categories --project src/GameAtlas.Infrastructure --startup-project src/GameAtlas.Api
+```
+
+Rollback deletes all marker and media rows and drops their tables, preserving games, groups, and
+categories. Validate both directions only against disposable databases.
+
 ## Timestamp ordering
 
 `OrderableGameTimestamps` records explicit UTC string conversions for CreatedAt and UpdatedAt so SQLite can sort them before pagination. It changes model metadata only: both migration directions are empty and existing TEXT values remain untouched. The invariant format is `yyyy-MM-dd HH:mm:ss.FFFFFFFzzz`, matching the original SQLite binding, including fractional-second precision. Domain and API values remain DateTimeOffset.
