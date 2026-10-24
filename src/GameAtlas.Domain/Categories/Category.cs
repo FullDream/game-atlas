@@ -14,7 +14,7 @@ public sealed class Category
 	public Guid CategoryGroupId { get; private set; }
 	public string Name { get; private set; } = string.Empty;
 	public string NormalizedName { get; private set; } = string.Empty;
-	public string Icon { get; private set; } = string.Empty;
+	public Guid IconAssetId { get; private set; }
 	public string Color { get; private set; } = string.Empty;
 	public int Order { get; private set; }
 	public DateTimeOffset CreatedAt { get; private set; }
@@ -22,10 +22,10 @@ public sealed class Category
 
 	public static string NormalizeName(string name) => name.Trim().ToUpperInvariant();
 
-	public static Result<Category> Create(Guid categoryGroupId, string? name, string? icon, string? color, int order)
+	public static Result<Category> Create(Guid categoryGroupId, string? name, Guid? iconAssetId, string? color, int order)
 	{
 		var category = new Category(Guid.CreateVersion7());
-		var result = category.Update(name, icon, color, order, categoryGroupId);
+		var result = category.Update(name, iconAssetId, color, order, categoryGroupId);
 
 		if (result.IsFailure)
 			return result.Errors;
@@ -35,11 +35,11 @@ public sealed class Category
 		return category;
 	}
 
-	public Result<bool> Update(Optional<string?> name = default, Optional<string?> icon = default,
+	public Result<bool> Update(Optional<string?> name = default, Optional<Guid?> iconAssetId = default,
 		Optional<string?> color = default, Optional<int?> order = default, Optional<Guid?> categoryGroupId = default)
 	{
 		var nextName = name.GetValueOrDefault(Name)?.Trim();
-		var nextIcon = icon.GetValueOrDefault(Icon)?.Trim();
+		var nextIcon = iconAssetId.GetValueOrDefault(IconAssetId);
 		var nextColor = color.GetValueOrDefault(Color);
 		var nextOrder = order.GetValueOrDefault(Order);
 		var nextGroupId = categoryGroupId.GetValueOrDefault(CategoryGroupId);
@@ -47,7 +47,7 @@ public sealed class Category
 		if (string.IsNullOrEmpty(nextName))
 			return CategoryErrors.NameRequired;
 
-		if (string.IsNullOrEmpty(nextIcon))
+		if (nextIcon is null || nextIcon == Guid.Empty)
 			return CategoryErrors.IconRequired;
 
 		if (nextColor is null || !ColorRegex.IsMatch(nextColor))
@@ -61,13 +61,13 @@ public sealed class Category
 
 		nextColor = NormalizeColor(nextColor);
 
-		if (nextName == Name && nextIcon == Icon && nextColor == Color && nextOrder == Order &&
+		if (nextName == Name && nextIcon == IconAssetId && nextColor == Color && nextOrder == Order &&
 			nextGroupId == CategoryGroupId)
 			return false;
 
 		Name = nextName;
 		NormalizedName = NormalizeName(nextName);
-		Icon = nextIcon;
+		IconAssetId = nextIcon.Value;
 		Color = nextColor;
 		Order = nextOrder.Value;
 		CategoryGroupId = nextGroupId.Value;

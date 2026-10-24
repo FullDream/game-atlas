@@ -8,7 +8,8 @@ public static class CategoryErrors
 		"Category.Name.Required", "Name must not be empty.", nameof(Category.Name), ErrorType.Validation);
 
 	public static readonly Error IconRequired = new(
-		"Category.Icon.Required", "Icon must not be empty.", nameof(Category.Icon), ErrorType.Validation);
+		"Category.IconAssetId.Required", "IconAssetId must not be empty.",
+		nameof(Category.IconAssetId), ErrorType.Validation);
 
 	public static readonly Error InvalidColor = new(
 		"Category.Color.Invalid", "Color must use the #RGB or #RRGGBB hexadecimal format.",

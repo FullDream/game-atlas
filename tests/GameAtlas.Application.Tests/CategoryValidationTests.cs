@@ -19,19 +19,6 @@ public class CategoryValidationTests
 	}
 
 	[Theory]
-	[InlineData(0, false)]
-	[InlineData(1, true)]
-	[InlineData(2048, true)]
-	[InlineData(2049, false)]
-	public void IconBoundsApplyAfterTrimming(int length, bool valid)
-	{
-		var icon = " " + new string('x', length) + " ";
-
-		Assert.Equal(valid, new CreateCategoryValidation().Validate(Create(icon: icon)).IsValid);
-		Assert.Equal(valid, new UpdateCategoryValidation().Validate(Update() with { Icon = icon }).IsValid);
-	}
-
-	[Theory]
 	[InlineData(null, false)]
 	[InlineData("", false)]
 	[InlineData("red", false)]
@@ -75,17 +62,17 @@ public class CategoryValidationTests
 		var update = new UpdateCategoryValidation();
 
 		Assert.False(create.Validate(Create(name: null)).IsValid);
-		Assert.False(create.Validate(Create(icon: null)).IsValid);
+		Assert.False(create.Validate(Create() with { IconAssetId = null }).IsValid);
 		Assert.False(update.Validate(Update()).IsValid);
 		Assert.False(update.Validate(Update() with { Name = (string?)null }).IsValid);
-		Assert.False(update.Validate(Update() with { Icon = (string?)null }).IsValid);
+		Assert.False(update.Validate(Update() with { IconAssetId = (Guid?)null }).IsValid);
 		Assert.False(update.Validate(Update() with { Color = (string?)null }).IsValid);
 		Assert.False(update.Validate(Update() with { CategoryGroupId = (Guid?)null }).IsValid);
 		Assert.True(update.Validate(Update() with { CategoryGroupId = Guid.Empty }).IsValid);
 	}
 
-	private static CreateCategory Create(string? name = "Name", string? icon = "icon", string? color = "#123456") =>
-		new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), name, icon, color);
+	private static CreateCategory Create(string? name = "Name", string? color = "#123456") =>
+		new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), name, Guid.NewGuid(), color);
 
 	private static UpdateCategory Update() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 }

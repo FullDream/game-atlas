@@ -18,6 +18,7 @@ public class MapAcceptanceTests
 			services.AddSingleton<IMapImageProcessor>(images));
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();

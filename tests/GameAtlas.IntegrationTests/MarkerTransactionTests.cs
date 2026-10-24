@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Domain.Markers;
-using GameAtlas.Domain.Markers.Media;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -27,6 +26,7 @@ public class MarkerTransactionTests
 		await using var factory = new GameApiFactory(interceptor: stage == "save" ? saveFailure : writeFailure);
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var source = await CategoryTestData.SeedAsync(factory, group.Id, "Source");
 		var destination = await CategoryTestData.SeedAsync(factory, group.Id, "Destination", 2);
@@ -46,7 +46,7 @@ public class MarkerTransactionTests
 					categoryId = destination.Id,
 					name = "New",
 					position = new { x = 0, y = 0 },
-					media = new[] { new { type = "video", url = "new-video" } }
+					media = new[] { MediaTestData.IconId }
 				}),
 			"delete" => await client.DeleteAsync(MarkerTestData.Path(game.Id) + $"/{id}"),
 			_ => await client.PatchAsJsonAsync(MarkerTestData.Path(game.Id) + $"/{id}",
@@ -55,7 +55,7 @@ public class MarkerTransactionTests
 					categoryId = destination.Id,
 					name = "Changed",
 					position = new { x = 999 },
-					media = new[] { new { type = "video", url = "replacement" } }
+					media = new[] { MediaTestData.IconId }
 				})
 		};
 
@@ -68,7 +68,7 @@ public class MarkerTransactionTests
 		Assert.Equal(before.Name, after.Name);
 		Assert.Equal(before.Position, after.Position);
 		Assert.Equal(before.UpdatedAt, after.UpdatedAt);
-		Assert.Equal(before.Media.Select(item => item.Id), after.Media.Select(item => item.Id));
+		Assert.Equal(before.Media.Select(item => item.AssetId), after.Media.Select(item => item.AssetId));
 		using var countsResponse = await client.GetAsync(CategoryTestData.Path(game.Id, group.Id));
 		var counts = await MarkerTestData.ReadAsync(countsResponse);
 
@@ -78,7 +78,7 @@ public class MarkerTransactionTests
 		var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		Assert.Single(await db.Markers.ToArrayAsync());
-		Assert.Equal(3, await db.Set<MarkerMedia>().CountAsync());
+		Assert.Equal(3, await db.Set<MarkerAsset>().CountAsync());
 		Assert.Equal(game.UpdatedAt, (await db.Games.SingleAsync()).UpdatedAt);
 		Assert.Equal(group.UpdatedAt, (await db.CategoryGroups.SingleAsync()).UpdatedAt);
 		Assert.Equal(new[] { source.UpdatedAt, destination.UpdatedAt },
@@ -95,6 +95,7 @@ public class MarkerTransactionTests
 		await using var factory = new GameApiFactory(interceptor: interceptor);
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
@@ -104,7 +105,7 @@ public class MarkerTransactionTests
 		interceptor.Enabled = true;
 		using var response = await client.PatchAsJsonAsync(
 			MarkerTestData.Path(game.Id) + "/" + created.GetProperty("id").GetGuid(),
-			new { position = new { }, media = created.GetProperty("media") });
+			new { position = new { }, media = created.GetProperty("media").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).ToArray() });
 
 		Assert.Equal(created.GetRawText(), (await MarkerTestData.ReadAsync(response)).GetRawText());
 	}
@@ -115,6 +116,7 @@ public class MarkerTransactionTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var first = await CategoryTestData.SeedAsync(factory, group.Id, "First");
 		var second = await CategoryTestData.SeedAsync(factory, group.Id, "Second", 2);
@@ -128,7 +130,7 @@ public class MarkerTransactionTests
 			{
 				categoryId = destination,
 				name = destination.ToString(),
-				media = new[] { new { type = "video", url = destination.ToString() } }
+				media = new[] { destination == first.Id ? MediaTestData.ImageId : MediaTestData.VideoId }
 			});
 
 			Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -136,11 +138,11 @@ public class MarkerTransactionTests
 
 		await Task.WhenAll(requests);
 		var marker = await MarkerTestData.LoadAsync(factory, id);
-		var video = Assert.IsType<VideoMedia>(Assert.Single(marker.Media));
+		var attachment = Assert.Single(marker.Media);
 
 		Assert.Equal(marker.CategoryId.ToString(), marker.Name);
-		Assert.Equal(marker.Name, video.Url);
-		Assert.Equal(marker.Id, video.MarkerId);
+		Assert.Equal(marker.CategoryId == first.Id ? MediaTestData.ImageId : MediaTestData.VideoId, attachment.AssetId);
+		Assert.Equal(marker.Id, attachment.MarkerId);
 		using var countsResponse = await client.GetAsync(CategoryTestData.Path(game.Id, group.Id));
 		var counts = await MarkerTestData.ReadAsync(countsResponse);
 
@@ -148,7 +150,7 @@ public class MarkerTransactionTests
 		await using var scope = factory.Services.CreateAsyncScope();
 
 		Assert.Equal(1, await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
-			.Set<MarkerMedia>().CountAsync());
+			.Set<MarkerAsset>().CountAsync());
 	}
 
 	[Fact]
@@ -158,6 +160,7 @@ public class MarkerTransactionTests
 		await using var factory = new GameApiFactory(interceptor: interceptor);
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
@@ -170,7 +173,7 @@ public class MarkerTransactionTests
 		var smallQueries = interceptor.Commands.Count;
 
 		Assert.Single(small.EnumerateArray());
-		Assert.InRange(smallQueries, 2, 3);
+		Assert.InRange(smallQueries, 3, 4);
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -178,7 +181,7 @@ public class MarkerTransactionTests
 			for (var index = 0; index < 30; index++)
 			{
 				var marker = Marker.Create(category.Id, "Duplicate", Position.Create(index, -index).Value,
-					media: [VideoMedia.Create("https://not-fetched.invalid/video").Value]);
+					media: [MediaTestData.VideoId]);
 
 				Assert.True(marker.IsSuccess);
 				db.Markers.Add(marker.Value);
@@ -200,7 +203,7 @@ public class MarkerTransactionTests
 		Assert.Equal(31, counts[0].GetProperty("markersCount").GetInt32());
 		Assert.Equal(2, interceptor.Commands.Count);
 		Assert.Contains(interceptor.Commands, sql => sql.Contains("COUNT(*)", StringComparison.OrdinalIgnoreCase));
-		Assert.DoesNotContain(interceptor.Commands, sql => sql.Contains("MarkerMedia"));
+		Assert.DoesNotContain(interceptor.Commands, sql => sql.Contains("MarkerAssets"));
 	}
 
 	private sealed class FailAfterSave : SaveChangesInterceptor
@@ -225,7 +228,7 @@ public class MarkerTransactionTests
 		public override async ValueTask<DbDataReader> ReaderExecutedAsync(DbCommand command,
 			CommandExecutedEventData eventData, DbDataReader result, CancellationToken cancellationToken = default)
 		{
-			var prefix = stage == "delete" ? "DELETE FROM \"MarkerMedia\"" : "INSERT INTO \"MarkerMedia\"";
+			var prefix = stage == "delete" ? "DELETE FROM \"MarkerAssets\"" : "INSERT INTO \"MarkerAssets\"";
 
 			if (Enabled && command.CommandText.Contains(prefix, StringComparison.Ordinal))
 			{

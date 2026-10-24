@@ -1,6 +1,10 @@
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Maps.Images;
 using GameAtlas.Application.Maps.Storage;
+using GameAtlas.Application.Media.Storage;
+using GameAtlas.Application.Media.Inspection;
+using GameAtlas.Infrastructure.Media.Inspection;
+using GameAtlas.Infrastructure.Media.Storage;
 using GameAtlas.Infrastructure.Maps.Images;
 using GameAtlas.Infrastructure.Maps.Persistence;
 using GameAtlas.Infrastructure.Maps.Processing;
@@ -30,13 +34,19 @@ public static class DependencyInjection
 
 		services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 		services.AddSingleton<IPersistenceFailureClassifier, SqlitePersistenceFailureClassifier>();
+		services.AddOptions<MediaStorageOptions>().Bind(configuration.GetSection("Media")).ValidateOnStart();
+		services.AddOptions<MediaLimits>().Bind(configuration.GetSection("Media:Limits")).ValidateOnStart();
+		services.AddSingleton<IValidateOptions<MediaStorageOptions>, MediaOptionsValidation>();
+		services.AddSingleton<IValidateOptions<MediaLimits>, MediaOptionsValidation>();
+		services.AddSingleton<IMediaStorage, LocalMediaStorage>();
+		services.AddSingleton<RasterInspector>();
+		services.AddSingleton<SvgInspector>();
+		services.AddSingleton<VideoInspector>();
+		services.AddSingleton<IMediaInspector, MediaInspector>();
 		services.AddOptions<MapStorageOptions>().Bind(configuration.GetSection("Maps")).ValidateOnStart();
-		services.AddOptions<MapUploadLimits>().Bind(configuration.GetSection("Maps:Limits")).ValidateOnStart();
 		services.AddSingleton<IValidateOptions<MapStorageOptions>, MapStorageOptionsValidation>();
-		services.AddSingleton<IValidateOptions<MapUploadLimits>, MapStorageOptionsValidation>();
 		services.AddSingleton<IMapStorage, LocalMapStorage>();
 		services.AddSingleton<IMapImageProcessor, VipsMapImageProcessor>();
-		services.AddScoped<IMapAdmissionSessions, MapAdmissionSessions>();
 		services.AddScoped<IMapCleanup, MapCleanup>();
 		services.AddSingleton<MapProcessor>();
 		services.AddHostedService<MapProcessingService>();

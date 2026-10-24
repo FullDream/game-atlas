@@ -6,6 +6,10 @@ namespace GameAtlas.Infrastructure.Persistence;
 
 public sealed class SqlitePersistenceFailureClassifier : IPersistenceFailureClassifier
 {
+	public bool IsMediaFolderNameConflict(Exception exception) =>
+		IsUniqueConflict(exception, "MediaFolders.NormalizedName") ||
+		IsUniqueConflict(exception, "MediaFolders.ParentId, MediaFolders.NormalizedName");
+
 	public bool IsMapNameConflict(Exception exception) => IsUniqueConflict(exception,
 		"Maps.GameId, Maps.NormalizedName");
 

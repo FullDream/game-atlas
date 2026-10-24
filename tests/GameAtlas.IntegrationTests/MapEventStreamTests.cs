@@ -30,7 +30,7 @@ public class MapEventStreamTests
 		Assert.Equal(JsonValueKind.Null, snapshot.Data.GetProperty("defaultStyleId").ValueKind);
 		Assert.Equal("heartbeat", (await ReadEventAsync(reader, timeout.Token)).Event);
 		using var upload = MapTestData.Style();
-		using var added = await client.PostAsync($"{MapTestData.PathFor(game.Id, map.Id)}/styles", upload);
+		using var added = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id, map.Id), upload);
 		var styled = await MapTestData.ReadAsync(added);
 		var change = await ReadEventAsync(reader, timeout.Token);
 

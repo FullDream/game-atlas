@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using GameAtlas.Api.Markers.Media;
 
 namespace GameAtlas.Api.Markers;
 
@@ -16,5 +15,5 @@ public sealed record CreateMarkerRequest
 	[Required]
 	public PositionRequest? Position { get; init; }
 
-	public IReadOnlyCollection<MarkerMediaRequest?>? Media { get; init; } = [];
+	public IReadOnlyCollection<Guid?>? Media { get; init; } = [];
 }

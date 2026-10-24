@@ -5,8 +5,8 @@ The base route is `/games/{gameId}/maps/{mapId}/category-groups/{groupId}/catego
 
 | Method | Route | Success |
 | --- | --- | --- |
-| POST | Base route | 200, complete category |
 | GET | Base route | 200, complete ordered array |
+| POST | Base route | 200, complete category |
 | PATCH | Base route + `/{id}` | 200, complete category |
 | DELETE | Base route + `/{id}` | 204, no body |
 
@@ -21,7 +21,11 @@ An existing group without categories returns `[]`.
   "id": "019a0d00-0000-7000-8000-000000000001",
   "categoryGroupId": "019a0d00-0000-7000-8000-000000000002",
   "name": "Chests",
-  "icon": "/icons/chest.svg",
+  "icon": { "type": "image", "id": "019a0d00-0000-7000-8000-000000000003",
+    "folderId": null, "name": "Chest", "url": "/media/files/019a0d00-0000-7000-8000-000000000003",
+    "contentType": "image/svg+xml", "byteLength": 240, "width": 24, "height": 24,
+    "alt": "Chest", "placeholder": null, "createdAt": "2026-10-23T12:00:00+00:00",
+    "updatedAt": "2026-10-23T12:00:00+00:00" },
   "color": "#FF8800",
   "order": 1,
   "markersCount": 0,
@@ -38,12 +42,13 @@ are not exposed. The route determines membership at creation; extra creation pro
 
 ## Creation and validation
 
-POST accepts required `name`, `icon`, and `color`, plus optional `order`.
+POST accepts required `name`, `iconAssetId`, and `color`, plus optional `order`.
 
 - Name: 1 through 200 characters after trimming. Display case is preserved. Names are unique within their group
   after invariant case normalization, including Latin and Cyrillic. Equal names in different groups are allowed.
-- Icon: 1 through 2048 characters after trimming. It is an opaque reference: full links and relative paths are accepted,
-  including SVG, PNG, WebP, and extensionless links. The API does not fetch images or validate URLs or image formats.
+- IconAssetId: a required nonempty UUID identifying a committed library image (JPEG/PNG/WebP/AVIF/SVG).
+  Null or missing values return 422, malformed IDs 400, missing assets 404, and video/folder IDs 422.
+  Arbitrary icon URLs are no longer mutation input. Upload an image to `/media/assets` first.
 - Color: `#RGB` or `#RRGGBB`, accepting either ASCII hexadecimal letter case. Short colors expand to uppercase
   `#RRGGBB`, for example `#fff` becomes `#FFFFFF`. No surrounding whitespace, named colors, or alpha channel is accepted.
 - Order: a positive 32-bit integer. Omission appends after the group's maximum, starting at 1. Duplicate explicit
@@ -55,7 +60,7 @@ save-time uniqueness failures. Fractional, string, or out-of-range integer order
 ## Updates and transfers
 
 PATCH accepts `application/merge-patch+json` and `application/json`, including charset parameters, with identical
-JSON Merge Patch semantics. All five mutable fields (`name`, `icon`, `color`, `order`, `categoryGroupId`) are optional:
+JSON Merge Patch semantics. All five mutable fields (`name`, `iconAssetId`, `color`, `order`, `categoryGroupId`) are optional:
 omission preserves the existing value; explicit null returns 422. An empty object returns 422. Unknown/read-only fields,
 malformed JSON, non-object bodies, incompatible types, and malformed GUIDs return 400. Other PATCH media types,
 including `application/json-patch+json` and `text/plain`, return 415.
@@ -83,3 +88,7 @@ Unexpected library and storage exceptions return safe 500 ProblemDetails without
 recognized category name uniqueness failures become 409. Apply the Infrastructure migration explicitly before use;
 see [SQLite migrations](../../GameAtlas.Infrastructure/Persistence/README.md). Runnable requests are in
 [GameAtlas.Api.http](../GameAtlas.Api.http).
+
+Icons use the shared image DTO, including shared alt and nullable placeholder. Library metadata changes appear
+without changing category timestamps. Category/group/map/game deletion detaches references and preserves files;
+explicit asset deletion returns 409 while any category or other resource still uses the asset.

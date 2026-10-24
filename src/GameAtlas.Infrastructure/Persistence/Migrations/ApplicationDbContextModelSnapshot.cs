@@ -35,9 +35,7 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.IsRequired()
 						.HasColumnType("TEXT");
 
-					b.Property<string>("Icon")
-						.IsRequired()
-						.HasMaxLength(2048)
+					b.Property<Guid>("IconAssetId")
 						.HasColumnType("TEXT");
 
 					b.Property<string>("Name")
@@ -58,6 +56,8 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.HasColumnType("TEXT");
 
 					b.HasKey("Id");
+
+					b.HasIndex("IconAssetId");
 
 					b.HasIndex("CategoryGroupId", "NormalizedName")
 						.IsUnique();
@@ -205,9 +205,6 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.HasMaxLength(7)
 						.HasColumnType("TEXT");
 
-					b.Property<long>("ByteLength")
-						.HasColumnType("INTEGER");
-
 					b.Property<string>("CreatedAt")
 						.IsRequired()
 						.HasColumnType("TEXT");
@@ -222,14 +219,6 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 					b.Property<string>("ErrorMessage")
 						.HasMaxLength(300)
 						.HasColumnType("TEXT");
-
-					b.Property<string>("Format")
-						.IsRequired()
-						.HasMaxLength(4)
-						.HasColumnType("TEXT");
-
-					b.Property<int>("Height")
-						.HasColumnType("INTEGER");
 
 					b.Property<Guid>("MapId")
 						.HasColumnType("TEXT");
@@ -247,6 +236,9 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 					b.Property<int>("Progress")
 						.HasColumnType("INTEGER");
 
+					b.Property<Guid>("SourceAssetId")
+						.HasColumnType("TEXT");
+
 					b.Property<string>("Status")
 						.IsConcurrencyToken()
 						.IsRequired()
@@ -256,10 +248,9 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.IsRequired()
 						.HasColumnType("TEXT");
 
-					b.Property<int>("Width")
-						.HasColumnType("INTEGER");
-
 					b.HasKey("Id");
+
+					b.HasIndex("SourceAssetId");
 
 					b.HasIndex("MapId", "CreationSequence")
 						.IsUnique();
@@ -317,71 +308,109 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 					b.ToTable("Markers", (string)null);
 				});
 
-			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.MarkerMedia", b =>
+			modelBuilder.Entity("GameAtlas.Domain.Markers.MarkerAsset", b =>
 				{
-					b.Property<Guid>("Id")
+					b.Property<Guid>("MarkerId")
 						.HasColumnType("TEXT");
 
-					b.Property<Guid>("MarkerId")
+					b.Property<Guid>("AssetId")
 						.HasColumnType("TEXT");
 
 					b.Property<int>("Order")
 						.HasColumnType("INTEGER");
 
+					b.HasKey("MarkerId", "AssetId");
+
+					b.HasIndex("AssetId");
+
+					b.HasIndex("MarkerId", "Order");
+
+					b.ToTable("MarkerAssets", (string)null);
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Media.MediaAsset", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
+
+					b.Property<long>("ByteLength")
+						.HasColumnType("INTEGER");
+
+					b.Property<string>("ContentType")
+						.IsRequired()
+						.HasMaxLength(64)
+						.HasColumnType("TEXT");
+
+					b.Property<string>("CreatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.Property<Guid?>("FolderId")
+						.HasColumnType("TEXT");
+
+					b.Property<string>("Name")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
+
 					b.Property<string>("Type")
 						.IsRequired()
-						.HasMaxLength(20)
+						.HasMaxLength(13)
+						.HasColumnType("TEXT");
+
+					b.Property<string>("UpdatedAt")
+						.IsRequired()
 						.HasColumnType("TEXT");
 
 					b.HasKey("Id");
 
-					b.HasIndex("MarkerId", "Order");
+					b.HasIndex("FolderId", "Name", "Id");
 
-					b.ToTable("MarkerMedia", (string)null);
+					b.ToTable("MediaAssets", (string)null);
 
-					b.HasDiscriminator<string>("Type").HasValue("MarkerMedia");
+					b.HasDiscriminator<string>("Type").HasValue("MediaAsset");
 
 					b.UseTphMappingStrategy();
 				});
 
-			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionSession", b =>
+			modelBuilder.Entity("GameAtlas.Domain.Media.MediaFolder", b =>
 				{
 					b.Property<Guid>("Id")
 						.HasColumnType("TEXT");
 
-					b.Property<string>("ExpiresAt")
+					b.Property<string>("CreatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.Property<string>("Name")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
+
+					b.Property<string>("NormalizedName")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
+
+					b.Property<Guid?>("ParentId")
+						.HasColumnType("TEXT");
+
+					b.Property<string>("UpdatedAt")
 						.IsRequired()
 						.HasColumnType("TEXT");
 
 					b.HasKey("Id");
 
-					b.HasIndex("ExpiresAt");
+					b.HasIndex("NormalizedName")
+						.IsUnique()
+						.HasFilter("ParentId IS NULL");
 
-					b.ToTable("MapAdmissionSessions", (string)null);
-				});
-
-			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionStyle", b =>
-				{
-					b.Property<Guid>("Id")
-						.HasColumnType("TEXT");
-
-					b.Property<Guid>("MapId")
-						.HasColumnType("TEXT");
-
-					b.Property<Guid>("SessionId")
-						.HasColumnType("TEXT");
-
-					b.Property<Guid>("StyleId")
-						.HasColumnType("TEXT");
-
-					b.HasKey("Id");
-
-					b.HasIndex("SessionId");
-
-					b.HasIndex("StyleId")
+					b.HasIndex("ParentId", "NormalizedName")
 						.IsUnique();
 
-					b.ToTable("MapAdmissionStyles", (string)null);
+					b.HasIndex("ParentId", "Name", "Id");
+
+					b.ToTable("MediaFolders", (string)null);
 				});
 
 			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapCleanupIntent", b =>
@@ -402,9 +431,6 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.IsRequired()
 						.HasColumnType("TEXT");
 
-					b.Property<Guid?>("SessionId")
-						.HasColumnType("TEXT");
-
 					b.Property<Guid?>("StyleId")
 						.HasColumnType("TEXT");
 
@@ -415,58 +441,36 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 					b.ToTable("MapCleanupIntents", (string)null);
 				});
 
-			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.ImageMedia", b =>
+			modelBuilder.Entity("GameAtlas.Domain.Media.ImageAsset", b =>
 				{
-					b.HasBaseType("GameAtlas.Domain.Markers.Media.MarkerMedia");
+					b.HasBaseType("GameAtlas.Domain.Media.MediaAsset");
 
 					b.Property<string>("Alt")
 						.IsRequired()
 						.HasColumnType("TEXT");
 
-					b.Property<int>("Height")
-						.HasColumnType("INTEGER");
+					b.Property<double?>("Height")
+						.HasColumnType("REAL");
 
-					b.Property<string>("Url")
-						.IsRequired()
-						.ValueGeneratedOnUpdateSometimes()
-						.HasMaxLength(2048)
-						.HasColumnType("TEXT")
-						.HasColumnName("Url");
+					b.Property<string>("Placeholder")
+						.HasColumnType("TEXT");
 
-					b.Property<int>("Width")
-						.HasColumnType("INTEGER");
+					b.Property<double?>("Width")
+						.HasColumnType("REAL");
 
 					b.HasDiscriminator().HasValue("image");
 				});
 
-			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.VideoMedia", b =>
+			modelBuilder.Entity("GameAtlas.Domain.Media.VideoAsset", b =>
 				{
-					b.HasBaseType("GameAtlas.Domain.Markers.Media.MarkerMedia");
+					b.HasBaseType("GameAtlas.Domain.Media.MediaAsset");
 
-					b.Property<string>("Preview")
-						.HasMaxLength(2048)
+					b.Property<Guid?>("PreviewAssetId")
 						.HasColumnType("TEXT");
 
-					b.Property<string>("Url")
-						.IsRequired()
-						.ValueGeneratedOnUpdateSometimes()
-						.HasMaxLength(2048)
-						.HasColumnType("TEXT")
-						.HasColumnName("Url");
+					b.HasIndex("PreviewAssetId");
 
 					b.HasDiscriminator().HasValue("video");
-				});
-
-			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.YouTubeVideoMedia", b =>
-				{
-					b.HasBaseType("GameAtlas.Domain.Markers.Media.MarkerMedia");
-
-					b.Property<string>("VideoId")
-						.IsRequired()
-						.HasMaxLength(11)
-						.HasColumnType("TEXT");
-
-					b.HasDiscriminator().HasValue("youtubeVideo");
 				});
 
 			modelBuilder.Entity("GameAtlas.Domain.Categories.Category", b =>
@@ -475,6 +479,12 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.WithMany()
 						.HasForeignKey("CategoryGroupId")
 						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired();
+
+					b.HasOne("GameAtlas.Domain.Media.ImageAsset", null)
+						.WithMany()
+						.HasForeignKey("IconAssetId")
+						.OnDelete(DeleteBehavior.Restrict)
 						.IsRequired();
 				});
 
@@ -503,6 +513,14 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.HasForeignKey("MapId")
 						.OnDelete(DeleteBehavior.Cascade)
 						.IsRequired();
+
+					b.HasOne("GameAtlas.Domain.Media.ImageAsset", "Source")
+						.WithMany()
+						.HasForeignKey("SourceAssetId")
+						.OnDelete(DeleteBehavior.Restrict)
+						.IsRequired();
+
+					b.Navigation("Source");
 				});
 
 			modelBuilder.Entity("GameAtlas.Domain.Markers.Marker", b =>
@@ -514,8 +532,14 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.IsRequired();
 				});
 
-			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.MarkerMedia", b =>
+			modelBuilder.Entity("GameAtlas.Domain.Markers.MarkerAsset", b =>
 				{
+					b.HasOne("GameAtlas.Domain.Media.MediaAsset", null)
+						.WithMany()
+						.HasForeignKey("AssetId")
+						.OnDelete(DeleteBehavior.Restrict)
+						.IsRequired();
+
 					b.HasOne("GameAtlas.Domain.Markers.Marker", null)
 						.WithMany("Media")
 						.HasForeignKey("MarkerId")
@@ -523,13 +547,30 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.IsRequired();
 				});
 
-			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionStyle", b =>
+			modelBuilder.Entity("GameAtlas.Domain.Media.MediaAsset", b =>
 				{
-					b.HasOne("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionSession", null)
-						.WithMany("Sources")
-						.HasForeignKey("SessionId")
-						.OnDelete(DeleteBehavior.Cascade)
-						.IsRequired();
+					b.HasOne("GameAtlas.Domain.Media.MediaFolder", null)
+						.WithMany()
+						.HasForeignKey("FolderId")
+						.OnDelete(DeleteBehavior.Restrict);
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Media.MediaFolder", b =>
+				{
+					b.HasOne("GameAtlas.Domain.Media.MediaFolder", null)
+						.WithMany()
+						.HasForeignKey("ParentId")
+						.OnDelete(DeleteBehavior.Restrict);
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Media.VideoAsset", b =>
+				{
+					b.HasOne("GameAtlas.Domain.Media.ImageAsset", "Preview")
+						.WithMany()
+						.HasForeignKey("PreviewAssetId")
+						.OnDelete(DeleteBehavior.Restrict);
+
+					b.Navigation("Preview");
 				});
 
 			modelBuilder.Entity("GameAtlas.Domain.Maps.Map", b =>
@@ -540,11 +581,6 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 			modelBuilder.Entity("GameAtlas.Domain.Markers.Marker", b =>
 				{
 					b.Navigation("Media");
-				});
-
-			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionSession", b =>
-				{
-					b.Navigation("Sources");
 				});
 #pragma warning restore 612, 618
 		}

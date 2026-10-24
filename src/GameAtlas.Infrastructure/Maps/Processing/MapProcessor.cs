@@ -1,5 +1,6 @@
 using GameAtlas.Application.Maps.Images;
 using GameAtlas.Application.Maps.Storage;
+using GameAtlas.Application.Media.Storage;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Infrastructure.Maps.Persistence;
 using GameAtlas.Infrastructure.Persistence;
@@ -10,7 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace GameAtlas.Infrastructure.Maps.Processing;
 
 public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storage, IMapImageProcessor images,
-	ILogger<MapProcessor> logger)
+	ILogger<MapProcessor> logger, IMediaStorage mediaStorage)
 {
 	private readonly SemaphoreSlim writer = new(1, 1);
 
@@ -26,26 +27,6 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 
 		foreach (var style in styles)
 			style.Recover();
-
-		var now = DateTimeOffset.UtcNow;
-		var expired = await context.Set<MapAdmissionSession>().Include(session => session.Sources)
-			.Where(session => session.ExpiresAt <= now).ToListAsync(cancellationToken);
-
-		foreach (var session in expired)
-		{
-			foreach (var source in session.Sources)
-			{
-				context.Set<MapCleanupIntent>().Add(new MapCleanupIntent
-				{
-					MapId = source.MapId,
-					StyleId = source.StyleId,
-					RetryAt = now
-				});
-			}
-
-			context.Set<MapCleanupIntent>().Add(new MapCleanupIntent { SessionId = session.Id, RetryAt = now });
-			context.Remove(session);
-		}
 
 		await context.SaveChangesAsync(cancellationToken);
 		await transaction.CommitAsync(cancellationToken);
@@ -88,7 +69,7 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 
 			var geometry = geometryResult.Value;
 			var work = storage.WorkPath(claim.MapId, claim.StyleId, claim.AttemptId);
-			generation = images.GenerateAsync(storage.OriginalPath(claim.MapId, claim.StyleId),
+			generation = images.GenerateAsync(mediaStorage.AssetPath(claim.SourceAssetId),
 				work, geometry, progress, attemptCancellation.Token);
 
 			while (!generation.IsCompleted)
@@ -108,6 +89,7 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 			}
 
 			await generation;
+			attemptCancellation.Token.ThrowIfCancellationRequested();
 			ValidateOutput(work, geometry, cancellationToken);
 			storage.Publish(claim.MapId, claim.StyleId, claim.AttemptId);
 			await PublishAsync(claim, cancellationToken);
@@ -171,15 +153,7 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		{
 			try
 			{
-				if (intent.SessionId is { } sessionId)
-				{
-					var live = await context.Set<MapAdmissionSession>().AnyAsync(session => session.Id == sessionId,
-						cancellationToken);
-
-					if (!live)
-						storage.DeleteStaging(sessionId);
-				}
-				else if (intent.OutputsOnly && intent.MapId is { } outputMap && intent.StyleId is { } outputStyle)
+				if (intent.OutputsOnly && intent.MapId is { } outputMap && intent.StyleId is { } outputStyle)
 				{
 					var published = await context.MapStyles.AnyAsync(style =>
 						style.Id == outputStyle && style.Status == MapProcessingStatus.Ready, cancellationToken);
@@ -219,13 +193,7 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 	{
 		if (intent.StyleId is { } styleId)
 		{
-			var referenced = await context.MapStyles.AnyAsync(style =>
-				style.Id == styleId, cancellationToken);
-
-			var liveUpload = await context.Set<MapAdmissionStyle>().AnyAsync(source => source.StyleId == styleId,
-				cancellationToken);
-
-			return referenced || liveUpload;
+			return await context.MapStyles.AnyAsync(style => style.Id == styleId, cancellationToken);
 		}
 
 		return await context.Maps.AnyAsync(map => map.Id == intent.MapId, cancellationToken);
@@ -236,7 +204,7 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		await using var scope = scopes.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-		var target = await context.MapStyles.AsTracking()
+		var target = await context.MapStyles.AsTracking().Include(style => style.Source)
 			.Where(style => style.Status == MapProcessingStatus.Queued)
 			.OrderBy(style => style.CreatedAt).ThenBy(style => style.CreationSequence).ThenBy(style => style.Id)
 			.FirstOrDefaultAsync(cancellationToken);
@@ -252,7 +220,7 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		await context.SaveChangesAsync(cancellationToken);
 		await transaction.CommitAsync(cancellationToken);
 
-		return new Claim(target.MapId, target.Id, target.AttemptId, target.Width, target.Height);
+		return new Claim(target.MapId, target.Id, target.AttemptId, target.SourceAssetId, target.Width, target.Height);
 	}
 
 	private async Task SaveProgressAsync(Claim claim, int progress, CancellationToken cancellationToken)
@@ -357,5 +325,5 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		}
 	}
 
-	private sealed record Claim(Guid MapId, Guid StyleId, Guid AttemptId, int Width, int Height);
+	private sealed record Claim(Guid MapId, Guid StyleId, Guid AttemptId, Guid SourceAssetId, int Width, int Height);
 }

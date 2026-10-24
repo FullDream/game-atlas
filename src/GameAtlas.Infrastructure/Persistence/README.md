@@ -35,60 +35,9 @@ and may have no styles. The unique map name key is `(GameId, NormalizedName)`; g
 Deleting a map cascades through its current groups, categories, markers, media rows, and styles.
 Historical migration descriptions below describe their original schemas, before this ownership transition.
 
-A fresh database with no maps or groups upgrades directly. A populated database requires an explicit preparation:
+Apply the full migration chain to a fresh empty database. Legacy ownership preparation commands and mapping models have been removed; populated legacy upgrades are unsupported. Historical migration guards remain unchanged and refuse unresolved ownership rather than silently discarding data.
 
-1. Stop the API, workers, and every other writer. Create a consistent SQLite backup (including any committed WAL
-   contents using SQLite's backup facility) and a matching complete map-storage backup. Verify the restore path.
-2. Bring the database to `20261023210838_SimplifyMapStyles` using the matching preceding application version.
-   Its earlier guard still refuses populated version-based map data; that needs its own agreed transfer first.
-3. Inventory every existing map and group. Supply every map's existing ID, game ID, exact dimensions, and an explicit
-   display name. For groups whose game has no map, explicitly choose a new UUID v7 map ID, name, width, and height.
-   Assign every group exactly once to a map of its existing game. Nothing is guessed from marker positions or names.
-4. Prepare an operator-reviewed JSON file, for example:
-
-```json
-{
-  "maps": [
-    {
-      "id": "019a0000-0000-7000-8000-000000000004",
-      "gameId": "019a0000-0000-7000-8000-000000000001",
-      "name": "World",
-      "width": 1025,
-      "height": 513
-    }
-  ],
-  "groups": [
-    {
-      "id": "019a0000-0000-7000-8000-000000000002",
-      "mapId": "019a0000-0000-7000-8000-000000000004"
-    }
-  ]
-}
-```
-
-5. Run the maintenance command with explicit database and mapping paths. It opens an existing database only,
-   validates the complete assignment, and atomically writes internal preparation tables. It starts no web server
-   or worker and does not apply migrations or move files. Invalid input returns a nonzero exit code without
-   changing application data or previously prepared assignments.
-
-```powershell
-dotnet run --project src/GameAtlas.Api -c Release -- prepare-map-ownership D:/data/game-atlas.db D:/data/map-ownership.json
-$env:ConnectionStrings__GameAtlas = 'Data Source=D:/data/game-atlas.db'
-dotnet ef database update --project src/GameAtlas.Infrastructure --startup-project src/GameAtlas.Api
-```
-
-6. Check migration history, `PRAGMA foreign_key_check`, map/group destinations, row counts, IDs, timestamps, marker
-   positions/media, and existing original/tile bytes before resuming the API. Existing map/style IDs and storage
-   paths are preserved. Prepared new maps have no styles; existing content is not rescaled or relocated.
-
-The migration has a `MapOwnership_RequiresExplicitPreparation` guard before ownership changes. Missing map names,
-unresolved groups, wrong-game destinations, changed existing dimensions, and conflicting names refuse the transition.
-Do not bypass the guard or delete affected data. Correct the mapping while writers remain stopped and rerun preparation.
-
-Nonempty-map rollback is intentionally refused by `MapOwnership_RestoreBackupForNonemptyMaps`: a one-map/game
-schema cannot represent the new ownership without losing data. Restore the matching database/storage backups and
-preceding application version instead. Empty-map databases can use EF's normal rollback. Validate migrations against
-disposable copies; generating or testing the migration does not authorize applying it to persistent data.
+Populated rollback requires matching database/filesystem backups with the preceding application. Empty database upgrades and rollback are tested using disposable stores. Database resets and migration application are always explicit operations.
 
 ## Category groups
 
@@ -144,3 +93,11 @@ categories. Validate both directions only against disposable databases.
 `OrderableGameTimestamps` records explicit UTC string conversions for CreatedAt and UpdatedAt so SQLite can sort them before pagination. It changes model metadata only: both migration directions are empty and existing TEXT values remain untouched. The invariant format is `yyyy-MM-dd HH:mm:ss.FFFFFFFzzz`, matching the original SQLite binding, including fractional-second precision. Domain and API values remain DateTimeOffset.
 
 Apply with the same `dotnet ef database update` command above. To roll back only this metadata migration, target `20261022182530_InitialGames`; its Down does not remove game data. Do not target `0` unless intentionally deleting the Games table. Reconsider this provider-specific conversion when adding PostgreSQL.
+
+## Media library schema
+
+Legacy category icons, marker media and map originals are not migrated into the library. No media preparation command, import manifest or legacy-data converter is provided. Initialize a new empty database by explicitly applying the full EF migration chain; upload files through the library API afterwards.
+
+Historical migrations remain unchanged. Existing consumer migration guards refuse unresolved legacy references rather than silently deleting them. A populated legacy database is not a supported upgrade source for this change. Database recreation or deletion of existing files must be requested explicitly; application startup never resets a database or applies migrations.
+
+Keep database and filesystem backups together when required. Populated rollback is unsupported; restore matching backups with the prior application. Fresh empty upgrade and rollback are verified using disposable test stores.

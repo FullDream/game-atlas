@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using GameAtlas.Application.Maps;
-using GameAtlas.Application.Maps.Storage;
+using GameAtlas.Application.Media.Storage;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Infrastructure.Maps.Processing;
 using GameAtlas.Infrastructure.Persistence;
@@ -70,7 +70,7 @@ public class MapApiTests
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
 		var style = Assert.Single(map.Styles);
-		var storage = factory.Services.GetRequiredService<IMapStorage>();
+		var storage = factory.Services.GetRequiredService<IMediaStorage>();
 
 		Assert.Equal(HttpStatusCode.OK, created.StatusCode);
 		Assert.Equal(23, map.Width);
@@ -83,7 +83,7 @@ public class MapApiTests
 		Assert.Equal(MapProcessingStatus.Queued, style.Status);
 		Assert.Equal("#FFFFFF", style.BackgroundColor);
 		Assert.Equal(MapTestData.ImageBytes(), await File.ReadAllBytesAsync(
-			storage.OriginalPath(map.Id, style.Id)));
+			storage.AssetPath(style.Source.Id)));
 		using var list = await client.GetAsync("/games");
 		var page = await list.Content.ReadFromJsonAsync<JsonElement>();
 
@@ -134,7 +134,7 @@ public class MapApiTests
 		using var removedTile = await client.GetAsync(publishedUrl);
 
 		Assert.Equal(HttpStatusCode.NotFound, removedTile.StatusCode);
-		Assert.False(File.Exists(storage.OriginalPath(map.Id, style.Id)));
+		Assert.True(File.Exists(storage.AssetPath(style.Source.Id)));
 		await using var scope = factory.Services.CreateAsyncScope();
 		var stored = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Games.SingleAsync();
 

@@ -62,11 +62,14 @@ public sealed class Map
 
 	public Result<MapStyle> AddStyle(MapStyleInput input)
 	{
-		if (input.Width != Width || input.Height != Height)
+		if (input.Source is null || !input.Source.IsRaster)
+			return MapProcessingErrors.InvalidSource;
+
+		if (input.Source.Width != Width || input.Source.Height != Height)
 			return MapErrors.DimensionsMismatch;
 
 		var created = MapStyle.Create(Id, LastCreationSequence + 1, input.Name, input.BackgroundColor,
-			input.Format, input.Width, input.Height, input.ByteLength);
+			input.Source);
 
 		if (created.IsFailure)
 			return created.Errors;

@@ -19,6 +19,7 @@ public class MarkerApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, Guid.NewGuid().ToString(), status);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
@@ -33,20 +34,20 @@ public class MarkerApiTests
 		Assert.Equal("Description", created.GetProperty("description").GetString());
 		Assert.Equal(created.GetProperty("createdAt").GetDateTimeOffset(),
 			created.GetProperty("updatedAt").GetDateTimeOffset());
-		Assert.Equal(new[] { "image", "youtubeVideo", "video" },
+		Assert.Equal(new[] { "image", "image", "video" },
 			created.GetProperty("media").EnumerateArray().Select(item => item.GetProperty("type").GetString()));
 		Assert.Equal("", created.GetProperty("media")[0].GetProperty("alt").GetString());
-		Assert.Equal("preview.jpg", created.GetProperty("media")[2].GetProperty("preview").GetString());
+		Assert.Equal(MediaTestData.PreviewId, created.GetProperty("media")[2].GetProperty("preview").GetProperty("id").GetGuid());
 		Assert.DoesNotContain("markerId", created.GetRawText());
 		Assert.Equal(3, before.Media.Count);
 
 		using var noOpResponse = await client.PatchAsJsonAsync(MarkerTestData.Path(game.Id) + $"/{id}",
-			new { name = " Marker ", position = new { }, media = created.GetProperty("media") });
+			new { name = " Marker ", position = new { }, media = created.GetProperty("media").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).ToArray() });
 		var noOp = await MarkerTestData.ReadAsync(noOpResponse);
 		var unchanged = await MarkerTestData.LoadAsync(factory, id);
 
 		Assert.Equal(created.GetRawText(), noOp.GetRawText());
-		Assert.Equal(before.Media.Select(item => item.Id), unchanged.Media.Select(item => item.Id));
+		Assert.Equal(before.Media.Select(item => item.AssetId), unchanged.Media.Select(item => item.AssetId));
 
 		using var xResponse = await client.PatchAsync(MarkerTestData.Path(game.Id) + $"/{id}",
 			new StringContent("""{"position":{"x":200},"description":null}""", Encoding.UTF8,
@@ -89,7 +90,7 @@ public class MarkerApiTests
 		var finalDb = finalScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		Assert.Empty(await finalDb.Markers.ToArrayAsync());
-		Assert.Equal(0, await finalDb.Set<GameAtlas.Domain.Markers.Media.MarkerMedia>().CountAsync());
+		Assert.Equal(0, await finalDb.Set<GameAtlas.Domain.Markers.MarkerAsset>().CountAsync());
 	}
 
 	[Theory]
@@ -114,12 +115,12 @@ public class MarkerApiTests
 	[InlineData("""{"media":[{}]}""", 400)]
 	[InlineData("""{"media":[{"type":"other"}]}""", 400)]
 	[InlineData("""{"media":[{"type":"Image","url":"a","width":1,"height":1}]}""", 400)]
-	[InlineData("""{"media":[{"type":"image"}]}""", 422)]
-	[InlineData("""{"media":[{"type":"image","url":"a","width":0,"height":1}]}""", 422)]
+	[InlineData("""{"media":[{"type":"image"}]}""", 400)]
+	[InlineData("""{"media":[{"type":"image","url":"a","width":0,"height":1}]}""", 400)]
 	[InlineData("""{"media":[{"type":"image","url":"a","width":1.5,"height":1}]}""", 400)]
 	[InlineData("""{"media":[{"type":"image","url":"a","width":2147483648,"height":1}]}""", 400)]
-	[InlineData("""{"media":[{"type":"image","url":"a","width":1,"height":1,"alt":null}]}""", 422)]
-	[InlineData("""{"media":[{"type":"youtubeVideo","videoId":"https://youtube.com/watch?v=Ab_cd-Ef012"}]}""", 422)]
+	[InlineData("""{"media":[{"type":"image","url":"a","width":1,"height":1,"alt":null}]}""", 400)]
+	[InlineData("""{"media":[{"type":"youtubeVideo","videoId":"https://youtube.com/watch?v=Ab_cd-Ef012"}]}""", 400)]
 	[InlineData("""{"media":[{"type":"youtubeVideo","videoId":"Ab_cd-Ef012","url":"wrong"}]}""", 400)]
 	[InlineData("""{"media":[{"type":"video","url":"v","width":1}]}""", 400)]
 	[InlineData("""{"media":[{"type":"video","url":"v","id":"00000000-0000-0000-0000-000000000000"}]}""", 400)]
@@ -129,6 +130,7 @@ public class MarkerApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
@@ -146,7 +148,7 @@ public class MarkerApiTests
 		Assert.Equal(before.Name, after.Name);
 		Assert.Equal(before.Position, after.Position);
 		Assert.Equal(before.UpdatedAt, after.UpdatedAt);
-		Assert.Equal(before.Media.Select(item => item.Id), after.Media.Select(item => item.Id));
+		Assert.Equal(before.Media.Select(item => item.AssetId), after.Media.Select(item => item.AssetId));
 	}
 
 	[Theory]
@@ -160,6 +162,7 @@ public class MarkerApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, _) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsync(MarkerTestData.Path(game.Id),
@@ -178,6 +181,7 @@ public class MarkerApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();

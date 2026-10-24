@@ -1,5 +1,6 @@
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.CategoryGroups;
+using GameAtlas.Application.Media;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Result;
 using Mediator;
@@ -40,7 +41,14 @@ public sealed class UpdateCategoryHandler(IApplicationDbContext context)
 				return UpdateCategoryErrors.NameConflict;
 		}
 
-		var result = category.Update(command.Name, command.Icon, command.Color, command.Order, command.CategoryGroupId);
+		var iconId = command.IconAssetId.GetValueOrDefault(category.IconAssetId);
+		var icon = await context.FindImageAsync(iconId ?? Guid.Empty, cancellationToken);
+
+		if (icon.IsFailure)
+			return icon.Errors;
+
+		var result = category.Update(command.Name, command.IconAssetId, command.Color, command.Order,
+			command.CategoryGroupId);
 
 		if (result.IsFailure)
 			return result.Errors;
@@ -53,6 +61,6 @@ public sealed class UpdateCategoryHandler(IApplicationDbContext context)
 
 		await transaction.CommitAsync(cancellationToken);
 
-		return category.ToDto(markersCount);
+		return category.ToDto(markersCount, icon.Value.ToDto());
 	}
 }

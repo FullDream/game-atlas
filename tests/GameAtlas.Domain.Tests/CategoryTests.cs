@@ -10,14 +10,15 @@ public class CategoryTests
 	public void CreationNormalizesMetadata(string input, string name, string normalized)
 	{
 		var groupId = Guid.NewGuid();
+		var iconId = Guid.NewGuid();
 		var category = Assert.IsType<Category>(
-			Category.Create(groupId, input, " /icons/chest.svg ", "#ff8800", 2).Value);
+			Category.Create(groupId, input, iconId, "#ff8800", 2).Value);
 
 		Assert.Equal(7, category.Id.Version);
 		Assert.Equal(groupId, category.CategoryGroupId);
 		Assert.Equal(name, category.Name);
 		Assert.Equal(normalized, category.NormalizedName);
-		Assert.Equal("/icons/chest.svg", category.Icon);
+		Assert.Equal(iconId, category.IconAssetId);
 		Assert.Equal("#FF8800", category.Color);
 		Assert.Equal(2, category.Order);
 		Assert.Equal(category.CreatedAt, category.UpdatedAt);
@@ -43,34 +44,35 @@ public class CategoryTests
 	public void InvalidStateDoesNotPartiallyMutate(string? name, string? icon, string? color, int order)
 	{
 		var category = Assert.IsType<Category>(
-			Category.Create(Guid.NewGuid(), "Original", "original", "#ABCDEF", 5).Value);
+			Category.Create(Guid.NewGuid(), "Original", Guid.NewGuid(), "#ABCDEF", 5).Value);
 		var before = Snapshot(category);
+		Guid? iconId = icon is null ? null : string.IsNullOrWhiteSpace(icon) ? Guid.Empty : Guid.NewGuid();
 
-		Assert.True(Category.Create(Guid.NewGuid(), name, icon, color, order).IsFailure);
-		Assert.True(category.Update(name, icon, color, order, Guid.NewGuid()).IsFailure);
+		Assert.True(Category.Create(Guid.NewGuid(), name, iconId, color, order).IsFailure);
+		Assert.True(category.Update(name, iconId, color, order, Guid.NewGuid()).IsFailure);
 		Assert.Equal(before, Snapshot(category));
 	}
 
 	[Fact]
 	public void UpdatesEachFieldAndMembershipAndPreservesNormalizedNoOps()
 	{
-		var category = Assert.IsType<Category>(Category.Create(Guid.NewGuid(), "Name", "icon", "#ABCDEF", 1).Value);
+		var category = Assert.IsType<Category>(Category.Create(Guid.NewGuid(), "Name", Guid.NewGuid(), "#ABCDEF", 1).Value);
 		var id = category.Id;
 		var created = category.CreatedAt;
 		var before = Snapshot(category);
 
 		Assert.False(category.Update().Value);
-		Assert.False(category.Update(" Name ", " icon ", "#abcdef", 1, category.CategoryGroupId).Value);
+		Assert.False(category.Update(" Name ", category.IconAssetId, "#abcdef", 1, category.CategoryGroupId).Value);
 		Assert.Equal(before, Snapshot(category));
 		Assert.True(category.Update(name: "New").Value);
-		Assert.True(category.Update(icon: "new.png").Value);
+		Assert.True(category.Update(iconAssetId: Guid.NewGuid()).Value);
 		Assert.True(category.Update(color: "#112233").Value);
 		Assert.True(category.Update(order: 10).Value);
 		var destination = Guid.NewGuid();
 
 		Assert.True(category.Update(categoryGroupId: destination).Value);
 		Assert.Equal(destination, category.CategoryGroupId);
-		Assert.True(category.Update("Combined", "combined", "#445566", 2, Guid.NewGuid()).Value);
+		Assert.True(category.Update("Combined", Guid.NewGuid(), "#445566", 2, Guid.NewGuid()).Value);
 		Assert.Equal(id, category.Id);
 		Assert.Equal(created, category.CreatedAt);
 		Assert.True(category.Update(order: (int?)null).IsFailure);
@@ -84,7 +86,7 @@ public class CategoryTests
 	[InlineData("#000", "#000000")]
 	public void ShortColorsExpandAndEquivalentUpdatesPreserveTimestamp(string input, string expected)
 	{
-		var category = Assert.IsType<Category>(Category.Create(Guid.NewGuid(), "Name", "icon", input, 1).Value);
+		var category = Assert.IsType<Category>(Category.Create(Guid.NewGuid(), "Name", Guid.NewGuid(), input, 1).Value);
 		var before = Snapshot(category);
 
 		Assert.Equal(expected, category.Color);
@@ -101,7 +103,7 @@ public class CategoryTests
 		category.CategoryGroupId,
 		category.Name,
 		category.NormalizedName,
-		category.Icon,
+		category.IconAssetId,
 		category.Color,
 		category.Order,
 		category.CreatedAt,

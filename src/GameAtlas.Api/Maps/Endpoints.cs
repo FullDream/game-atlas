@@ -1,6 +1,5 @@
 using GameAtlas.Api.Http;
 using GameAtlas.Api.Maps.Events;
-using GameAtlas.Api.Maps.Uploads;
 using GameAtlas.Api.Results;
 using GameAtlas.Application.Maps;
 using GameAtlas.Application.Maps.CreateMap;
@@ -32,7 +31,7 @@ public static class Endpoints
 			.ProducesProblem(413).ProducesProblem(415).ProducesProblem(422).ProducesProblem(500);
 
 		maps.MapPost("/{mapId}/styles", AddMapStyleAsync).WithName("AddMapStyle").WithSummary("Add map style")
-			.Accepts<MapUploadRequest>("multipart/form-data")
+			.Accepts<AddMapStyleRequest>("application/json")
 			.Produces<MapDto>().ProducesProblem(400).ProducesProblem(404).ProducesProblem(409)
 			.ProducesProblem(413).ProducesProblem(415).ProducesProblem(422).ProducesProblem(500);
 
@@ -66,9 +65,9 @@ public static class Endpoints
 		IMediator mediator, CancellationToken cancellationToken) =>
 		await mediator.Send(request.ToCommand(gameId), cancellationToken);
 
-	private static Task<IResult> AddMapStyleAsync(Guid gameId, Guid mapId, HttpRequest request,
-		MapUploadWorkflow uploads,
-		CancellationToken cancellationToken) => uploads.SingleAsync(gameId, mapId, request, cancellationToken);
+	private static async Task<OutcomeResult<MapDto>> AddMapStyleAsync(Guid gameId, Guid mapId, AddMapStyleRequest request,
+		IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(request.ToCommand(gameId, mapId), cancellationToken);
 
 	private static async Task<OutcomeResult<MapStyleDto>> RetryMapStyleAsync(Guid gameId, Guid mapId, Guid styleId,
 		IMediator mediator, CancellationToken cancellationToken) =>

@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using GameAtlas.Application.Maps.Storage;
+using GameAtlas.Application.Media.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -13,7 +13,7 @@ public class AddMapStyleApiTests
 	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
-	public async Task FlatFormAddsExactlyOneStyleWithOriginalBytesAndMetadataInEitherOrder(bool fileFirst)
+	public async Task LibraryAdmissionThenJsonAttachmentPreservesOriginalBytesAndMetadata(bool fileFirst)
 	{
 		await using var factory = new GameApiFactory();
 
@@ -25,10 +25,10 @@ public class AddMapStyleApiTests
 		var map = await MapTestData.ReadAsync(created);
 		var bytes = MapTestData.ImageBytes(color: 200);
 		using var upload = MapTestData.Style(bytes, " Roads ", "#abc", fileFirst);
-		using var response = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", upload);
+		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
 		var result = await MapTestData.ReadAsync(response);
 		var style = result.Styles.Last();
-		var storage = factory.Services.GetRequiredService<IMapStorage>();
+		var storage = factory.Services.GetRequiredService<IMediaStorage>();
 
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 		Assert.Equal(map.Id, result.Id);
@@ -37,7 +37,7 @@ public class AddMapStyleApiTests
 		Assert.Equal("#AABBCC", style.BackgroundColor);
 		Assert.Null(style.TilesUrlTemplate);
 		Assert.Equal(map.Styles.Single(), result.Styles.First());
-		Assert.Equal(bytes, await File.ReadAllBytesAsync(storage.OriginalPath(map.Id, style.Id)));
+		Assert.Equal(bytes, await File.ReadAllBytesAsync(storage.AssetPath(style.Source.Id)));
 	}
 
 	[Theory]
@@ -46,7 +46,7 @@ public class AddMapStyleApiTests
 	[InlineData("duplicateName")]
 	[InlineData("unknown")]
 	[InlineData("batch")]
-	public async Task AmbiguousOrBatchInputReturns400WithoutAddingAStyle(string mode)
+	public async Task MultipartInputReturns415WithoutAddingAStyle(string mode)
 	{
 		await using var factory = new GameApiFactory();
 
@@ -82,7 +82,7 @@ public class AddMapStyleApiTests
 		using var response = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", upload);
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));
 
-		Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+		Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
 		Assert.Equal(map.Styles.Single().Id, (await MapTestData.ReadAsync(read)).Styles.Single().Id);
 	}
 
@@ -98,7 +98,7 @@ public class AddMapStyleApiTests
 		await MapTestData.SeedAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 		using var upload = MapTestData.Style(MapTestData.ImageBytes(1025, 513), name, color);
-		using var response = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", upload);
+		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
 		var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
 
 		Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
@@ -112,14 +112,14 @@ public class AddMapStyleApiTests
 	public async Task ActualFileBytesOverLimitReturn413WithoutAddingAStyle()
 	{
 		await using var factory = new GameApiFactory(configureServices: services =>
-			services.AddSingleton<IOptions<MapUploadLimits>>(Options.Create(new MapUploadLimits { FileBytes = 10 })));
+			services.AddSingleton<IOptions<MediaLimits>>(Options.Create(new MediaLimits { MaximumBytes = 10 })));
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.SeedAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 		using var upload = MapTestData.Style(MapTestData.ImageBytes(1025, 513));
-		using var response = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", upload);
+		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));
 
 		Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
@@ -139,7 +139,7 @@ public class AddMapStyleApiTests
 		using var client = factory.CreateHttpsClient();
 		var bytes = invalidImage ? Encoding.UTF8.GetBytes("<svg></svg>") : MapTestData.ImageBytes(23, 17);
 		using var upload = MapTestData.Style(bytes);
-		using var response = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", upload);
+		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));
 
 		Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
@@ -147,7 +147,7 @@ public class AddMapStyleApiTests
 	}
 
 	[Fact]
-	public async Task NonMultipartRequestReturns415()
+	public async Task NonJsonRequestReturns415()
 	{
 		await using var factory = new GameApiFactory();
 

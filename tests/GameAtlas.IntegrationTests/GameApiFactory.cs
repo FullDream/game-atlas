@@ -15,6 +15,7 @@ public sealed class GameApiFactory(string environment = "Production", IIntercept
 {
 	public string DatabasePath { get; } = Path.Combine(Path.GetTempPath(), $"game-api-{Guid.NewGuid():N}.db");
 	public string MapStoragePath { get; } = Path.Combine(Path.GetTempPath(), $"game-maps-{Guid.NewGuid():N}");
+	public string MediaStoragePath { get; } = Path.Combine(Path.GetTempPath(), $"game-media-{Guid.NewGuid():N}");
 
 	protected override void ConfigureWebHost(IWebHostBuilder builder)
 	{
@@ -23,13 +24,15 @@ public sealed class GameApiFactory(string environment = "Production", IIntercept
 		builder.UseSetting("ConnectionStrings:GameAtlas", $"Data Source={DatabasePath};Pooling=False");
 		builder.UseSetting("Maps:WorkerEnabled", "false");
 		builder.UseSetting("Maps:StorageRoot", MapStoragePath);
+		builder.UseSetting("Media:StorageRoot", MediaStoragePath);
 		builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
 			new Dictionary<string, string?>
 			{
 				["ConnectionStrings:GameAtlas"] = $"Data Source={DatabasePath};Pooling=False",
 				["Logging:LogLevel:Default"] = "None",
 				["Maps:WorkerEnabled"] = "false",
-				["Maps:StorageRoot"] = MapStoragePath
+				["Maps:StorageRoot"] = MapStoragePath,
+				["Media:StorageRoot"] = MediaStoragePath,
 			}));
 		builder.ConfigureServices(services =>
 		{
@@ -67,5 +70,8 @@ public sealed class GameApiFactory(string environment = "Production", IIntercept
 
 		if (Directory.Exists(MapStoragePath))
 			Directory.Delete(MapStoragePath, true);
+
+		if (Directory.Exists(MediaStoragePath))
+			Directory.Delete(MediaStoragePath, true);
 	}
 }

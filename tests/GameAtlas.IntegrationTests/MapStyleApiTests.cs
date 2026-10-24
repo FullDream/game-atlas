@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using GameAtlas.Application.Maps.Storage;
+using GameAtlas.Application.Media.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GameAtlas.IntegrationTests;
@@ -19,7 +19,7 @@ public class MapStyleApiTests
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
 		var style = map.Styles.Single();
-		var storage = factory.Services.GetRequiredService<IMapStorage>();
+		var storage = factory.Services.GetRequiredService<IMediaStorage>();
 		using var replacement = new MultipartFormDataContent
 		{
 			{ new ByteArrayContent(MapTestData.ImageBytes(color: 200)), "file", "replacement.png" }
@@ -40,6 +40,6 @@ public class MapStyleApiTests
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));
 
 		Assert.Equal(style, (await MapTestData.ReadAsync(read)).Styles.Single());
-		Assert.Equal(MapTestData.ImageBytes(), await File.ReadAllBytesAsync(storage.OriginalPath(map.Id, style.Id)));
+		Assert.Equal(MapTestData.ImageBytes(), await File.ReadAllBytesAsync(storage.AssetPath(style.Source.Id)));
 	}
 }

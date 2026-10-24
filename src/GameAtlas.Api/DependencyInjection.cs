@@ -7,7 +7,6 @@ using GameAtlas.Api.CategoryGroups;
 using GameAtlas.Api.Errors;
 using GameAtlas.Api.Games;
 using GameAtlas.Api.Markers;
-using GameAtlas.Api.Markers.Media;
 using GameAtlas.Api.OpenApi.Optional;
 using GameAtlas.Api.OpenApi.Parameters;
 using GameAtlas.Api.OpenApi.Validation;
@@ -22,10 +21,6 @@ using GameAtlas.Application.Games.ListGames;
 using GameAtlas.Application.Games.UpdateGame;
 using GameAtlas.Application.Markers;
 using GameAtlas.Application.Markers.CreateMarker;
-using GameAtlas.Application.Markers.Media;
-using GameAtlas.Application.Markers.Media.Image;
-using GameAtlas.Application.Markers.Media.Video;
-using GameAtlas.Application.Markers.Media.YouTubeVideo;
 using GameAtlas.Application.Markers.UpdateMarker;
 using Microsoft.AspNetCore.Routing;
 
@@ -36,8 +31,16 @@ public static class DependencyInjection
 	public static IServiceCollection AddApi(this IServiceCollection services)
 	{
 		services.AddProblemDetails();
+		services.AddOpenApiValidationSource<Media.UpdateMediaAssetRequest,
+			Application.Media.Assets.UpdateMediaAsset.UpdateMediaAsset>();
+		services.AddOpenApiValidationSource<Media.ListMediaRequest, Application.Media.ListMedia.ListMedia>();
+		services.AddOpenApiValidationSource<Media.CreateMediaFolderRequest,
+			Application.Media.Folders.CreateMediaFolder.CreateMediaFolder>();
+		services.AddOpenApiValidationSource<Media.UpdateMediaFolderRequest,
+			Application.Media.Folders.UpdateMediaFolder.UpdateMediaFolder>();
+		services.AddExceptionHandler<MediaFolderConflictExceptionHandler>();
 		services.AddOpenApiValidationSource<Maps.CreateMapRequest, Application.Maps.CreateMap.CreateMap>();
-		services.AddOpenApiValidationSource<Maps.MapUploadRequest, Application.Maps.Uploads.MapUploadMetadata>();
+		services.AddOpenApiValidationSource<Maps.AddMapStyleRequest, Application.Maps.AddMapStyle.AddMapStyle>();
 		services.AddOpenApiValidationSource<Maps.UpdateMapStyleRequest,
 			Application.Maps.UpdateMapStyle.UpdateMapStyle>();
 
@@ -57,14 +60,10 @@ public static class DependencyInjection
 		services.AddOpenApiValidationSource<UpdateMarkerRequest, UpdateMarker>();
 		services.AddOpenApiValidationSource<PositionRequest, PositionInput>();
 		services.AddOpenApiValidationSource<PositionPatchRequest, PositionPatch>();
-		services.AddOpenApiValidationSource<ImageMediaRequest, ImageMediaInput>();
-		services.AddOpenApiValidationSource<YouTubeVideoMediaRequest, YouTubeVideoMediaInput>();
-		services.AddOpenApiValidationSource<VideoMediaRequest, VideoMediaInput>();
 		services.ConfigureHttpJsonOptions(options =>
 		{
 			options.SerializerOptions.AddOptionalSupport();
-			options.SerializerOptions.TypeInfoResolver = options.SerializerOptions.TypeInfoResolver?
-				.WithAddedModifier(MarkerMediaJsonTypeInfoModifier.Modify);
+
 
 			options.SerializerOptions.AllowOutOfOrderMetadataProperties = true;
 			options.SerializerOptions.Converters.Add(

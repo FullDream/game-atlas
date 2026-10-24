@@ -7,4 +7,5 @@ public interface IPersistenceFailureClassifier
 	bool IsCategoryNameConflict(Exception exception);
 	bool IsMapNameConflict(Exception exception);
 	bool IsMapStyleNameConflict(Exception exception);
+	bool IsMediaFolderNameConflict(Exception exception);
 }

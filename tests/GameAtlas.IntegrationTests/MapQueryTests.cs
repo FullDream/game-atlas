@@ -27,7 +27,7 @@ public class MapQueryTests
 				new { name = $"Map {index}", width = 23, height = 17 });
 			var map = await MapTestData.ReadAsync(created);
 			using var upload = MapTestData.Style();
-			using var styled = await client.PostAsync($"{MapTestData.PathFor(game.Id, map.Id)}/styles", upload);
+			using var styled = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id, map.Id), upload);
 
 			Assert.Single((await MapTestData.ReadAsync(styled)).Styles);
 		}
@@ -66,10 +66,9 @@ public class MapQueryTests
 		for (var index = 0; index < 100; index++)
 		{
 			using var upload = MapTestData.Style(name: $"Style {index}");
-			var path = index == 0 ? MapTestData.PathFor(game.Id) : $"{MapTestData.PathFor(game.Id)}/styles";
 			using var response = index == 0
 				? await MapTestData.UploadFirstStyleAsync(client, game.Id, upload)
-				: await client.PostAsync(path, upload);
+				: await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
 
 			Assert.Equal(index + 1, (await MapTestData.ReadAsync(response)).Styles.Count);
 		}

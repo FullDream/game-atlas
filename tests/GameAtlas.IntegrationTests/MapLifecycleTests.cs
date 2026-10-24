@@ -17,6 +17,7 @@ public class MapLifecycleTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
@@ -63,7 +64,7 @@ public class MapLifecycleTests
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
 		using var secondUpload = MapTestData.Style(name: "Roads");
-		using var added = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", secondUpload);
+		using var added = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), secondUpload);
 		var styles = (await MapTestData.ReadAsync(added)).Styles.ToArray();
 		var deletions = await Task.WhenAll(styles.Select(style =>
 			client.DeleteAsync($"{MapTestData.PathFor(game.Id)}/styles/{style.Id}")));

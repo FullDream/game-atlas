@@ -2,6 +2,9 @@
 @gameId = 019a0000-0000-7000-8000-000000000001
 @mapId = 019a0000-0000-7000-8000-000000000004
 @categoryGroupId = 019a0000-0000-7000-8000-000000000002
+@iconAssetId = 019a0000-0000-7000-8000-000000000111
+@imageAssetId = 019a0000-0000-7000-8000-000000000112
+@videoAssetId = 019a0000-0000-7000-8000-000000000113
 
 # Default page: offset=0, limit=20, no explicit order.
 GET {{GameAtlas_Api_HostAddress}}/games
@@ -121,13 +124,13 @@ DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-gr
 
 ###
 
-# Replace categoryGroupId with a group of gameId. Default order appends within this group.
+# Use a committed image ID from POST /media/assets as iconAssetId. Default order appends within this group.
 POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups/{{categoryGroupId}}/categories
 Content-Type: application/json
 
 {
   "name": "Chests",
-  "icon": "/icons/chest.svg",
+  "iconAssetId": "{{iconAssetId}}",
   "color": "#ff8800"
 }
 
@@ -180,11 +183,7 @@ Content-Type: application/json
   "name": "Chest",
   "description": "Behind the waterfall",
   "position": { "x": -120.5, "y": 200 },
-  "media": [
-    { "type": "image", "url": "/images/chest.webp", "width": 640, "height": 480 },
-    { "type": "youtubeVideo", "videoId": "Ab_cd-Ef012" },
-    { "type": "video", "url": "/videos/chest.mp4", "preview": "/images/preview.jpg" }
-  ]
+  "media": ["{{imageAssetId}}", "{{videoAssetId}}"]
 }
 
 ###
@@ -199,15 +198,12 @@ Content-Type: application/merge-patch+json; charset=utf-8
 
 ###
 
-# Complete media replacement. Alt defaults to ""; video preview defaults to null.
+# Complete media ID replacement. Alt and preview are shared metadata edited through the library.
 PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/markers/{{markerId}}
 Content-Type: application/json
 
 {
-  "media": [
-    { "type": "image", "url": "/images/new.png", "width": 800, "height": 600 },
-    { "type": "video", "url": "/videos/new.webm" }
-  ]
+  "media": ["{{imageAssetId}}", "{{videoAssetId}}"]
 }
 
 ###

@@ -6,7 +6,7 @@ namespace GameAtlas.Application.Maps;
 public static class MapQueryExtensions
 {
 	public static IQueryable<Map> WithStyles(this IQueryable<Map> maps) =>
-		maps.Include(map => map.Styles);
+		maps.Include(map => map.Styles).ThenInclude(style => style.Source);
 
 	public static IQueryable<Map> ForGame(this IQueryable<Map> maps, Guid gameId) =>
 		maps.Where(map => map.GameId == gameId);

@@ -47,63 +47,68 @@ POST /games/{gameId}/maps SHALL accept application/json with required name, widt
 - **WHEN** groups, categories, and markers are added to a map with no styles
 - **THEN** they are persisted normally using the map's existing coordinate space without requiring an image
 
-### Requirement: Add one style through a flat typed multipart contract
-POST /games/{gameId}/maps/{mapId}/styles SHALL accept exactly one original in multipart field file and plain text fields name and backgroundColor. It SHALL append one queued style and return HTTP 200 with complete map metadata after durable admission. It SHALL NOT accept a metadata JSON array or dynamic file keys. Duplicate, unknown, or missing file parts SHALL return 400; invalid or missing name/color 422. A rejected request SHALL leave existing styles unchanged.
+### Requirement: Attach one library image as a map style
+POST /games/{gameId}/maps/{mapId}/styles SHALL accept application/json with required name, backgroundColor, and sourceAssetId. It SHALL atomically attach one compatible committed image, enqueue one style, and return 200 with the complete map. Missing sources SHALL return 404; invalid names/colors or incompatible images 422; name conflicts 409; multipart or unsupported request media 415. No file upload SHALL occur here.
 
 #### Scenario: Append one style independently of wire order
-- **WHEN** an existing map receives valid name, backgroundColor, and file parts in any order
-- **THEN** exactly one style is appended, its unchanged original and queued state are durable before HTTP 200, and existing styles remain unchanged
-- **AND** a typed request schema documents three required properties, including one binary file
+- **WHEN** valid JSON identifies an existing image asset with name and backgroundColor in any property order
+- **THEN** exactly one queued style and its asset relationship commit before 200
+- **AND** source bytes are not copied or moved and existing styles remain unchanged
 
 #### Scenario: Reject a conflicting name
-- **WHEN** the supplied name conflicts with an existing style
-- **THEN** HTTP 409 rejects the addition without changing original bytes, style metadata, order, or defaults
+- **WHEN** the supplied style name conflicts with an existing style in that map
+- **THEN** 409 rejects attachment without changing the source asset, files, existing styles, order, or defaults
 
 #### Scenario: Reject batch or ambiguous input
-- **WHEN** the form contains metadata JSON, multiple files, repeated name/color, or unknown parts
-- **THEN** HTTP 400 rejects the request without adding a style
-- **AND** validation errors for name/color use flat field names
+- **WHEN** style creation receives multipart/file input or an array instead of the JSON object contract
+- **THEN** unsupported media returns 415 and incompatible JSON shapes return 400
+- **AND** field validation uses name, backgroundColor, and sourceAssetId rather than file or multipart metadata
 
 ### Requirement: Enforce configurable single-file upload limits
-Default admission limits SHALL be 209715200 bytes per file and width and height each from 1 through 16384 pixels. Limits SHALL be configurable. Byte-limit violations SHALL return HTTP 413. Dimension violations SHALL return HTTP 422. Limits SHALL NOT trigger silent image resizing.
+Original file admission SHALL occur only through the media library under its one configurable default 314572800-byte file limit. Style attachment SHALL NOT introduce a separate byte limit or upload path. Raster dimensions SHALL remain 1..16384 and exactly match the map; incompatible dimensions SHALL return 422 without resizing bytes or changing map geometry.
 
 #### Scenario: Accept configured boundaries
-- **WHEN** a file is exactly within configured byte and dimension limits
-- **THEN** it passes those size checks without downscaling the original
+- **WHEN** a valid library image is within the configured shared byte/dimension bounds and exactly matches its map
+- **THEN** it can be attached without downscaling or copying
 
 #### Scenario: Reject oversize and dimension violations
-- **WHEN** a file exceeds its byte limit
-- **THEN** HTTP 413 rejects the entire upload
-- **AND** an image exceeding either dimension bound returns HTTP 422 instead
+- **WHEN** a file exceeds the shared library byte limit
+- **THEN** the library rejects upload with 413 before style creation
+- **AND** attaching an image with incompatible map dimensions returns 422
 
 #### Scenario: Apply changed configuration
-- **WHEN** an operator changes supported admission limits and restarts the application
-- **THEN** new uploads use those configured limits
-- **AND** existing map dimensions, published images, and tile geometry are not rewritten
+- **WHEN** an operator changes the shared admission limit and restarts the application
+- **THEN** later library uploads use that limit without rewriting existing assets or map geometry
 
 ### Requirement: Accept supported image originals without modifying them
-Uploads SHALL accept still PNG and JPEG image content, identified from the file rather than trusting its extension or declared media type. Unsupported content SHALL return HTTP 422. Original bytes SHALL be preserved unchanged. Admission SHALL check readable image metadata and dimensions; failures only discoverable during background decoding SHALL follow style processing failure rules.
+Style sources SHALL reference verified static JPEG, PNG, WebP, or AVIF library images. SVG, videos, folders, and unsupported images SHALL return 422. Byte preservation and content identification SHALL be owned by the library; map attachment SHALL check current compatibility. Decode-only failures SHALL produce safe failed style state. Supporting a format SHALL require a working decoder on the deployment runtime.
 
 #### Scenario: Preserve an accepted original
-- **WHEN** a supported image is admitted
-- **THEN** its retained original is byte-for-byte equal to the uploaded file
-- **AND** a misleading filename cannot bypass content validation or choose a storage path
+- **WHEN** a supported library image is attached to one or several styles
+- **THEN** every style reads the same unchanged committed bytes through its asset reference
+- **AND** neither filename nor MIME input selects a filesystem path
 
 #### Scenario: Reject unsupported images
-- **WHEN** a binary part contains SVG, an animated image, or unsupported or unreadable image headers
-- **THEN** HTTP 422 rejects the complete upload without visible state changes
+- **WHEN** a sourceAssetId identifies SVG, a video, or an incompatible image
+- **THEN** 422 rejects the entire style creation without visible map changes
+
+#### Scenario: Verify expanded raster formats
+- **WHEN** matching static WebP or AVIF assets are attached
+- **THEN** they generate the same geometry and transparent lossless WebP tile contract as JPEG/PNG
+- **AND** animation or an unavailable decoder cannot be silently treated as a supported static original
 
 ### Requirement: Keep all styles aligned in the map's immutable geometry
-JSON map creation SHALL establish width, height, and centered coordinates before any style exists. Every uploaded style SHALL exactly match those dimensions. Mismatches SHALL return HTTP 422 before changes. Adding, retrying, or removing styles SHALL NOT resize the map or reposition markers. No resizing endpoint SHALL be exposed.
+Map creation SHALL establish immutable dimensions before any style. Each source asset SHALL exactly match those dimensions and be an eligible raster image. Mismatches SHALL return 422 before attachment. Adding, retrying, or removing styles or changing library metadata SHALL NOT resize maps, alter source pixels, or reposition markers. No resizing endpoint SHALL be exposed.
 
 #### Scenario: Validate the first and later styles
-- **WHEN** any uploaded style, including the first one, differs from the map's width or height
-- **THEN** HTTP 422 leaves the map, existing styles, and markers unchanged
-- **AND** a matching original can be admitted without detecting semantic image alignment
+- **WHEN** any source image, including the first, differs from the map width or height
+- **THEN** 422 preserves the map, existing styles, source asset, and markers
+- **AND** a compatible image can be attached without detecting semantic image alignment
 
 #### Scenario: Keep geometry after removing all images
-- **WHEN** the last style is deleted and a later matching style is uploaded
-- **THEN** map identity, dimensions, coordinates, and existing content remain valid throughout
+- **WHEN** the last style is deleted and a later matching library image is attached
+- **THEN** map identity, dimensions, coordinates, and content remain valid throughout
+- **AND** the previously used source asset remains in the library
 
 ### Requirement: Validate unique user-defined style names
 Styles SHALL support user-defined names rather than a fixed enum of styles. Names SHALL be trimmed, preserve display spelling, contain 1 through 200 characters, and be unique within their map after invariant case normalization. Invalid names SHALL return HTTP 422; conflicting names SHALL return HTTP 409, including recognized save-time uniqueness conflicts.
@@ -138,7 +143,7 @@ GET /games/{gameId}/maps/{mapId} SHALL return HTTP 200 with id, gameId, name, wi
 - **AND** defaultStyleId is null whenever no surviving style is ready
 
 ### Requirement: Expose processing state directly on each style
-Every style representation SHALL include id, name, backgroundColor, status, progress, error, tilesUrlTemplate, createdAt, and updatedAt. Status SHALL be queued, processing, ready, or failed as a string; progress SHALL be an integer from 0 through 100. There SHALL be no sourceVersionId or activeVersionId fields. The tile template SHALL be null until successful publication and SHALL identify that style's immutable image.
+Style representations SHALL retain id, name, backgroundColor, status, progress, error, tilesUrlTemplate, createdAt, and updatedAt and add source as the shared image-asset DTO. Existing queued/processing/ready/failed and progress semantics SHALL remain. source SHALL resolve the referenced asset, not a copied original/version model. Tile templates SHALL remain null until successful publication.
 
 #### Scenario: Report queued and ready styles
 - **WHEN** an accepted style has not completed processing
@@ -149,6 +154,10 @@ Every style representation SHALL include id, name, backgroundColor, status, prog
 - **WHEN** a style's processing fails
 - **THEN** tilesUrlTemplate remains null and status is failed
 - **AND** error exposes only a safe code and message, never paths, stack traces, or library diagnostics
+
+#### Scenario: Resolve source metadata without retiling
+- **WHEN** a source asset is renamed, moved, or given new alt text
+- **THEN** subsequent map/style/SSE representations resolve that metadata without changing style timestamps, attempts, pixels, or tile URLs
 
 ### Requirement: Use centered original-pixel coordinates
 Map coordinates SHALL use the original image center as (0,0), X increasing right, and Y increasing up. Extent SHALL be [-width/2,-height/2,width/2,height/2] and tileOrigin SHALL be [-width/2,height/2]. Coordinates SHALL remain independent of zoom and style selection. Existing marker finite-coordinate rules SHALL remain unchanged, including acceptance outside the map extent.
@@ -190,9 +199,9 @@ The system SHALL serve complete WebP tiles statically at /map-tiles/{mapId}/{sty
 - **AND** HEAD returns the same headers without a response body
 
 #### Scenario: Keep original and incomplete files private
-- **WHEN** a client requests an original, staging file, working tile, manifest, missing style, or nonexistent tile coordinate
-- **THEN** HTTP 404 is returned and no working directory or original becomes accessible
-- **AND** only a complete validated pyramid is moved into the public tile root
+- **WHEN** a client requests a legacy original path, staging file, work tile, manifest, directory, or nonexistent tile coordinate
+- **THEN** 404 preserves private working paths and only complete pyramids exist under the public tile root
+- **AND** committed originals are intentionally available through their separate shared /media/files/{id} endpoint
 
 #### Scenario: Serve complete files independently of metadata
 - **WHEN** a validated pyramid has moved into the public tile root but its ready commit has not completed, or its metadata was deleted before cleanup
@@ -214,15 +223,15 @@ At most one style SHALL be tiled at a time in the initial deployment. Admitted w
 - **THEN** only one tiling operation runs at once while other work remains queued
 
 ### Requirement: Keep exactly one original per style
-Each style SHALL own one immutable PNG/JPEG original and one tile pyramid. Image replacement, source-version history, and image-version identifiers SHALL NOT be exposed. A different original SHALL require a new style. Metadata PATCH SHALL NOT change original bytes or enqueue processing. Removing an original's style SHALL NOT remove its map or content.
+Each style SHALL reference exactly one immutable library image for its lifetime and own its derived tile pyramid. Several styles MAY reference the same asset without byte duplication. Image replacement/version history SHALL NOT be exposed. A different source SHALL require a new style. Metadata PATCH SHALL NOT change sourceAssetId or image bytes. Removing a style SHALL remove only its relationship and derived output.
 
 #### Scenario: Refuse image replacement
-- **WHEN** a file is posted to a style image-replacement path
-- **THEN** no replacement operation exists and the style's original remains unchanged
+- **WHEN** a client attempts an image replacement path or patches sourceAssetId on an existing style
+- **THEN** no replacement occurs and the original reference remains unchanged
 
 #### Scenario: Change visual styles without changing map content
-- **WHEN** a new style is added or any old style is removed
-- **THEN** every surviving style retains its own identity and original, and map markers remain unchanged
+- **WHEN** a style is added or removed
+- **THEN** surviving styles retain their own references/pyramids, markers remain unchanged, and every source asset remains in the library
 
 ### Requirement: Retry failed processing from the retained original
 POST /games/{gameId}/maps/{mapId}/styles/{styleId}/retry SHALL requeue only a failed style and return HTTP 200 with the complete style. It SHALL reuse retained original bytes without a new upload, clear the previous error, and reset progress to 0. Retrying queued, processing, or ready work SHALL return HTTP 409 without duplication.
@@ -235,6 +244,11 @@ POST /games/{gameId}/maps/{mapId}/styles/{styleId}/retry SHALL requeue only a fa
 #### Scenario: Reject redundant retry
 - **WHEN** a client retries work not in failed state
 - **THEN** HTTP 409 is returned without creating another processing attempt
+
+#### Scenario: Handle an out-of-band missing source
+- **WHEN** retry encounters a library source whose physical file was removed manually
+- **THEN** it fails safely under the existing processing-state contract without removing the asset or source relationship
+- **AND** the failure does not block processing of unrelated styles
 
 ### Requirement: Recover interrupted processing after restart
 Accepted queued work SHALL survive application restart. Styles left processing by interruption SHALL be retried automatically from their retained original beginning at progress 0. Ready styles SHALL remain available. Recovery SHALL NOT require an SSE client, another upload, or restoration of in-memory queue contents.
@@ -301,7 +315,7 @@ defaultStyleId SHALL identify the earliest-created surviving ready style. Persis
 - **AND** defaultStyleId is null if no remaining style is displayable
 
 ### Requirement: Allow deletion of every style independently of the map
-DELETE /games/{gameId}/maps/{mapId}/styles/{styleId} SHALL physically remove the scoped style and return empty HTTP 204 after committed removal and durable cleanup scheduling. The last style SHALL be removable regardless of processing state. Map identity, geometry, groups, categories, markers, media, and coordinates SHALL remain unchanged. Missing/repeated deletion SHALL return HTTP 404.
+Style DELETE SHALL remove the scoped style/source relationship and durably schedule only its derived tile/work cleanup before returning empty 204. The last style SHALL remain removable in any processing state. Source assets SHALL remain in the library even without other uses. Missing/repeated deletion SHALL return 404. Existing map geometry/content/default rules SHALL remain unchanged.
 
 #### Scenario: Remove the final queued ready or failed style
 - **WHEN** the only style of a map is deleted in any processing state
@@ -312,8 +326,12 @@ DELETE /games/{gameId}/maps/{mapId}/styles/{styleId} SHALL physically remove the
 - **WHEN** distinct final styles are deleted concurrently from one map
 - **THEN** both successful deletions may leave zero styles without deleting or resizing the map
 
+#### Scenario: Preserve a source shared by several styles
+- **WHEN** two styles share an asset and one or both styles are deleted
+- **THEN** only their derived output and references are removed; original bytes remain until explicit eligible asset deletion
+
 ### Requirement: Delete a map and its complete owned content
-DELETE /games/{gameId}/maps/{mapId} SHALL return empty HTTP 204 after physically deleting the map, styles, groups, categories, markers, and marker-media records and durably scheduling map artifact cleanup. Other maps and the game SHALL remain unchanged. Referenced marker-media files SHALL NOT be deleted. Missing/repeated deletion SHALL return HTTP 404.
+Map DELETE SHALL retain empty 204, ownership cascades, sibling isolation, SSE closure, and durable derived-output cleanup. Its style source links, category icon links, and marker attachment rows SHALL disappear with their resources, but shared assets, preview links owned by surviving videos, and original bytes SHALL remain. No asset deletion SHALL follow automatically from deleting a map or game.
 
 #### Scenario: Delete one of several maps
 - **WHEN** a map containing groups, categories, markers, media, and processing styles is deleted
@@ -326,31 +344,30 @@ DELETE /games/{gameId}/maps/{mapId} SHALL return empty HTTP 204 after physically
 - **AND** a later map using that name receives a new identity and does not inherit deleted content
 
 ### Requirement: Remove map files durably and prevent stale publication
-Map or style deletion SHALL durably schedule physical cleanup of owned original, tile, staging, and working files. Temporary cleanup failures SHALL be retried after restart without restoring deleted resources. A deleted game SHALL also lose all its maps and their artifacts while retaining existing game-deletion cascades. Background work SHALL NOT resurrect deleted metadata or advertise stale tile output.
+Map/style/game deletion SHALL durably clean only map-owned tiles and work output, never shared library originals. Cleanup failures SHALL retry after restart. Stale processing SHALL NOT restore deleted metadata or advertise output. No source-file leases SHALL be introduced. Once a style relationship is removed, active native reading SHALL NOT independently block explicit asset deletion; disappearance may fail the attempt.
 
 #### Scenario: Delete during image processing
-- **WHEN** a style, map, or owning game is deleted while tiling is in progress
-- **THEN** its metadata ceases being publicly accessible after commit
-- **AND** complete tile files may remain accessible until cleanup
-- **AND** late processing output is discarded and cleanup eventually removes its owned files
+- **WHEN** a style, map, or game is deleted during tiling
+- **THEN** resource metadata disappears after commit and stale output cannot be advertised
+- **AND** source assets remain unless explicitly deleted through the library, and only derived files are eventually removed
 
 #### Scenario: Retry filesystem cleanup
-- **WHEN** committed deletion is followed by a temporary filesystem failure and application restart
-- **THEN** cleanup is resumed until the owned artifacts are removed
-- **AND** unrelated map storage and marker-media references are never deleted
+- **WHEN** derived-output deletion fails and the application restarts
+- **THEN** cleanup resumes without deleting shared originals or unrelated outputs
+- **AND** source assets remain discoverable even after their final style is gone
 
 ### Requirement: Keep storage durable configurable and outside the repository history
-Originals, tiles, and work files SHALL use a configured local storage root. The default root and its generated descendants SHALL be ignored by Git. Storage paths SHALL be generated by the server and remain inside that root. Accepted originals, style metadata, processing state, and ready tile metadata SHALL survive restart without public exposure of filesystem paths.
+Originals SHALL reside in the configured library asset store; tiles and work SHALL retain map/style-addressed storage. All generated stores SHALL be Git-ignored with server-owned paths and no path/link traversal. Asset/source relationships and existing map processing metadata SHALL survive restart. Physical paths SHALL remain private even though committed original bytes are publicly served through library URLs.
 
 #### Scenario: Use safe owned storage
-- **WHEN** an uploaded filename or multipart key contains path-like text
-- **THEN** it cannot select an absolute or relative server path or access another map
-- **AND** local original, tile, and staging folders remain untracked
+- **WHEN** an upload filename or logical folder name contains path-like input
+- **THEN** it cannot select storage paths or access other assets/maps
+- **AND** original, tile, staging, and work stores remain untracked
 
 #### Scenario: Recover admission interruption
-- **WHEN** an upload is rejected or interrupted before durable admission
-- **THEN** no queued visible map mutation is left behind
-- **AND** unreferenced staging or promoted files are cleaned without deleting another upload's files
+- **WHEN** a library upload is interrupted or style attachment fails before commit
+- **THEN** request-level finally removes the temporary upload and failed attachment queues no style
+- **AND** committed sources remain, while a process crash may leave temporary/orphaned files with no startup cleanup
 
 ### Requirement: Return safe errors across HTTP and SSE phases
 Expected HTTP failures SHALL use ProblemDetails and unexpected failures before response start SHALL return safe HTTP 500. Processing failures SHALL appear as failed style state and SHALL NOT terminate the worker. Stream failures after headers SHALL send a safe error event and close; deleted maps SHALL emit mapDeleted and close. Internal diagnostics SHALL be logged without being exposed.
@@ -366,12 +383,12 @@ Expected HTTP failures SHALL use ProblemDetails and unexpected failures before r
 - **AND** subscribers receive a safe code and message without exception details or physical paths
 
 ### Requirement: Document maps content ownership and rendering metadata
-OpenAPI SHALL document JSON map creation, complete map listing, explicit map routes, map/group DTO changes, style upload forms, SSE, geometry, retries, PATCH, and errors. Game responses SHALL have no singular mapId. Tile documentation SHALL describe static WebP GET/HEAD, cache validators, no database checks, and eventual cleanup without a tile API operation.
+OpenAPI SHALL retain nine map operations, explicit map scope, fifteen-field MapDto, geometry, retry, SSE, and static WebP delivery. AddMapStyle SHALL document name/backgroundColor/sourceAssetId JSON rather than multipart; style DTOs SHALL include shared source image metadata. Documentation SHALL explain public library originals and asset preservation during derived-output/resource deletion.
 
 #### Scenario: Discover independent map and style creation
 - **WHEN** a client reads OpenAPI
-- **THEN** CreateMap documents required name/width/height JSON and AddMapStyle documents required name/backgroundColor/file multipart fields
-- **AND** ListMaps returns a plain array; map and content routes require their game/map identifiers, and legacy singular/game-wide content routes are absent
+- **THEN** CreateMap remains name/width/height JSON and AddMapStyle becomes name/backgroundColor/sourceAssetId JSON with no file picker
+- **AND** maps remain complete arrays/DTOs while file uploads occur only through the library and legacy routes remain absent
 
 ### Requirement: Validate map names within their game
 Map names SHALL be trimmed, preserve display spelling, contain 1..200 characters, and be unique per game after invariant case normalization. Duplicate names SHALL return HTTP 409 with name errors, including recognized save-time conflicts. Different games SHALL allow equal names. No editable map order, selected-map field, or map metadata PATCH SHALL be introduced in this scope.
@@ -388,15 +405,3 @@ GET /games/{gameId}/maps SHALL return HTTP 200 with a plain array of complete ma
 - **WHEN** a game owns blank and styled maps, including equal creation timestamps
 - **THEN** each map appears once with full geometry and styles, ordered by createdAt then id
 - **AND** maps of other games never appear
-
-### Requirement: Preserve existing data when adopting map ownership
-Ownership migration SHALL preserve existing IDs, dimensions, metadata, coordinates, media, and file identities. Existing groups SHALL be assigned to an explicitly determined map of their game. Missing or ambiguous assignments, missing names/dimensions, or destination conflicts SHALL stop the upgrade before destructive changes. The upgrade SHALL NOT invent dimensions, silently delete content, or modify applied migrations.
-
-#### Scenario: Upgrade a prepared legacy game
-- **WHEN** legacy maps have supplied valid names and every legacy group has one valid destination map
-- **THEN** the upgrade preserves all descendant IDs, values, timestamps, and original/tile paths while establishing map ownership
-
-#### Scenario: Refuse an unresolved legacy assignment
-- **WHEN** a game has legacy groups but no prepared map or an assignment is ambiguous
-- **THEN** the upgrade fails without discarding or partially moving any data
-- **AND** an operator must explicitly supply the missing map/name/dimensions or mapping before retrying

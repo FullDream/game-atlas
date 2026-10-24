@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using GameAtlas.Domain.Maps;
+using GameAtlas.Application.Media;
 
 namespace GameAtlas.Application.Maps;
 
@@ -7,6 +8,7 @@ public sealed record MapStyleDto(
 	Guid Id,
 	string Name,
 	string BackgroundColor,
+	ImageAssetDto Source,
 	MapProcessingStatus Status,
 	int Progress,
 	MapProcessingErrorDto? Error,

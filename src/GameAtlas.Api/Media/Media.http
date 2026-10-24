@@ -1,0 +1,71 @@
+@host = https://localhost:7001
+@folderId = 00000000-0000-0000-0000-000000000001
+@assetId = 00000000-0000-0000-0000-000000000002
+
+### Browse root
+GET {{host}}/media?offset=0&limit=20
+
+### Search immediate folder contents
+GET {{host}}/media?folderId={{folderId}}&search=icon&limit=20
+
+### Create a root folder
+POST {{host}}/media/folders
+Content-Type: application/json
+
+{
+  "name": "Icons"
+}
+
+### Rename and move a folder to root
+PATCH {{host}}/media/folders/{{folderId}}
+Content-Type: application/merge-patch+json
+
+{
+  "name": "Shared icons",
+  "parentId": null
+}
+
+### Update shared image alt
+PATCH {{host}}/media/assets/{{assetId}}
+Content-Type: application/merge-patch+json
+
+{
+  "alt": "Mountain entrance"
+}
+
+### Delete an empty folder
+DELETE {{host}}/media/folders/{{folderId}}
+
+### Upload one image (name defaults to basename; replace local file path)
+POST {{host}}/media/assets
+Content-Type: multipart/form-data; boundary=media-upload
+
+--media-upload
+Content-Disposition: form-data; name="alt"
+
+Mountain entrance
+--media-upload
+Content-Disposition: form-data; name="file"; filename="icon.png"
+Content-Type: image/png
+
+< ./icon.png
+--media-upload--
+
+### Download the immutable original
+GET {{host}}/media/files/{{assetId}}
+
+### Read original headers
+HEAD {{host}}/media/files/{{assetId}}
+
+### Read a video byte range
+GET {{host}}/media/files/{{assetId}}
+Range: bytes=0-65535
+
+### Clear a video's preview while retaining the preview image
+PATCH {{host}}/media/assets/{{assetId}}
+Content-Type: application/merge-patch+json
+
+{"previewAssetId":null}
+
+### Delete an unused asset; attached assets return 409
+DELETE {{host}}/media/assets/{{assetId}}

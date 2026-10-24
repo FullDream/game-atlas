@@ -1,4 +1,5 @@
 using GameAtlas.Domain.Maps;
+using GameAtlas.Application.Media;
 
 namespace GameAtlas.Application.Maps;
 
@@ -35,6 +36,7 @@ public static class MapMappingExtensions
 			style.Id,
 			style.Name,
 			style.BackgroundColor,
+			style.Source.ToDto(),
 			style.Status,
 			style.Progress,
 			error,

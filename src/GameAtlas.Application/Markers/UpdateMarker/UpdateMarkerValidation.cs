@@ -1,6 +1,5 @@
 using FluentValidation;
 using GameAtlas.Application.Common.Validation;
-using GameAtlas.Application.Markers.Media;
 using GameAtlas.Domain;
 using GameAtlas.Domain.Markers;
 
@@ -33,8 +32,10 @@ public sealed class UpdateMarkerValidation : AbstractValidator<UpdateMarker>
 		When(command => command.Media.IsSpecified, () =>
 		{
 			RuleFor(command => command.Media.Value).NotNull().OverridePropertyName(nameof(UpdateMarker.Media));
-			RuleForEach(command => command.Media.Value).NotNull().SetValidator(new MarkerMediaInputValidation())
+			RuleForEach(command => command.Media.Value).NotNull().NotEqual(Guid.Empty)
 				.OverridePropertyName(nameof(UpdateMarker.Media));
+			RuleFor(command => command.Media.Value).Must(ids => ids is null || ids.Distinct().Count() == ids.Count)
+				.WithMessage("Media asset IDs must be distinct.").OverridePropertyName(nameof(UpdateMarker.Media));
 		});
 	}
 }

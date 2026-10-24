@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Maps.Images;
+using GameAtlas.Application.Media.Storage;
+using GameAtlas.Infrastructure.Media.Storage;
 using GameAtlas.Application.Maps.Storage;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Infrastructure.Maps.Persistence;
@@ -26,6 +28,7 @@ public class MapFaultTests
 		await using var factory = Factory(new MapStorageFaults(), fault);
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		using var client = factory.CreateHttpsClient();
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Resources", 1);
@@ -72,37 +75,7 @@ public class MapFaultTests
 			.AnyAsync(intent => intent.MapId == map.Id && !intent.OutputsOnly));
 		var storage = factory.Services.GetRequiredService<IMapStorage>();
 
-		Assert.True(File.Exists(storage.OriginalPath(map.Id, style.Id)));
-	}
-
-	[Fact]
-	public async Task FailedImmediateRollbackCleanupLeavesDurableOwnersForRestart()
-	{
-		var faults = new MapStorageFaults { FailPromotionNumber = 1, FailAfterPromotion = true, FailCleanup = true };
-		await using var factory = Factory(faults);
-
-		await factory.MigrateAsync();
-		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
-		using var upload = MapTestData.Style();
-		using var rejected = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
-
-		Assert.Equal(HttpStatusCode.InternalServerError, rejected.StatusCode);
-		Assert.NotEmpty(Directory.EnumerateFiles(factory.MapStoragePath, "original", SearchOption.AllDirectories));
-		await using (var scope = factory.Services.CreateAsyncScope())
-		{
-			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-			Assert.True(await context.Maps.AnyAsync());
-			Assert.True(await context.Set<MapCleanupIntent>().AnyAsync(intent => intent.StyleId != null));
-		}
-
-		faults.FailCleanup = false;
-		var restarted = ActivatorUtilities.CreateInstance<MapProcessor>(factory.Services);
-
-		await restarted.RecoverAsync(CancellationToken.None);
-		await restarted.CleanupAsync(CancellationToken.None);
-		Assert.Empty(Directory.EnumerateFiles(factory.MapStoragePath, "*", SearchOption.AllDirectories));
+		Assert.True(File.Exists(factory.Services.GetRequiredService<IMediaStorage>().AssetPath(style.Source.Id)));
 	}
 
 	private sealed class SaveFault : SaveChangesInterceptor
@@ -130,6 +103,10 @@ public class MapFaultTests
 		new(interceptor: interceptor, configureServices: services =>
 		{
 			services.AddSingleton<LocalMapStorage>();
+			services.AddSingleton<LocalMediaStorage>();
+			services.AddSingleton<IMediaStorage>(provider =>
+				new MediaFaultStorage(provider.GetRequiredService<LocalMediaStorage>(), faults));
+
 			services.AddSingleton<IMapStorage>(provider => new MapFaultStorage(
 				provider.GetRequiredService<LocalMapStorage>(), faults));
 		});
@@ -141,6 +118,7 @@ public class MapFaultTests
 		await using var factory = Factory(faults);
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		using var client = factory.CreateHttpsClient();
 		using var content = MapTestData.Style();
@@ -162,13 +140,17 @@ public class MapFaultTests
 		await using var factory = Factory(new MapStorageFaults(), fault);
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		using var client = factory.CreateHttpsClient();
 		using var upload = MapTestData.Style();
 
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+		var image = await MediaTestData.UploadImageAsync(client, width: 23, height: 17);
+
 		fault.Armed = true;
-		using var lost = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", upload);
+		using var lost = await client.PostAsJsonAsync($"{MapTestData.PathFor(game.Id)}/styles",
+			new { name = "Atlas", backgroundColor = "#fff", sourceAssetId = image.Id });
 
 		Assert.Equal(HttpStatusCode.InternalServerError, lost.StatusCode);
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));
@@ -176,7 +158,7 @@ public class MapFaultTests
 		var style = admitted.Styles.Single();
 		var storage = factory.Services.GetRequiredService<IMapStorage>();
 
-		Assert.True(File.Exists(storage.OriginalPath(admitted.Id, style.Id)));
+		Assert.True(File.Exists(factory.Services.GetRequiredService<IMediaStorage>().AssetPath(style.Source.Id)));
 		Assert.True(await factory.Services.GetRequiredService<MapProcessor>().RunNextAsync(CancellationToken.None));
 	}
 
@@ -186,6 +168,7 @@ public class MapFaultTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		using var client = factory.CreateHttpsClient();
 		using var upload = MapTestData.Style();
@@ -207,7 +190,7 @@ public class MapFaultTests
 		var storage = factory.Services.GetRequiredService<IMapStorage>();
 		var images = factory.Services.GetRequiredService<IMapImageProcessor>();
 
-		await images.GenerateAsync(storage.OriginalPath(map.Id, dto.Id),
+		await images.GenerateAsync(factory.Services.GetRequiredService<IMediaStorage>().AssetPath(dto.Source.Id),
 			storage.WorkPath(map.Id, dto.Id, attempt),
 			MapGeometry.Create(map.Width, map.Height).Value!,
 			new Progress<int>(), CancellationToken.None);
@@ -235,6 +218,7 @@ public class MapFaultTests
 		await using var factory = Factory(faults);
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		using var client = factory.CreateHttpsClient();
 		using var upload = MapTestData.Style();
@@ -246,7 +230,7 @@ public class MapFaultTests
 
 		Assert.True(await processor.RunNextAsync(CancellationToken.None));
 		await processor.CleanupAsync(CancellationToken.None);
-		Assert.True(File.Exists(storage.OriginalPath(map.Id, style.Id)));
+		Assert.True(File.Exists(factory.Services.GetRequiredService<IMediaStorage>().AssetPath(style.Source.Id)));
 		Assert.False(Directory.Exists(storage.TilesPath(map.Id, style.Id)));
 		faults.FailCleanup = true;
 		using var deleted = await client.DeleteAsync(MapTestData.PathFor(game.Id));
@@ -269,7 +253,7 @@ public class MapFaultTests
 		var restarted = ActivatorUtilities.CreateInstance<MapProcessor>(factory.Services);
 
 		await restarted.CleanupAsync(CancellationToken.None);
-		Assert.False(File.Exists(storage.OriginalPath(map.Id, style.Id)));
+		Assert.True(File.Exists(factory.Services.GetRequiredService<IMediaStorage>().AssetPath(style.Source.Id)));
 	}
 
 	private sealed class AfterCommitFault : DbTransactionInterceptor

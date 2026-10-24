@@ -35,17 +35,14 @@ public class MapOpenApiTests
 			form.GetProperty("required").EnumerateArray().Select(item => item.GetString()).Order());
 		var add = paths.GetProperty("/games/{gameId}/maps/{mapId}/styles").GetProperty("post");
 		var addSchema = Resolve(root, add.GetProperty("requestBody").GetProperty("content")
-			.GetProperty("multipart/form-data").GetProperty("schema"));
+			.GetProperty("application/json").GetProperty("schema"));
 		var addProperties = addSchema.GetProperty("properties");
 
-		Assert.Equal(new[] { "backgroundColor", "file", "name" },
+		Assert.Equal(new[] { "backgroundColor", "name", "sourceAssetId" },
 			addProperties.EnumerateObject().Select(property => property.Name).Order());
-		var fileSchema = Resolve(root, addProperties.GetProperty("file"));
-
-		Assert.True(fileSchema.TryGetProperty("format", out var fileFormat), fileSchema.GetRawText());
-		Assert.Equal("binary", fileFormat.GetString());
+		Assert.Equal("uuid", Resolve(root, addProperties.GetProperty("sourceAssetId")).GetProperty("format").GetString());
 		Assert.Equal(200, addProperties.GetProperty("name").GetProperty("maxLength").GetInt32());
-		Assert.Equal(new[] { "backgroundColor", "file", "name" },
+		Assert.Equal(new[] { "backgroundColor", "name", "sourceAssetId" },
 			addSchema.GetProperty("required").EnumerateArray().Select(item => item.GetString()).Order());
 		var responses = create.GetProperty("responses");
 
@@ -61,7 +58,7 @@ public class MapOpenApiTests
 		Assert.Equal(new[]
 		{
 			"backgroundColor", "createdAt", "error", "id", "name", "progress",
-			"status", "tilesUrlTemplate", "updatedAt"
+			"source", "status", "tilesUrlTemplate", "updatedAt"
 		}, style.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
 		Assert.Equal(new[] { "queued", "processing", "ready", "failed" },
 			Resolve(root, style.GetProperty("properties").GetProperty("status")).GetProperty("enum")
@@ -87,9 +84,7 @@ public class MapOpenApiTests
 		foreach (var operation in operations.Where(operation => operation.Name == "delete"))
 			Assert.False(operation.Value.GetProperty("responses").GetProperty("204").TryGetProperty("content", out _));
 
-		var markerRequest = root.GetProperty("components").GetProperty("schemas").GetProperty("MarkerMediaRequest");
-
-		Assert.True(markerRequest.TryGetProperty("anyOf", out _));
+		Assert.False(root.GetProperty("components").GetProperty("schemas").TryGetProperty("MarkerMediaRequest", out _));
 	}
 
 	private static JsonElement Resolve(JsonElement root, JsonElement schema)

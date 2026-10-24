@@ -1,6 +1,6 @@
 using System.Data.Common;
 using System.Net;
-using GameAtlas.Application.Maps.Storage;
+using GameAtlas.Application.Media.Storage;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Infrastructure.Maps.Processing;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -45,7 +45,7 @@ public class MapTileTests
 		Assert.Equal(tile.Content.Headers.ContentLength, head.Content.Headers.ContentLength);
 		Assert.Equal(HttpStatusCode.NotModified, unchanged.StatusCode);
 		Assert.Contains("immutable", tile.Headers.CacheControl!.ToString());
-		var storage = factory.Services.GetRequiredService<IMapStorage>();
+		var storage = factory.Services.GetRequiredService<IMediaStorage>();
 		var privatePaths = new[]
 		{
 			$"{prefix}/manifest.json", prefix,
@@ -54,7 +54,7 @@ public class MapTileTests
 			"/map-tiles/staging/original.webp", "/map-tiles/not-a-tile.webp"
 		};
 
-		Assert.True(File.Exists(storage.OriginalPath(map.Id, style.Id)));
+		Assert.True(File.Exists(storage.AssetPath(style.Source.Id)));
 
 		foreach (var path in privatePaths)
 		{

@@ -35,12 +35,9 @@ public sealed class MapImageProcessorTests : IDisposable
 		var path = Path.Combine(root, "original");
 
 		image.Pngsave(path);
-		var probe = processor.Probe(path);
 		var geometry = MapGeometry.Create(width, height).Value!;
 		var output = Path.Combine(root, "tiles");
 
-		Assert.Equal("png", probe.Value!.Format);
-		Assert.Equal(width, probe.Value.Width);
 		await processor.GenerateAsync(path, output, geometry, new Progress<int>(), CancellationToken.None);
 
 		for (var zoom = 0; zoom <= geometry.MaxZoom; zoom++)
@@ -80,20 +77,6 @@ public sealed class MapImageProcessorTests : IDisposable
 				}
 			}
 		}
-	}
-
-	[Fact]
-	public void ProbeDetectsContentAndRejectsUnsupportedHeaders()
-	{
-		using var image = Image.Black(4, 3, bands: 3);
-		var jpeg = Path.Combine(root, "misleading.png");
-
-		image.Jpegsave(jpeg);
-		Assert.Equal("jpeg", processor.Probe(jpeg).Value!.Format);
-		var unsupported = Path.Combine(root, "fake.jpg");
-
-		File.WriteAllText(unsupported, "<svg>not a supported image</svg>");
-		Assert.True(processor.Probe(unsupported).IsFailure);
 	}
 
 	[Fact]

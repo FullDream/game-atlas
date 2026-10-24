@@ -19,6 +19,6 @@ public static class MarkerErrors
 		"Marker.CategoryId.Required", "CategoryId must not be null.", nameof(Marker.CategoryId), ErrorType.Validation);
 
 	public static readonly Error InvalidMedia = new(
-		"Marker.Media.Invalid", "Media must be a non-null list of distinct attachments owned by this marker.",
+		"Marker.Media.Invalid", "Media must be a non-null ordered list of distinct, nonempty asset IDs.",
 		nameof(Marker.Media), ErrorType.Validation);
 }

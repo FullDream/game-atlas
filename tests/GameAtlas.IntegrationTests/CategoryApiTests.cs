@@ -21,10 +21,11 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		var path = CategoryTestData.Path(game.Id, group.Id);
-		using var created = await client.PostAsJsonAsync(path, new { name = "Name", icon = "icon", color });
+		using var created = await client.PostAsJsonAsync(path, new { name = "Name", iconAssetId = MediaTestData.IconId, color });
 		var dto = await ReadAsync(created);
 
 		Assert.Equal(expected, dto.Color);
@@ -42,21 +43,22 @@ public class CategoryApiTests
 
 	[Theory]
 	[InlineData("{}", 422)]
-	[InlineData("{\"name\":null,\"icon\":\"icon\",\"color\":\"#123456\"}", 422)]
+	[InlineData("{\"name\":null,\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\"}", 422)]
 	[InlineData("{\"name\":\"Name\",\"color\":\"#123456\"}", 422)]
-	[InlineData("{\"name\":\"Name\",\"icon\":\"icon\"}", 422)]
-	[InlineData("{\"name\":\"Name\",\"icon\":\"icon\",\"color\":\"red\"}", 422)]
-	[InlineData("{\"name\":\"Name\",\"icon\":\"icon\",\"color\":\"#123456\",\"order\":null}", 422)]
-	[InlineData("{\"name\":\"Name\",\"icon\":\"icon\",\"color\":\"#123456\",\"order\":0}", 422)]
-	[InlineData("{\"name\":\"Name\",\"icon\":\"icon\",\"color\":\"#123456\",\"order\":-1}", 422)]
-	[InlineData("{\"name\":\"Name\",\"icon\":\"icon\",\"color\":\"#123456\",\"order\":1.5}", 400)]
-	[InlineData("{\"name\":\"Name\",\"icon\":\"icon\",\"color\":\"#123456\",\"order\":\"1\"}", 400)]
-	[InlineData("{\"name\":\"Name\",\"icon\":\"icon\",\"color\":\"#123456\",\"order\":2147483648}", 400)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\"}", 422)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"red\"}", 422)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":null}", 422)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":0}", 422)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":-1}", 422)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":1.5}", 400)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":\"1\"}", 400)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":2147483648}", 400)]
 	public async Task CreationValidatesBeforePersistence(string body, int status)
 	{
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsync(CategoryTestData.Path(game.Id, group.Id),
@@ -68,15 +70,15 @@ public class CategoryApiTests
 	}
 
 	[Theory]
-	[InlineData(1, 1, true)]
-	[InlineData(200, 2048, true)]
-	[InlineData(201, 2048, false)]
-	[InlineData(200, 2049, false)]
-	public async Task StringBoundsApplyToCreateAndPatchWithoutPartialChanges(int nameLength, int iconLength, bool valid)
+	[InlineData(1, true)]
+	[InlineData(200, true)]
+	[InlineData(201, false)]
+	public async Task StringBoundsApplyToCreateAndPatchWithoutPartialChanges(int nameLength, bool valid)
 	{
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
@@ -85,7 +87,7 @@ public class CategoryApiTests
 		var body = new
 		{
 			name = " " + new string('n', nameLength) + " ",
-			icon = " " + new string('i', iconLength) + " ",
+			iconAssetId = MediaTestData.IconId,
 			color = "#abcdef"
 		};
 
@@ -105,17 +107,18 @@ public class CategoryApiTests
 	[InlineData("https://example.test/icon.png")]
 	[InlineData("https://example.test/icon.webp")]
 	[InlineData("https://example.test/icon")]
-	public async Task IconReferencesDoNotRequireFormatOrRemoteValidation(string icon)
+	public async Task LegacyIconStringsAreRejected(string icon)
 	{
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id),
 			new { name = "Name", icon, color = "#123456" });
 
-		Assert.Equal(icon, (await ReadAsync(response)).Icon);
+		Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
 	}
 
 	[Fact]
@@ -124,6 +127,7 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var otherGroup = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
@@ -166,13 +170,14 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game", status);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id), new
 		{
 			name = " Ресурсы ",
-			icon = " /icons/chest.svg ",
+			iconAssetId = MediaTestData.IconId,
 			color = "#ff8800",
 			order = 99,
 			id = Guid.Empty,
@@ -187,7 +192,7 @@ public class CategoryApiTests
 		Assert.Equal(7, dto.Id.Version);
 		Assert.Equal(group.Id, dto.CategoryGroupId);
 		Assert.Equal("Ресурсы", dto.Name);
-		Assert.Equal("/icons/chest.svg", dto.Icon);
+		Assert.Equal(MediaTestData.IconId, dto.Icon.Id);
 		Assert.Equal("#FF8800", dto.Color);
 		Assert.Equal(99, dto.Order);
 		Assert.Equal(0, dto.MarkersCount);
@@ -208,6 +213,7 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, source) = await CategoryTestData.ParentAsync(factory);
 		var destination = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Destination", 2);
 		var category = await CategoryTestData.SeedAsync(factory, source.Id, name, 4);
@@ -232,7 +238,7 @@ public class CategoryApiTests
 		{
 			categoryGroupId = destination.Id,
 			name = "Unique",
-			icon = "new.webp",
+			iconAssetId = MediaTestData.IconId,
 			color = "#abcdef"
 		});
 		var dto = await ReadAsync(moved);
@@ -241,7 +247,7 @@ public class CategoryApiTests
 		Assert.Equal(category.Id, dto.Id);
 		Assert.Equal(category.CreatedAt, dto.CreatedAt);
 		Assert.Equal(4, dto.Order);
-		Assert.Equal("new.webp", dto.Icon);
+		Assert.Equal(MediaTestData.IconId, dto.Icon.Id);
 		Assert.Equal("#ABCDEF", dto.Color);
 		Assert.Empty(await CategoryTestData.LoadAsync(factory, source.Id));
 		Assert.Equal(2, (await CategoryTestData.LoadAsync(factory, destination.Id)).Length);
@@ -266,13 +272,14 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
 		var path = CategoryTestData.Path(game.Id, group.Id, category.Id);
 		var before = Assert.Single(await CategoryTestData.LoadAsync(factory, group.Id));
 		using var noOp = await PatchAsync(client, path,
-			$"{{\"name\":\" Category \",\"icon\":\" icon \",\"color\":\"#123456\"," +
+			$"{{\"name\":\" Category \",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\"," +
 			$"\"categoryGroupId\":\"{group.Id}\"}}", mediaType);
 
 		Assert.Equal(before, await ReadAsync(noOp));
@@ -290,14 +297,14 @@ public class CategoryApiTests
 	[Theory]
 	[InlineData("{}", 422)]
 	[InlineData("{\"name\":null}", 422)]
-	[InlineData("{\"icon\":null}", 422)]
+	[InlineData("{\"iconAssetId\":null}", 422)]
 	[InlineData("{\"color\":null}", 422)]
 	[InlineData("{\"order\":null}", 422)]
 	[InlineData("{\"categoryGroupId\":null}", 422)]
 	[InlineData("{\"name\":\"New\",\"order\":0}", 422)]
 	[InlineData("{\"name\":\"New\",\"order\":-1}", 422)]
 	[InlineData("{\"name\":\" \"}", 422)]
-	[InlineData("{\"icon\":\" \"}", 422)]
+	[InlineData("{\"iconAssetId\":\" \"}", 400)]
 	[InlineData("{\"name\":\"New\",\"color\":\"red\"}", 422)]
 	[InlineData("{\"color\":\"#123456\\n\"}", 422)]
 	[InlineData("null", 400)]
@@ -305,7 +312,7 @@ public class CategoryApiTests
 	[InlineData("1", 400)]
 	[InlineData("{", 400)]
 	[InlineData("{\"name\":1}", 400)]
-	[InlineData("{\"icon\":[]}", 400)]
+	[InlineData("{\"iconAssetId\":[]}", 400)]
 	[InlineData("{\"color\":false}", 400)]
 	[InlineData("{\"order\":1.5}", 400)]
 	[InlineData("{\"order\":\"1\"}", 400)]
@@ -322,6 +329,7 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
@@ -341,6 +349,7 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
@@ -358,6 +367,7 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var (otherGame, otherGroup) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
@@ -407,6 +417,7 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var other = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
 		using var client = factory.CreateHttpsClient();
@@ -452,6 +463,7 @@ public class CategoryApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		var path = CategoryTestData.Path(game.Id, group.Id);
@@ -463,7 +475,7 @@ public class CategoryApiTests
 
 		Assert.Equal(HttpStatusCode.UnprocessableEntity, overflow.StatusCode);
 		using var explicitOrder = await client.PostAsJsonAsync(path,
-			new { name = "Duplicate order", icon = "icon", color = "#123456", order = 1 });
+			new { name = "Duplicate order", iconAssetId = MediaTestData.IconId, color = "#123456", order = 1 });
 
 		Assert.Equal(1, (await ReadAsync(explicitOrder)).Order);
 		var other = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
@@ -472,7 +484,7 @@ public class CategoryApiTests
 		Assert.Equal(1, (await ReadAsync(isolated)).Order);
 	}
 
-	internal static object Body(string name = "Category") => new { name, icon = "icon", color = "#123456" };
+	internal static object Body(string name = "Category") => new { name, iconAssetId = MediaTestData.IconId, color = "#123456" };
 
 	internal static async Task<CategoryDto> ReadAsync(HttpResponseMessage response)
 	{

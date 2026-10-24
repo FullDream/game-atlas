@@ -1,20 +1,17 @@
 using GameAtlas.Domain.Markers;
-using GameAtlas.Domain.Markers.Media;
 
 namespace GameAtlas.Domain.Tests;
 
 public class MarkerTests
 {
 	[Fact]
-	public void CreatesAggregateAndPreservesNormalizedNoOpsAndChildIdentity()
+	public void CreatesAggregateAndPreservesNormalizedNoOpsAndAttachmentIdentity()
 	{
-		var position = Assert.IsType<Position>(Position.Create(1, -2).Value);
-		var image = Assert.IsType<ImageMedia>(ImageMedia.Create(" image ", 1, 2).Value);
-		var video = Assert.IsType<VideoMedia>(VideoMedia.Create("video", " ").Value);
-		var marker = Assert.IsType<Marker>(Marker.Create(Guid.NewGuid(), " Chest ", position,
-			" Description ", [image, video]).Value);
+		var ids = new Guid?[] { Guid.NewGuid(), Guid.NewGuid() };
+		var position = Position.Create(1, -2).Value!;
+		var marker = Marker.Create(Guid.NewGuid(), " Chest ", position, " Description ", ids).Value!;
 		var before = marker.UpdatedAt;
-		var childIds = marker.Media.Select(item => item.Id).ToArray();
+		var attachments = marker.Media.ToArray();
 
 		Assert.Equal(7, marker.Id.Version);
 		Assert.Equal("Chest", marker.Name);
@@ -23,35 +20,26 @@ public class MarkerTests
 		Assert.Equal(new[] { 0, 1 }, marker.Media.Select(item => item.Order));
 		Assert.All(marker.Media, item => Assert.Equal(marker.Id, item.MarkerId));
 		Assert.False(marker.Update().Value);
-		Assert.False(marker.Update(name: " Chest ", description: " Description ",
-			media: new MarkerMedia[]
-			{
-				Assert.IsType<ImageMedia>(ImageMedia.Create("image", 1, 2).Value),
-				Assert.IsType<VideoMedia>(VideoMedia.Create("video").Value)
-			}).Value);
+		Assert.False(marker.Update(name: " Chest ", description: " Description ", media: ids).Value);
 		Assert.Equal(before, marker.UpdatedAt);
-		Assert.Equal(childIds, marker.Media.Select(item => item.Id));
-		Assert.Equal("Chest", Marker.Create(marker.CategoryId, "Chest", position).Value?.Name);
+		Assert.Same(attachments[0], marker.Media.First());
 	}
 
 	[Fact]
-	public void UpdatesAllFieldsAndReplacesThenClearsMedia()
+	public void ReorderingRetainsExistingRelationshipsAndClearingDoesNotChangeIdentityOrCreationTime()
 	{
-		var marker = Create();
+		var first = Guid.NewGuid();
+		var second = Guid.NewGuid();
+		var marker = Marker.Create(Guid.NewGuid(), "Name", Position.Create(0, 0).Value, media: [first, second]).Value!;
 		var id = marker.Id;
 		var created = marker.CreatedAt;
-		var destination = Guid.NewGuid();
-		var position = Assert.IsType<Position>(Position.Create(10, 20).Value);
-		var youtube = Assert.IsType<YouTubeVideoMedia>(YouTubeVideoMedia.Create("dQw4w9WgXcQ").Value);
+		var firstAttachment = marker.Media.First();
 
-		Assert.True(marker.Update(destination, "New", " desc ", position,
-			new MarkerMedia[] { youtube }).Value);
-		Assert.Equal(destination, marker.CategoryId);
-		Assert.Equal(position, marker.Position);
-		Assert.Equal("New", marker.Name);
-		Assert.Equal("desc", marker.Description);
-		Assert.Equal(youtube.Id, Assert.Single(marker.Media).Id);
-		Assert.True(marker.Update(description: " ", media: Array.Empty<MarkerMedia>()).Value);
+		Assert.True(marker.Update(media: new Guid?[] { second, first }).Value);
+		Assert.Equal(new[] { second, first }, marker.Media.Select(item => item.AssetId));
+		Assert.Equal(new[] { 0, 1 }, marker.Media.Select(item => item.Order));
+		Assert.Same(firstAttachment, marker.Media.Last());
+		Assert.True(marker.Update(name: "New", description: " ", media: Array.Empty<Guid?>()).Value);
 		Assert.Null(marker.Description);
 		Assert.Empty(marker.Media);
 		Assert.Equal(id, marker.Id);
@@ -59,26 +47,27 @@ public class MarkerTests
 	}
 
 	[Fact]
-	public void InvalidChangesAreAtomicAndChildrenCannotBeReusedAcrossMarkers()
+	public void InvalidChangesAreAtomicAndLibraryAssetsCanBeReusedAcrossMarkers()
 	{
 		var marker = Create();
-		var child = Assert.IsType<ImageMedia>(ImageMedia.Create("image", 1, 1).Value);
-		var other = Assert.IsType<Marker>(Marker.Create(Guid.NewGuid(), "Other", marker.Position,
-			media: [child]).Value);
+		var assetId = Guid.NewGuid();
+		var other = Marker.Create(Guid.NewGuid(), "Other", marker.Position, media: [assetId]).Value!;
 		var before = marker.UpdatedAt;
-		var name = marker.Name;
 
 		Assert.True(marker.Update(name: " ", categoryId: Guid.NewGuid()).IsFailure);
 		Assert.True(marker.Update(name: "New", position: (Position?)null).IsFailure);
 		Assert.True(marker.Update(name: "New", categoryId: (Guid?)null).IsFailure);
 		Assert.True(marker.Update(name: "New", description: new string('x', 5001)).IsFailure);
-		Assert.True(marker.Update(name: "New", media: new MarkerMedia?[] { null }).IsFailure);
-		Assert.True(marker.Update(name: "New", media: new MarkerMedia[] { child }).IsFailure);
-		Assert.True(marker.Update(media: (MarkerMedia[]?)null).IsFailure);
+		Assert.True(marker.Update(name: "New", media: new Guid?[] { null }).IsFailure);
+		Assert.True(marker.Update(name: "New", media: new Guid?[] { Guid.Empty }).IsFailure);
+		Assert.True(marker.Update(name: "New", media: new Guid?[] { assetId, assetId }).IsFailure);
+		Assert.True(marker.Update(media: (Guid?[]?)null).IsFailure);
 		Assert.Equal(before, marker.UpdatedAt);
-		Assert.Equal(name, marker.Name);
+		Assert.Equal("Name", marker.Name);
 		Assert.Empty(marker.Media);
-		Assert.Equal(other.Id, child.MarkerId);
+		Assert.True(marker.Update(media: new Guid?[] { assetId }).Value);
+		Assert.Equal(assetId, Assert.Single(other.Media).AssetId);
+		Assert.Equal(assetId, Assert.Single(marker.Media).AssetId);
 	}
 
 	[Theory]
@@ -86,13 +75,8 @@ public class MarkerTests
 	[InlineData(1, true)]
 	[InlineData(200, true)]
 	[InlineData(201, false)]
-	public void NameBoundsApplyAfterTrimming(int length, bool valid)
-	{
-		var marker = Create();
+	public void NameBoundsApplyAfterTrimming(int length, bool valid) =>
+		Assert.Equal(valid, Create().Update(name: " " + new string('x', length) + " ").IsSuccess);
 
-		Assert.Equal(valid, marker.Update(name: " " + new string('x', length) + " ").IsSuccess);
-	}
-
-	private static Marker Create() => Assert.IsType<Marker>(Marker.Create(Guid.NewGuid(), "Name",
-		Assert.IsType<Position>(Position.Create(0, 0).Value)).Value);
+	private static Marker Create() => Marker.Create(Guid.NewGuid(), "Name", Position.Create(0, 0).Value).Value!;
 }

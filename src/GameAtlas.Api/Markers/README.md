@@ -24,9 +24,8 @@ POST accepts categoryId, name, and position, plus optional description and media
   "description": "Behind the waterfall",
   "position": { "x": -120.5, "y": 200 },
   "media": [
-    { "type": "image", "url": "/images/chest.webp", "width": 640, "height": 480, "alt": "Chest entrance" },
-    { "type": "youtubeVideo", "videoId": "Ab_cd-Ef012" },
-    { "type": "video", "url": "/videos/chest.mp4", "preview": "/images/preview.jpg" }
+    "019a0000-0000-7000-8000-000000000112",
+    "019a0000-0000-7000-8000-000000000113"
   ]
 }
 ```
@@ -44,25 +43,22 @@ cannot override these values. Id and createdAt are immutable. Duplicate marker n
   input returns 422. Malformed GUIDs return 400.
 - Omitted media defaults to []. Array order is preserved.
 
-## Media union
+## Shared media attachments
 
-The exact, case-sensitive discriminator values are image, youtubeVideo, and video. Type may appear anywhere
-inside an object. OpenAPI documents anyOf with all three discriminator mappings for requests and responses.
+Mutation `media` is an ordered array of distinct committed library asset UUIDs. Upload files through
+`POST /media/assets` before attaching them. Omission at creation means []; arrays are replaced as a whole.
+Images (including accepted SVG) and uploaded MP4/WebM videos can be reused across markers, maps and games.
+YouTube and legacy URL/object inputs are no longer supported.
 
-Images require url and positive 32-bit integer width/height. Alt defaults to the empty string when omitted,
-is preserved as supplied, and cannot be null. YouTube videos require an 11-character videoId containing only ASCII
-letters, digits, underscores, or hyphens; full YouTube URLs are not accepted. Videos require url and may include
-preview. Omitted/null/blank preview becomes null; other preview references are trimmed.
+Responses resolve the shared image/video DTO union with required `type` (`image` or `video`). They include asset IDs,
+names, URLs and current library metadata. Images include shared alt and nullable persisted placeholders;
+video preview is a shared image DTO or null. There are no marker-owned copies of these fields.
+Update alt, names or video previews through the library; subsequent marker reads see those changes without changing
+marker timestamps. Reordering the same IDs changes attachment order while retaining existing relationships.
 
-Url and nonblank preview references are trimmed, contain 1..2048 characters, and may be full links or relative paths
-with any extension. There are no uploads, remote requests, format checks, external availability checks, or transcoding.
-The API never deletes referenced files.
-
-Media have internal entity IDs for persistence only. Neither requests nor responses expose those IDs, and there
-are no independent media endpoints, names, or captions. Use image alt for alternative text.
-Missing/unknown type, properties from another subtype, internal IDs, and unknown media members return 400.
-Missing/null required subtype values, invalid dimensions, and null array elements return indexed validation errors
-with 422. Invalid JSON types, fractional/overflowing integer dimensions, and malformed JSON return 400.
+Null arrays, null elements, empty GUIDs and duplicate IDs return 422; malformed GUIDs and legacy object items return
+400. Missing assets return 404; folder IDs return 422. Attachment validation is atomic with scalar and position changes.
+Asset deletion returns 409 while any marker or other consumer uses it. Removing an attachment does not delete the asset.
 
 ## Atomic updates
 
@@ -96,7 +92,7 @@ and existing media IDs without a write. Creation time and parent game/map/group/
 
 ## Deletion and counts
 
-DELETE physically removes the marker and all its media rows, returning empty 204; missing/repeated/foreign marker
+DELETE physically removes the marker and all its attachment rows, returning empty 204; missing/repeated/foreign marker
 deletion returns 404 ProblemDetails. Category, group, map, and game deletion cascade through their current markers and
 media. Moved markers and transferred categories survive deletion of former parents; referenced files remain untouched.
 
@@ -104,4 +100,4 @@ Category markersCount is computed from committed marker rows in every category r
 same-map transfers change the next count, without storing counters or touching category timestamps.
 All expected errors use ProblemDetails. Unexpected storage failures are logged centrally and return safe 500 responses.
 
-Apply the Markers migration explicitly before serving these endpoints; see the Infrastructure persistence README.
+Apply the current media-library migrations explicitly before serving these endpoints; see the Infrastructure persistence README.

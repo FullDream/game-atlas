@@ -1,3 +1,4 @@
+@sourceAssetId = 00000000-0000-0000-0000-000000000005
 @host = https://localhost:7000
 @gameId = 00000000-0000-0000-0000-000000000001
 @mapId = 00000000-0000-0000-0000-000000000004
@@ -20,24 +21,11 @@ Content-Type: application/json
 
 {"name":"World","width":1025,"height":513}
 
-### Append one style with flat metadata and one original
+### Attach an existing library image with matching map dimensions
 POST {{host}}/games/{{gameId}}/maps/{{mapId}}/styles
-Content-Type: multipart/form-data; boundary=map-upload
+Content-Type: application/json
 
---map-upload
-Content-Disposition: form-data; name="name"
-
-Night
---map-upload
-Content-Disposition: form-data; name="backgroundColor"
-
-#000
---map-upload
-Content-Disposition: form-data; name="file"; filename="night.png"
-Content-Type: image/png
-
-< ./night.png
---map-upload--
+{"name":"Night","backgroundColor":"#000","sourceAssetId":"{{sourceAssetId}}"}
 
 ### Retry only a failed style, retaining its original
 POST {{host}}/games/{{gameId}}/maps/{{mapId}}/styles/{{styleId}}/retry

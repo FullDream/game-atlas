@@ -65,11 +65,13 @@ public class MapTests
 	}
 
 	private static MapStyleInput Input(string name = "Atlas", string color = "#abc", int width = 1025,
-		int height = 513) => new(name, color, "png", width, height, 100);
+		int height = 513) => new(name, color,
+		GameAtlas.Domain.Media.ImageAsset.Create(Guid.CreateVersion7(), "Source", null, "image/png", 100, width, height).Value);
 
 	private static Map Create(params MapStyleInput[] inputs)
 	{
-		var map = Map.Create(Guid.CreateVersion7(), "World", inputs[0].Width, inputs[0].Height).Value!;
+		var map = Map.Create(Guid.CreateVersion7(), "World", (int)(inputs[0].Source?.Width ?? 0),
+			(int)(inputs[0].Source?.Height ?? 0)).Value!;
 
 		foreach (var input in inputs)
 			Assert.True(map.AddStyle(input).IsSuccess);
@@ -180,7 +182,7 @@ public class MapTests
 	{
 		var input = Input() with { Name = name, BackgroundColor = color };
 
-		var map = Map.Create(Guid.NewGuid(), "World", input.Width, input.Height).Value!;
+		var map = Map.Create(Guid.NewGuid(), "World", (int)(input.Source?.Width ?? 0), (int)(input.Source?.Height ?? 0)).Value!;
 
 		Assert.True(map.AddStyle(input).IsFailure);
 	}

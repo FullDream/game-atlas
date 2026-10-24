@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using GameAtlas.Application.Maps.Storage;
+using GameAtlas.Application.Media.Storage;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,7 +33,7 @@ public class MapMultipartTests
 		if (missingField != "backgroundColor")
 			content.Add(new StringContent("#fff"), "backgroundColor");
 
-		using var response = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", content);
+		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), content);
 		using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
 		Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
@@ -66,7 +66,6 @@ public class MapMultipartTests
 	}
 
 	[Theory]
-	[InlineData("application/json")]
 	[InlineData("application/octet-stream")]
 	[InlineData("text/plain")]
 	public async Task UnsupportedRequestMediaReturns415(string contentType)
@@ -98,7 +97,7 @@ public class MapMultipartTests
 		using var content = new MultipartFormDataContent
 		{
 			{ new StringContent("Atlas"), "name" },
-			{ new StringContent("#fff"), "backgroundColor" }
+			{ new StringContent(""), "alt" }
 		};
 
 		if (mode != "missingFile")
@@ -111,7 +110,7 @@ public class MapMultipartTests
 		else if (mode is "unknown" or "batch")
 			content.Add(new StringContent("[]"), mode == "batch" ? "metadata" : "description");
 
-		using var response = await MapTestData.UploadFirstStyleAsync(client, game.Id, content);
+		using var response = await client.PostAsync("/media/assets", content);
 
 		Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 		Assert.Empty(Directory.EnumerateFiles(factory.MapStoragePath, "*", SearchOption.AllDirectories));
@@ -148,17 +147,19 @@ public class MapMultipartTests
 	{
 		var image = MapTestData.ImageBytes();
 		await using var factory = new GameApiFactory(configureServices: services =>
-			services.AddSingleton<IOptions<MapUploadLimits>>(Options.Create(new MapUploadLimits
+			services.AddSingleton<IOptions<MediaLimits>>(Options.Create(new MediaLimits
 			{
-				FileBytes = image.Length
+				MaximumBytes = image.Length
 			})));
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
-		using var multipart = MapTestData.Style(exceed ? [.. image, 0] : image);
-		using var request = new HttpRequestMessage(HttpMethod.Post, $"{MapTestData.PathFor(game.Id)}/styles")
+		using var multipart = new MultipartFormDataContent();
+
+		multipart.Add(new ByteArrayContent(exceed ? [.. image, 0] : image), "file", "original.png");
+		using var request = new HttpRequestMessage(HttpMethod.Post, "/media/assets")
 		{
 			Content = new StreamContent(await multipart.ReadAsStreamAsync())
 		};

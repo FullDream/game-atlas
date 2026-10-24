@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using GameAtlas.Domain.Result;
+using GameAtlas.Domain.Media;
 
 namespace GameAtlas.Domain.Maps;
 
@@ -8,6 +9,7 @@ public sealed class MapStyle
 	public const int NameMaxLength = 200;
 	public const string ColorPattern = @"\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\z";
 	private static readonly Regex ColorRegex = new(ColorPattern, RegexOptions.CultureInvariant);
+	private ImageAsset? source;
 
 	private MapStyle(Guid id) => Id = id;
 
@@ -17,10 +19,12 @@ public sealed class MapStyle
 	public string NormalizedName { get; private set; } = string.Empty;
 	public string BackgroundColor { get; private set; } = string.Empty;
 	public long CreationSequence { get; private set; }
-	public string Format { get; private set; } = string.Empty;
-	public int Width { get; private set; }
-	public int Height { get; private set; }
-	public long ByteLength { get; private set; }
+	public Guid SourceAssetId { get; private set; }
+	public ImageAsset Source => source ?? throw new InvalidOperationException("The style source must be loaded.");
+	public string Format => Source.ContentType[6..];
+	public int Width => checked((int)(Source.Width ?? 0));
+	public int Height => checked((int)(Source.Height ?? 0));
+	public long ByteLength => Source.ByteLength;
 	public MapProcessingStatus Status { get; private set; }
 	public int Progress { get; private set; }
 	public string? ErrorCode { get; private set; }
@@ -33,7 +37,7 @@ public sealed class MapStyle
 	internal void AssignCreationSequence(long sequence) => CreationSequence = sequence;
 
 	internal static Result<MapStyle> Create(Guid mapId, long sequence, string? name, string? color,
-		string format, int width, int height, long byteLength)
+		ImageAsset? source)
 	{
 		var style = new MapStyle(Guid.CreateVersion7()) { MapId = mapId, CreationSequence = sequence };
 		var metadata = style.UpdateMetadata(name, color);
@@ -41,13 +45,11 @@ public sealed class MapStyle
 		if (metadata.IsFailure)
 			return metadata.Errors;
 
-		if (format is not ("png" or "jpeg") || byteLength <= 0 || MapGeometry.Create(width, height).IsFailure)
+		if (source is null || !source.IsRaster)
 			return MapProcessingErrors.InvalidSource;
 
-		style.Format = format;
-		style.Width = width;
-		style.Height = height;
-		style.ByteLength = byteLength;
+		style.SourceAssetId = source.Id;
+		style.source = source;
 		style.Status = MapProcessingStatus.Queued;
 		style.AttemptId = Guid.CreateVersion7();
 		style.CreatedAt = DateTimeOffset.UtcNow;

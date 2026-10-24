@@ -23,12 +23,12 @@ Category operations SHALL use /games/{gameId}/maps/{mapId}/category-groups/{grou
 - **THEN** it returns HTTP 404 and changes no storage
 
 ### Requirement: Create categories with server-owned identity and timestamps
-POST on the collection SHALL accept required name, icon, and color with optional order, returning HTTP 200 with the complete category representation. The server SHALL generate UUID v7, derive categoryGroupId from the route, and set equal UTC createdAt and updatedAt. Additional creation properties SHALL NOT override server-owned values.
+POST SHALL accept required name, iconAssetId, and color with optional order and return the complete category. iconAssetId SHALL identify a committed library image. The server SHALL generate UUID v7, route-derived categoryGroupId, and equal UTC timestamps. Additional creation metadata SHALL NOT override server values. Category creation SHALL NOT upload files.
 
 #### Scenario: Successful creation
-- **WHEN** a valid category is created in an existing group
-- **THEN** its complete stored representation is returned and survives reopening storage
-- **AND** id is UUID v7, categoryGroupId matches the route, and the timestamps are equal UTC instants
+- **WHEN** a valid category references an existing library image in an existing group
+- **THEN** its complete representation survives reopening storage and icon resolves the shared image DTO
+- **AND** id is UUID v7, categoryGroupId matches the route, and timestamps are equal UTC instants
 
 #### Scenario: Server-owned creation fields
 - **WHEN** valid creation input additionally supplies id, categoryGroupId, gameId, timestamps, or markersCount
@@ -59,17 +59,23 @@ Category names SHALL be unique within their group after trimming and culture-ind
 - **THEN** no self-conflict occurs
 - **AND** concurrent same-name creations in one group cannot both succeed; the duplicate returns HTTP 409
 
-### Requirement: Accept icon references without restricting image formats
-Icon SHALL be a required string of 1 through 2048 characters after trimming surrounding whitespace. Missing creation input, null, empty, whitespace-only, or overlength values SHALL return HTTP 422 with icon errors. The system SHALL accept absolute links and relative paths without URL, extension, image format, or remote content validation.
+### Requirement: Attach library image assets as category icons
+Category icons SHALL reference library images through iconAssetId rather than arbitrary URLs. Missing/null required IDs SHALL return 422, malformed GUIDs 400, missing assets 404, and non-image assets 422. JPEG, PNG, WebP, AVIF, and accepted SVG SHALL be permitted. Attachments SHALL participate in the library deletion guard; changing or deleting a category SHALL NOT delete its asset.
 
 #### Scenario: Icon references
-- **WHEN** valid icon values use an SVG, PNG, WebP, relative path, or a link without a file extension
-- **THEN** the trimmed reference is stored and returned without fetching the resource
+- **WHEN** a category attaches a valid raster or SVG image asset from any folder or game usage
+- **THEN** it resolves shared image metadata without copying bytes or requiring a URL
+- **AND** video assets and folder IDs cannot be used as icons
 
 #### Scenario: Icon bounds
-- **WHEN** a supplied icon has exactly 2048 characters after trimming
-- **THEN** it is accepted
-- **AND** missing required creation input, null, blank, or 2049 trimmed characters return HTTP 422 without changes
+- **WHEN** iconAssetId is missing/null, malformed, absent from the library, or identifies a video
+- **THEN** the corresponding 422, 400, 404, or 422 response preserves all category data
+- **AND** legacy icon strings are no longer accepted as category mutation input
+
+#### Scenario: Reuse an icon and preserve it after detachment
+- **WHEN** two categories share one image and one is deleted or changes its icon
+- **THEN** the other category retains its reference and the asset remains in the library
+- **AND** explicit asset deletion returns 409 until every category and other consumer detaches it
 
 ### Requirement: Validate and normalize icon color
 Color SHALL be a required string in `#RGB` or `#RRGGBB` format, accepting ASCII hexadecimal digits in either case. Short values SHALL expand by duplicating each digit; storage and responses SHALL use uppercase `#RRGGBB`. Missing creation input, null, or invalid formats SHALL return HTTP 422 with color errors. Transparency and named colors SHALL NOT be supported.
@@ -106,7 +112,7 @@ Order SHALL be a positive 32-bit integer and permit duplicates. Creation with om
 - **AND** fractional numbers, strings, and values outside the 32-bit integer range return HTTP 400 without changes
 
 ### Requirement: List complete categories without pagination
-GET on the collection SHALL return HTTP 200 with every category of the route group as a JSON array, ordered by order, createdAt, and id ascending. Each item SHALL contain id, categoryGroupId, name, icon, color, order, markersCount, createdAt, and updatedAt. No individual GET, pagination, search, alternate sorting, batch update, or reorder endpoint SHALL be exposed.
+GET SHALL retain the complete ordered category array and its nine fields: id, categoryGroupId, name, icon, color, order, markersCount, createdAt, and updatedAt. icon SHALL be the shared image-asset representation rather than a string. Ordering SHALL remain order/createdAt/id ascending. No individual GET, pagination, search, alternate sorting, batch update, or reorder endpoint SHALL be introduced.
 
 #### Scenario: Ordered complete collection
 - **WHEN** an existing group contains categories, including duplicate orders and equal creation timestamps
@@ -118,8 +124,13 @@ GET on the collection SHALL return HTTP 200 with every category of the route gro
 - **THEN** its list response is HTTP 200 with `[]`
 - **AND** a missing or foreign group returns HTTP 404 instead
 
+#### Scenario: Resolve current shared icon metadata
+- **WHEN** an icon asset is renamed, moved, or given different alt text through the library
+- **THEN** subsequent category responses include that current shared image metadata without changing category timestamps
+- **AND** collection queries load icons without one query per category
+
 ### Requirement: Update category state atomically through merge patch
-PATCH SHALL accept optional name, icon, color, order, and categoryGroupId and return HTTP 200 with the unchanged nine-field category representation. Omission SHALL preserve values; null mutable values and an empty patch SHALL return 422. Failed updates SHALL persist no partial changes. Identity and createdAt SHALL remain immutable; updatedAt SHALL change only for effective category changes. Parent map/game/group timestamps SHALL remain unchanged.
+PATCH SHALL accept optional name, iconAssetId, color, order, and categoryGroupId and return the nine-field category with resolved icon. Omission SHALL preserve fields; null required mutable values and empty objects SHALL return 422. Asset checks, parent transfers, metadata, and attachment updates SHALL commit atomically. Identity/createdAt and parent timestamps SHALL remain unchanged; only effective changes update the category.
 
 #### Scenario: Preserve parent state and no-ops
 - **WHEN** a valid patch changes category metadata or transfers within its map
@@ -132,12 +143,16 @@ PATCH SHALL accept optional name, icon, color, order, and categoryGroupId and re
 - **AND** game, map, group, and other category metadata and timestamps remain unchanged
 
 #### Scenario: No effective change
-- **WHEN** supplied values equal stored values after name and icon trimming and color normalization, including the same group ID
-- **THEN** HTTP 200 returns the current representation without changing updatedAt or writing a category update
+- **WHEN** supplied values equal current state after name trimming/color normalization, including the same iconAssetId and group
+- **THEN** HTTP 200 returns the current representation without changing category updatedAt or rewriting its attachment
 
 #### Scenario: Atomic rejection
 - **WHEN** a patch is empty or contains an invalid value alongside otherwise valid changes
 - **THEN** the response is the relevant validation failure and no field or membership changes
+
+#### Scenario: Reject a failed icon replacement atomically
+- **WHEN** a valid name or group change accompanies a missing or incompatible iconAssetId
+- **THEN** the complete patch fails and prior ownership, icon reference, metadata, and timestamps remain unchanged
 
 ### Requirement: Transfer categories only between groups of the same map
 PATCH SHALL identify the current group in the route and the destination through categoryGroupId. The destination SHALL belong to the same route map. Missing/foreign destination groups SHALL return 404, including groups of sibling maps in the same game. Name uniqueness SHALL use the resulting destination/name. Transfers SHALL preserve identity, createdAt, and omitted order and commit all changes atomically.
@@ -235,15 +250,15 @@ Successful category mutations SHALL be durable and atomic. Recognized category n
 - **AND** unrelated constraint failures are handled as safe HTTP 500
 
 ### Requirement: Document the category API and preserve existing contracts
-OpenAPI SHALL describe CreateCategory/ListCategories/UpdateCategory/DeleteCategory on map-scoped routes, all GUID parents, nine-field DTOs, existing validation/count/order rules, same-map transfers, both PATCH media types, and ProblemDetails. Category DTOs SHALL NOT acquire redundant mapId/gameId fields. Legacy game-wide routes SHALL be absent; unrelated category behavior SHALL remain unchanged.
+OpenAPI SHALL retain the four map-scoped category operations, GUID parents, counts, ordering, colors, and PATCH errors. Mutations SHALL expose required/optional iconAssetId as appropriate, and the nine-field response SHALL expose icon as the shared image schema. Arbitrary icon URLs and old icon mutation properties SHALL NOT be advertised. No redundant mapId/gameId response fields SHALL be added.
 
 #### Scenario: Discover map-scoped categories
 - **WHEN** a client reads OpenAPI
-- **THEN** category routes require gameId/mapId/groupId, categoryGroupId remains the ownership field, and markersCount remains read-only
-- **AND** icons/colors/names, array ordering, merge-patch behavior, and lack of individual GET/pagination/batch/reorder remain unchanged
+- **THEN** routes require gameId/mapId/groupId and categoryGroupId remains category ownership
+- **AND** iconAssetId selects a shared library image while markersCount stays read-only
 
 #### Scenario: Discover all four operations
 - **WHEN** a client reads OpenAPI
-- **THEN** POST and PATCH document HTTP 200 category responses, GET documents a plain array, DELETE documents empty HTTP 204, and relevant 400, 404, 409, 415, 422, and 500 errors are documented
-- **AND** schemas expose name and icon bounds, hexadecimal color format, positive order, and optional PATCH fields without exposing internal normalization or optional-wrapper fields
-- **AND** no individual-category GET, PUT, batch, pagination, or reorder operation is advertised
+- **THEN** POST/PATCH document 200 category responses, GET a plain array, DELETE empty 204, and relevant ProblemDetails
+- **AND** name/color/order constraints, GUID iconAssetId, shared image icon metadata, and optional PATCH presence are documented
+- **AND** individual GET, PUT, batch, pagination, and reorder remain absent

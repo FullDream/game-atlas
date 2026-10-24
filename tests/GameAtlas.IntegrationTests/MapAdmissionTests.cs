@@ -1,5 +1,5 @@
 using System.Net;
-using GameAtlas.Application.Maps.Storage;
+using GameAtlas.Application.Media.Storage;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Infrastructure.Maps.Processing;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,12 +21,12 @@ public class MapAdmissionTests
 		var styles = map.Styles.ToArray();
 
 		Assert.Equal(new[] { "Atlas", "Roads" }, styles.Select(style => style.Name));
-		var storage = factory.Services.GetRequiredService<IMapStorage>();
+		var storage = factory.Services.GetRequiredService<IMediaStorage>();
 
 		Assert.Equal(MapTestData.ImageBytes(), await File.ReadAllBytesAsync(
-			storage.OriginalPath(map.Id, styles[0].Id)));
+			storage.AssetPath(styles[0].Source.Id)));
 		Assert.Equal(MapTestData.ImageBytes(color: 100), await File.ReadAllBytesAsync(
-			storage.OriginalPath(map.Id, styles[1].Id)));
+			storage.AssetPath(styles[1].Source.Id)));
 		var processor = factory.Services.GetRequiredService<MapProcessor>();
 
 		Assert.True(await processor.RunNextAsync(CancellationToken.None));
@@ -58,7 +58,7 @@ public class MapAdmissionTests
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, initial);
 		var map = await MapTestData.ReadAsync(created);
 		using var upload = MapTestData.Style(MapTestData.ImageBytes(differentDimensions ? 24 : 23), secondName);
-		using var response = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", upload);
+		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
 
 		Assert.Equal(status, (int)response.StatusCode);
 		using var missing = await client.GetAsync(MapTestData.PathFor(game.Id));
@@ -80,7 +80,7 @@ public class MapAdmissionTests
 		using var duplicate = MapTestData.Style();
 		using var duplicateMap = await MapTestData.UploadFirstStyleAsync(client, game.Id, duplicate);
 		using var duplicateStyle = MapTestData.Style(name: " atlas ");
-		using var duplicateAdd = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", duplicateStyle);
+		using var duplicateAdd = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), duplicateStyle);
 		using var missingUpload = MapTestData.Style();
 		using var missing = await MapTestData.UploadFirstStyleAsync(client, Guid.NewGuid(), missingUpload);
 

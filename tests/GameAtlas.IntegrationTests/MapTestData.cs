@@ -4,6 +4,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using GameAtlas.Application.Maps;
 using GameAtlas.Domain.Maps;
+using GameAtlas.Domain.Media;
+using GameAtlas.Application.Media;
+using GameAtlas.Application.Media.Storage;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -88,7 +91,7 @@ internal static class MapTestData
 
 			mapIds[gameId] = map.Id;
 
-			return await client.PostAsync($"{PathFor(gameId)}/styles", upload);
+			return await AddStyleAsync(client, PathFor(gameId), upload);
 		}
 	}
 
@@ -128,7 +131,7 @@ internal static class MapTestData
 		created.EnsureSuccessStatusCode();
 		using var next = Style(ImageBytes(color: 100), "Roads", "#000");
 
-		return await client.PostAsync($"{PathFor(gameId)}/styles", next);
+		return await AddStyleAsync(client, PathFor(gameId), next);
 	}
 
 	internal static async Task<MapDto> ReadAsync(HttpResponseMessage response)
@@ -152,15 +155,53 @@ internal static class MapTestData
 		var seeded = await EnsureMapAsync(factory, gameId, 1025, 513);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var map = await context.Maps.AsTracking().Include(item => item.Styles).SingleAsync(item => item.Id == seeded.Id);
+		var map = await context.Maps.AsTracking().WithStyles().SingleAsync(item => item.Id == seeded.Id);
 
 		if (map.Styles.Count == 0)
 		{
-			Assert.True(map.AddStyle(new MapStyleInput("Atlas", "#fff", "png", map.Width, map.Height, 100)).IsSuccess);
+			var bytes = ImageBytes(map.Width, map.Height);
+			var image = ImageAsset.Create(Guid.CreateVersion7(), "Source", null, "image/png", bytes.Length,
+				map.Width, map.Height).Value!;
+			var storage = scope.ServiceProvider.GetRequiredService<IMediaStorage>();
+			var path = storage.AssetPath(image.Id);
+
+			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+			await File.WriteAllBytesAsync(path, bytes);
+			Assert.True(map.AddStyle(new MapStyleInput("Atlas", "#fff", image)).IsSuccess);
 			await context.SaveChangesAsync();
 		}
 
 		return map;
+	}
+
+	internal static async Task<HttpResponseMessage> AddStyleAsync(HttpClient client, string mapPath,
+		MultipartFormDataContent input)
+	{
+		var file = input.FirstOrDefault(part => part.Headers.ContentDisposition?.Name?.Trim('"') == "file");
+		using var upload = new MultipartFormDataContent();
+
+		if (file is not null)
+			upload.Add(new ByteArrayContent(await file.ReadAsByteArrayAsync()), "file",
+				file.Headers.ContentDisposition?.FileName?.Trim('"') ?? "source");
+
+		var admitted = await client.PostAsync("/media/assets", upload);
+
+		if (!admitted.IsSuccessStatusCode)
+			return admitted;
+
+		using (admitted)
+		{
+			var asset = (await admitted.Content.ReadFromJsonAsync<MediaAssetDto>())!;
+			var name = input.FirstOrDefault(part => part.Headers.ContentDisposition?.Name?.Trim('"') == "name");
+			var color = input.FirstOrDefault(part => part.Headers.ContentDisposition?.Name?.Trim('"') == "backgroundColor");
+
+			return await client.PostAsJsonAsync(mapPath + "/styles", new
+			{
+				name = name is null ? null : await name.ReadAsStringAsync(),
+				backgroundColor = color is null ? null : await color.ReadAsStringAsync(),
+				sourceAssetId = asset.Id
+			});
+		}
 	}
 
 }

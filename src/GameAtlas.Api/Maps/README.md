@@ -14,7 +14,7 @@ A game owns zero or more independently named maps, including draft games. Each m
 | DELETE | /{mapId}/styles/{styleId} | DeleteMapStyle | empty 204 |
 | DELETE | /{mapId} | DeleteMap | empty 204 |
 
-There is no pagination, separate style GET, public source history, original download, manual order/default selection, or PUT operation.
+There is no pagination, separate style GET, public source history, manual order/default selection, or PUT operation.
 
 ## Creation and listing
 
@@ -22,25 +22,25 @@ POST accepts application/json with required name, width, and height, for example
 
 GET returns every complete map ordered by createdAt then id ascending, including [] for an existing game without maps. There are no pagination/filter/order parameters. Missing games return 404. Every item route requires both the owning game ID and map ID; a sibling or foreign map/style returns 404. Legacy singular-map and game-wide content routes are absent.
 
-## Uploads
+## Shared style sources
 
-Style addition uses one flat multipart form: `name` (text), `backgroundColor` (text), and `file` (one PNG/JPEG). All three are required; wire order does not matter. No JSON metadata, fileKey, dynamic properties, or multiple files are accepted. Unknown/duplicate parts and a missing file return 400; invalid/missing name/color return 422 with flat field names. HTTP 200 returns the complete map with one newly queued style. Upload each style through POST /{mapId}/styles after JSON map creation. The first and every later original must match the map's declared width and height.
+Upload the original once through `POST /media/assets`, then add a style with JSON: `{"name":"Atlas","backgroundColor":"#fff","sourceAssetId":"<image UUID>"}`. Multipart style requests return 415. Sources must be existing raster JPEG, PNG, WebP, or AVIF images; SVG, videos, and folders return 422, unknown IDs return 404. The first and every subsequent source must exactly match the map's declared dimensions.
 
-OpenAPI generates the upload body from MapUploadRequest with shared FV constraints and a binary file picker. Names are trimmed, 1..200 characters, and unique within the map ignoring case. Colors use #RGB/#RRGGBB and return uppercase six-digit notation; they only affect the viewer background.
+Names are trimmed, 1..200 characters, and unique within the map ignoring case. Colors use #RGB/#RRGGBB and return uppercase six-digit notation; they only affect the viewer background. Success returns the complete map with the new style queued. The relationship is committed atomically without copying the original. Multiple styles and maps can share one asset.
 
-Admission is atomic. Still PNG/JPEG content and encoded dimensions are checked without trusting filename or MIME. Streamed file limits default to 200 MiB and 16384 pixels per side, with bounded 64 KiB metadata and a 1 MiB envelope budget. Originals remain unchanged. Later pixel-decoding failures become failed processing state.
+Sources are immutable attachments: for a different image, add a new style and delete the old style. Retry only accepts failed styles, retains style/source IDs, resets error/progress, and creates a fresh internal attempt. Queued, processing, and ready styles return 409 for retry. Original bytes are delivered through the common `/media/files/{assetId}` route; the media library owns the 300 MiB upload limit and content inspection.
 
-Each style owns exactly one immutable original. There is no image replacement or source-version history. For a different image, add a new style and delete the old style. Retry only accepts failed styles, retains style ID/original, resets error/progress, and creates a fresh internal attempt. Queued, processing, and ready styles return 409 for retry.
+Shared name/alt/folder changes appear in style and SSE responses without changing style timestamps or triggering processing. Each source includes the same persisted nullable Base64 placeholder as other image responses. Explicit asset deletion returns 409 while persisted references remain. After its final style is deleted, a running native reader does not independently prevent deletion; no file-use leases or media maintenance jobs are created.
 
 ## Responses and updates
 
 Map fields: `id`, `gameId`, `name`, `width`, `height`, `extent`, `tileOrigin`, `tileSize`, `minZoom`, `maxZoom`, `resolutions`, `defaultStyleId`, `styles`, `createdAt`, `updatedAt`. Styles are returned in creation order. The default is the earliest surviving ready style; it is null until any style is ready. Queued, processing, and failed styles are skipped.
 
-Style fields: `id`, `name`, `backgroundColor`, `status`, `progress`, `error`, `tilesUrlTemplate`, `createdAt`, `updatedAt`. Status is `queued`, `processing`, `ready`, or `failed`. Progress is approximate, nondecreasing within an attempt, 0..99 until full publication, and 100 only when ready. Error is null or a safe `{code,message}`; no paths or native diagnostics are exposed. The tile template is null until ready. IDs use UUID v7; dates use UTC.
+Style fields: `id`, `name`, `backgroundColor`, `source`, `status`, `progress`, `error`, `tilesUrlTemplate`, `createdAt`, `updatedAt`. Status is `queued`, `processing`, `ready`, or `failed`. Progress is approximate, nondecreasing within an attempt, 0..99 until full publication, and 100 only when ready. Error is null or a safe `{code,message}`; no paths or native diagnostics are exposed. The tile template is null until ready. IDs use UUID v7; dates use UTC.
 
 PATCH accepts `application/json` and `application/merge-patch+json`, including charset, with identical RFC 7396 semantics. Only `name` and `backgroundColor` are optional mutable members. Omission preserves a field; null is invalid. Empty objects return 422. Changes are atomic; normalized no-ops preserve timestamps, and metadata may change while processing without retiling. Unknown/read-only fields and incompatible JSON return 400, other update media 415.
 
-Errors use ProblemDetails: malformed multipart/JSON or unmatched parts 400; missing/foreign owners 404; duplicate map/style names and invalid retry state 409; streamed byte excess 413; unsupported request media 415; invalid metadata/content/dimensions 422; unexpected pre-response storage errors safe 500. A failed patch or upload does not persist partial state.
+Errors use ProblemDetails: malformed JSON 400; missing/foreign owners 404; duplicate map/style names and invalid retry state 409; streamed byte excess 413; unsupported request media 415; invalid metadata/content/dimensions 422; unexpected pre-response storage errors safe 500. A failed patch or attachment does not persist partial state. Previously admitted unreferenced assets remain in the library.
 
 ## OpenLayers geometry and tiles
 
@@ -50,7 +50,7 @@ Configure an OpenLayers pixel projection and TileGrid with the returned extent, 
 
 Use the returned `tilesUrlTemplate`: `/map-tiles/{mapId:N}/{styleId:N}/{z}/{x}/{y}.webp`. Static-file middleware serves GET/HEAD directly from the dedicated public tile root without Mediator or database queries. Each style's files are immutable, use `Cache-Control: public,max-age=31536000,immutable`, and carry native ETag/Last-Modified validators; conditional requests can return 304. Missing files, malformed paths, and nonexistent coordinates return 404.
 
-Only complete validated pyramids move into the public root atomically. A complete pyramid may be accessible by its generated URL before its ready database commit; metadata/SSE advertise it only after that commit succeeds. Deleted style files may remain accessible until physical cleanup, and browser/proxy caches may retain their bytes longer. There is no retention guarantee or immediate access revocation. Originals, staging, work directories, manifests, and directory listings are not public. Static files have no separate OpenAPI operation; the DTO property documents their contract.
+Only complete validated pyramids move into the public root atomically. A complete pyramid may be accessible by its generated URL before its ready database commit; metadata/SSE advertise it only after that commit succeeds. Deleted style files may remain accessible until physical cleanup, and browser/proxy caches may retain their bytes longer. There is no retention guarantee or immediate access revocation. Staging, work directories, manifests, and directory listings are not public. Shared originals are public through /media/files/{assetId} without database lookups. Static files have no separate OpenAPI operation; the DTO property documents their contract.
 
 ## Server-sent events
 
@@ -64,6 +64,6 @@ Viewer disconnects never cancel processing. Disable proxy buffering/compression 
 
 Delete any style, including the last in any state, with empty 204. Deleting the default selects the next ready style or null. Removing every style retains the map's geometry, groups, categories, markers, positions, and referenced media.
 
-Deleting the whole map returns 204 and physically cascades to its styles, groups, categories, markers, and media rows. Sibling maps and the owning game's fields/timestamps remain unchanged. Repeated deletion returns 404. A new map starts with empty content; it does not relocate or recover deleted markers.
+Deleting the whole map returns 204 and physically cascades to its styles, groups, categories, markers, and attachment rows. Sibling maps and the owning game's fields/timestamps remain unchanged. Repeated deletion returns 404. A new map starts with empty content; it does not relocate or recover deleted markers.
 
-Deletion commits durable cleanup scheduling before 204; disk deletion may follow later and is retried after IO failure/restart. Game deletion schedules cleanup for every owned map while keeping existing relational cascades. External marker-media references are never filesystem cleanup targets. See Infrastructure Maps README for storage, migration, recovery and operational constraints.
+Deletion commits durable cleanup scheduling before 204; disk deletion may follow later and is retried after IO failure/restart. Game deletion schedules cleanup for every owned map while keeping existing relational cascades. Cleanup only removes derived tiles/work. Shared media originals and records survive style, map, and game deletion. See Infrastructure Maps README for storage, migration, recovery and operational constraints.

@@ -5,6 +5,9 @@ namespace GameAtlas.Api.Maps;
 
 internal static class MapMappingExtensions
 {
+	internal static Application.Maps.AddMapStyle.AddMapStyle ToCommand(this AddMapStyleRequest request,
+		Guid gameId, Guid mapId) => new(gameId, mapId, request.Name, request.BackgroundColor, request.SourceAssetId);
+
 	internal static CreateMap ToCommand(this CreateMapRequest request, Guid gameId) =>
 		new(gameId, request.Name, request.Width, request.Height);
 

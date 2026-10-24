@@ -1,9 +1,7 @@
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Categories;
-using GameAtlas.Application.Markers.Media;
 using GameAtlas.Domain;
 using GameAtlas.Domain.Markers;
-using GameAtlas.Domain.Markers.Media;
 using GameAtlas.Domain.Result;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -38,19 +36,13 @@ public sealed class UpdateMarkerHandler(IApplicationDbContext context)
 		if (position.IsFailure)
 			return position.Errors;
 
-		Optional<IReadOnlyCollection<MarkerMedia?>?> replacement = default;
+		var ids = command.Media.GetValueOrDefault(marker.Media.Select(item => (Guid?)item.AssetId).ToArray());
+		var assets = await context.ResolveAssetsAsync(ids, cancellationToken);
 
-		if (command.Media.IsSpecified)
-		{
-			var media = command.Media.Value.ToDomain();
+		if (assets.IsFailure)
+			return assets.Errors;
 
-			if (media.IsFailure)
-				return media.Errors;
-
-			replacement = Optional<IReadOnlyCollection<MarkerMedia?>?>.From(media.Value);
-		}
-
-		var result = marker.Update(command.CategoryId, command.Name, command.Description, position.Value, replacement);
+		var result = marker.Update(command.CategoryId, command.Name, command.Description, position.Value, command.Media);
 
 		if (result.IsFailure)
 			return result.Errors;
@@ -60,6 +52,6 @@ public sealed class UpdateMarkerHandler(IApplicationDbContext context)
 
 		await transaction.CommitAsync(cancellationToken);
 
-		return marker.ToDto();
+		return marker.ToDto(assets.Value);
 	}
 }

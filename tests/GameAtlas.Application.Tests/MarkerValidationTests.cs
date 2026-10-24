@@ -1,9 +1,5 @@
 using GameAtlas.Application.Markers;
 using GameAtlas.Application.Markers.CreateMarker;
-using GameAtlas.Application.Markers.Media;
-using GameAtlas.Application.Markers.Media.Image;
-using GameAtlas.Application.Markers.Media.Video;
-using GameAtlas.Application.Markers.Media.YouTubeVideo;
 using GameAtlas.Application.Markers.UpdateMarker;
 using GameAtlas.Domain;
 
@@ -60,52 +56,25 @@ public class MarkerValidationTests
 	}
 
 	[Fact]
-	public void ValidatesEverySubtypeWithIndexedErrorsAndAllowsDuplicateAttachments()
+	public void ValidatesDistinctAssetIdsAndIndexedNulls()
 	{
-		var image = new ImageMediaInput(" image ", 1, int.MaxValue);
+		var id = Guid.NewGuid();
 		var validator = new CreateMarkerValidation();
-		var valid = Create() with
-		{
-			Media = [image, image, new VideoMediaInput("video", " "), new YouTubeVideoMediaInput("Ab_cd-Ef012")]
-		};
 
-		Assert.True(validator.Validate(valid).IsValid);
+		Assert.True(validator.Validate(Create() with { Media = [id, Guid.NewGuid()] }).IsValid);
+		Assert.False(validator.Validate(Create() with { Media = [id, id] }).IsValid);
+		Assert.False(validator.Validate(Create() with { Media = [Guid.Empty] }).IsValid);
 		Assert.False(validator.Validate(Create() with { Media = null }).IsValid);
-		var invalid = validator.Validate(Create() with
-		{
-			Media = [null, image with { Alt = null }, image with { Width = 0 },
-				new VideoMediaInput(" ", new string('x', 2049)), new YouTubeVideoMediaInput("invalid")]
-		});
-
-		Assert.False(invalid.IsValid);
-
-		foreach (var index in Enumerable.Range(0, 5))
-			Assert.Contains(invalid.Errors, error => error.PropertyName.StartsWith($"Media[{index}]"));
-
+		Assert.Contains(validator.Validate(Create() with { Media = [null] }).Errors,
+			error => error.PropertyName == "Media[0]");
 		var update = new UpdateMarker(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-			Media: Optional<IReadOnlyCollection<MarkerMediaInput?>?>.From([null]));
+			Media: Optional<IReadOnlyCollection<Guid?>?>.From([null]));
 
-		Assert.Contains(new UpdateMarkerValidation().Validate(update).Errors,
-			error => error.PropertyName.StartsWith("Media[0]"));
-
+		Assert.False(new UpdateMarkerValidation().Validate(update).IsValid);
 		Assert.True(new UpdateMarkerValidation().Validate(update with
 		{
-			Media = Optional<IReadOnlyCollection<MarkerMediaInput?>?>.From([])
+			Media = Optional<IReadOnlyCollection<Guid?>?>.From([])
 		}).IsValid);
-	}
-
-	[Theory]
-	[InlineData(2048, true)]
-	[InlineData(2049, false)]
-	public void ReferenceBoundsApplyToImageVideoAndPreview(int length, bool valid)
-	{
-		var reference = new string('x', length);
-		var command = Create() with
-		{
-			Media = [new ImageMediaInput(reference, 1, 1), new VideoMediaInput(reference, reference)]
-		};
-
-		Assert.Equal(valid, new CreateMarkerValidation().Validate(command).IsValid);
 	}
 
 	private static CreateMarker Create() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Marker", new(0, 0), null, []);

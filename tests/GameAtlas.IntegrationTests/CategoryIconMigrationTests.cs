@@ -1,0 +1,40 @@
+using GameAtlas.Infrastructure.Persistence;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace GameAtlas.IntegrationTests;
+
+public sealed class CategoryIconMigrationTests
+{
+	[Fact]
+	public async Task LegacyIconsRefuseUpgradeWithoutChangingExistingData()
+	{
+		await using var factory = new GameApiFactory();
+		await using var scope = factory.Services.CreateAsyncScope();
+		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+		var migrator = context.GetService<IMigrator>();
+
+		await migrator.MigrateAsync("20261024135813_MediaLibrary");
+		var (game, group) = await CategoryTestData.ParentAsync(factory);
+		var id = Guid.CreateVersion7();
+		var created = new DateTimeOffset(2026, 10, 1, 10, 0, 0, TimeSpan.Zero);
+
+		await context.Database.ExecuteSqlAsync($"""
+			INSERT INTO "Categories" ("Id", "CategoryGroupId", "Name", "NormalizedName", "Icon", "Color",
+			    "Order", "CreatedAt", "UpdatedAt")
+			VALUES ({id}, {group.Id}, 'Legacy', 'LEGACY', '/legacy/icon.svg', '#FFFFFF', 4, {created}, {created});
+			""");
+
+		var refusal = await Assert.ThrowsAsync<SqliteException>(() => migrator.MigrateAsync());
+
+		Assert.Contains("Media_RequiresEmptyLegacyCategories", refusal.Message);
+		var original = await context.Database.SqlQuery<string>($"SELECT \"Icon\" AS \"Value\" FROM \"Categories\"")
+			.SingleAsync();
+
+		Assert.Equal("/legacy/icon.svg", original);
+		Assert.Equal(game.Id, (await context.Games.SingleAsync()).Id);
+	}
+}

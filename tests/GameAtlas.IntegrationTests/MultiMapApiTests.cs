@@ -27,7 +27,7 @@ public class MultiMapApiTests
 		var first = await MapTestData.ReadAsync(firstCreation);
 		var second = await MapTestData.ReadAsync(secondCreation);
 		using var upload = MapTestData.Style();
-		using var admitted = await client.PostAsync(MapTestData.PathFor(game.Id, first.Id) + "/styles", upload);
+		using var admitted = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id, first.Id), upload);
 		var style = (await MapTestData.ReadAsync(admitted)).Styles.Single();
 
 		foreach (var scope in new[] { (game.Id, second.Id), (other.Id, first.Id) })
@@ -43,7 +43,7 @@ public class MultiMapApiTests
 		}
 
 		using var wrongUpload = MapTestData.Style();
-		using var rejected = await client.PostAsync(MapTestData.PathFor(other.Id, first.Id) + "/styles", wrongUpload);
+		using var rejected = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(other.Id, first.Id), wrongUpload);
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id, first.Id));
 		using var siblingRead = await client.GetAsync(MapTestData.PathFor(game.Id, second.Id));
 
@@ -161,9 +161,9 @@ public class MultiMapApiTests
 		using var client = factory.CreateHttpsClient();
 		var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id);
 		using var invalidFile = MapTestData.Style(MapTestData.ImageBytes(24, 17));
-		using var mismatch = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", invalidFile);
+		using var mismatch = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), invalidFile);
 		using var validFile = MapTestData.Style();
-		using var admitted = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", validFile);
+		using var admitted = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), validFile);
 		var map = await MapTestData.ReadAsync(admitted);
 		using var deleted = await client.DeleteAsync($"{MapTestData.PathFor(game.Id)}/styles/{map.Styles.Single().Id}");
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));

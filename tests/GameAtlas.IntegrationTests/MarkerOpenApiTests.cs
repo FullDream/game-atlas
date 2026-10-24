@@ -75,54 +75,20 @@ public class MarkerOpenApiTests
 		Assert.Contains(patch.GetProperty("properties").GetProperty("description").GetProperty("type").EnumerateArray(),
 			type => type.GetString() == "null");
 
-		foreach (var owner in new[] { create, patch, dto })
+		foreach (var owner in new[] { create, patch })
 		{
 			var media = Resolve(root, owner.GetProperty("properties").GetProperty("media").GetProperty("items"));
-			var styles = media.GetProperty("anyOf").EnumerateArray().ToArray();
-			var discriminator = media.GetProperty("discriminator");
-			var mappings = discriminator.GetProperty("mapping");
 
-			Assert.False(media.TryGetProperty("oneOf", out _));
-			Assert.Contains(media.GetProperty("required").EnumerateArray(), value => value.GetString() == "type");
-			Assert.Equal("type", discriminator.GetProperty("propertyName").GetString());
-			Assert.Equal(3, styles.Length);
-			Assert.Equal(new[] { "image", "video", "youtubeVideo" },
-				mappings.EnumerateObject().Select(property => property.Name).Order());
-
-			foreach (var mapping in mappings.EnumerateObject())
-			{
-				var style = Assert.Single(styles, value =>
-					value.GetProperty("$ref").GetString() == mapping.Value.GetString());
-				var properties = Resolve(root, style).GetProperty("properties");
-
-				Assert.Equal(mapping.Name, properties.GetProperty("type").GetProperty("enum")[0].GetString());
-				Assert.False(properties.TryGetProperty("id", out _));
-				Assert.False(properties.TryGetProperty("markerId", out _));
-				Assert.False(properties.TryGetProperty("name", out _));
-			}
+			Assert.Equal("uuid", media.GetProperty("format").GetString());
+			Assert.False(media.TryGetProperty("discriminator", out _));
 		}
 
-		var requestMedia = Resolve(root, create.GetProperty("properties").GetProperty("media").GetProperty("items"));
-		var requestStyles = requestMedia.GetProperty("anyOf").EnumerateArray()
-			.Select(value => Resolve(root, value)).ToArray();
-		var image = requestStyles.Single(value => value.GetProperty("properties").TryGetProperty("width", out _));
-		var imageProperties = image.GetProperty("properties");
+		var responseMedia = Resolve(root, dto.GetProperty("properties").GetProperty("media").GetProperty("items"));
+		var mappings = responseMedia.GetProperty("discriminator").GetProperty("mapping");
 
-		Assert.Equal("", imageProperties.GetProperty("alt").GetProperty("default").GetString());
-		Assert.Equal("string", imageProperties.GetProperty("alt").GetProperty("type").GetString());
-		Assert.Equal(2048, imageProperties.GetProperty("url").GetProperty("maxLength").GetInt32());
-		Assert.Equal(1, imageProperties.GetProperty("url").GetProperty("minLength").GetInt32());
-		Assert.Equal(0, imageProperties.GetProperty("width").GetProperty("exclusiveMinimum").GetInt32());
-		Assert.Contains(image.GetProperty("required").EnumerateArray(), value => value.GetString() == "height");
-		var youtube = requestStyles.Single(value => value.GetProperty("properties").TryGetProperty("videoId", out _));
-		var videoId = youtube.GetProperty("properties").GetProperty("videoId");
-
-		Assert.Equal(11, videoId.GetProperty("minLength").GetInt32());
-		Assert.Equal(11, videoId.GetProperty("maxLength").GetInt32());
-		Assert.True(videoId.TryGetProperty("pattern", out _));
-		var video = requestStyles.Single(value => value.GetProperty("properties").TryGetProperty("preview", out _));
-
-		Assert.Equal(2048, video.GetProperty("properties").GetProperty("preview").GetProperty("maxLength").GetInt32());
+		Assert.Equal("type", responseMedia.GetProperty("discriminator").GetProperty("propertyName").GetString());
+		Assert.Equal(new[] { "image", "video" }, mappings.EnumerateObject().Select(property => property.Name).Order());
+		Assert.DoesNotContain("youtubeVideo", document.RootElement.GetRawText());
 	}
 
 	private static JsonElement Request(JsonElement operation) =>

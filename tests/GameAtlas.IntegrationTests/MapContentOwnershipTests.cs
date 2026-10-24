@@ -20,6 +20,7 @@ public class MapContentOwnershipTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		using var client = factory.CreateHttpsClient();
 		var first = await CreateMapAsync(client, game.Id, "World");
@@ -40,9 +41,9 @@ public class MapContentOwnershipTests
 		var categoryPath = firstPath + $"/category-groups/{group.Id}/categories";
 		var otherCategoryPath = secondPath + $"/category-groups/{otherGroup.Id}/categories";
 		using var categoryCreation = await client.PostAsJsonAsync(categoryPath,
-			new { name = "Chest", icon = "icon", color = "#fff" });
+			new { name = "Chest", iconAssetId = MediaTestData.IconId, color = "#fff" });
 		using var otherCategoryCreation = await client.PostAsJsonAsync(otherCategoryPath,
-			new { name = "Chest", icon = "icon", color = "#fff" });
+			new { name = "Chest", iconAssetId = MediaTestData.IconId, color = "#fff" });
 		var category = (await categoryCreation.Content.ReadFromJsonAsync<CategoryDto>())!;
 		var otherCategory = (await otherCategoryCreation.Content.ReadFromJsonAsync<CategoryDto>())!;
 		using var markerCreation = await client.PostAsJsonAsync(firstPath + "/markers",
@@ -87,6 +88,7 @@ public class MapContentOwnershipTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureIconAsync(factory);
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "other");
 		using var client = factory.CreateHttpsClient();
@@ -97,7 +99,7 @@ public class MapContentOwnershipTests
 		foreach (var map in new[] { first, second, unrelated })
 		{
 			using var upload = MapTestData.Style();
-			using var added = await client.PostAsync(MapTestData.PathFor(map.GameId, map.Id) + "/styles", upload);
+			using var added = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(map.GameId, map.Id), upload);
 
 			Assert.Equal(HttpStatusCode.OK, added.StatusCode);
 		}
@@ -118,11 +120,8 @@ public class MapContentOwnershipTests
 		}
 
 		await factory.Services.GetRequiredService<MapProcessor>().CleanupAsync(CancellationToken.None);
-		var content = Path.Combine(factory.MapStoragePath, "content");
-
-		Assert.False(Directory.Exists(Path.Combine(content, first.Id.ToString("N"))));
-		Assert.False(Directory.Exists(Path.Combine(content, second.Id.ToString("N"))));
-		Assert.True(Directory.Exists(Path.Combine(content, unrelated.Id.ToString("N"))));
+		Assert.Equal(3, Directory.GetFiles(Path.Combine(factory.MediaStoragePath, "assets")).Length);
+		Assert.False(Directory.Exists(Path.Combine(factory.MapStoragePath, "content")));
 	}
 
 	private static async Task<MapDto> CreateMapAsync(HttpClient client, Guid gameId, string name)

@@ -73,6 +73,7 @@ public class MapPersistenceTests
 		}
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
@@ -107,7 +108,7 @@ public class MapPersistenceTests
 			var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 				context.GetService<IMigrator>().MigrateAsync("20261023145510_Markers"));
 
-			Assert.Contains("MapOwnership_RestoreBackupForNonemptyMaps", rollback.Message);
+			Assert.Contains("Media_RestoreBackupForNonemptyMapStyles", rollback.Message);
 			DeleteGameHandlerTests.AssertSameGame(game, await context.Games.SingleAsync());
 			Assert.Equal(group.Id, (await context.CategoryGroups.SingleAsync()).Id);
 			Assert.Equal(category.Id, (await context.Categories.SingleAsync()).Id);

@@ -31,7 +31,7 @@ public class CategoryPersistenceTests
 		Assert.Equal(category.Id, dto.Id);
 		Assert.Equal(category.CategoryGroupId, dto.CategoryGroupId);
 		Assert.Equal(category.Name, dto.Name);
-		Assert.Equal(category.Icon, dto.Icon);
+		Assert.Equal(category.IconAssetId, dto.Icon.Id);
 		Assert.Equal(category.Color, dto.Color);
 		Assert.Equal(category.Order, dto.Order);
 		Assert.Equal(category.CreatedAt, dto.CreatedAt);
@@ -46,7 +46,7 @@ public class CategoryPersistenceTests
 		var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 			reloaded.GetService<IMigrator>().MigrateAsync("20261023100000_CategoryGroups"));
 
-		Assert.Contains("MapOwnership_RestoreBackupForNonemptyMaps", rollback.Message);
+		Assert.Contains("Media_RestoreBackupForNonemptyCategories", rollback.Message);
 
 		DeleteGameHandlerTests.AssertSameGame(game, await reloaded.Games.SingleAsync());
 		Assert.Equal(group.Id, (await reloaded.CategoryGroups.SingleAsync()).Id);
@@ -70,7 +70,7 @@ public class CategoryPersistenceTests
 		var classifier = new SqlitePersistenceFailureClassifier();
 
 		context.Categories.Add(Assert.IsType<Category>(
-			Category.Create(group.Id, duplicate, "icon", "#123456", 1).Value));
+			Category.Create(group.Id, duplicate, MediaTestData.IconId, "#123456", 1).Value));
 
 		var conflict = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 
@@ -80,7 +80,7 @@ public class CategoryPersistenceTests
 		Assert.False(classifier.IsCategoryNameConflict(new InvalidOperationException("private failure")));
 		context.ChangeTracker.Clear();
 		context.Categories.Add(Assert.IsType<Category>(
-			Category.Create(Guid.NewGuid(), "Orphan", "icon", "#123456", 1).Value));
+			Category.Create(Guid.NewGuid(), "Orphan", MediaTestData.IconId, "#123456", 1).Value));
 
 		var foreignKey = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 

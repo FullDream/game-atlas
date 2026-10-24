@@ -1,11 +1,10 @@
-using GameAtlas.Domain.Markers.Media;
 using GameAtlas.Domain.Result;
 
 namespace GameAtlas.Domain.Markers;
 
 public sealed class Marker
 {
-	private readonly List<MarkerMedia> media = [];
+	private readonly List<MarkerAsset> media = [];
 
 	private Marker(Guid id) => Id = id;
 
@@ -16,14 +15,14 @@ public sealed class Marker
 	public Position Position { get; private set; } = null!;
 	public DateTimeOffset CreatedAt { get; private set; }
 	public DateTimeOffset UpdatedAt { get; private set; }
-	public IReadOnlyCollection<MarkerMedia> Media => media.AsReadOnly();
+	public IReadOnlyCollection<MarkerAsset> Media => media.AsReadOnly();
 
 	public static Result<Marker> Create(Guid categoryId, string? name, Position? position,
-		string? description = null, IReadOnlyCollection<MarkerMedia?>? media = null)
+		string? description = null, IReadOnlyCollection<Guid?>? media = null)
 	{
 		var marker = new Marker(Guid.CreateVersion7());
 		var result = marker.Update(categoryId, name, description, position,
-			Optional<IReadOnlyCollection<MarkerMedia?>?>.From(media ?? []));
+			Optional<IReadOnlyCollection<Guid?>?>.From(media ?? []));
 
 		if (result.IsFailure)
 			return result.Errors;
@@ -35,13 +34,13 @@ public sealed class Marker
 
 	public Result<bool> Update(Optional<Guid?> categoryId = default, Optional<string?> name = default,
 		Optional<string?> description = default, Optional<Position?> position = default,
-		Optional<IReadOnlyCollection<MarkerMedia?>?> media = default)
+		Optional<IReadOnlyCollection<Guid?>?> media = default)
 	{
 		var nextCategoryId = categoryId.GetValueOrDefault(CategoryId);
 		var nextName = name.GetValueOrDefault(Name)?.Trim();
 		var nextDescription = description.GetValueOrDefault(Description)?.Trim();
 		var nextPosition = position.GetValueOrDefault(Position);
-		var nextMedia = media.GetValueOrDefault(this.media)?.ToArray();
+		var nextMedia = media.GetValueOrDefault(this.media.Select(item => (Guid?)item.AssetId).ToArray())?.ToArray();
 
 		if (nextCategoryId is null)
 			return MarkerErrors.CategoryRequired;
@@ -55,13 +54,13 @@ public sealed class Marker
 		if (nextPosition is null)
 			return MarkerErrors.PositionRequired;
 
-		if (nextMedia is null || !HasValidMedia(nextMedia))
+		if (nextMedia is null || nextMedia.Any(id => id is null || id == Guid.Empty) ||
+			nextMedia.Distinct().Count() != nextMedia.Length)
 			return MarkerErrors.InvalidMedia;
 
 		nextDescription = string.IsNullOrEmpty(nextDescription) ? null : nextDescription;
-		var attachments = nextMedia.OfType<MarkerMedia>().ToArray();
-		var sameMedia = this.media.Count == attachments.Length && this.media
-			.Zip(attachments).All(pair => pair.First.HasSameContent(pair.Second));
+		var assetIds = nextMedia.Select(id => id.GetValueOrDefault()).ToArray();
+		var sameMedia = this.media.OrderBy(item => item.Order).Select(item => item.AssetId).SequenceEqual(assetIds);
 
 		var hasChanges = nextCategoryId != CategoryId
 			|| nextName != Name
@@ -79,12 +78,17 @@ public sealed class Marker
 
 		if (!sameMedia)
 		{
+			var retained = this.media.ToDictionary(item => item.AssetId);
+
 			this.media.Clear();
 
-			foreach (var (index, attachment) in attachments.Index())
-				attachment.AttachTo(Id, index);
+			foreach (var (index, assetId) in assetIds.Index())
+			{
+				var attachment = retained.GetValueOrDefault(assetId) ?? new MarkerAsset(Id, assetId, index);
 
-			this.media.AddRange(attachments);
+				attachment.SetOrder(index);
+				this.media.Add(attachment);
+			}
 		}
 
 		UpdatedAt = DateTimeOffset.UtcNow;
@@ -92,22 +96,4 @@ public sealed class Marker
 		return true;
 	}
 
-	private bool HasValidMedia(IReadOnlyCollection<MarkerMedia?> attachments)
-	{
-		var ids = new HashSet<Guid>();
-
-		foreach (var attachment in attachments)
-		{
-			if (attachment is null)
-				return false;
-
-			if (attachment.MarkerId != Guid.Empty && attachment.MarkerId != Id)
-				return false;
-
-			if (!ids.Add(attachment.Id))
-				return false;
-		}
-
-		return true;
-	}
 }

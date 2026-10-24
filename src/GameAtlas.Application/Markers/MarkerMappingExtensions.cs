@@ -1,17 +1,17 @@
-using GameAtlas.Application.Markers.Media;
+using GameAtlas.Application.Media;
 using GameAtlas.Domain.Markers;
 
 namespace GameAtlas.Application.Markers;
 
 internal static class MarkerMappingExtensions
 {
-	internal static MarkerDto ToDto(this Marker marker) => new(
+	internal static MarkerDto ToDto(this Marker marker, IReadOnlyDictionary<Guid, MediaAssetDto> assets) => new(
 		marker.Id,
 		marker.CategoryId,
 		marker.Name,
 		marker.Description,
 		marker.Position.ToDto(),
-		marker.Media.OrderBy(item => item.Order).Select(item => item.ToDto()).ToArray(),
+		marker.Media.OrderBy(item => item.Order).Select(item => assets[item.AssetId]).ToArray(),
 		marker.CreatedAt,
 		marker.UpdatedAt);
 

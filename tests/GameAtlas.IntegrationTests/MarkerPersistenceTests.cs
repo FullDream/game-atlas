@@ -1,5 +1,4 @@
 using GameAtlas.Domain.Markers;
-using GameAtlas.Domain.Markers.Media;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -22,14 +21,13 @@ public class MarkerPersistenceTests
 		}
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		var position = Assert.IsType<Position>(Position.Create(123.45, -67.89).Value);
 		var marker = Assert.IsType<Marker>(Marker.Create(category.Id, "Chest", position, "Description",
 			[
-				Assert.IsType<ImageMedia>(ImageMedia.Create("image", 1920, 1080, "Alt").Value),
-				Assert.IsType<YouTubeVideoMedia>(YouTubeVideoMedia.Create("dQw4w9WgXcQ").Value),
-				Assert.IsType<VideoMedia>(VideoMedia.Create("video", "preview").Value)
+				MediaTestData.ImageId, MediaTestData.PreviewId, MediaTestData.VideoId
 			]).Value);
 
 		await using (var scope = factory.Services.CreateAsyncScope())
@@ -50,11 +48,10 @@ public class MarkerPersistenceTests
 		Assert.Equal(marker.CategoryId, stored.CategoryId);
 		Assert.Equal(marker.CreatedAt, stored.CreatedAt);
 		Assert.Equal(marker.UpdatedAt, stored.UpdatedAt);
-		Assert.Equal("Alt", Assert.IsType<ImageMedia>(media[0]).Alt);
-		Assert.Equal("dQw4w9WgXcQ", Assert.IsType<YouTubeVideoMedia>(media[1]).VideoId);
-		Assert.Equal("preview", Assert.IsType<VideoMedia>(media[2]).Preview);
+		Assert.Equal(new[] { MediaTestData.ImageId, MediaTestData.PreviewId, MediaTestData.VideoId },
+			media.Select(item => item.AssetId));
 		Assert.All(media, item => Assert.Equal(stored.Id, item.MarkerId));
-		Assert.Equal(marker.Media.Select(item => item.Id), media.Select(item => item.Id));
+		Assert.Equal(marker.Media.Select(item => item.AssetId), media.Select(item => item.AssetId));
 		Assert.Null(reloaded.Model.FindEntityType(typeof(Position)));
 		Assert.Null(reloaded.Model.FindEntityType(typeof(GameAtlas.Domain.Categories.Category))
 			?.FindProperty("MarkersCount"));
@@ -66,21 +63,21 @@ public class MarkerPersistenceTests
 		Assert.False(classifier.IsCategoryNameConflict(failure));
 		Assert.False(classifier.IsGameSlugConflict(failure));
 		reloaded.ChangeTracker.Clear();
-		var orphanMedia = Assert.IsType<VideoMedia>(VideoMedia.Create("orphan-video").Value);
+		var orphan = Marker.Create(Guid.NewGuid(), "Orphan", position, media: [MediaTestData.VideoId]).Value!;
+		var orphanMedia = Assert.Single(orphan.Media);
 
-		reloaded.Set<MarkerMedia>().Add(orphanMedia);
-		reloaded.Entry(orphanMedia).Property(item => item.MarkerId).CurrentValue = Guid.NewGuid();
+		reloaded.Set<MarkerAsset>().Add(orphanMedia);
 		await Assert.ThrowsAsync<DbUpdateException>(() => reloaded.SaveChangesAsync());
 		reloaded.ChangeTracker.Clear();
 		var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 			reloaded.GetService<IMigrator>().MigrateAsync("20261023114301_Categories"));
 
-		Assert.Contains("MapOwnership_RestoreBackupForNonemptyMaps", rollback.Message);
+		Assert.Contains("Media_RestoreBackupForNonemptyMarkerAssets", rollback.Message);
 
 		Assert.Equal(game.Id, (await reloaded.Games.SingleAsync()).Id);
 		Assert.Equal(group.Id, (await reloaded.CategoryGroups.SingleAsync()).Id);
 		Assert.Equal(category.Id, (await reloaded.Categories.SingleAsync()).Id);
 		Assert.Equal(marker.Id, (await reloaded.Markers.SingleAsync()).Id);
-		Assert.Equal(3, await reloaded.Set<MarkerMedia>().CountAsync());
+		Assert.Equal(3, await reloaded.Set<MarkerAsset>().CountAsync());
 	}
 }

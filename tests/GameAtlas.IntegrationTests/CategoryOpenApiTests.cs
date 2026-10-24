@@ -81,7 +81,7 @@ public class CategoryOpenApiTests
 				.GetProperty("application/json").GetProperty("schema"));
 			var properties = schema.GetProperty("properties");
 
-			foreach (var (field, maximum) in new[] { ("name", 200), ("icon", 2048) })
+			foreach (var (field, maximum) in new[] { ("name", 200) })
 			{
 				var value = Resolve(root, properties.GetProperty(field));
 
@@ -89,6 +89,9 @@ public class CategoryOpenApiTests
 				Assert.Equal(1, value.GetProperty("minLength").GetInt32());
 				Assert.Equal(maximum, value.GetProperty("maxLength").GetInt32());
 			}
+
+			Assert.False(properties.TryGetProperty("icon", out _));
+			Assert.Equal("uuid", Resolve(root, properties.GetProperty("iconAssetId")).GetProperty("format").GetString());
 
 			var color = Resolve(root, properties.GetProperty("color"));
 			var order = Resolve(root, properties.GetProperty("order"));

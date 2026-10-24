@@ -1,6 +1,6 @@
 using GameAtlas.Application.Maps.CreateMap;
 using GameAtlas.Application.Maps.UpdateMapStyle;
-using GameAtlas.Application.Maps.Uploads;
+using GameAtlas.Application.Maps.AddMapStyle;
 using GameAtlas.Domain;
 
 namespace GameAtlas.Application.Tests;
@@ -10,10 +10,12 @@ public class MapValidationTests
 	[Fact]
 	public async Task MetadataTrimsNamesAndEnforcesColorAndLengthBoundaries()
 	{
-		var validator = new MapUploadMetadataValidation();
-		var valid = await validator.ValidateAsync(new MapUploadMetadata(" " + new string('n', 200) + " ", "#abc"));
+		var validator = new AddMapStyleValidation();
+		var valid = await validator.ValidateAsync(new AddMapStyle(Guid.NewGuid(), Guid.NewGuid(),
+			" " + new string('n', 200) + " ", "#abc", Guid.NewGuid()));
+
 		var invalid = await validator.ValidateAsync(
-			new MapUploadMetadata(new string('n', 201), "#ggg"));
+			new AddMapStyle(Guid.NewGuid(), Guid.NewGuid(), new string('n', 201), "#ggg", Guid.NewGuid()));
 
 		Assert.True(valid.IsValid);
 		Assert.Equal(new[] { "BackgroundColor", "Name" },

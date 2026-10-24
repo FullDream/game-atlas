@@ -1,6 +1,7 @@
 using GameAtlas.Application.Categories;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.CategoryGroups;
+using GameAtlas.Domain.Media;
 using GameAtlas.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -19,7 +20,9 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
 
 		builder.Property(category => category.Name).HasMaxLength(CategoryLimits.NameMaxLength).IsRequired();
 		builder.Property(category => category.NormalizedName).HasMaxLength(CategoryLimits.NameMaxLength).IsRequired();
-		builder.Property(category => category.Icon).HasMaxLength(CategoryLimits.IconMaxLength).IsRequired();
+		builder.HasOne<ImageAsset>().WithMany().HasForeignKey(category => category.IconAssetId)
+			.OnDelete(DeleteBehavior.Restrict);
+
 		builder.Property(category => category.Color).HasMaxLength(7).IsRequired();
 		builder.HasIndex(category => new { category.CategoryGroupId, category.NormalizedName }).IsUnique();
 		builder.HasIndex(category => new { category.CategoryGroupId, category.Order });

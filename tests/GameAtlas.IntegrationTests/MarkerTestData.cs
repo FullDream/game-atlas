@@ -11,9 +11,9 @@ namespace GameAtlas.IntegrationTests;
 internal static class MarkerTestData
 {
 	internal const string MixedMedia = """
-		[{"type":"image","url":" image.png ","width":640,"height":480},
-		 {"videoId":"Ab_cd-Ef012","type":"youtubeVideo"},
-		 {"type":"video","url":" clip.mp4 ","preview":" preview.jpg "}]
+		["019a0000-0000-7000-8000-000000000112",
+		 "019a0000-0000-7000-8000-000000000114",
+		 "019a0000-0000-7000-8000-000000000113"]
 		""";
 
 	internal static string Path(Guid gameId) => $"/games/{gameId}/maps/{MapTestData.MapIdFor(gameId)}/markers";

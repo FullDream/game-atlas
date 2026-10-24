@@ -16,7 +16,7 @@ public sealed class RetryMapStyleHandler(IApplicationDbContext context)
 			join map in context.Maps.ForMap(command.GameId, command.MapId) on candidate.MapId equals map.Id
 			where candidate.Id == command.StyleId
 			select candidate
-		).SingleOrDefaultAsync(cancellationToken);
+		).Include(style => style.Source).SingleOrDefaultAsync(cancellationToken);
 
 		if (style is null)
 			return MapOperationErrors.NotFound;

@@ -4,7 +4,6 @@ using GameAtlas.Application.Maps;
 using GameAtlas.Application.Maps.Images;
 using GameAtlas.Application.Maps.Storage;
 using GameAtlas.Domain.Maps;
-using GameAtlas.Domain.Result;
 using GameAtlas.Infrastructure.Maps.Images;
 using GameAtlas.Infrastructure.Maps.Processing;
 using GameAtlas.Infrastructure.Persistence;
@@ -68,7 +67,7 @@ public class MapProcessingTests
 		var map = await MapTestData.ReadAsync(initial);
 		var atlas = map.Styles.Single();
 		using var roadUpload = MapTestData.Style(name: "Roads");
-		using var added = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles", roadUpload);
+		using var added = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), roadUpload);
 		var appended = await MapTestData.ReadAsync(added);
 		var roads = appended.Styles.Last();
 		var processor = factory.Services.GetRequiredService<MapProcessor>();
@@ -198,7 +197,6 @@ public class MapProcessingTests
 		public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-		public Result<MapImageInfo> Probe(string path) => inner.Probe(path);
 		public void CheckCapabilities() => inner.CheckCapabilities();
 
 		public async Task GenerateAsync(string path, string output, MapGeometry geometry, IProgress<int> progress,

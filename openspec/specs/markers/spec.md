@@ -20,7 +20,7 @@ Unauthenticated GET/POST SHALL use /games/{gameId}/maps/{mapId}/markers and PATC
 - **AND** missing or foreign game/map/marker scope returns 404 without changes
 
 ### Requirement: Create a complete marker
-POST SHALL accept required categoryId, name, and position with optional description/media and return HTTP 200 with the existing eight marker fields. The server SHALL assign UUID v7 and equal UTC timestamps. The route map SHALL exist, but no uploaded/ready style SHALL be required. Server-owned input SHALL NOT override identity, ownership, or timestamps.
+POST SHALL accept required categoryId, name, and position with optional description and an ordered media array of library asset IDs. Omitted media SHALL default to []. Success SHALL return the existing eight root fields with media resolved as shared image/video assets. Server-generated identity/timestamps, route ownership, and zero-style map support SHALL remain unchanged.
 
 #### Scenario: Create on a blank coordinate space
 - **WHEN** a valid marker is created in a category of a map with styles=[]
@@ -122,81 +122,48 @@ Creation SHALL require categoryId. PATCH SHALL allow categoryId changes only to 
 - **THEN** HTTP 404 is returned without partial writes
 - **AND** null or missing required creation categoryId returns HTTP 422, and malformed GUID input returns HTTP 400
 
-### Requirement: Expose an ordered media union without public child identities
-Media SHALL be an ordered array containing image, youtubeVideo, or video objects identified by the required case-sensitive type property. Each variant SHALL expose only its own fields. Media IDs and storage order fields SHALL NOT be exposed or accepted. Missing/unknown discriminators, incompatible types, and unknown variant properties SHALL return HTTP 400; null array elements SHALL return HTTP 422.
+### Requirement: Attach ordered library assets without independent marker media models
+Marker media SHALL reference existing library images/videos through ordered UUID arrays. Duplicate IDs and null elements SHALL return 422, malformed GUIDs or legacy media objects 400, missing assets 404, and folder/incompatible references 422. Responses SHALL reuse shared library image/video representations including public asset IDs and required type. Separate per-marker media identities/metadata SHALL NOT be exposed.
 
 #### Scenario: Mixed media round trip
-- **WHEN** media contains an image, a YouTube reference, and a hosted video in that order
-- **THEN** all three objects round-trip in the same order with their canonical type values and variant-specific data
-- **AND** repeated equal attachments remain separate ordered elements without public IDs
+- **WHEN** media contains an image asset ID followed by a video asset ID
+- **THEN** both resolve in exactly that order as shared library representations with id, type, URL, and metadata
+- **AND** one asset may be reused by other markers but cannot occur twice within the same marker
 
 #### Scenario: Reject ambiguous or unknown variants
-- **WHEN** an element omits type, supplies an unknown type such as fileVideo, adds name/caption/internal IDs, or combines fields belonging to different variants
-- **THEN** HTTP 400 is returned without changes
-- **AND** null elements return HTTP 422 without partial persistence
+- **WHEN** a media element is an old image/video/YouTube object, a URL, or a malformed GUID
+- **THEN** HTTP 400 rejects the complete request
+- **AND** null elements or duplicate IDs return 422 without partial persistence
 
-### Requirement: Validate image attachment metadata
-An image SHALL contain type=image, required url, and required positive 32-bit integer width and height. Alt SHALL default to an empty string when omitted and SHALL allow empty text but reject explicit null with HTTP 422. Missing/null/blank url or missing/null/nonpositive dimensions SHALL return HTTP 422; incompatible or out-of-range dimension representations SHALL return HTTP 400.
-
-#### Scenario: Image metadata and default alt
-- **WHEN** an image supplies a valid url and dimensions 1920 by 1080 without alt
-- **THEN** the complete returned image includes alt="" and the supplied dimensions
-- **AND** a supplied alt string is preserved, while explicit null alt returns HTTP 422
-
-#### Scenario: Required image dimensions
-- **WHEN** width or height is missing, null, zero, or negative
-- **THEN** HTTP 422 with the affected nested media field error is returned
-- **AND** fractional numbers, strings, and integer overflow return HTTP 400
-
-### Requirement: Accept YouTube references by video identifier
-A youtubeVideo attachment SHALL contain type=youtubeVideo and a required case-sensitive videoId of 11 ASCII letters, digits, hyphens, or underscores. Missing, null, blank, or invalid IDs SHALL return HTTP 422 with videoId errors. Full YouTube URLs, embed HTML, provider lookups, and remote existence checks SHALL NOT be supported.
-
-#### Scenario: Identifier-only YouTube reference
-- **WHEN** an attachment supplies `{"type":"youtubeVideo","videoId":"dQw4w9WgXcQ"}`
-- **THEN** the identifier is stored and returned unchanged without contacting YouTube
-- **AND** a full URL or an identifier with the wrong length or alphabet returns HTTP 422
-
-### Requirement: Accept hosted video references and optional previews
-A video attachment SHALL contain type=video and required url, with optional preview as an image-reference string. Omitted/null/blank preview SHALL normalize to null. A supplied nonblank preview SHALL be trimmed and returned. Preview dimensions and alt, HTML embeds, playback settings, and processing state SHALL NOT be introduced.
-
-#### Scenario: Hosted video with and without preview
-- **WHEN** media contains `{"type":"video","url":"/videos/chest.mp4","preview":"/images/chest.webp"}`
-- **THEN** both references round-trip
-- **AND** omission, null, or whitespace-only preview returns preview=null, while missing/null/blank required url returns HTTP 422
-
-### Requirement: Validate media references without remote inspection
-Image/video url and nonblank preview SHALL be trimmed opaque strings of 1 through 2048 characters. Relative paths and absolute links SHALL be accepted without extension, resource availability, or file-content checks. Overlength values SHALL return HTTP 422 with nested field errors. This feature SHALL NOT upload, fetch, transcode, or delete referenced files.
-
-#### Scenario: Reference bounds and formats
-- **WHEN** a reference uses a relative path, an absolute link, or an extensionless resource within the length limit
-- **THEN** it is stored without remote access
-- **AND** 2048 trimmed characters are accepted while 2049 are rejected with HTTP 422 without partial changes
+#### Scenario: Shared metadata is resolved rather than copied
+- **WHEN** attached image alt/name or a video's preview changes in the library
+- **THEN** subsequent marker responses expose current shared metadata without updating marker timestamps or attachment IDs/order
 
 ### Requirement: Replace media arrays atomically through marker updates
-Media omission at creation SHALL produce []; omission in PATCH SHALL preserve current media. A supplied array SHALL replace the whole list in client order, including complete replacement objects for every element. [] SHALL clear media; null SHALL return HTTP 422. An invalid element SHALL reject the entire marker mutation. Separate media update/reorder endpoints SHALL NOT be exposed.
+Omitted creation media SHALL produce []; omitted PATCH media SHALL preserve attachments. A supplied asset-ID array SHALL replace the whole ordered attachment list. [] SHALL clear attachments; null SHALL return 422. Every ID SHALL be validated before any marker state is saved. Detachment SHALL NOT remove library assets. No separate marker-media update/reorder endpoint SHALL exist.
 
 #### Scenario: Replace and clear the list
-- **WHEN** PATCH supplies a valid media array, including a different order or variant composition
-- **THEN** the supplied array becomes the complete ordered list and omitted old attachments are removed from storage
-- **AND** [] clears the list while omitted media leaves it unchanged
+- **WHEN** PATCH supplies a valid ordered array of distinct asset IDs
+- **THEN** it becomes the complete attachment list and omitted former attachments are removed
+- **AND** [] clears attachments, omitted media preserves them, and all underlying assets remain in the library
 
 #### Scenario: Reject partial element patches
-- **WHEN** a supplied replacement image contains only alt, or any replacement element lacks its required fields
-- **THEN** the operation fails with the appropriate 400 discriminator/type or 422 validation response
+- **WHEN** an array contains a partial media object or an invalid, duplicated, missing, or incompatible asset reference
+- **THEN** the operation fails with the applicable 400/404/422 response
 - **AND** no scalar, position, category, or attachment change is persisted
 
 ### Requirement: Apply atomic marker merge patches and preserve no-ops
-PATCH SHALL accept optional categoryId, name, description, position, and media and return the complete marker. Empty objects SHALL return 422; unknown/read-only fields SHALL return 400. Identity/createdAt SHALL remain unchanged. Only effective marker state SHALL update its updatedAt; no-ops SHALL preserve it. Parent map/game/group/category metadata and timestamps SHALL remain unchanged. Failed updates SHALL be atomic.
+PATCH SHALL retain optional categoryId, name, description, position, and media, with media now an asset-ID array. Attachment/reference checks and scalar/position changes SHALL commit atomically. Empty objects SHALL return 422 and unknown/read-only fields 400. Identity/createdAt and parent timestamps SHALL remain unchanged. Equal ordered IDs SHALL be a media no-op; effective changes SHALL update only the marker.
 
 #### Scenario: Preserve parents and recursive position behavior
 - **WHEN** a marker is created, changed, transferred, or deleted
 - **THEN** parent metadata remains unchanged
-- **AND** recursive position merge, full-array media replacement, normalized equality, and read-only mapId/gameId rejection retain their existing behavior
+- **AND** position merging, ID-array replacement, read-only-field rejection, and resource-level atomicity remain in force
 
 #### Scenario: Combined update and effective equality
-- **WHEN** a valid patch changes any combination of mutable fields
-- **THEN** all effective changes commit together and only that marker's updatedAt changes
-- **AND** supplied values equal to current normalized state, including equal ordered media content, succeed without changing updatedAt or rewriting media
+- **WHEN** valid changes combine scalar fields, recursive position members, same-map category transfer, and ordered asset IDs
+- **THEN** all effective changes commit together and only marker updatedAt changes
+- **AND** equal normalized fields and equal ordered asset IDs preserve marker timestamps and attachment rows
 
 #### Scenario: Parent timestamps and read-only fields
 - **WHEN** a marker is created, edited, transferred, or deleted
@@ -216,41 +183,41 @@ Updates SHALL accept application/merge-patch+json and application/json with iden
 - **THEN** it returns HTTP 400 ProblemDetails without storage changes
 
 ### Requirement: Physically delete markers and cascade current ownership
-DELETE SHALL physically remove the scoped marker/media records and return empty HTTP 204. Repeated deletion SHALL return 404. Category/group/map/game deletion SHALL cascade through currently owned markers/media while preserving unrelated data. Referenced files SHALL NOT be deleted. Style deletion, including the last style, SHALL NOT delete markers or their media records.
+DELETE SHALL physically remove the scoped marker and its attachment rows and return empty 204. Repeated deletion SHALL return 404. Category/group/map/game deletion SHALL cascade through current marker ownership without deleting shared assets or their files. Other markers' attachments SHALL remain unchanged. Removing a style SHALL NOT delete marker attachments.
 
 #### Scenario: Map deletion and style deletion have distinct ownership
-- **WHEN** the map is deleted
-- **THEN** its current markers/media records disappear while sibling maps and external media references remain intact
-- **AND** deleting only a style leaves every marker, media record, coordinate, and category count unchanged
+- **WHEN** a map is deleted
+- **THEN** its marker/attachment rows disappear while sibling maps and every shared asset remain intact
+- **AND** style deletion alone preserves every marker, attachment, position, and category count
 
 #### Scenario: Delete and repeat
-- **WHEN** an existing marker with mixed media is deleted
-- **THEN** its marker and media records are absent after reopening storage and the response is empty HTTP 204
-- **AND** another marker remains unchanged and repeated deletion returns HTTP 404
+- **WHEN** a marker referencing shared image/video assets is deleted
+- **THEN** its marker and attachment rows are absent after reopening storage and the response is empty 204
+- **AND** referenced assets and another marker's references remain; repeated deletion returns 404
 
 #### Scenario: Parent deletion after transfers
-- **WHEN** a category, group, map, or game is deleted using its existing API, including direct game deletion
-- **THEN** its currently owned markers and media are physically removed
-- **AND** a marker transferred out of a deleted category survives, and unrelated game data is preserved
+- **WHEN** a category, group, map, or game is deleted through its existing API
+- **THEN** current marker and attachment rows cascade while assets remain in the library
+- **AND** moved markers survive former-parent deletion, and detached assets are not automatically expired
 
 ### Requirement: Persist marker mutations safely
-Successful marker mutations SHALL be durable. Category checks, position changes, and replacement media SHALL commit together. Unexpected storage/library failures SHALL return safe HTTP 500 ProblemDetails without SQL, connection, or exception details and SHALL NOT be mislabeled as name conflicts. Failed writes SHALL NOT leave orphaned media or partial category-count changes.
+Marker state, category checks, and ordered asset attachments SHALL be durable and atomic. Concurrent asset deletion SHALL NOT create dangling references. Unexpected storage/library failures SHALL return safe 500 without being classified as name conflicts. Failed writes SHALL restore prior attachments and category counts, leaving every shared asset unchanged.
 
 #### Scenario: Failure after a write but before commit
-- **WHEN** creating, updating, transferring, deleting, or replacing media fails after database commands execute but before commit
-- **THEN** the prior marker state, media, and observable category counts are restored
-- **AND** the response is safe HTTP 500 without internal details
+- **WHEN** creation, transfer, deletion, or attachment replacement fails after commands execute but before commit
+- **THEN** prior marker fields, attachment order, and observable counts are restored
+- **AND** assets/bytes remain intact and the safe 500 response reveals no internal details
 
 ### Requirement: Document marker operations and discriminated media
-OpenAPI SHALL document the four existing marker operation IDs on game/map-scoped routes in GET/POST/PATCH/DELETE order. It SHALL preserve complete eight-field DTOs, finite/nested position rules, required-discriminator media anyOf unions, shared PATCH semantics, validation, and applicable ProblemDetails. Legacy game-wide marker routes SHALL be absent; no redundant mapId/gameId DTO field SHALL be added.
+OpenAPI SHALL retain four map-scoped marker operations in GET/POST/PATCH/DELETE order and eight root response fields. Creation/PATCH media SHALL be UUID arrays; response media SHALL reuse the library image/video union. YouTube, arbitrary URLs, per-marker media metadata, and old media-object input schemas SHALL be absent. Existing position, category, counts, PATCH, and safe-error contracts SHALL remain.
 
 #### Scenario: Discover scoped operations without media regression
 - **WHEN** a client reads OpenAPI
-- **THEN** ListMarkers/CreateMarker/UpdateMarker/DeleteMarker require gameId/mapId paths and retain image/youtubeVideo/video request/response schemas
-- **AND** lists remain unpaginated and unfiltered, and PUT and individual-marker GET remain absent
+- **THEN** existing marker operation IDs/routes remain, requests accept ordered UUID media arrays, and responses use shared image/video schemas
+- **AND** lists stay unpaginated/unfiltered while YouTube, PUT, and individual-marker GET are absent
 
 #### Scenario: Discover the contract
 - **WHEN** a client reads OpenAPI
-- **THEN** GET documents a plain full-marker array, POST/PATCH document 200 DTOs, DELETE documents empty 204, and relevant 400/404/415/422/500 errors are present
-- **AND** both request and response media arrays expose the three distinct schemas, required discriminator values, subtype-specific fields, image alt default, and nullable video preview
-- **AND** PATCH fields and nested coordinates are optional, creation coordinates are required, and internal media IDs, optional wrappers, filters, pagination, PUT, and individual GET are absent
+- **THEN** GET returns complete marker arrays, POST/PATCH return 200 DTOs, DELETE returns empty 204, and relevant 400/404/415/422/500 responses are documented
+- **AND** responses expose image/video discriminator mappings with shared alt/preview metadata, while input uses IDs without type discriminators
+- **AND** optional patch fields, recursive position semantics, creation requirements, and duplicate-ID validation are discoverable
