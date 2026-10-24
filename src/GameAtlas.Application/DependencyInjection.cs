@@ -15,6 +15,7 @@ public static class DependencyInjection
 		});
 
 		services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
+		services.AddScoped<Maps.Uploads.MapUploadAdmission>();
 
 		return services;
 	}

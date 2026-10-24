@@ -13,8 +13,8 @@ public sealed class UpdateCategoryGroupHandler(IApplicationDbContext context)
 		UpdateCategoryGroup command, CancellationToken cancellationToken)
 	{
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
-		var group = await context.CategoryGroups.AsTracking().SingleOrDefaultAsync(
-			group => group.GameId == command.GameId && group.Id == command.Id, cancellationToken);
+		var group = await context.CategoryGroups.AsTracking().ForMap(context, command.GameId, command.MapId)
+			.SingleOrDefaultAsync(group => group.Id == command.Id, cancellationToken);
 
 		if (group is null)
 			return UpdateCategoryGroupErrors.NotFound;
@@ -25,7 +25,7 @@ public sealed class UpdateCategoryGroupHandler(IApplicationDbContext context)
 			CategoryGroup.NormalizeName(nextName) != group.NormalizedName)
 		{
 			var normalizedName = CategoryGroup.NormalizeName(nextName);
-			var nameExists = await context.CategoryGroups.AnyAsync(other => other.GameId == command.GameId &&
+			var nameExists = await context.CategoryGroups.AnyAsync(other => other.MapId == command.MapId &&
 				other.Id != command.Id && other.NormalizedName == normalizedName, cancellationToken);
 
 			if (nameExists)

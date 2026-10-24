@@ -14,7 +14,7 @@ public sealed class GamePersistenceTests : IDisposable
 	[Fact]
 	public async Task MigrationPersistsMetadataAcrossConnectionsWithStringStatus()
 	{
-		var game = Game.Create(" Game ", " game ", " cover ", Guid.NewGuid()).Value!;
+		var game = Game.Create(" Game ", " game ", " cover ").Value!;
 
 		await using (var context = CreateContext())
 		{
@@ -30,7 +30,6 @@ public sealed class GamePersistenceTests : IDisposable
 		Assert.Equal(game.Name, stored.Name);
 		Assert.Equal(game.Slug, stored.Slug);
 		Assert.Equal(game.Image, stored.Image);
-		Assert.Equal(game.MapId, stored.MapId);
 		Assert.Equal(game.CreatedAt, stored.CreatedAt);
 		Assert.Equal(game.UpdatedAt, stored.UpdatedAt);
 		Assert.Equal(GameStatus.Draft, stored.Status);
@@ -47,7 +46,8 @@ public sealed class GamePersistenceTests : IDisposable
 		await using var context = CreateContext();
 
 		await context.Database.MigrateAsync();
-		context.Games.AddRange(Game.Create("Game", "first", "image").Value!, Game.Create("Game", "second", "image").Value!);
+		context.Games.AddRange(Game.Create("Game", "first", "image").Value!,
+			Game.Create("Game", "second", "image").Value!);
 		await context.SaveChangesAsync();
 		context.Games.Add(Game.Create("Other", "first", "image").Value!);
 		await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());

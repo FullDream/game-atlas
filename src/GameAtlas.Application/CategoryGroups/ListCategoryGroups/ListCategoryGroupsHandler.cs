@@ -12,13 +12,13 @@ public sealed class ListCategoryGroupsHandler(IApplicationDbContext context)
 		ListCategoryGroups query,
 		CancellationToken cancellationToken)
 	{
-		if (!await context.Games.AnyAsync(game => game.Id == query.GameId, cancellationToken))
-			return ListCategoryGroupsErrors.GameNotFound;
+		if (!await context.Maps.AnyAsync(map => map.Id == query.MapId && map.GameId == query.GameId, cancellationToken))
+			return ListCategoryGroupsErrors.MapNotFound;
 
 		var groups = await context
 			.CategoryGroups
 			.AsNoTracking()
-			.Where(group => group.GameId == query.GameId)
+			.Where(group => group.MapId == query.MapId)
 			.OrderBy(group => group.Order)
 			.ThenBy(group => group.CreatedAt)
 			.ThenBy(group => group.Id)

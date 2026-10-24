@@ -8,10 +8,10 @@ public static class CreateCategoryGroupErrors
 		"CategoryGroup.Order.Required", "The order range is exhausted. Supply an explicit positive order.",
 		nameof(CreateCategoryGroup.Order), ErrorType.Validation);
 
-	public static readonly Error GameNotFound = new(
-		"Game.NotFound", "The game was not found.", nameof(CreateCategoryGroup.GameId), ErrorType.NotFound);
+	public static readonly Error MapNotFound = new(
+		"Map.NotFound", "The map was not found.", nameof(CreateCategoryGroup.MapId), ErrorType.NotFound);
 
 	public static readonly Error NameConflict = new(
-		"CategoryGroup.Name.Conflict", "A category group with this name already exists in this game.",
+		"CategoryGroup.Name.Conflict", "A category group with this name already exists in this map.",
 		nameof(CreateCategoryGroup.Name), ErrorType.Conflict);
 }

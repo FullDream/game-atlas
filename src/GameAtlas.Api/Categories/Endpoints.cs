@@ -11,7 +11,8 @@ public static class Endpoints
 {
 	public static RouteGroupBuilder MapCategories(this RouteGroupBuilder group)
 	{
-		var categories = group.MapGroup("/games/{gameId}/category-groups/{groupId}/categories").WithTags("Categories");
+		var categories = group.MapGroup("/games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories")
+			.WithTags("Categories");
 
 		categories.MapGet("", ListCategoriesAsync)
 			.WithName("ListCategories").WithSummary("List categories")
@@ -27,7 +28,7 @@ public static class Endpoints
 		categories.MapPatch("/{id}", UpdateCategoryAsync)
 			.WithName("UpdateCategory").WithSummary("Update category")
 			.WithDescription("Supply name, icon, color, order, or categoryGroupId. The route identifies the current " +
-				"group; categoryGroupId transfers to a group of the same game. Omitted fields remain unchanged, " +
+				"group; categoryGroupId transfers to a group of the same map. Omitted fields remain unchanged, " +
 				"including order on transfer. Use the new group route after transfer. Nulls and empty patches are " +
 				"rejected. Both media types use JSON Merge Patch semantics; no-ops preserve updatedAt.")
 			.WithMergePatch<UpdateCategoryRequest>();
@@ -41,20 +42,20 @@ public static class Endpoints
 	}
 
 	private static async Task<OutcomeResult<IReadOnlyCollection<CategoryDto>>> ListCategoriesAsync(
-		Guid gameId, Guid groupId, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(new ListCategories(gameId, groupId), cancellationToken);
+		Guid gameId, Guid mapId, Guid groupId, IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(new ListCategories(gameId, mapId, groupId), cancellationToken);
 
 	private static async Task<OutcomeResult<CategoryDto>> CreateCategoryAsync(
-		Guid gameId, Guid groupId, CreateCategoryRequest request, IMediator mediator,
+		Guid gameId, Guid mapId, Guid groupId, CreateCategoryRequest request, IMediator mediator,
 		CancellationToken cancellationToken) =>
-		await mediator.Send(request.ToCommand(gameId, groupId), cancellationToken);
+		await mediator.Send(request.ToCommand(gameId, mapId, groupId), cancellationToken);
 
 	private static async Task<OutcomeResult<CategoryDto>> UpdateCategoryAsync(
-		Guid gameId, Guid groupId, Guid id, UpdateCategoryRequest request, IMediator mediator,
+		Guid gameId, Guid mapId, Guid groupId, Guid id, UpdateCategoryRequest request, IMediator mediator,
 		CancellationToken cancellationToken) =>
-		await mediator.Send(request.ToCommand(gameId, groupId, id), cancellationToken);
+		await mediator.Send(request.ToCommand(gameId, mapId, groupId, id), cancellationToken);
 
 	private static async Task<OutcomeResult> DeleteCategoryAsync(
-		Guid gameId, Guid groupId, Guid id, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(new DeleteCategory(gameId, groupId, id), cancellationToken);
+		Guid gameId, Guid mapId, Guid groupId, Guid id, IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(new DeleteCategory(gameId, mapId, groupId, id), cancellationToken);
 }

@@ -1,0 +1,58 @@
+@host = https://localhost:7000
+@gameId = 00000000-0000-0000-0000-000000000001
+@mapId = 00000000-0000-0000-0000-000000000004
+@styleId = 00000000-0000-0000-0000-000000000002
+@tilePath = /map-tiles/00000000000000000000000000000004/00000000000000000000000000000002/0/0/0.webp
+
+### List all maps
+GET {{host}}/games/{{gameId}}/maps
+
+### Read complete map and geometry
+GET {{host}}/games/{{gameId}}/maps/{{mapId}}
+
+### Current snapshot followed by changes and idle heartbeats
+GET {{host}}/games/{{gameId}}/maps/{{mapId}}/events
+Accept: text/event-stream
+
+### Create an empty coordinate space before uploading any style
+POST {{host}}/games/{{gameId}}/maps
+Content-Type: application/json
+
+{"name":"World","width":1025,"height":513}
+
+### Append one style with flat metadata and one original
+POST {{host}}/games/{{gameId}}/maps/{{mapId}}/styles
+Content-Type: multipart/form-data; boundary=map-upload
+
+--map-upload
+Content-Disposition: form-data; name="name"
+
+Night
+--map-upload
+Content-Disposition: form-data; name="backgroundColor"
+
+#000
+--map-upload
+Content-Disposition: form-data; name="file"; filename="night.png"
+Content-Type: image/png
+
+< ./night.png
+--map-upload--
+
+### Retry only a failed style, retaining its original
+POST {{host}}/games/{{gameId}}/maps/{{mapId}}/styles/{{styleId}}/retry
+
+### Update viewer metadata independently of processing
+PATCH {{host}}/games/{{gameId}}/maps/{{mapId}}/styles/{{styleId}}
+Content-Type: application/merge-patch+json; charset=utf-8
+
+{"name":"Atlas","backgroundColor":"#abc"}
+
+### Fetch an immutable static tile (replace tilePath from tilesUrlTemplate; IDs use N format)
+GET {{host}}{{tilePath}}
+
+### Remove any style, including the last; geometry and map content remain
+DELETE {{host}}/games/{{gameId}}/maps/{{mapId}}/styles/{{styleId}}
+
+### Permanently delete this map and all its groups, categories, markers, and styles
+DELETE {{host}}/games/{{gameId}}/maps/{{mapId}}

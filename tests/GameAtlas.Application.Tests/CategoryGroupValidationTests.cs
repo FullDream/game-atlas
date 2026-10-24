@@ -17,10 +17,10 @@ public class CategoryGroupValidationTests
 		var gameId = Guid.NewGuid();
 
 		Assert.Equal(valid, new CreateCategoryGroupValidation().Validate(
-			new CreateCategoryGroup(gameId, "Group", order)).IsValid);
+			new CreateCategoryGroup(gameId, Guid.NewGuid(), "Group", order)).IsValid);
 		Assert.Equal(valid, new UpdateCategoryGroupValidation().Validate(
-			new UpdateCategoryGroup(gameId, Guid.NewGuid(), Order: order)).IsValid);
-		Assert.True(new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(gameId, "Group")).IsValid);
+			new UpdateCategoryGroup(gameId, Guid.NewGuid(), Guid.NewGuid(), Order: order)).IsValid);
+		Assert.True(new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(gameId, Guid.NewGuid(), "Group")).IsValid);
 	}
 
 	[Theory]
@@ -33,9 +33,9 @@ public class CategoryGroupValidationTests
 		var gameId = Guid.NewGuid();
 		var name = " " + new string('x', length) + " ";
 
-		Assert.Equal(valid, new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(gameId, name)).IsValid);
+		Assert.Equal(valid, new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(gameId, Guid.NewGuid(), name)).IsValid);
 		Assert.Equal(valid, new UpdateCategoryGroupValidation().Validate(
-			new UpdateCategoryGroup(gameId, Guid.NewGuid(), name)).IsValid);
+			new UpdateCategoryGroup(gameId, Guid.NewGuid(), Guid.NewGuid(), name)).IsValid);
 	}
 
 	[Fact]
@@ -44,9 +44,9 @@ public class CategoryGroupValidationTests
 		var gameId = Guid.NewGuid();
 		var validator = new UpdateCategoryGroupValidation();
 
-		Assert.False(new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(gameId, null)).IsValid);
-		Assert.False(validator.Validate(new UpdateCategoryGroup(gameId, Guid.NewGuid())).IsValid);
-		Assert.False(validator.Validate(new UpdateCategoryGroup(gameId, Guid.NewGuid(),
+		Assert.False(new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(gameId, Guid.NewGuid(), null)).IsValid);
+		Assert.False(validator.Validate(new UpdateCategoryGroup(gameId, Guid.NewGuid(), Guid.NewGuid())).IsValid);
+		Assert.False(validator.Validate(new UpdateCategoryGroup(gameId, Guid.NewGuid(), Guid.NewGuid(),
 			Optional<string?>.From(null))).IsValid);
 	}
 }

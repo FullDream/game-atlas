@@ -10,7 +10,7 @@ public sealed class DeleteMarkerHandler(IApplicationDbContext context) : IComman
 	public async ValueTask<Result> Handle(DeleteMarker command, CancellationToken cancellationToken)
 	{
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
-		var marker = await context.Markers.AsTracking().ForGame(context, command.GameId)
+		var marker = await context.Markers.AsTracking().ForMap(context, command.GameId, command.MapId)
 			.SingleOrDefaultAsync(item => item.Id == command.Id, cancellationToken);
 
 		if (marker is null)

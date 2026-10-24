@@ -28,7 +28,7 @@ public class GameOpenApiTests
 		Assert.Contains(statusSchema.GetProperty("enum").EnumerateArray(), value => value.GetString() == "draft");
 		var dto = schemas.GetProperty("GameDto").GetProperty("properties");
 
-		foreach (var property in new[] { "id", "name", "slug", "image", "mapId", "createdAt", "updatedAt", "status" })
+		foreach (var property in new[] { "id", "name", "slug", "image", "createdAt", "updatedAt", "status" })
 			Assert.True(dto.TryGetProperty(property, out _));
 	}
 }

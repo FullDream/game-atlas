@@ -14,12 +14,11 @@ public sealed class Game
 	public string Name { get; private set; } = null!;
 	public string Slug { get; private set; } = null!;
 	public string Image { get; private set; } = null!;
-	public Guid? MapId { get; private set; }
 	public DateTimeOffset CreatedAt { get; private set; }
 	public DateTimeOffset UpdatedAt { get; private set; }
 	public GameStatus Status { get; private set; }
 
-	public static Result<Game> Create(string? name, string? slug, string? image, Guid? mapId = null)
+	public static Result<Game> Create(string? name, string? slug, string? image)
 	{
 		name = name?.Trim();
 		slug = slug?.Trim();
@@ -43,7 +42,6 @@ public sealed class Game
 			Name = name!,
 			Slug = slug!,
 			Image = image!,
-			MapId = mapId,
 			CreatedAt = now,
 			UpdatedAt = now,
 			Status = GameStatus.Draft
@@ -54,13 +52,11 @@ public sealed class Game
 		Optional<string?> name = default,
 		Optional<string?> slug = default,
 		Optional<string?> image = default,
-		Optional<Guid?> mapId = default,
 		Optional<GameStatus?> status = default)
 	{
 		var nextName = name.GetValueOrDefault(Name)?.Trim();
 		var nextSlug = slug.GetValueOrDefault(Slug)?.Trim();
 		var nextImage = image.GetValueOrDefault(Image)?.Trim();
-		var nextMapId = mapId.GetValueOrDefault(MapId);
 		var nextStatus = status.GetValueOrDefault(Status);
 		var errors = new List<Error>();
 
@@ -79,13 +75,12 @@ public sealed class Game
 		if (errors.Count > 0 || nextName is null || nextSlug is null || nextImage is null || nextStatus is null)
 			return errors.ToArray();
 
-		if (nextName == Name && nextSlug == Slug && nextImage == Image && nextMapId == MapId && nextStatus == Status)
+		if (nextName == Name && nextSlug == Slug && nextImage == Image && nextStatus == Status)
 			return false;
 
 		Name = nextName;
 		Slug = nextSlug;
 		Image = nextImage;
-		MapId = nextMapId;
 		Status = nextStatus.Value;
 		UpdatedAt = DateTimeOffset.UtcNow;
 

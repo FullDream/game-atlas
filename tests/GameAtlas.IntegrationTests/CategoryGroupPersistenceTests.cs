@@ -31,7 +31,7 @@ public class CategoryGroupPersistenceTests
 		var stored = Assert.Single(await CategoryGroupTestData.LoadAsync(factory, game.Id));
 
 		Assert.Equal(group.Id, stored.Id);
-		Assert.Equal(game.Id, stored.GameId);
+		Assert.Equal(MapTestData.MapIdFor(game.Id), stored.MapId);
 		Assert.Equal("Ресурсы", stored.Name);
 		Assert.Equal(4, stored.Order);
 		Assert.Equal(group.CreatedAt, stored.CreatedAt);
@@ -53,6 +53,7 @@ public class CategoryGroupPersistenceTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
 
 		await CategoryGroupTestData.SeedAsync(factory, game.Id, name, 1);
@@ -60,7 +61,7 @@ public class CategoryGroupPersistenceTests
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-		context.CategoryGroups.Add(CategoryGroup.Create(game.Id, duplicate, 1).Value!);
+		context.CategoryGroups.Add(CategoryGroup.Create(MapTestData.MapIdFor(game.Id), duplicate, 1).Value!);
 		var failure = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 		var classifier = new SqlitePersistenceFailureClassifier();
 

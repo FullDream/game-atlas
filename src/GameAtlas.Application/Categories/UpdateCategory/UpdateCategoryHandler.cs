@@ -1,4 +1,5 @@
 using GameAtlas.Application.Abstractions.Persistence;
+using GameAtlas.Application.CategoryGroups;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Result;
 using Mediator;
@@ -14,8 +15,8 @@ public sealed class UpdateCategoryHandler(IApplicationDbContext context)
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
 		var category = await context.Categories.AsTracking().SingleOrDefaultAsync(
 			category => category.Id == command.Id && category.CategoryGroupId == command.GroupId &&
-				context.CategoryGroups.Any(group =>
-					group.Id == category.CategoryGroupId && group.GameId == command.GameId),
+				context.CategoryGroups.ForMap(context, command.GameId, command.MapId).Any(group =>
+					group.Id == category.CategoryGroupId),
 			cancellationToken);
 
 		if (category is null)
@@ -23,8 +24,8 @@ public sealed class UpdateCategoryHandler(IApplicationDbContext context)
 
 		var destinationId = command.CategoryGroupId.GetValueOrDefault(category.CategoryGroupId);
 
-		if (!await context.CategoryGroups.AnyAsync(
-			group => group.Id == destinationId && group.GameId == command.GameId, cancellationToken))
+		if (!await context.CategoryGroups.ForMap(context, command.GameId, command.MapId).AnyAsync(
+			group => group.Id == destinationId, cancellationToken))
 			return UpdateCategoryErrors.GroupNotFound;
 
 		var nextName = command.Name.GetValueOrDefault(category.Name);

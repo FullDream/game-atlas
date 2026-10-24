@@ -10,7 +10,7 @@ public sealed class CreateGameHandler(IApplicationDbContext context) : ICommandH
 {
 	public async ValueTask<Result<GameDto>> Handle(CreateGame command, CancellationToken cancellationToken)
 	{
-		var result = Game.Create(command.Name, command.Slug, command.Image, command.MapId);
+		var result = Game.Create(command.Name, command.Slug, command.Image);
 
 		if (result.IsFailure)
 			return result.Errors;

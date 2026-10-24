@@ -26,7 +26,7 @@ public sealed class UpdateGameHandler(IApplicationDbContext context) : ICommandH
 				return UpdateGameErrors.SlugConflict;
 		}
 
-		var result = game.Update(command.Name, command.Slug, command.Image, command.MapId, command.Status);
+		var result = game.Update(command.Name, command.Slug, command.Image, command.Status);
 
 		if (result.IsFailure)
 			return result.Errors;

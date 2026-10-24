@@ -4,6 +4,6 @@ namespace GameAtlas.Application.CategoryGroups.ListCategoryGroups;
 
 public static class ListCategoryGroupsErrors
 {
-	public static readonly Error GameNotFound = new(
-		"Game.NotFound", "The game was not found.", nameof(ListCategoryGroups.GameId), ErrorType.NotFound);
+	public static readonly Error MapNotFound = new(
+		"Map.NotFound", "The map was not found.", nameof(ListCategoryGroups.MapId), ErrorType.NotFound);
 }

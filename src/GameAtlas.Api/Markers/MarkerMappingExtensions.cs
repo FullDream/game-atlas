@@ -12,12 +12,12 @@ namespace GameAtlas.Api.Markers;
 
 internal static class MarkerMappingExtensions
 {
-	internal static CreateMarker ToCommand(this CreateMarkerRequest request, Guid gameId) =>
-		new(gameId, request.CategoryId, request.Name, request.Position?.ToInput(), request.Description,
+	internal static CreateMarker ToCommand(this CreateMarkerRequest request, Guid gameId, Guid mapId) =>
+		new(gameId, mapId, request.CategoryId, request.Name, request.Position?.ToInput(), request.Description,
 			request.Media?.Select(item => item.ToInput()).ToArray());
 
-	internal static UpdateMarker ToCommand(this UpdateMarkerRequest request, Guid gameId, Guid id) =>
-		new(gameId, id, request.CategoryId, request.Name, request.Description,
+	internal static UpdateMarker ToCommand(this UpdateMarkerRequest request, Guid gameId, Guid mapId, Guid id) =>
+		new(gameId, mapId, id, request.CategoryId, request.Name, request.Description,
 			request.Position.IsSpecified
 				? Optional<PositionPatch?>.From(request.Position.Value?.ToInput())
 				: default,

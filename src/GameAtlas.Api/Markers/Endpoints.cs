@@ -11,7 +11,7 @@ public static class Endpoints
 {
 	public static RouteGroupBuilder MapMarkers(this RouteGroupBuilder group)
 	{
-		var markers = group.MapGroup("/games/{gameId}/markers").WithTags("Markers");
+		var markers = group.MapGroup("/games/{gameId}/maps/{mapId}/markers").WithTags("Markers");
 
 		markers.MapGet("", ListMarkersAsync)
 			.WithName("ListMarkers").WithSummary("List markers")
@@ -39,18 +39,20 @@ public static class Endpoints
 	}
 
 	private static async Task<OutcomeResult<IReadOnlyCollection<MarkerDto>>> ListMarkersAsync(
-		Guid gameId, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(new ListMarkers(gameId), cancellationToken);
+		Guid gameId, Guid mapId, IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(new ListMarkers(gameId, mapId), cancellationToken);
 
 	private static async Task<OutcomeResult<MarkerDto>> CreateMarkerAsync(
-		Guid gameId, CreateMarkerRequest request, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(request.ToCommand(gameId), cancellationToken);
+		Guid gameId, Guid mapId, CreateMarkerRequest request, IMediator mediator,
+			CancellationToken cancellationToken) =>
+		await mediator.Send(request.ToCommand(gameId, mapId), cancellationToken);
 
 	private static async Task<OutcomeResult<MarkerDto>> UpdateMarkerAsync(
-		Guid gameId, Guid id, UpdateMarkerRequest request, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(request.ToCommand(gameId, id), cancellationToken);
+		Guid gameId, Guid mapId, Guid id, UpdateMarkerRequest request, IMediator mediator,
+			CancellationToken cancellationToken) =>
+		await mediator.Send(request.ToCommand(gameId, mapId, id), cancellationToken);
 
 	private static async Task<OutcomeResult> DeleteMarkerAsync(
-		Guid gameId, Guid id, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(new DeleteMarker(gameId, id), cancellationToken);
+		Guid gameId, Guid mapId, Guid id, IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(new DeleteMarker(gameId, mapId, id), cancellationToken);
 }

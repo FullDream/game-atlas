@@ -1,7 +1,7 @@
 # Categories API
 
 Categories belong to one category group. All operations are unauthenticated and work for draft and published games.
-The base route is `/games/{gameId}/category-groups/{groupId}/categories`.
+The base route is `/games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories`.
 
 | Method | Route | Success |
 | --- | --- | --- |
@@ -11,7 +11,7 @@ The base route is `/games/{gameId}/category-groups/{groupId}/categories`.
 | DELETE | Base route + `/{id}` | 204, no body |
 
 There is no individual-category GET, PUT, batch or reorder operation, pagination, search, or alternate sorting.
-Missing games, groups, categories, and resources outside the route ownership return 404 ProblemDetails.
+Missing games, maps, groups, categories, and resources outside the route ownership return 404 ProblemDetails.
 An existing group without categories returns `[]`.
 
 ## Representation
@@ -61,14 +61,14 @@ malformed JSON, non-object bodies, incompatible types, and malformed GUIDs retur
 including `application/json-patch+json` and `text/plain`, return 415.
 
 For transfer, use the **current group** in the route and send the destination `categoryGroupId` in the body.
-The destination must belong to the same game; a missing, all-zero, or other-game group ID returns 404.
+The destination must belong to the same map; a missing, all-zero, sibling-map, or other-game group ID returns 404.
 The resulting name must be unique in that destination. A combined rename and transfer is permitted and validated
 using the new name. Omitted order is preserved on transfer, even if another destination category has the same order.
 Use the new group route after success; PATCH and DELETE under the old route return 404.
 
 Updates and transfers are atomic. Invalid values, conflicts, and save failures do not persist partial changes.
 Only an effective change updates the target category's `updatedAt`; normalized no-ops preserve it without an update write.
-Identity and creation time never change. Other categories and parent game/group metadata and timestamps remain unchanged.
+Identity and creation time never change. Other categories and parent game/map/group metadata and timestamps remain unchanged.
 
 ## Listing and deletion
 
@@ -76,8 +76,8 @@ GET returns every category of the route group ordered by `order`, then `createdA
 Changing or deleting one category does not shift or renumber others; order gaps and duplicates are intentional.
 
 DELETE physically removes a category and releases its name. Repeated deletion returns 404. Deleting a group cascades
-to its current categories; deleting a game cascades through its groups. A transferred category survives deletion
-of its former group. Unrelated game/group categories are preserved.
+to its current categories; deleting a map or game cascades through its groups. A transferred category survives deletion
+of its former group. Unrelated map/group categories are preserved.
 
 Unexpected library and storage exceptions return safe 500 ProblemDetails without internal details. Only precisely
 recognized category name uniqueness failures become 409. Apply the Infrastructure migration explicitly before use;

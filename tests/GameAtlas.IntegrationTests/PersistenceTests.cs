@@ -1,9 +1,9 @@
 using GameAtlas.Application;
 using GameAtlas.Application.Abstractions.Persistence;
+using GameAtlas.Domain.CategoryGroups;
+using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure;
 using GameAtlas.Infrastructure.Persistence;
-using GameAtlas.Domain.Games;
-using GameAtlas.Domain.CategoryGroups;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -22,12 +22,13 @@ public class PersistenceTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		var map = await MapTestData.EnsureMapAsync(factory, game.Id);
 
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 			await using var transaction = await context.BeginTransactionAsync();
-			var group = CategoryGroup.Create(game.Id, "Resources", 1);
+			var group = CategoryGroup.Create(map.Id, "Resources", 1);
 
 			Assert.True(group.IsSuccess);
 			context.CategoryGroups.Add(group.Value);

@@ -2,6 +2,7 @@ using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.CategoryGroups;
 using GameAtlas.Domain.Games;
+using GameAtlas.Domain.Maps;
 using GameAtlas.Domain.Markers;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,8 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 	public DbSet<CategoryGroup> CategoryGroups => Set<CategoryGroup>();
 	public DbSet<Category> Categories => Set<Category>();
 	public DbSet<Marker> Markers => Set<Marker>();
+	public DbSet<Map> Maps => Set<Map>();
+	public DbSet<MapStyle> MapStyles => Set<MapStyle>();
 
 	public async Task<IApplicationTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) =>
 		new ApplicationTransaction(await Database.BeginTransactionAsync(cancellationToken));

@@ -7,7 +7,6 @@ public sealed record GameDto(
 	string Name,
 	string Slug,
 	string Image,
-	Guid? MapId,
 	DateTimeOffset CreatedAt,
 	DateTimeOffset UpdatedAt,
 	GameStatus Status);

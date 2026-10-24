@@ -11,8 +11,8 @@ public sealed class DeleteCategoryGroupHandler(IApplicationDbContext context)
 	public async ValueTask<Result> Handle(DeleteCategoryGroup command, CancellationToken cancellationToken)
 	{
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
-		var group = await context.CategoryGroups.AsTracking().SingleOrDefaultAsync(
-			group => group.GameId == command.GameId && group.Id == command.Id, cancellationToken);
+		var group = await context.CategoryGroups.AsTracking().ForMap(context, command.GameId, command.MapId)
+			.SingleOrDefaultAsync(group => group.Id == command.Id, cancellationToken);
 
 		if (group is null)
 			return DeleteCategoryGroupErrors.NotFound;

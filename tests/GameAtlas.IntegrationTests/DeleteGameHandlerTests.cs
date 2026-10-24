@@ -15,7 +15,7 @@ public class DeleteGameHandlerTests
 	[Theory]
 	[InlineData(GameStatus.Draft)]
 	[InlineData(GameStatus.Published)]
-	public async Task DeletesWithOneStatementAndPreservesOtherGames(GameStatus status)
+	public async Task DeletesWithOneDeleteStatementAndPreservesOtherGames(GameStatus status)
 	{
 		var capture = new DeleteCommandCapture();
 		await using var factory = new GameApiFactory(interceptor: capture);
@@ -31,7 +31,7 @@ public class DeleteGameHandlerTests
 			var result = await scope.ServiceProvider.GetRequiredService<IMediator>().Send(new DeleteGame(game.Id));
 
 			Assert.True(result.IsSuccess);
-			Assert.StartsWith("DELETE", Assert.Single(capture.Commands));
+			Assert.Single(capture.Commands, command => command.StartsWith("DELETE"));
 			Assert.Empty(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().ChangeTracker.Entries());
 		}
 
@@ -74,7 +74,7 @@ public class DeleteGameHandlerTests
 	{
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var game = Game.Create("Game", slug, "cover", Guid.NewGuid()).Value!;
+		var game = Game.Create("Game", slug, "cover").Value!;
 
 		Assert.True(game.Update(status: status).IsSuccess);
 		context.Games.Add(game);
@@ -89,7 +89,6 @@ public class DeleteGameHandlerTests
 		Assert.Equal(expected.Name, actual.Name);
 		Assert.Equal(expected.Slug, actual.Slug);
 		Assert.Equal(expected.Image, actual.Image);
-		Assert.Equal(expected.MapId, actual.MapId);
 		Assert.Equal(expected.Status, actual.Status);
 		Assert.Equal(expected.CreatedAt, actual.CreatedAt);
 		Assert.Equal(expected.UpdatedAt, actual.UpdatedAt);

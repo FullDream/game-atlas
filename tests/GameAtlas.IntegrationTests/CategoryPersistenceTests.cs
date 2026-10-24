@@ -23,9 +23,8 @@ public class CategoryPersistenceTests
 			await context.GetService<IMigrator>().MigrateAsync("20261023100000_CategoryGroups");
 		}
 
-		var (game, group) = await CategoryTestData.ParentAsync(factory);
-
 		await factory.MigrateAsync();
+		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id, "Ресурсы", 4);
 		var dto = Assert.Single(await CategoryTestData.LoadAsync(factory, group.Id));
 
@@ -44,7 +43,10 @@ public class CategoryPersistenceTests
 		Assert.NotNull(entityType);
 		Assert.Null(entityType.FindProperty("MarkersCount"));
 		Assert.False(reloaded.Database.HasPendingModelChanges());
-		await reloaded.GetService<IMigrator>().MigrateAsync("20261023100000_CategoryGroups");
+		var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
+			reloaded.GetService<IMigrator>().MigrateAsync("20261023100000_CategoryGroups"));
+
+		Assert.Contains("MapOwnership_RestoreBackupForNonemptyMaps", rollback.Message);
 
 		DeleteGameHandlerTests.AssertSameGame(game, await reloaded.Games.SingleAsync());
 		Assert.Equal(group.Id, (await reloaded.CategoryGroups.SingleAsync()).Id);
@@ -85,7 +87,7 @@ public class CategoryPersistenceTests
 		Assert.False(classifier.IsCategoryNameConflict(foreignKey));
 		context.ChangeTracker.Clear();
 		context.CategoryGroups.Add(Assert.IsType<GameAtlas.Domain.CategoryGroups.CategoryGroup>(
-			GameAtlas.Domain.CategoryGroups.CategoryGroup.Create(game.Id, "Group", 2).Value));
+			GameAtlas.Domain.CategoryGroups.CategoryGroup.Create(MapTestData.MapIdFor(game.Id), "Group", 2).Value));
 		var groupConflict = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 
 		Assert.False(classifier.IsCategoryNameConflict(groupConflict));
@@ -121,7 +123,7 @@ public class CategoryPersistenceTests
 			new { categoryGroupId = destination.Id });
 
 		Assert.Equal(HttpStatusCode.OK, transfer.StatusCode);
-		using var deleteSource = await client.DeleteAsync($"/games/{game.Id}/category-groups/{source.Id}");
+		using var deleteSource = await client.DeleteAsync($"/games/{game.Id}/maps/{MapTestData.MapIdFor(game.Id)}/category-groups/{source.Id}");
 
 		Assert.Equal(HttpStatusCode.NoContent, deleteSource.StatusCode);
 		Assert.Empty(await CategoryTestData.LoadAsync(factory, source.Id));

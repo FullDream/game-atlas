@@ -29,8 +29,9 @@ public static class Endpoints
 		games.MapPatch("/{id}", UpdateGameAsync)
 			.WithName("UpdateGame")
 			.WithSummary("Update game")
-			.WithDescription("Updates supplied fields using JSON Merge Patch semantics with either supported media type. " +
-				"Supply at least one mutable field. Omitted fields are preserved; null clears only mapId. " +
+			.WithDescription("Updates supplied fields using JSON Merge Patch semantics " +
+				"with either supported media type. " +
+				"Supply at least one mutable field. Omitted fields are preserved; null is invalid. " +
 				"Identity and timestamps are read-only. Status supports draft and published. " +
 				"Unchanged values preserve updatedAt. Returns the complete stored game.")
 			.WithMergePatch<UpdateGameRequest>();

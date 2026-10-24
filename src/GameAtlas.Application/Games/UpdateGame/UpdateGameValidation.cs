@@ -10,7 +10,7 @@ public sealed class UpdateGameValidation : AbstractValidator<UpdateGame>
 	{
 		RuleFor(command => command)
 			.Must(command => Optional.AnySpecified(
-				command.Name, command.Slug, command.Image, command.MapId, command.Status))
+				command.Name, command.Slug, command.Image, command.Status))
 			.WithErrorCode(UpdateGameErrors.EmptyPatch.Code)
 			.WithMessage(UpdateGameErrors.EmptyPatch.Message)
 			.OverridePropertyName(string.Empty);

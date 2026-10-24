@@ -22,6 +22,7 @@ public class CategoryGroupOrderTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
@@ -109,6 +110,9 @@ public class CategoryGroupOrderTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+
+		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		using var client = factory.CreateHttpsClient();
 		using var first = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id), new { name = "First" });
 

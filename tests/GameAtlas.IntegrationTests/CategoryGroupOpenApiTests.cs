@@ -12,8 +12,8 @@ public class CategoryGroupOpenApiTests
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var paths = root.GetProperty("paths");
-		var collection = paths.GetProperty("/games/{gameId}/category-groups");
-		var item = paths.GetProperty("/games/{gameId}/category-groups/{id}");
+		var collection = paths.GetProperty("/games/{gameId}/maps/{mapId}/category-groups");
+		var item = paths.GetProperty("/games/{gameId}/maps/{mapId}/category-groups/{id}");
 		var operations = new[]
 		{
 			(collection.GetProperty("post"), "CreateCategoryGroup", new[] { "400", "404", "409", "422", "500" }),
@@ -38,10 +38,10 @@ public class CategoryGroupOpenApiTests
 					.TryGetProperty("application/problem+json", out _));
 		}
 
-		Assert.False(paths.TryGetProperty("/games/{gameId}/category-groups/order", out _));
+		Assert.False(paths.TryGetProperty("/games/{gameId}/maps/{mapId}/category-groups/order", out _));
 		Assert.False(item.TryGetProperty("get", out _));
 		Assert.False(item.TryGetProperty("put", out _));
-		Assert.Single(collection.GetProperty("get").GetProperty("parameters").EnumerateArray());
+		Assert.Equal(2, collection.GetProperty("get").GetProperty("parameters").GetArrayLength());
 		Assert.False(item.GetProperty("delete").GetProperty("responses").GetProperty("204")
 			.TryGetProperty("content", out _));
 		var list = Resolve(root, collection.GetProperty("get").GetProperty("responses").GetProperty("200")
@@ -63,8 +63,8 @@ public class CategoryGroupOpenApiTests
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var paths = root.GetProperty("paths");
-		var post = paths.GetProperty("/games/{gameId}/category-groups").GetProperty("post");
-		var patch = paths.GetProperty("/games/{gameId}/category-groups/{id}").GetProperty("patch");
+		var post = paths.GetProperty("/games/{gameId}/maps/{mapId}/category-groups").GetProperty("post");
+		var patch = paths.GetProperty("/games/{gameId}/maps/{mapId}/category-groups/{id}").GetProperty("patch");
 		var patchContent = patch.GetProperty("requestBody").GetProperty("content");
 		var patchSchema = Resolve(root, patchContent.GetProperty("application/json").GetProperty("schema"));
 
@@ -99,7 +99,7 @@ public class CategoryGroupOpenApiTests
 	{
 		var properties = Resolve(root, schema).GetProperty("properties");
 
-		Assert.Equal(new[] { "createdAt", "gameId", "id", "name", "order", "updatedAt" },
+		Assert.Equal(new[] { "createdAt", "id", "mapId", "name", "order", "updatedAt" },
 			properties.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
 	}
 

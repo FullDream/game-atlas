@@ -13,10 +13,10 @@ namespace GameAtlas.IntegrationTests;
 public class CategoryGroupApiTests
 {
 	[Theory]
-	[InlineData("GET", "/games/not-a-guid/category-groups")]
-	[InlineData("POST", "/games/not-a-guid/category-groups")]
-	[InlineData("PATCH", "/games/019a0000-0000-7000-8000-000000000001/category-groups/not-a-guid")]
-	[InlineData("DELETE", "/games/019a0000-0000-7000-8000-000000000001/category-groups/not-a-guid")]
+	[InlineData("GET", "/games/not-a-guid/maps/019a0000-0000-7000-8000-000000000001/category-groups")]
+	[InlineData("POST", "/games/not-a-guid/maps/019a0000-0000-7000-8000-000000000001/category-groups")]
+	[InlineData("PATCH", "/games/019a0000-0000-7000-8000-000000000001/maps/019a0000-0000-7000-8000-000000000001/category-groups/not-a-guid")]
+	[InlineData("DELETE", "/games/019a0000-0000-7000-8000-000000000001/maps/019a0000-0000-7000-8000-000000000001/category-groups/not-a-guid")]
 	public async Task MalformedRouteIdentifiersReturn400(string method, string path)
 	{
 		await using var factory = new GameApiFactory();
@@ -40,7 +40,9 @@ public class CategoryGroupApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game", status);
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
+		await MapTestData.EnsureMapAsync(factory, other.Id);
 
 		await CategoryGroupTestData.SeedAsync(factory, other.Id, "Other", 1);
 		using var client = factory.CreateHttpsClient();
@@ -65,7 +67,7 @@ public class CategoryGroupApiTests
 		Assert.NotNull(group);
 		Assert.Equal(6, json.RootElement.EnumerateObject().Count());
 		Assert.Equal(7, group.Id.Version);
-		Assert.Equal(game.Id, group.GameId);
+		Assert.Equal(MapTestData.MapIdFor(game.Id), group.MapId);
 		Assert.Equal("Ресурсы", group.Name);
 		Assert.Equal(99, group.Order);
 		Assert.Equal(group.CreatedAt, group.UpdatedAt);
@@ -97,6 +99,7 @@ public class CategoryGroupApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
@@ -120,6 +123,7 @@ public class CategoryGroupApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsJsonAsync(Path(game.Id), new { name = " " + new string('x', length) + " " });
 
@@ -135,7 +139,9 @@ public class CategoryGroupApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
+		await MapTestData.EnsureMapAsync(factory, other.Id);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, name, 1);
 		var second = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
@@ -168,6 +174,7 @@ public class CategoryGroupApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Original", 5);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, Path(game.Id, group.Id), "{\"name\":\" New \"}", mediaType);
@@ -177,7 +184,7 @@ public class CategoryGroupApiTests
 
 		Assert.Equal("New", dto!.Name);
 		Assert.Equal(group.Id, dto.Id);
-		Assert.Equal(game.Id, dto.GameId);
+		Assert.Equal(MapTestData.MapIdFor(game.Id), dto.MapId);
 		Assert.Equal(5, dto.Order);
 		Assert.Equal(group.CreatedAt, dto.CreatedAt);
 		Assert.True(dto.UpdatedAt > group.UpdatedAt);
@@ -205,6 +212,7 @@ public class CategoryGroupApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
@@ -223,6 +231,7 @@ public class CategoryGroupApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, Path(game.Id, group.Id), "{\"name\":\"New\"}", mediaType);
@@ -238,7 +247,9 @@ public class CategoryGroupApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
+		await MapTestData.EnsureMapAsync(factory, other.Id);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		var missing = Guid.NewGuid();
 		using var client = factory.CreateHttpsClient();
@@ -262,7 +273,9 @@ public class CategoryGroupApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
+		await MapTestData.EnsureMapAsync(factory, other.Id);
 
 		await CategoryGroupTestData.SeedAsync(factory, game.Id, "First", 1);
 		var middle = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Middle", 2);
@@ -292,7 +305,7 @@ public class CategoryGroupApiTests
 	}
 
 	internal static string Path(Guid gameId, Guid? id = null) =>
-		$"/games/{gameId}/category-groups" + (id is null ? "" : $"/{id}");
+		$"/games/{gameId}/maps/{MapTestData.MapIdFor(gameId)}/category-groups" + (id is null ? "" : $"/{id}");
 
 	internal static async Task<HttpResponseMessage> PatchAsync(
 		HttpClient client, string path, string json, string mediaType = "application/json")

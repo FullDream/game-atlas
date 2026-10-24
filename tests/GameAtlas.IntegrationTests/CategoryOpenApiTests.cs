@@ -4,7 +4,7 @@ namespace GameAtlas.IntegrationTests;
 
 public class CategoryOpenApiTests
 {
-	private const string CollectionPath = "/games/{gameId}/category-groups/{groupId}/categories";
+	private const string CollectionPath = "/games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories";
 
 	[Fact]
 	public async Task DocumentsFourOperationsCompleteDtosAndErrors()
@@ -44,7 +44,7 @@ public class CategoryOpenApiTests
 		Assert.Equal(2, item.EnumerateObject().Count());
 		Assert.False(paths.TryGetProperty(CollectionPath + "/order", out _));
 		Assert.False(paths.TryGetProperty(CollectionPath + "/batch", out _));
-		Assert.Equal(2, collection.GetProperty("get").GetProperty("parameters").GetArrayLength());
+		Assert.Equal(3, collection.GetProperty("get").GetProperty("parameters").GetArrayLength());
 		Assert.False(item.GetProperty("delete").GetProperty("responses").GetProperty("204")
 			.TryGetProperty("content", out _));
 		var list = ResponseSchema(root, collection.GetProperty("get"));

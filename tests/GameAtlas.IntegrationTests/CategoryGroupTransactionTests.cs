@@ -16,6 +16,7 @@ public class CategoryGroupTransactionTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+		await MapTestData.EnsureMapAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 		var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		var tasks = Enumerable.Range(0, 3).Select(index => Task.Run(async () =>

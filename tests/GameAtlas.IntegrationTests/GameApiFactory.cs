@@ -5,23 +5,31 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace GameAtlas.IntegrationTests;
 
-public sealed class GameApiFactory(string environment = "Production", IInterceptor? interceptor = null)
+public sealed class GameApiFactory(string environment = "Production", IInterceptor? interceptor = null,
+	Action<IServiceCollection>? configureServices = null)
 	: WebApplicationFactory<Program>
 {
 	public string DatabasePath { get; } = Path.Combine(Path.GetTempPath(), $"game-api-{Guid.NewGuid():N}.db");
+	public string MapStoragePath { get; } = Path.Combine(Path.GetTempPath(), $"game-maps-{Guid.NewGuid():N}");
 
 	protected override void ConfigureWebHost(IWebHostBuilder builder)
 	{
 		builder.UseEnvironment(environment);
+		builder.ConfigureLogging(logging => logging.ClearProviders());
 		builder.UseSetting("ConnectionStrings:GameAtlas", $"Data Source={DatabasePath};Pooling=False");
+		builder.UseSetting("Maps:WorkerEnabled", "false");
+		builder.UseSetting("Maps:StorageRoot", MapStoragePath);
 		builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
 			new Dictionary<string, string?>
 			{
 				["ConnectionStrings:GameAtlas"] = $"Data Source={DatabasePath};Pooling=False",
-				["Logging:LogLevel:Default"] = "None"
+				["Logging:LogLevel:Default"] = "None",
+				["Maps:WorkerEnabled"] = "false",
+				["Maps:StorageRoot"] = MapStoragePath
 			}));
 		builder.ConfigureServices(services =>
 		{
@@ -32,6 +40,8 @@ public sealed class GameApiFactory(string environment = "Production", IIntercept
 				if (interceptor is not null)
 					options.AddInterceptors(interceptor);
 			});
+
+			configureServices?.Invoke(services);
 		});
 	}
 
@@ -54,5 +64,8 @@ public sealed class GameApiFactory(string environment = "Production", IIntercept
 		File.Delete(DatabasePath);
 		File.Delete(DatabasePath + "-wal");
 		File.Delete(DatabasePath + "-shm");
+
+		if (Directory.Exists(MapStoragePath))
+			Directory.Delete(MapStoragePath, true);
 	}
 }

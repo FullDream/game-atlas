@@ -1,5 +1,6 @@
 @GameAtlas_Api_HostAddress = https://localhost:7241
 @gameId = 019a0000-0000-7000-8000-000000000001
+@mapId = 019a0000-0000-7000-8000-000000000004
 @categoryGroupId = 019a0000-0000-7000-8000-000000000002
 
 # Default page: offset=0, limit=20, no explicit order.
@@ -33,8 +34,7 @@ Accept: application/json
 {
   "name": "Elden Ring",
   "slug": "elden-ring",
-  "image": "elden-ring-cover",
-  "mapId": null
+  "image": "elden-ring-cover"
 }
 
 ###
@@ -72,7 +72,7 @@ Accept: application/json
 
 ###
 
-# Clear the map without changing other fields.
+# mapId is not part of GameDto: this PATCH returns 400. Manage maps through /games/{gameId}/maps/{mapId}.
 PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}
 Content-Type: application/json
 Accept: application/json
@@ -91,7 +91,7 @@ DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}
 ###
 
 # Replace gameId with an existing game's id. A new group is appended to its list.
-POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups
+POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups
 Content-Type: application/json
 
 {
@@ -101,12 +101,12 @@ Content-Type: application/json
 ###
 
 # All groups in display order, without pagination.
-GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups
+GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups
 
 ###
 
 # Replace categoryGroupId with an id returned by creation or listing.
-PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups/{{categoryGroupId}}
 Content-Type: application/merge-patch+json
 
 {
@@ -117,12 +117,12 @@ Content-Type: application/merge-patch+json
 ###
 
 # Physical deletion: 204; repeat deletion: 404. Survivor positions are preserved.
-DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}
+DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups/{{categoryGroupId}}
 
 ###
 
 # Replace categoryGroupId with a group of gameId. Default order appends within this group.
-POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories
+POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups/{{categoryGroupId}}/categories
 Content-Type: application/json
 
 {
@@ -134,12 +134,12 @@ Content-Type: application/json
 ###
 
 # Full ordered array with current marker counts.
-GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories
+GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups/{{categoryGroupId}}/categories
 
 ###
 
 # Replace categoryId with a returned category ID. Only supplied fields change.
-PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
 Content-Type: application/merge-patch+json
 
 {
@@ -152,7 +152,7 @@ Content-Type: application/merge-patch+json
 
 # Transfer to another group of the same game. Preserve order unless explicitly supplied.
 # After success, use destinationCategoryGroupId in subsequent category routes.
-PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
 Content-Type: application/json
 
 {
@@ -162,17 +162,17 @@ Content-Type: application/json
 ###
 
 # Physical category deletion: 204, then 404 on repeat. No survivor renumbering.
-DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
+DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups/{{categoryGroupId}}/categories/{{categoryId}}
 
 ###
 
 # Complete marker list, including ordered media. No pagination or category filters.
-GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers
+GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/markers
 
 ###
 
 # Creation returns 200. Replace categoryId with a category belonging to gameId.
-POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers
+POST {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/markers
 Content-Type: application/json
 
 {
@@ -190,7 +190,7 @@ Content-Type: application/json
 ###
 
 # Recursive object merge: update only x, preserving y and omitted media.
-PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers/{{markerId}}
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/markers/{{markerId}}
 Content-Type: application/merge-patch+json; charset=utf-8
 
 {
@@ -200,7 +200,7 @@ Content-Type: application/merge-patch+json; charset=utf-8
 ###
 
 # Complete media replacement. Alt defaults to ""; video preview defaults to null.
-PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers/{{markerId}}
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/markers/{{markerId}}
 Content-Type: application/json
 
 {
@@ -213,7 +213,7 @@ Content-Type: application/json
 ###
 
 # Transfer within the same game, clear description, and remove all media.
-PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers/{{markerId}}
+PATCH {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/markers/{{markerId}}
 Content-Type: application/merge-patch+json
 
 {
@@ -226,6 +226,6 @@ Content-Type: application/merge-patch+json
 
 # Physical deletion: empty 204, then 404 on repeat. Deletes media rows, never referenced files.
 # Deleting the current category, group, or game also cascades through marker/media rows.
-DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/markers/{{markerId}}
+DELETE {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/markers/{{markerId}}
 
 ###

@@ -10,312 +10,543 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace GameAtlas.Infrastructure.Persistence.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
-    {
-        protected override void BuildModel(ModelBuilder modelBuilder)
-        {
+	[DbContext(typeof(ApplicationDbContext))]
+	partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+	{
+		protected override void BuildModel(ModelBuilder modelBuilder)
+		{
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.13");
+			modelBuilder.HasAnnotation("ProductVersion", "10.0.13");
 
-            modelBuilder.Entity("GameAtlas.Domain.Categories.Category", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
+			modelBuilder.Entity("GameAtlas.Domain.Categories.Category", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
 
-                    b.Property<Guid>("CategoryGroupId")
-                        .HasColumnType("TEXT");
+					b.Property<Guid>("CategoryGroupId")
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("TEXT");
+					b.Property<string>("Color")
+						.IsRequired()
+						.HasMaxLength(7)
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("CreatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+					b.Property<string>("CreatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("TEXT");
+					b.Property<string>("Icon")
+						.IsRequired()
+						.HasMaxLength(2048)
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+					b.Property<string>("Name")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("NormalizedName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+					b.Property<string>("NormalizedName")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
 
-                    b.Property<int>("Order")
-                        .HasColumnType("INTEGER");
+					b.Property<int>("Order")
+						.HasColumnType("INTEGER");
 
-                    b.Property<string>("UpdatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+					b.Property<string>("UpdatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+					b.HasKey("Id");
 
-                    b.HasIndex("CategoryGroupId", "NormalizedName")
-                        .IsUnique();
+					b.HasIndex("CategoryGroupId", "NormalizedName")
+						.IsUnique();
 
-                    b.HasIndex("CategoryGroupId", "Order");
+					b.HasIndex("CategoryGroupId", "Order");
 
-                    b.ToTable("Categories", (string)null);
-                });
+					b.ToTable("Categories", (string)null);
+				});
 
-            modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
+			modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("CreatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+					b.Property<string>("CreatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
 
-                    b.Property<Guid>("GameId")
-                        .HasColumnType("TEXT");
+					b.Property<Guid>("MapId")
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+					b.Property<string>("Name")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("NormalizedName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+					b.Property<string>("NormalizedName")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
 
-                    b.Property<int>("Order")
-                        .HasColumnType("INTEGER");
+					b.Property<int>("Order")
+						.HasColumnType("INTEGER");
 
-                    b.Property<string>("UpdatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+					b.Property<string>("UpdatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+					b.HasKey("Id");
 
-                    b.HasIndex("GameId", "NormalizedName")
-                        .IsUnique();
+					b.HasIndex("MapId", "NormalizedName")
+						.IsUnique();
 
-                    b.HasIndex("GameId", "Order");
+					b.HasIndex("MapId", "Order");
 
-                    b.ToTable("CategoryGroups", (string)null);
-                });
+					b.ToTable("CategoryGroups", (string)null);
+				});
 
-            modelBuilder.Entity("GameAtlas.Domain.Games.Game", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
+			modelBuilder.Entity("GameAtlas.Domain.Games.Game", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("CreatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+					b.Property<string>("CreatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("Image")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("TEXT");
+					b.Property<string>("Image")
+						.IsRequired()
+						.HasMaxLength(2048)
+						.HasColumnType("TEXT");
 
-                    b.Property<Guid?>("MapId")
-                        .HasColumnType("TEXT");
+					b.Property<string>("Name")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+					b.Property<string>("Slug")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+					b.Property<string>("Status")
+						.IsRequired()
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+					b.Property<string>("UpdatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("UpdatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+					b.HasKey("Id");
 
-                    b.HasKey("Id");
+					b.HasIndex("Slug")
+						.IsUnique();
 
-                    b.HasIndex("Slug")
-                        .IsUnique();
+					b.ToTable("Games", (string)null);
+				});
 
-                    b.ToTable("Games", (string)null);
-                });
+			modelBuilder.Entity("GameAtlas.Domain.Maps.Map", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
 
-            modelBuilder.Entity("GameAtlas.Domain.Markers.Marker", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
+					b.Property<string>("CreatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
 
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("TEXT");
+					b.Property<Guid>("GameId")
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("CreatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+					b.Property<int>("Height")
+						.HasColumnType("INTEGER");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(5000)
-                        .HasColumnType("TEXT");
+					b.Property<long>("LastCreationSequence")
+						.HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+					b.Property<string>("Name")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
 
-                    b.Property<string>("UpdatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+					b.Property<string>("NormalizedName")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
 
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "Position", "GameAtlas.Domain.Markers.Marker.Position#Position", b1 =>
-                        {
-                            b1.IsRequired();
+					b.Property<string>("UpdatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
 
-                            b1.Property<double>("X")
-                                .HasColumnType("REAL")
-                                .HasColumnName("PositionX");
+					b.Property<int>("Width")
+						.HasColumnType("INTEGER");
 
-                            b1.Property<double>("Y")
-                                .HasColumnType("REAL")
-                                .HasColumnName("PositionY");
-                        });
+					b.HasKey("Id");
 
-                    b.HasKey("Id");
+					b.HasIndex("GameId");
 
-                    b.HasIndex("CategoryId");
+					b.HasIndex("GameId", "NormalizedName")
+						.IsUnique();
 
-                    b.ToTable("Markers", (string)null);
-                });
+					b.ToTable("Maps", (string)null);
+				});
 
-            modelBuilder.Entity("GameAtlas.Domain.Markers.Media.MarkerMedia", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("MarkerId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MarkerId", "Order");
-
-                    b.ToTable("MarkerMedia", (string)null);
-
-                    b.HasDiscriminator<string>("Type").HasValue("MarkerMedia");
-
-                    b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("GameAtlas.Domain.Markers.Media.ImageMedia", b =>
-                {
-                    b.HasBaseType("GameAtlas.Domain.Markers.Media.MarkerMedia");
-
-                    b.Property<string>("Alt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Height")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .ValueGeneratedOnUpdateSometimes()
-                        .HasMaxLength(2048)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Url");
-
-                    b.Property<int>("Width")
-                        .HasColumnType("INTEGER");
-
-                    b.HasDiscriminator().HasValue("image");
-                });
-
-            modelBuilder.Entity("GameAtlas.Domain.Markers.Media.VideoMedia", b =>
-                {
-                    b.HasBaseType("GameAtlas.Domain.Markers.Media.MarkerMedia");
-
-                    b.Property<string>("Preview")
-                        .HasMaxLength(2048)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .ValueGeneratedOnUpdateSometimes()
-                        .HasMaxLength(2048)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("Url");
-
-                    b.HasDiscriminator().HasValue("video");
-                });
-
-            modelBuilder.Entity("GameAtlas.Domain.Markers.Media.YouTubeVideoMedia", b =>
-                {
-                    b.HasBaseType("GameAtlas.Domain.Markers.Media.MarkerMedia");
-
-                    b.Property<string>("VideoId")
-                        .IsRequired()
-                        .HasMaxLength(11)
-                        .HasColumnType("TEXT");
-
-                    b.HasDiscriminator().HasValue("youtubeVideo");
-                });
-
-            modelBuilder.Entity("GameAtlas.Domain.Categories.Category", b =>
-                {
-                    b.HasOne("GameAtlas.Domain.CategoryGroups.CategoryGroup", null)
-                        .WithMany()
-                        .HasForeignKey("CategoryGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
-                {
-                    b.HasOne("GameAtlas.Domain.Games.Game", null)
-                        .WithMany()
-                        .HasForeignKey("GameId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("GameAtlas.Domain.Markers.Marker", b =>
-                {
-                    b.HasOne("GameAtlas.Domain.Categories.Category", null)
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("GameAtlas.Domain.Markers.Media.MarkerMedia", b =>
-                {
-                    b.HasOne("GameAtlas.Domain.Markers.Marker", null)
-                        .WithMany("Media")
-                        .HasForeignKey("MarkerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("GameAtlas.Domain.Markers.Marker", b =>
-                {
-                    b.Navigation("Media");
-                });
+			modelBuilder.Entity("GameAtlas.Domain.Maps.MapStyle", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
+
+					b.Property<Guid>("AttemptId")
+						.IsConcurrencyToken()
+						.HasColumnType("TEXT");
+
+					b.Property<string>("BackgroundColor")
+						.IsRequired()
+						.HasMaxLength(7)
+						.HasColumnType("TEXT");
+
+					b.Property<long>("ByteLength")
+						.HasColumnType("INTEGER");
+
+					b.Property<string>("CreatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.Property<long>("CreationSequence")
+						.HasColumnType("INTEGER");
+
+					b.Property<string>("ErrorCode")
+						.HasMaxLength(100)
+						.HasColumnType("TEXT");
+
+					b.Property<string>("ErrorMessage")
+						.HasMaxLength(300)
+						.HasColumnType("TEXT");
+
+					b.Property<string>("Format")
+						.IsRequired()
+						.HasMaxLength(4)
+						.HasColumnType("TEXT");
+
+					b.Property<int>("Height")
+						.HasColumnType("INTEGER");
+
+					b.Property<Guid>("MapId")
+						.HasColumnType("TEXT");
+
+					b.Property<string>("Name")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
+
+					b.Property<string>("NormalizedName")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
+
+					b.Property<int>("Progress")
+						.HasColumnType("INTEGER");
+
+					b.Property<string>("Status")
+						.IsConcurrencyToken()
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.Property<string>("UpdatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.Property<int>("Width")
+						.HasColumnType("INTEGER");
+
+					b.HasKey("Id");
+
+					b.HasIndex("MapId", "CreationSequence")
+						.IsUnique();
+
+					b.HasIndex("MapId", "NormalizedName")
+						.IsUnique();
+
+					b.HasIndex("Status", "CreatedAt");
+
+					b.ToTable("MapStyles", (string)null);
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Markers.Marker", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
+
+					b.Property<Guid>("CategoryId")
+						.HasColumnType("TEXT");
+
+					b.Property<string>("CreatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.Property<string>("Description")
+						.HasMaxLength(5000)
+						.HasColumnType("TEXT");
+
+					b.Property<string>("Name")
+						.IsRequired()
+						.HasMaxLength(200)
+						.HasColumnType("TEXT");
+
+					b.Property<string>("UpdatedAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.ComplexProperty(typeof(Dictionary<string, object>), "Position", "GameAtlas.Domain.Markers.Marker.Position#Position", b1 =>
+						{
+							b1.IsRequired();
+
+							b1.Property<double>("X")
+								.HasColumnType("REAL")
+								.HasColumnName("PositionX");
+
+							b1.Property<double>("Y")
+								.HasColumnType("REAL")
+								.HasColumnName("PositionY");
+						});
+
+					b.HasKey("Id");
+
+					b.HasIndex("CategoryId");
+
+					b.ToTable("Markers", (string)null);
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.MarkerMedia", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
+
+					b.Property<Guid>("MarkerId")
+						.HasColumnType("TEXT");
+
+					b.Property<int>("Order")
+						.HasColumnType("INTEGER");
+
+					b.Property<string>("Type")
+						.IsRequired()
+						.HasMaxLength(20)
+						.HasColumnType("TEXT");
+
+					b.HasKey("Id");
+
+					b.HasIndex("MarkerId", "Order");
+
+					b.ToTable("MarkerMedia", (string)null);
+
+					b.HasDiscriminator<string>("Type").HasValue("MarkerMedia");
+
+					b.UseTphMappingStrategy();
+				});
+
+			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionSession", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
+
+					b.Property<string>("ExpiresAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.HasKey("Id");
+
+					b.HasIndex("ExpiresAt");
+
+					b.ToTable("MapAdmissionSessions", (string)null);
+				});
+
+			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionStyle", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
+
+					b.Property<Guid>("MapId")
+						.HasColumnType("TEXT");
+
+					b.Property<Guid>("SessionId")
+						.HasColumnType("TEXT");
+
+					b.Property<Guid>("StyleId")
+						.HasColumnType("TEXT");
+
+					b.HasKey("Id");
+
+					b.HasIndex("SessionId");
+
+					b.HasIndex("StyleId")
+						.IsUnique();
+
+					b.ToTable("MapAdmissionStyles", (string)null);
+				});
+
+			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapCleanupIntent", b =>
+				{
+					b.Property<Guid>("Id")
+						.HasColumnType("TEXT");
+
+					b.Property<int>("Attempts")
+						.HasColumnType("INTEGER");
+
+					b.Property<Guid?>("MapId")
+						.HasColumnType("TEXT");
+
+					b.Property<bool>("OutputsOnly")
+						.HasColumnType("INTEGER");
+
+					b.Property<string>("RetryAt")
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.Property<Guid?>("SessionId")
+						.HasColumnType("TEXT");
+
+					b.Property<Guid?>("StyleId")
+						.HasColumnType("TEXT");
+
+					b.HasKey("Id");
+
+					b.HasIndex("RetryAt");
+
+					b.ToTable("MapCleanupIntents", (string)null);
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.ImageMedia", b =>
+				{
+					b.HasBaseType("GameAtlas.Domain.Markers.Media.MarkerMedia");
+
+					b.Property<string>("Alt")
+						.IsRequired()
+						.HasColumnType("TEXT");
+
+					b.Property<int>("Height")
+						.HasColumnType("INTEGER");
+
+					b.Property<string>("Url")
+						.IsRequired()
+						.ValueGeneratedOnUpdateSometimes()
+						.HasMaxLength(2048)
+						.HasColumnType("TEXT")
+						.HasColumnName("Url");
+
+					b.Property<int>("Width")
+						.HasColumnType("INTEGER");
+
+					b.HasDiscriminator().HasValue("image");
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.VideoMedia", b =>
+				{
+					b.HasBaseType("GameAtlas.Domain.Markers.Media.MarkerMedia");
+
+					b.Property<string>("Preview")
+						.HasMaxLength(2048)
+						.HasColumnType("TEXT");
+
+					b.Property<string>("Url")
+						.IsRequired()
+						.ValueGeneratedOnUpdateSometimes()
+						.HasMaxLength(2048)
+						.HasColumnType("TEXT")
+						.HasColumnName("Url");
+
+					b.HasDiscriminator().HasValue("video");
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.YouTubeVideoMedia", b =>
+				{
+					b.HasBaseType("GameAtlas.Domain.Markers.Media.MarkerMedia");
+
+					b.Property<string>("VideoId")
+						.IsRequired()
+						.HasMaxLength(11)
+						.HasColumnType("TEXT");
+
+					b.HasDiscriminator().HasValue("youtubeVideo");
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Categories.Category", b =>
+				{
+					b.HasOne("GameAtlas.Domain.CategoryGroups.CategoryGroup", null)
+						.WithMany()
+						.HasForeignKey("CategoryGroupId")
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired();
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
+				{
+					b.HasOne("GameAtlas.Domain.Maps.Map", null)
+						.WithMany()
+						.HasForeignKey("MapId")
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired();
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Maps.Map", b =>
+				{
+					b.HasOne("GameAtlas.Domain.Games.Game", null)
+						.WithMany()
+						.HasForeignKey("GameId")
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired();
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Maps.MapStyle", b =>
+				{
+					b.HasOne("GameAtlas.Domain.Maps.Map", null)
+						.WithMany("Styles")
+						.HasForeignKey("MapId")
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired();
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Markers.Marker", b =>
+				{
+					b.HasOne("GameAtlas.Domain.Categories.Category", null)
+						.WithMany()
+						.HasForeignKey("CategoryId")
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired();
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Markers.Media.MarkerMedia", b =>
+				{
+					b.HasOne("GameAtlas.Domain.Markers.Marker", null)
+						.WithMany("Media")
+						.HasForeignKey("MarkerId")
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired();
+				});
+
+			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionStyle", b =>
+				{
+					b.HasOne("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionSession", null)
+						.WithMany("Sources")
+						.HasForeignKey("SessionId")
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired();
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Maps.Map", b =>
+				{
+					b.Navigation("Styles");
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Markers.Marker", b =>
+				{
+					b.Navigation("Media");
+				});
+
+			modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapAdmissionSession", b =>
+				{
+					b.Navigation("Sources");
+				});
 #pragma warning restore 612, 618
-        }
-    }
+		}
+	}
 }

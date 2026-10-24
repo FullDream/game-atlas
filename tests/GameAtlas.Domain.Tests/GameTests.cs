@@ -8,9 +8,8 @@ public class GameTests
 	[Fact]
 	public void CreatesNormalizedDraftWithServerMetadata()
 	{
-		var mapId = Guid.NewGuid();
 		var before = DateTimeOffset.UtcNow;
-		var result = Game.Create(" Elden Ring ", " elden-ring-2 ", " cover ", mapId);
+		var result = Game.Create(" Elden Ring ", " elden-ring-2 ", " cover ");
 
 		Assert.True(result.IsSuccess);
 		var game = result.Value;
@@ -19,7 +18,6 @@ public class GameTests
 		Assert.Equal("Elden Ring", game.Name);
 		Assert.Equal("elden-ring-2", game.Slug);
 		Assert.Equal("cover", game.Image);
-		Assert.Equal(mapId, game.MapId);
 		Assert.Equal(GameStatus.Draft, game.Status);
 		Assert.Equal(game.CreatedAt, game.UpdatedAt);
 		Assert.Equal(TimeSpan.Zero, game.CreatedAt.Offset);
@@ -56,7 +54,6 @@ public class GameTests
 		var result = Game.Create(new string('n', 201), new string('s', 201), new string('i', 2049));
 
 		Assert.True(result.IsSuccess);
-		Assert.Null(result.Value.MapId);
 	}
 
 }

@@ -48,7 +48,7 @@ public class MarkerValidationTests
 	public void RejectsRootEmptyPatchButAllowsEmptyNestedPatchAndNullableDescription()
 	{
 		var validator = new UpdateMarkerValidation();
-		var command = new UpdateMarker(Guid.NewGuid(), Guid.NewGuid());
+		var command = new UpdateMarker(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
 		Assert.False(validator.Validate(command).IsValid);
 		Assert.True(validator.Validate(command with { Position = new PositionPatch() }).IsValid);
@@ -82,7 +82,7 @@ public class MarkerValidationTests
 		foreach (var index in Enumerable.Range(0, 5))
 			Assert.Contains(invalid.Errors, error => error.PropertyName.StartsWith($"Media[{index}]"));
 
-		var update = new UpdateMarker(Guid.NewGuid(), Guid.NewGuid(),
+		var update = new UpdateMarker(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
 			Media: Optional<IReadOnlyCollection<MarkerMediaInput?>?>.From([null]));
 
 		Assert.Contains(new UpdateMarkerValidation().Validate(update).Errors,
@@ -108,5 +108,5 @@ public class MarkerValidationTests
 		Assert.Equal(valid, new CreateMarkerValidation().Validate(command).IsValid);
 	}
 
-	private static CreateMarker Create() => new(Guid.NewGuid(), Guid.NewGuid(), "Marker", new(0, 0), null, []);
+	private static CreateMarker Create() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Marker", new(0, 0), null, []);
 }

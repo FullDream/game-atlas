@@ -9,16 +9,14 @@ public class UpdateGameValidationTests
 	private readonly UpdateGameValidation validator = new();
 
 	[Fact]
-	public async Task RejectsEmptyPatchButAcceptsOneSpecifiedFieldIncludingNullMap()
+	public async Task RejectsEmptyPatchButAcceptsOneSpecifiedMutableField()
 	{
 		var empty = await validator.ValidateAsync(new UpdateGame(Guid.NewGuid()));
 		var name = await validator.ValidateAsync(new UpdateGame(Guid.NewGuid(), Name: "Game"));
-		var map = await validator.ValidateAsync(new UpdateGame(Guid.NewGuid(), MapId: Optional<Guid?>.From(null)));
 
 		Assert.False(empty.IsValid);
 		Assert.Equal(UpdateGameErrors.EmptyPatch.Code, Assert.Single(empty.Errors).ErrorCode);
 		Assert.True(name.IsValid);
-		Assert.True(map.IsValid);
 	}
 
 	[Theory]

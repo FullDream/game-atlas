@@ -16,7 +16,7 @@ public sealed class UpdateMarkerHandler(IApplicationDbContext context)
 	public async ValueTask<Result<MarkerDto>> Handle(UpdateMarker command, CancellationToken cancellationToken)
 	{
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
-		var marker = await context.Markers.AsTracking().ForGame(context, command.GameId)
+		var marker = await context.Markers.AsTracking().ForMap(context, command.GameId, command.MapId)
 			.Include(item => item.Media).SingleOrDefaultAsync(item => item.Id == command.Id, cancellationToken);
 
 		if (marker is null)
@@ -24,7 +24,7 @@ public sealed class UpdateMarkerHandler(IApplicationDbContext context)
 
 		if (command.CategoryId.IsSpecified)
 		{
-			var categoryExists = await context.Categories.ForGame(context, command.GameId)
+			var categoryExists = await context.Categories.ForMap(context, command.GameId, command.MapId)
 				.AnyAsync(category => category.Id == command.CategoryId.Value, cancellationToken);
 
 			if (!categoryExists)

@@ -1,4 +1,5 @@
 using GameAtlas.Application.Abstractions.Persistence;
+using GameAtlas.Application.CategoryGroups;
 using GameAtlas.Domain.Result;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -12,8 +13,8 @@ public sealed class DeleteCategoryHandler(IApplicationDbContext context) : IComm
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
 		var category = await context.Categories.AsTracking().SingleOrDefaultAsync(
 			category => category.Id == command.Id && category.CategoryGroupId == command.GroupId &&
-				context.CategoryGroups.Any(group =>
-					group.Id == category.CategoryGroupId && group.GameId == command.GameId),
+				context.CategoryGroups.ForMap(context, command.GameId, command.MapId).Any(group =>
+					group.Id == category.CategoryGroupId),
 			cancellationToken);
 
 		if (category is null)

@@ -11,7 +11,7 @@ public static class Endpoints
 {
 	public static RouteGroupBuilder MapCategoryGroups(this RouteGroupBuilder group)
 	{
-		var groups = group.MapGroup("/games/{gameId}/category-groups").WithTags("Category groups");
+		var groups = group.MapGroup("/games/{gameId}/maps/{mapId}/category-groups").WithTags("Category groups");
 
 		groups.MapGet("", ListCategoryGroupsAsync)
 			.WithName("ListCategoryGroups").WithSummary("List category groups")
@@ -39,18 +39,20 @@ public static class Endpoints
 	}
 
 	private static async Task<OutcomeResult<IReadOnlyCollection<CategoryGroupDto>>> ListCategoryGroupsAsync(
-		Guid gameId, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(new ListCategoryGroups(gameId), cancellationToken);
+		Guid gameId, Guid mapId, IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(new ListCategoryGroups(gameId, mapId), cancellationToken);
 
 	private static async Task<OutcomeResult<CategoryGroupDto>> CreateCategoryGroupAsync(
-		Guid gameId, CreateCategoryGroupRequest request, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(request.ToCommand(gameId), cancellationToken);
+		Guid gameId, Guid mapId, CreateCategoryGroupRequest request, IMediator mediator,
+			CancellationToken cancellationToken) =>
+		await mediator.Send(request.ToCommand(gameId, mapId), cancellationToken);
 
 	private static async Task<OutcomeResult<CategoryGroupDto>> UpdateCategoryGroupAsync(
-		Guid gameId, Guid id, UpdateCategoryGroupRequest request, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(request.ToCommand(gameId, id), cancellationToken);
+		Guid gameId, Guid mapId, Guid id, UpdateCategoryGroupRequest request, IMediator mediator,
+			CancellationToken cancellationToken) =>
+		await mediator.Send(request.ToCommand(gameId, mapId, id), cancellationToken);
 
 	private static async Task<OutcomeResult> DeleteCategoryGroupAsync(
-		Guid gameId, Guid id, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(new DeleteCategoryGroup(gameId, id), cancellationToken);
+		Guid gameId, Guid mapId, Guid id, IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(new DeleteCategoryGroup(gameId, mapId, id), cancellationToken);
 }

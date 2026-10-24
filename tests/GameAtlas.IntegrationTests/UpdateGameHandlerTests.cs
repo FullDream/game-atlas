@@ -19,17 +19,19 @@ public class UpdateGameHandlerTests
 
 		await factory.MigrateAsync();
 		var game = await SeedAsync(factory, "game");
-		var mapId = Guid.NewGuid();
+		var mapId = (await MapTestData.SeedAsync(factory, game.Id)).Id;
 
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 			var result = await mediator.Send(new UpdateGame(game.Id, " Updated ", " updated ", " image ",
-				mapId, GameStatus.Published));
+				GameStatus.Published));
 
 			Assert.True(result.IsSuccess);
 			Assert.Equal("Updated", result.Value.Name);
 			Assert.Equal(GameStatus.Published, result.Value.Status);
+			Assert.True(await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Maps
+				.AnyAsync(map => map.Id == mapId && map.GameId == game.Id));
 		}
 
 		await using var reloadScope = factory.Services.CreateAsyncScope();
@@ -40,13 +42,13 @@ public class UpdateGameHandlerTests
 		Assert.Equal("Updated", stored.Name);
 		Assert.Equal("updated", stored.Slug);
 		Assert.Equal("image", stored.Image);
-		Assert.Equal(mapId, stored.MapId);
 		Assert.Equal(GameStatus.Published, stored.Status);
 		var returned = await reloadScope.ServiceProvider.GetRequiredService<IMediator>().Send(
-			new UpdateGame(game.Id, MapId: Optional<Guid?>.From(null), Status: GameStatus.Draft));
+			new UpdateGame(game.Id, Status: GameStatus.Draft));
 
 		Assert.True(returned.IsSuccess);
-		Assert.Null(returned.Value.MapId);
+		Assert.True(await reloadScope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Maps
+			.AnyAsync(map => map.Id == mapId && map.GameId == game.Id));
 		Assert.Equal(GameStatus.Draft, returned.Value.Status);
 	}
 
@@ -86,7 +88,7 @@ public class UpdateGameHandlerTests
 		await using var scope = factory.Services.CreateAsyncScope();
 		var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 		var unchanged = await mediator.Send(new UpdateGame(game.Id, " Game ", " game ", " cover ",
-			Optional<Guid?>.From(null), GameStatus.Draft));
+			GameStatus.Draft));
 		var invalid = await mediator.Send(new UpdateGame(game.Id, Name: "New", Image: " "));
 		var empty = await mediator.Send(new UpdateGame(game.Id));
 

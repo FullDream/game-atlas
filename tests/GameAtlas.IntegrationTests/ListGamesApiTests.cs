@@ -20,6 +20,9 @@ public class ListGamesApiTests
 		var capture = new CommandCapture();
 		await using var factory = new GameApiFactory(interceptor: capture);
 		var games = await SeedAsync(factory, Enumerable.Range(0, 25).Select(index => $"Game {index:D2}").ToArray());
+		await using var scope = factory.Services.CreateAsyncScope();
+		var mapIds = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Maps
+			.ToDictionaryAsync(map => map.GameId, map => map.Id);
 
 		capture.Commands.Clear();
 		using var client = factory.CreateHttpsClient();
@@ -40,11 +43,11 @@ public class ListGamesApiTests
 		{
 			var game = games.Single(game => game.Id == item.GetProperty("id").GetGuid());
 
-			Assert.Equal(8, item.EnumerateObject().Count());
+			Assert.Equal(7, item.EnumerateObject().Count());
 			Assert.Equal(game.Name, item.GetProperty("name").GetString());
 			Assert.Equal(game.Slug, item.GetProperty("slug").GetString());
 			Assert.Equal(game.Image, item.GetProperty("image").GetString());
-			Assert.Equal(game.MapId, item.GetProperty("mapId").GetGuid());
+			Assert.False(item.TryGetProperty("mapId", out _));
 			Assert.Equal(game.CreatedAt, item.GetProperty("createdAt").GetDateTimeOffset());
 			Assert.Equal(game.UpdatedAt, item.GetProperty("updatedAt").GetDateTimeOffset());
 		}
@@ -90,7 +93,8 @@ public class ListGamesApiTests
 
 		using var response = await client.GetAsync(url);
 		var page = await ReadPageAsync(response);
-		var descending = direction is not null && Enum.Parse<SortDirection>(direction, ignoreCase: true) == SortDirection.Desc;
+		var descending = direction is not null &&
+			Enum.Parse<SortDirection>(direction, ignoreCase: true) == SortDirection.Desc;
 		IOrderedEnumerable<Game> expected = Enum.Parse<GameSortBy>(field, ignoreCase: true) switch
 		{
 			GameSortBy.Name => descending ? games.OrderByDescending(game => game.Name, StringComparer.Ordinal)
@@ -105,7 +109,8 @@ public class ListGamesApiTests
 		Assert.Equal(5, page.GetProperty("total").GetInt32());
 		var sql = capture.Commands.Last();
 
-		Assert.True(sql.IndexOf("ORDER BY", StringComparison.Ordinal) < sql.IndexOf("LIMIT", StringComparison.Ordinal));
+		Assert.True(sql.LastIndexOf("ORDER BY", StringComparison.Ordinal) <
+			sql.LastIndexOf("LIMIT", StringComparison.Ordinal));
 	}
 
 	[Theory]
@@ -206,12 +211,15 @@ public class ListGamesApiTests
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var start = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-		var games = names.Select((name, index) => Game.Create(name, "game-" + index, "image", Guid.NewGuid()).Value!)
+		var games = names.Select((name, index) => Game.Create(name, "game-" + index, "image").Value!)
 			.ToArray();
 
 		for (var index = 0; index < games.Length; index++)
 		{
 			var entry = context.Games.Add(games[index]);
+
+			context.Maps.Add(Domain.Maps.Map.Create(games[index].Id,
+				"World", 1, 1).Value!);
 
 			entry.Property(game => game.CreatedAt).CurrentValue = start.AddTicks(index);
 			entry.Property(game => game.UpdatedAt).CurrentValue = start.AddTicks(games.Length - index);

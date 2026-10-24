@@ -131,7 +131,7 @@ public class CategoryApiTests
 
 		foreach (var path in new[]
 		{
-			$"/games/bad/category-groups/{group.Id}/categories", $"/games/{game.Id}/category-groups/bad/categories"
+			$"/games/bad/maps/019a0000-0000-7000-8000-000000000001/category-groups/{group.Id}/categories", $"/games/{game.Id}/maps/{MapTestData.MapIdFor(game.Id)}/category-groups/bad/categories"
 		})
 		{
 			using var create = await client.PostAsJsonAsync(path, Body());

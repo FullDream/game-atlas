@@ -39,9 +39,10 @@ public sealed class ListGamesHandler(IApplicationDbContext context)
 		if (ordered is not null)
 			query = ordered.ThenBy(game => game.Id);
 
-		var games = await query.Skip(request.Offset).Take(request.Limit).ToListAsync(cancellationToken);
+		var games = await query.Skip(request.Offset).Take(request.Limit).ToDto()
+			.ToArrayAsync(cancellationToken);
 
-		return new PaginatedResult<GameDto>(games.Select(game => game.ToDto()).ToArray(),
+		return new PaginatedResult<GameDto>(games,
 			request.Limit, request.Offset, total);
 	}
 }

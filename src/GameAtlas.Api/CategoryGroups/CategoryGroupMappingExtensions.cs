@@ -5,9 +5,10 @@ namespace GameAtlas.Api.CategoryGroups;
 
 internal static class CategoryGroupMappingExtensions
 {
-	internal static CreateCategoryGroup ToCommand(this CreateCategoryGroupRequest request, Guid gameId) =>
-		new(gameId, request.Name, request.Order);
+	internal static CreateCategoryGroup ToCommand(this CreateCategoryGroupRequest request, Guid gameId, Guid mapId) =>
+		new(gameId, mapId, request.Name, request.Order);
 
-	internal static UpdateCategoryGroup ToCommand(this UpdateCategoryGroupRequest request, Guid gameId, Guid id) =>
-		new(gameId, id, request.Name, request.Order);
+	internal static UpdateCategoryGroup ToCommand(this UpdateCategoryGroupRequest request, Guid gameId,
+		Guid mapId, Guid id) =>
+		new(gameId, mapId, id, request.Name, request.Order);
 }

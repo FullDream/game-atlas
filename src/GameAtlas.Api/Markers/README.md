@@ -1,17 +1,17 @@
 # Markers API
 
-Markers belong to one category of a game. The four unauthenticated operations work for draft and published games,
-including games without a mapId.
+Markers belong to one category in one map. The four unauthenticated operations work for draft and published games,
+including maps without styles. A map and category must exist before marker creation.
 
 | Method | Route | Success |
 | --- | --- | --- |
-| GET | /games/{gameId}/markers | 200, complete array |
-| POST | /games/{gameId}/markers | 200, complete marker |
-| PATCH | /games/{gameId}/markers/{id} | 200, complete marker |
-| DELETE | /games/{gameId}/markers/{id} | 204, no body |
+| GET | /games/{gameId}/maps/{mapId}/markers | 200, complete array |
+| POST | /games/{gameId}/maps/{mapId}/markers | 200, complete marker |
+| PATCH | /games/{gameId}/maps/{mapId}/markers/{id} | 200, complete marker |
+| DELETE | /games/{gameId}/maps/{mapId}/markers/{id} | 204, no body |
 
 There is no individual-marker GET, PUT, pagination, search, or server-side category filter. Lists contain all markers
-of the route game, ordered by createdAt then id ascending. An existing empty game returns []; a missing game returns 404.
+of the route map, ordered by createdAt then id ascending. An existing empty map returns []; a missing or foreign game/map returns 404.
 
 ## Creation and representation
 
@@ -40,7 +40,7 @@ cannot override these values. Id and createdAt are immutable. Duplicate marker n
   becomes null. It is not interpreted as HTML.
 - Position requires both finite double coordinates at creation. Zero, negative, and fractional values are valid;
   these are X/Y coordinates without geographic restrictions.
-- Category must exist in the route game. Missing, all-zero, or foreign category IDs return 404; missing/null category
+- Category must exist in the route map. Missing, all-zero, or foreign category IDs return 404; missing/null category
   input returns 422. Malformed GUIDs return 400.
 - Omitted media defaults to []. Array order is preserved.
 
@@ -90,18 +90,18 @@ desired array, with complete subtype fields for every element. [] clears all med
 }
 ```
 
-Transfers are limited to categories in the same game. Scalar, position, category, and media changes commit in one
+Transfers are limited to categories in the same map. Scalar, position, category, and media changes commit in one
 transaction. Failed updates persist nothing. Equal normalized values and ordered media content preserve updatedAt
-and existing media IDs without a write. Creation time and parent game/group/category timestamps do not change.
+and existing media IDs without a write. Creation time and parent game/map/group/category timestamps do not change.
 
 ## Deletion and counts
 
 DELETE physically removes the marker and all its media rows, returning empty 204; missing/repeated/foreign marker
-deletion returns 404 ProblemDetails. Category, group, and game deletion cascade through their current markers and
+deletion returns 404 ProblemDetails. Category, group, map, and game deletion cascade through their current markers and
 media. Moved markers and transferred categories survive deletion of former parents; referenced files remain untouched.
 
 Category markersCount is computed from committed marker rows in every category response. Creation, deletion, and
-same-game transfers change the next count, without storing counters or touching category timestamps.
+same-map transfers change the next count, without storing counters or touching category timestamps.
 All expected errors use ProblemDetails. Unexpected storage failures are logged centrally and return safe 500 responses.
 
 Apply the Markers migration explicitly before serving these endpoints; see the Infrastructure persistence README.

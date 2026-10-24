@@ -14,14 +14,15 @@ public sealed class CreateCategoryGroupHandler(IApplicationDbContext context)
 	{
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
 
-		if (!await context.Games.AnyAsync(game => game.Id == command.GameId, cancellationToken))
-			return CreateCategoryGroupErrors.GameNotFound;
+		if (!await context.Maps.AnyAsync(map => map.Id == command.MapId && map.GameId == command.GameId,
+			cancellationToken))
+			return CreateCategoryGroupErrors.MapNotFound;
 
 		var order = command.Order.GetValueOrDefault(null);
 
 		if (!command.Order.IsSpecified)
 		{
-			var lastOrder = await context.CategoryGroups.Where(group => group.GameId == command.GameId)
+			var lastOrder = await context.CategoryGroups.Where(group => group.MapId == command.MapId)
 				.MaxAsync(group => (int?)group.Order, cancellationToken) ?? 0;
 
 			if (lastOrder == int.MaxValue)
@@ -33,14 +34,14 @@ public sealed class CreateCategoryGroupHandler(IApplicationDbContext context)
 		if (order is null)
 			return CategoryGroupErrors.InvalidOrder;
 
-		var result = CategoryGroup.Create(command.GameId, command.Name, order.Value);
+		var result = CategoryGroup.Create(command.MapId, command.Name, order.Value);
 
 		if (result.IsFailure)
 			return result.Errors;
 
 		var group = result.Value;
 		var nameExists = await context.CategoryGroups.AnyAsync(
-			other => other.GameId == command.GameId && other.NormalizedName == group.NormalizedName, cancellationToken);
+			other => other.MapId == command.MapId && other.NormalizedName == group.NormalizedName, cancellationToken);
 
 		if (nameExists)
 			return CreateCategoryGroupErrors.NameConflict;

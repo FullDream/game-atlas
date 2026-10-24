@@ -10,5 +10,4 @@ public sealed record UpdateGame(
 	Optional<string?> Name = default,
 	Optional<string?> Slug = default,
 	Optional<string?> Image = default,
-	Optional<Guid?> MapId = default,
 	Optional<GameStatus?> Status = default) : ICommand<Result<GameDto>>;

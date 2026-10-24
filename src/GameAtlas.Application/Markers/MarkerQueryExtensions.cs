@@ -6,10 +6,10 @@ namespace GameAtlas.Application.Markers;
 
 internal static class MarkerQueryExtensions
 {
-	internal static IQueryable<Marker> ForGame(this IQueryable<Marker> markers, IApplicationDbContext context,
-		Guid gameId)
+	internal static IQueryable<Marker> ForMap(this IQueryable<Marker> markers, IApplicationDbContext context,
+		Guid gameId, Guid mapId)
 	{
-		var categories = context.Categories.ForGame(context, gameId);
+		var categories = context.Categories.ForMap(context, gameId, mapId);
 
 		return markers.Where(marker => categories.Any(category => category.Id == marker.CategoryId));
 	}

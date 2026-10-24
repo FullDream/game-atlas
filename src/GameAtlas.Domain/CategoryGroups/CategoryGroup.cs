@@ -4,14 +4,14 @@ namespace GameAtlas.Domain.CategoryGroups;
 
 public sealed class CategoryGroup
 {
-	private CategoryGroup(Guid id, Guid gameId)
+	private CategoryGroup(Guid id, Guid mapId)
 	{
 		Id = id;
-		GameId = gameId;
+		MapId = mapId;
 	}
 
 	public Guid Id { get; }
-	public Guid GameId { get; }
+	public Guid MapId { get; }
 	public string Name { get; private set; } = string.Empty;
 	public string NormalizedName { get; private set; } = string.Empty;
 	public int Order { get; private set; }
@@ -20,7 +20,7 @@ public sealed class CategoryGroup
 
 	public static string NormalizeName(string name) => name.Trim().ToUpperInvariant();
 
-	public static Result<CategoryGroup> Create(Guid gameId, string? name, int order)
+	public static Result<CategoryGroup> Create(Guid mapId, string? name, int order)
 	{
 		name = name?.Trim();
 
@@ -32,7 +32,7 @@ public sealed class CategoryGroup
 
 		var now = DateTimeOffset.UtcNow;
 
-		return new CategoryGroup(Guid.CreateVersion7(), gameId)
+		return new CategoryGroup(Guid.CreateVersion7(), mapId)
 		{
 			Name = name,
 			NormalizedName = NormalizeName(name),

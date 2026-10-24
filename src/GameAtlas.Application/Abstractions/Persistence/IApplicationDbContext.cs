@@ -1,6 +1,7 @@
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.CategoryGroups;
 using GameAtlas.Domain.Games;
+using GameAtlas.Domain.Maps;
 using GameAtlas.Domain.Markers;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +13,8 @@ public interface IApplicationDbContext
 	DbSet<CategoryGroup> CategoryGroups { get; }
 	DbSet<Category> Categories { get; }
 	DbSet<Marker> Markers { get; }
+	DbSet<Map> Maps { get; }
+	DbSet<MapStyle> MapStyles { get; }
 
 	Task<IApplicationTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 

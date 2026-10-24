@@ -85,7 +85,7 @@ public class CategoryValidationTests
 	}
 
 	private static CreateCategory Create(string? name = "Name", string? icon = "icon", string? color = "#123456") =>
-		new(Guid.NewGuid(), Guid.NewGuid(), name, icon, color);
+		new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), name, icon, color);
 
-	private static UpdateCategory Update() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+	private static UpdateCategory Update() => new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 }

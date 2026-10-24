@@ -1,4 +1,5 @@
 using GameAtlas.Application.Abstractions.Persistence;
+using GameAtlas.Application.CategoryGroups;
 using GameAtlas.Domain.Result;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -11,8 +12,8 @@ public sealed class ListCategoriesHandler(IApplicationDbContext context)
 	public async ValueTask<Result<IReadOnlyCollection<CategoryDto>>> Handle(
 		ListCategories query, CancellationToken cancellationToken)
 	{
-		if (!await context.CategoryGroups.AnyAsync(
-			group => group.Id == query.GroupId && group.GameId == query.GameId, cancellationToken))
+		if (!await context.CategoryGroups.ForMap(context, query.GameId, query.MapId).AnyAsync(
+			group => group.Id == query.GroupId, cancellationToken))
 			return ListCategoriesErrors.GroupNotFound;
 
 		var categories = await context.Categories.AsNoTracking()

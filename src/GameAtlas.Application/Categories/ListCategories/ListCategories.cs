@@ -3,4 +3,5 @@ using Mediator;
 
 namespace GameAtlas.Application.Categories.ListCategories;
 
-public sealed record ListCategories(Guid GameId, Guid GroupId) : IQuery<Result<IReadOnlyCollection<CategoryDto>>>;
+public sealed record ListCategories(Guid GameId, Guid MapId,
+	Guid GroupId) : IQuery<Result<IReadOnlyCollection<CategoryDto>>>;

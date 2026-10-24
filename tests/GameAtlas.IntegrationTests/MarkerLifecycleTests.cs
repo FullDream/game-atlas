@@ -63,7 +63,7 @@ public class MarkerLifecycleTests
 			Assert.Equal(HttpStatusCode.NotFound, delete.StatusCode);
 		}
 
-		using var invalidGuid = await client.GetAsync("/games/not-a-guid/markers");
+		using var invalidGuid = await client.GetAsync("/games/not-a-guid/maps/019a0000-0000-7000-8000-000000000001/markers");
 
 		Assert.Equal(HttpStatusCode.BadRequest, invalidGuid.StatusCode);
 	}
@@ -240,7 +240,7 @@ public class MarkerLifecycleTests
 			{
 				"marker" => MarkerTestData.Path(game.Id) + "/" + created.GetProperty("id").GetGuid(),
 				"category" => CategoryTestData.Path(game.Id, group.Id, category.Id),
-				"group" => $"/games/{game.Id}/category-groups/{group.Id}",
+				"group" => $"/games/{game.Id}/maps/{MapTestData.MapIdFor(game.Id)}/category-groups/{group.Id}",
 				_ => $"/games/{game.Id}"
 			};
 
@@ -283,7 +283,7 @@ public class MarkerLifecycleTests
 				new { categoryId = destinationCategory.Id });
 
 		Assert.Equal(HttpStatusCode.OK, moved.StatusCode);
-		using var deleted = await client.DeleteAsync($"/games/{game.Id}/category-groups/{sourceGroup.Id}");
+		using var deleted = await client.DeleteAsync($"/games/{game.Id}/maps/{MapTestData.MapIdFor(game.Id)}/category-groups/{sourceGroup.Id}");
 
 		Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
 		var survivor = await MarkerTestData.LoadAsync(factory, id);

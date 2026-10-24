@@ -44,7 +44,7 @@ public class CreateGameApiTests
 		var body = json.RootElement;
 
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-		Assert.Equal(8, body.EnumerateObject().Count());
+		Assert.Equal(7, body.EnumerateObject().Count());
 		Assert.Equal(7, body.GetProperty("id").GetGuid().Version);
 		Assert.Equal("Elden Ring", body.GetProperty("name").GetString());
 		Assert.Equal("elden-ring-2", body.GetProperty("slug").GetString());
@@ -59,17 +59,13 @@ public class CreateGameApiTests
 		var stored = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Games.SingleAsync();
 
 		Assert.Equal(body.GetProperty("id").GetGuid(), stored.Id);
-		Assert.Equal(mapId, stored.MapId);
 		Assert.Equal(createdAt, stored.CreatedAt);
 		Assert.Equal("Elden Ring", stored.Name);
 		Assert.Equal("elden-ring-2", stored.Slug);
 		Assert.Equal("cover", stored.Image);
 		Assert.Equal(GameStatus.Draft, stored.Status);
 
-		if (mapId.HasValue)
-			Assert.Equal(mapId.Value, body.GetProperty("mapId").GetGuid());
-		else
-			Assert.Equal(JsonValueKind.Null, body.GetProperty("mapId").ValueKind);
+		Assert.False(body.TryGetProperty("mapId", out _));
 	}
 
 	public static IEnumerable<object[]> InvalidInputs()
@@ -127,14 +123,14 @@ public class CreateGameApiTests
 
 	[Theory]
 	[InlineData("{")]
-	[InlineData("{\"name\":\"Game\",\"slug\":\"game\",\"image\":\"cover\",\"mapId\":\"invalid\"}")]
 	public async Task MalformedRequestReturns400(string input)
 	{
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
 		using var client = factory.CreateHttpsClient();
-		using var response = await client.PostAsync("/games", new StringContent(input, Encoding.UTF8, "application/json"));
+		using var response = await client.PostAsync("/games",
+			new StringContent(input, Encoding.UTF8, "application/json"));
 
 		await AssertProblemAsync(response, HttpStatusCode.BadRequest);
 		await AssertCountAsync(factory, 0);
@@ -177,7 +173,8 @@ public class CreateGameApiTests
 		using var client = factory.CreateHttpsClient();
 
 		Assert.False(File.Exists(factory.DatabasePath));
-		using var response = await client.PostAsJsonAsync("/games", new { name = "Game", slug = "game", image = "cover" });
+		using var response = await client.PostAsJsonAsync("/games",
+			new { name = "Game", slug = "game", image = "cover" });
 
 		await AssertProblemAsync(response, HttpStatusCode.InternalServerError);
 		await using var scope = factory.Services.CreateAsyncScope();
@@ -226,7 +223,8 @@ public class CreateGameApiTests
 
 		await failing.MigrateAsync();
 		using var client = failing.CreateHttpsClient();
-		using var response = await client.PostAsJsonAsync("/games", new { name = "New", slug = "new", image = "cover" });
+		using var response = await client.PostAsJsonAsync("/games",
+			new { name = "New", slug = "new", image = "cover" });
 
 		await AssertProblemAsync(response, HttpStatusCode.Conflict);
 		await AssertCountAsync(failing, 0);
@@ -241,7 +239,8 @@ public class CreateGameApiTests
 	private sealed class ThrowOnSave(Exception exception) : SaveChangesInterceptor
 	{
 		public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
-			DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default) =>
+			DbContextEventData eventData, InterceptionResult<int> result,
+			CancellationToken cancellationToken = default) =>
 			throw exception;
 	}
 

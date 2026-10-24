@@ -36,7 +36,13 @@ public static class DependencyInjection
 	public static IServiceCollection AddApi(this IServiceCollection services)
 	{
 		services.AddProblemDetails();
+		services.AddOpenApiValidationSource<Maps.CreateMapRequest, Application.Maps.CreateMap.CreateMap>();
+		services.AddOpenApiValidationSource<Maps.MapUploadRequest, Application.Maps.Uploads.MapUploadMetadata>();
+		services.AddOpenApiValidationSource<Maps.UpdateMapStyleRequest,
+			Application.Maps.UpdateMapStyle.UpdateMapStyle>();
+
 		services.AddExceptionHandler<GameSlugConflictExceptionHandler>();
+		services.AddExceptionHandler<MapConflictExceptionHandler>();
 		services.AddExceptionHandler<CategoryGroupNameConflictExceptionHandler>();
 		services.AddExceptionHandler<CategoryNameConflictExceptionHandler>();
 		services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = false);
@@ -63,6 +69,7 @@ public static class DependencyInjection
 			options.SerializerOptions.AllowOutOfOrderMetadataProperties = true;
 			options.SerializerOptions.Converters.Add(
 				new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
+
 			options.SerializerOptions.DictionaryKeyPolicy = new SegmentedNamingPolicy(JsonNamingPolicy.CamelCase);
 			options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
 		});
@@ -71,6 +78,7 @@ public static class DependencyInjection
 		services.AddOpenApiValidation();
 		services.AddOpenApi(options =>
 		{
+			options.AddOperationTransformer<Maps.MapOperationTransformer>();
 			options.AddOptionalSupport();
 			options.AddOperationTransformer<CamelCaseQueryParametersTransformer>();
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();

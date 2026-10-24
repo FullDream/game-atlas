@@ -2,11 +2,11 @@
 
 ## Delete game
 
-DELETE `/games/{id}` requires no authentication or request body. It permanently removes a draft or published game and returns HTTP 204 with no response body after the deletion is persisted. Other games remain unchanged. Images and maps are not deleted: their values are currently scalar metadata, not owned resources.
+DELETE `/games/{id}` requires no authentication or request body. It permanently removes a draft or published game and returns HTTP 204 with no response body after deletion and any map cleanup intent commit together. All its maps, styles, categories, groups, markers and media rows cascade; owned map files are removed durably by the worker. Other games remain unchanged. External image and marker-media references are not filesystem deletion targets.
 
 A missing game, including a repeated deletion or an unknown valid GUID, returns HTTP 404 ProblemDetails. An identifier that cannot be parsed as a GUID returns 400 ProblemDetails. Unexpected storage failures return a safe 500 response without internal details.
 
-Deleted games disappear from list items and totals, and a valid PATCH to their identifier returns 404. Their slugs become available for creation or updating another game under the existing validation and uniqueness rules. Deletion has no restoration mechanism or additional schema migration. See `GameAtlas.Api.http` for an example.
+Deleted games disappear from list items and totals, and a valid PATCH to their identifier returns 404. Their slugs become available for creation or updating another game under the existing validation and uniqueness rules. Deletion has no restoration mechanism. Apply the Maps migration before deploying the map-aware handler; see Infrastructure Maps README for upgrade and rollback. See `GameAtlas.Api.http` for an example.
 
 ## List games
 
@@ -32,7 +32,7 @@ API requests and Application queries use nullable GameSortBy and SortDirection e
 
 PATCH `/games/{id}` requires no authentication. Both `application/merge-patch+json` and `application/json` use identical JSON Merge Patch semantics; `charset=utf-8` is accepted with either. PUT is not supported. Other request media types, including `application/json-patch+json` and `text/plain`, return 415 ProblemDetails.
 
-Supply at least one of `name`, `slug`, `image`, `mapId`, or `status`. Omitted fields retain their values. Explicit `mapId: null` clears the map identifier; null for any other mutable field returns 422. Metadata uses the same trimming, length, and slug rules as creation. Map existence is not checked. Status accepts string values `draft` and `published`; publication and returning to draft have no extra prerequisites.
+Supply at least one of `name`, `slug`, `image`, or `status`. Omitted fields retain their values; null for mutable required fields returns 422. Maps are independent child resources; GameDto has seven fields with no mapId. Supplying mapId in PATCH returns 400 atomically. Metadata uses the same trimming, length, and slug rules as creation. Status accepts string values `draft` and `published`; publication and returning to draft have no extra prerequisites.
 
 Success returns 200 with the complete GameDto. The server preserves `id` and `createdAt` and changes `updatedAt` only when at least one normalized value changes. A nonempty patch with existing values returns the current game without saving or touching its timestamp. An empty object returns 422. Unknown fields and client-supplied `id`, `createdAt`, or `updatedAt` return 400, even alongside valid changes. JSON bodies must be objects; malformed JSON, incompatible value types, invalid GUIDs, and unknown or numeric status representations return 400. Errors use ProblemDetails.
 
@@ -42,7 +42,7 @@ A valid patch for a missing game returns 404; it never creates a game. Keeping t
 
 Apply SQLite migrations before starting the API (see Infrastructure/Persistence/README.md). POST `/games` requires no authentication yet. Run the example in `GameAtlas.Api.http` using the API's HTTPS launch profile.
 
-The request accepts `name`, `slug`, `image`, and optional nullable `mapId`. Required strings are trimmed and must remain nonempty. Name and slug allow up to 200 characters; image allows 2048 and need not be a URL. Slugs contain lowercase ASCII letters or digits separated by single hyphens. Map identifiers are stored without an existence check.
+The request accepts `name`, `slug`, and `image`. Additional `mapId` input is ignored without parsing, like other server-owned creation metadata; new games have no maps. Required strings are trimmed and must remain nonempty. Name and slug allow up to 200 characters; image allows 2048 and need not be a URL. Slugs contain lowercase ASCII letters or digits separated by single hyphens. Create maps separately through POST /games/{gameId}/maps.
 
 Success is HTTP 200 with all stored fields, for example:
 
@@ -52,7 +52,6 @@ Success is HTTP 200 with all stored fields, for example:
   "name": "Elden Ring",
   "slug": "elden-ring",
   "image": "elden-ring-cover",
-  "mapId": null,
   "createdAt": "2026-10-22T18:00:00+00:00",
   "updatedAt": "2026-10-22T18:00:00+00:00",
   "status": "draft"

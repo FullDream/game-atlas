@@ -16,7 +16,7 @@ internal static class MarkerTestData
 		 {"type":"video","url":" clip.mp4 ","preview":" preview.jpg "}]
 		""";
 
-	internal static string Path(Guid gameId) => $"/games/{gameId}/markers";
+	internal static string Path(Guid gameId) => $"/games/{gameId}/maps/{MapTestData.MapIdFor(gameId)}/markers";
 
 	internal static async Task<JsonElement> ReadAsync(
 		HttpResponseMessage response, HttpStatusCode status = HttpStatusCode.OK)

@@ -1,4 +1,5 @@
 using GameAtlas.Application.Abstractions.Persistence;
+using GameAtlas.Application.CategoryGroups;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Result;
 using Mediator;
@@ -13,8 +14,8 @@ public sealed class CreateCategoryHandler(IApplicationDbContext context)
 	{
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
 
-		if (!await context.CategoryGroups.AnyAsync(
-			group => group.Id == command.GroupId && group.GameId == command.GameId, cancellationToken))
+		if (!await context.CategoryGroups.ForMap(context, command.GameId, command.MapId).AnyAsync(
+			group => group.Id == command.GroupId, cancellationToken))
 			return CreateCategoryErrors.GroupNotFound;
 
 		var order = command.Order.GetValueOrDefault(null);

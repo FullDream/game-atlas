@@ -15,7 +15,7 @@ public sealed class CreateMarkerHandler(IApplicationDbContext context)
 	{
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
 
-		var categoryExists = await context.Categories.ForGame(context, command.GameId)
+		var categoryExists = await context.Categories.ForMap(context, command.GameId, command.MapId)
 			.AnyAsync(category => category.Id == command.CategoryId, cancellationToken);
 
 		if (!categoryExists)

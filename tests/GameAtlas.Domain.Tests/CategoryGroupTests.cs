@@ -14,7 +14,7 @@ public class CategoryGroupTests
 
 		Assert.True(result.IsSuccess);
 		Assert.Equal(7, result.Value.Id.Version);
-		Assert.Equal(gameId, result.Value.GameId);
+		Assert.Equal(gameId, result.Value.MapId);
 		Assert.Equal(name, result.Value.Name);
 		Assert.Equal(key, result.Value.NormalizedName);
 		Assert.Equal(2, result.Value.Order);
@@ -37,7 +37,7 @@ public class CategoryGroupTests
 		Assert.Equal(before, group.UpdatedAt);
 
 		if (order is { } value)
-			Assert.True(CategoryGroup.Create(group.GameId, "Group", value).IsFailure);
+			Assert.True(CategoryGroup.Create(group.MapId, "Group", value).IsFailure);
 	}
 
 	[Theory]

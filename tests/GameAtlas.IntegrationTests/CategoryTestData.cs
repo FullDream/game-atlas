@@ -11,7 +11,7 @@ namespace GameAtlas.IntegrationTests;
 internal static class CategoryTestData
 {
 	internal static string Path(Guid gameId, Guid groupId, Guid? id = null) =>
-		$"/games/{gameId}/category-groups/{groupId}/categories" + (id is null ? "" : $"/{id}");
+		$"/games/{gameId}/maps/{MapTestData.MapIdFor(gameId)}/category-groups/{groupId}/categories" + (id is null ? "" : $"/{id}");
 
 	internal static async Task<(Game Game, CategoryGroup Group)> ParentAsync(GameApiFactory factory)
 	{
