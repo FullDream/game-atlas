@@ -4,7 +4,7 @@
 	"namedInputs": {
 		"default": ["{projectRoot}/**/*", "sharedGlobals"],
 		"production": ["default", "!{projectRoot}/.eslintrc.json", "!{projectRoot}/eslint.config.mjs"],
-		"sharedGlobals": ["{workspaceRoot}/.postcssrc.json"]
+		"sharedGlobals": ["{workspaceRoot}/.postcssrc.json", "{workspaceRoot}/libs/shared/ui/src/theme/styles.css"]
 	},
 	"targetDefaults": {
 		"@angular/build:application": {
@@ -37,10 +37,17 @@
 	],
 	"generators": {
 		"@nx/angular:application": {
-			"e2eTestRunner": "playwright",
+			"e2eTestRunner": "none",
 			"linter": "eslint",
 			"style": "css",
 			"unitTestRunner": "vitest-angular"
+		},
+		"@nx/angular:component": {
+			"style": "css"
+		},
+		"@nx/angular:library": {
+			"linter": "eslint",
+			"unitTestRunner": "none"
 		}
 	}
 }

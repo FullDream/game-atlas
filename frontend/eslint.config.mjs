@@ -12,18 +12,28 @@ const typeDependencies = {
 }
 
 const scopeDependencies = {
+	'scope:app': ['scope:games', 'scope:maps', 'scope:media', 'scope:shared'],
+	'scope:games': ['scope:games', 'scope:media', 'scope:shared'],
+	'scope:maps': ['scope:maps', 'scope:media', 'scope:shared'],
+	'scope:media': ['scope:media', 'scope:shared'],
 	'scope:shared': ['scope:shared'],
-	'scope:web': ['scope:web', 'scope:shared'],
-	'scope:editor': ['scope:editor', 'scope:shared'],
 }
 
-// A source must match both tag dimensions. Nx rejects cross-project imports
-// when no constraint matches, so a missing type or scope cannot bypass a layer.
+const platformDependencies = {
+	'platform:admin': ['platform:admin', 'platform:shared'],
+	'platform:web': ['platform:web', 'platform:shared'],
+	'platform:shared': ['platform:shared'],
+}
+
+// A source must match all three dimensions to receive cross-project permissions.
 const depConstraints = Object.entries(typeDependencies).flatMap(([type, allowedTypes]) =>
-	Object.entries(scopeDependencies).flatMap(([scope, allowedScopes]) => [
-		{ allSourceTags: [type, scope], onlyDependOnLibsWithTags: allowedTypes },
-		{ allSourceTags: [type, scope], onlyDependOnLibsWithTags: allowedScopes },
-	]),
+	Object.entries(scopeDependencies).flatMap(([scope, allowedScopes]) =>
+		Object.entries(platformDependencies).flatMap(([platform, allowedPlatforms]) => [
+			{ allSourceTags: [type, scope, platform], onlyDependOnLibsWithTags: allowedTypes },
+			{ allSourceTags: [type, scope, platform], onlyDependOnLibsWithTags: allowedScopes },
+			{ allSourceTags: [type, scope, platform], onlyDependOnLibsWithTags: allowedPlatforms },
+		]),
+	),
 )
 
 export default [

@@ -24,29 +24,46 @@
 
 ## Module boundaries
 
-- Tag each project with a type (`type:app`, `type:feature`, `type:ui`, `type:data-access`, or `type:util`) and a scope (`scope:web`, `scope:editor`, or `scope:shared`). Do not use `type:shell`.
-- The future `editor` application should use `type:app` and `scope:editor`. Its libraries use the matching type and `scope:editor`.
-- Keep web and editor libraries isolated; put reusable libraries in `scope:shared`. Shared libraries must only depend on other shared libraries.
-- Follow the dependency directions in `eslint.config.mjs`; scope and type constraints both apply.
+- Tag each project with exactly one type (`type:app`, `type:feature`, `type:ui`, `type:data-access`, or `type:util`), one domain scope, and one platform. Do not use `type:shell`.
+- Domain scopes are `scope:games`, `scope:maps`, `scope:media`, and `scope:shared`. Category groups, categories, and markers belong to `scope:maps`. Reserve `scope:app` for application composition roots.
+- Platforms are `platform:admin`, `platform:web`, and `platform:shared`. Keep admin and web libraries isolated; platform-shared libraries depend only on other platform-shared libraries.
+- Games and maps may depend on media and domain-shared libraries; media depends only on media and domain-shared libraries. Domain-shared libraries depend only on other domain-shared libraries.
+- Follow the dependency directions in `eslint.config.mjs`; type, scope and platform constraints all apply. A project missing any dimension has no permission for cross-project imports.
 - Prefer non-buildable internal libraries. See `docs/frontend-architecture.md` for the planned structure and tag rules; create libraries only when needed.
 
-## Static web output
+## Applications and HTTP data access
 
-- The public web app uses `outputMode: "static"`. Keep prerendering and hydration; do not introduce a production Node.js server or depend on the editor API.
-- Initialize browser-only packages with dynamic imports in browser render hooks such as `afterNextRender()`.
-- Add future parameterized prerender routes only with their features and a published-manifest-backed `getPrerenderParams()`.
-- Catalog JSON is in `apps/web/public/content/games.json`; rebuild on publication to keep prerendered HTML and static JSON consistent.
+- Admin is a browser SPA in `apps/admin`. Web remains a separate statically prerendered neutral entry while its product features are rebuilt. Do not restore the removed static GamesCatalog, its fixture or UUID-v4-only parser.
+- Shared backend API libraries use `platform:shared`. The existing `libs/games/data-access` serves both platforms; do not create a parallel admin-specific Games client.
+- Generate Angular HttpClient services with Orval into a library-local `src/lib/generated` directory, using tag filtering and `tags-split`. Do not generate TanStack integration or httpResource wrappers.
+- Run generation through the library's uncached `generate-api` Nx target. The current input is `http://localhost:5041/openapi/v1.json`; `GAME_ATLAS_OPENAPI_URL` can override it. Keep generated sources in version control. Ordinary builds must not fetch OpenAPI.
+- Never edit generated sources manually. Change generator configuration and regenerate; narrow generated-only lint exceptions must not weaken handwritten code or module boundaries.
+- Prefer type aliases over interfaces. Generate enum schemas as union types. Add runtime `as const` values only when consumers need them.
+- Keep query keys and query functions together in handwritten injectable query-options classes. Use generated services as transport and preserve HTTP errors/ProblemDetails. Unsubscribe HTTP requests when a consuming query is cancelled.
+- Configure QueryClient and runtime API base URLs in consuming applications. The generation URL does not define the deployment URL. Admin development proxies only `/api/**` to the backend so page routes such as `/games` remain SPA routes.
+- Domain tag ownership: games selects `Games`; maps selects `Maps`, `Category groups`, `Categories` and `Markers`; media selects `Media`. Add clients only when needed.
+- Initialize browser-only packages in browser render hooks. Do not introduce a production Node.js rendering server for admin.
+- Keep route titles limited to page names. Admin's `AdminTitleStrategy` appends `| GameAtlas Admin` centrally and uses the application name when no page title is available.
 
 ## Entity identifiers
 
-- Use stable lowercase UUID v4 identifiers for all entities, separate from URL slugs. Preserve existing IDs on content updates and publication.
-- New browser-side entities must use `crypto.randomUUID()`. Do not use slugs, indices or incremental integers as identifiers.
+- Backend entity identifiers and timestamps are authoritative server values. Accept UUID v7 IDs and preserve them unchanged; admin does not create IDs for backend resources.
+- Do not derive entity identity from slugs, array indices or incremental counters. Use `crypto.randomUUID()` only for an explicitly browser-owned local identifier, never as a replacement for a server entity ID.
 
 ## UI and styling
 
-- Use Tailwind CSS v4 for styling. PostCSS is configured in `.postcssrc.json`; global styles and the Spartan theme are in `apps/web/src/styles.css`.
+- Use Tailwind CSS v4 for styling. PostCSS is configured in `.postcssrc.json`; shared theme tokens are in `libs/shared/ui/src/theme/styles.css`, registered before application CSS in each app’s `project.json` build `styles` array; do not repeat relative theme imports in application CSS.
+- Theme selection uses a head `<meta name="color-scheme">`: `light`, `light dark` for the default/system choice, or `dark`. Use CSS `light-dark()` semantic tokens rather than toggling a `.dark` class. Keep Tailwind dark variants aligned with the meta value and system preference.
+- Keep browser chrome hints aligned with the selected theme using two `theme-color` meta tags: white (`#ffffff`) and dark zinc (`#09090b`). In system mode use their `prefers-color-scheme` media queries; for an explicit choice enable only its tag with `all` and disable the other with `not all`. Apply these hints both in the startup script and at runtime. Browser UI coloring is best-effort and depends on browser/platform support.
+- Admin persists `game-atlas.theme` (`light`, `system`, `dark`) as a raw string through ngxtension `injectLocalStorage`; the startup script at the beginning of `<body>`, before `<app-root>`, only reads the same key before Angular bootstraps. Keep browser persistence in the application; shared theme controls expose signal inputs/models.
+- Use Material Symbols Rounded consistently, including icons inside owned Spartan Helm components. Import SVG icons from `@ng-icons/material-symbols/round` and register only the icons used with `provideIcons`. Do not load external icon fonts or mix icon families. Keep decorative icons hidden from assistive technology and give icon-only controls accessible names.
+- Keep owned Spartan Helm code in the single non-buildable `ui-helm` project at `libs/shared/ui`, tagged `type:ui`, `scope:shared`, `platform:shared`. Place Spartan entrypoints under `src/lib/helm` and our own reusable components directly under `src/lib`, without an extra `components` directory. Our public API is `src/index.ts` via `@game-atlas/shared/ui`. Use `generateAs: entrypoint` and `componentsPath: libs/shared/ui/src/lib/helm` in `components.json`; add components as entrypoints, not separate Nx projects. Import specific entrypoints (`@spartan-ng/helm/button`, etc.) and keep UI-specific helpers within this project.
 - Spartan UI dependencies and theme are configured. `components.json` defines the destination and import alias for any future Helm components.
 - Reuse existing project components and library APIs. Generate Helm components only when explicitly requested.
+
+## Verification
+
+- E2E testing is deferred for the current phase. Do not scaffold E2E projects or add/run browser suites unless explicitly requested. Use focused unit tests, lint and production builds.
 
 ## Code Style
 
@@ -64,6 +81,10 @@ Follow the existing Prettier and ESLint configuration.
 
 ### Naming
 
+- Prefix component selectors by their purpose/domain, without encoding the library type: shared UI uses `ui-` (for example, `ui-theme-switcher`); games uses `games-`; maps, including category groups/categories/markers, uses `maps-`; media uses `media-`. Application composition components use `app-`; copied Spartan Helm components retain `hlm-`. Use the same domain prefix for both feature and UI libraries. Keep TypeScript class names descriptive and unprefixed (for example, `ThemeSwitcher`). Match project generator prefixes and ESLint selector rules to these conventions when creating libraries.
+
+- Use kebab-case for frontend source file and directory names, including generated API files (for example, `game-dto.ts` and `games-queries.ts`). Preserve required tool filenames such as `AGENTS.md`, `README.md` and standard configuration names. Keep conventional dot-separated suffixes such as `.spec.ts` and `.service.ts`.
+- Set Orval's output-level `namingConvention: 'kebab-case'`; regenerate files rather than renaming generated output manually. This setting controls filenames, not API property names or TypeScript type names.
 - Use descriptive camelCase names for variables, functions, and methods.
 - Use PascalCase for classes, interfaces, and types.
 - Do not use Hungarian notation (`strName`, `bEnabled`, `arrItems`, `IUserService`).
@@ -74,12 +95,15 @@ Follow the existing Prettier and ESLint configuration.
 ### Quality
 
 - Prefer readable code over clever or overly compact expressions.
+- Do not use nested ternary expressions. Use explicit `if`/`else` branches or `switch` for multiple conditions.
 - Keep functions focused and reasonably small.
 - Do not introduce unnecessary abstractions.
 - Do not add comments that merely restate the code.
 - Run Prettier and ESLint on changed files before completing a task.
 
 ### Angular classes
+
+- Angular 22+ uses OnPush change detection by default. Omit redundant `changeDetection: ChangeDetectionStrategy.OnPush` metadata and its import, including in owned Helm components. Explicitly select another strategy only when required by the component; verify the installed Angular version before changing this convention.
 
 Order class members in the following groups:
 

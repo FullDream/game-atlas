@@ -10,6 +10,14 @@ context: |
   - Layered monolith initially; consider separate modules when feature areas grow
   - DDD, Vertical Slice Architecture, and pragmatic Clean Architecture
 
+  Frontend:
+  - Angular/Nx workspace in frontend, with separate admin SPA and public web
+  - Tailwind CSS and Spartan UI with Material Symbols Rounded icons, with shared semantic theme tokens
+  - TanStack Query Angular with handwritten query-options classes
+  - Orval Angular HttpClient generation per domain through OpenAPI tag filtering
+  - Shared games/data-access for admin and web; union enums and type aliases
+  - Frontend conventions and module boundaries are defined in frontend/AGENTS.md
+
   Architectural principles:
   - Separate domain logic from infrastructure.
   - Avoid generic repositories.

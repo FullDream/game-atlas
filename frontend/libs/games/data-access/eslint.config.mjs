@@ -31,4 +31,12 @@ export default [
 		// Override or add rules here
 		rules: {},
 	},
+	{
+		files: ['**/generated/**/*.ts'],
+		rules: {
+			'enforce-es-private/fields': 'off',
+			'@typescript-eslint/no-inferrable-types': 'off',
+			'@stylistic/padding-line-between-statements': 'off',
+		},
+	},
 ]

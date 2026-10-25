@@ -1,135 +1,70 @@
 # Frontend architecture and deployment
 
-Game Atlas uses Nx 23, Angular 22, TypeScript 6, Tailwind CSS 4 and Spartan UI.
-Run commands from `frontend` with npm. The installed Angular build tools require
-Node.js `^22.22.3 || ^24.15.0 || >=26.0.0`; Node 24.13 is below that supported range.
+The workspace uses Angular 22, Nx 23, TypeScript 6, Tailwind CSS 4 and Spartan UI. Use npm from `frontend` and a Node.js version supported by the installed Angular build tools.
 
-## Static production website
+## Applications
 
-`npm exec nx build web` produces `dist/apps/web/browser`. Deploy the contents of
-that directory to static hosting. Node.js is used for the build and prerendering,
-but neither Node.js nor ASP.NET Core is required by the deployed website.
-`main.server.ts`, `app.config.server.ts` and `@angular/ssr` remain build-time
-prerendering infrastructure; there is no production request handler.
+`admin` is a browser SPA for content management. It has its own bootstrap, providers, routes and shell under `apps/admin`, independent of web. Development uses port 4201 and proxies only `/api/**` to the backend at `http://localhost:5041`, removing the prefix. Page navigation to `/games` must never be proxied as an API request.
 
-The home catalog page is prerendered by the existing `RenderMode.Prerender` catch-all.
-Client hydration and event replay remain enabled. Public assets go in
-`apps/web/public` and are copied into the deployment directory. Published map
-content will be loaded from static JSON files in that directory.
+Build with `npm exec nx -- build admin`. Deploy `dist/apps/admin/browser` to static hosting with an `index.html` fallback for application routes and real 404s for missing assets. Production needs an explicit reverse-proxy or application base-URL configuration; the development proxy is not deployed. No production Node.js renderer is required.
 
-The catalog is lazy-loaded at `/` from `games-feature-catalog`. Its JSON is served
-at build time by the app's prerender-only HTTP backend and transferred to the
-browser through Angular's HTTP cache. Rebuild HTML and JSON together on publish.
-There are no game-detail or map routes yet.
+The initial Games and Media pages identify future resource areas without pretending to implement CRUD. The sidebar supports desktop collapse and mobile overlays. There is no dashboard, fake account or authentication flow. Maps will be reached through a game, with groups/categories/markers inside a selected map; those screens are not scaffolded yet.
 
-When game-detail and map features exist, add their lazy routes to `app.routes.ts`.
-Parameterized routes need explicit server-route entries before the catch-all,
-with `getPrerenderParams()` reading the published content manifest at build time.
-Do not rely on the local editor API for production builds. Choose client or no
-fallback deliberately for parameters absent from the manifest; static hosting
-cannot perform request-time server rendering.
+`web` retains static prerendering and hydration, but currently has only a neutral entry. The earlier catalog component, fixture, parsing model and prerender HTTP interception have been removed. Public product features and publication strategy are separate work. Do not import administration-only code into web.
 
-For direct navigation, configure the host to serve each generated
-`<route>/index.html`. If client-only paths are introduced, configure an SPA
-fallback to the generated `index.csr.html` shell for application paths that were
-not prerendered; keep `index.html` as the prerendered home page. Keep missing JSON, images and
-other assets as real 404 responses rather than rewriting them to HTML. Hosts
-without rewrite support need prerendered files for every directly navigable URL
-(or a separately chosen hash-routing strategy). Subdirectory deployments also
-need the matching Angular base URL and asset paths.
+## API generation and query ownership
 
-Preview the static build with `npm exec nx run web:serve-static`. Its local
-SPA fallback is a development convenience, not a configuration applied to the
-hosting provider. Playwright uses this target to exercise production files.
+The existing `libs/games/data-access` is shared by both platforms. Keep the public alias `@game-atlas/games/data-access`. Orval generates Angular HttpClient services with tag splitting from the live OpenAPI document into `src/lib/generated`; it does not generate TanStack integration. The library's uncached `generate-api` target selects only Games and referenced schemas.
 
-The current preview target falls back to the home page. If client-only routes
-are added, update that preview fallback to the CSR shell as well.
+Generated sources are version-controlled and formatted by a post-generation hook. Normal builds never fetch OpenAPI; regeneration requires an available backend. Override `GAME_ATLAS_OPENAPI_URL` for another document source. Runtime API addressing is independently supplied through generated base-URL DI providers. Models prefer type aliases and enum unions; runtime constants require an actual consumer need.
 
-## Browser-only functionality
+Handwritten query-options classes colocate keys and request functions and use generated transport. Angular Observables are converted to Promises at this boundary, with cancellation unsubscription and unchanged HttpErrorResponse/ProblemDetails. Applications own QueryClient configuration. No generic repository, base-query framework, additional state store or overlapping httpResource cache is introduced.
 
-Future OpenLayers rendering and Dexie progress storage must initialize in the
-browser. Use `afterNextRender()` for DOM work and dynamically import packages
-that access browser globals there, rather than importing them at module scope.
-Keep the initial prerendered and client templates consistent for hydration.
-Load public JSON independently of local user progress; browser state is not
-available during prerendering. These packages are not installed yet.
+Future maps clients select Maps, Category groups, Categories and Markers tags. Media selects Media. Add their libraries when needed; do not generate the whole backend into every domain. UUIDs and timestamps for backend entities remain authoritative server values; do not recreate server identifiers or enforce the prototype's UUID-v4 restriction.
 
-## Planned libraries
+The Games library test builder uses the admin development build as a compilation harness, not as a runtime dependency. Shared source cannot import app code.
 
-The two `games` libraries exist. The `maps` and `progress` directories remain
-plans, not a required initial scaffold; create libraries only when needed:
+## Library boundaries
 
-```text
-libs/
-├── games/
-│   ├── feature-catalog/
-│   └── data-access/
-├── maps/
-│   ├── feature-viewer/
-│   ├── data-access/
-│   ├── ui/
-│   └── util/
-└── progress/
-    └── data-access/
-```
+Every project has one type, domain scope and platform tag. These are independent dimensions enforced together by `eslint.config.mjs`.
 
-Applications configure routing and compose features. Features implement user
-workflows, data-access libraries retrieve/persist data, UI libraries contain
-presentation components, and utility libraries provide pure helpers. Prefer
-ordinary non-buildable internal libraries. Add a separate build only for a
-concrete publishing or distribution requirement; no model libraries are needed
-yet.
+| Source type | Allowed target types           |
+| ----------- | ------------------------------ |
+| app         | feature, data-access, ui, util |
+| feature     | data-access, ui, util          |
+| data-access | data-access, util              |
+| ui          | ui, util                       |
+| util        | util                           |
 
-Each project needs one supported type tag and one supported scope tag:
+| Source scope | Allowed target scopes      |
+| ------------ | -------------------------- |
+| app          | games, maps, media, shared |
+| games        | games, media, shared       |
+| maps         | maps, media, shared        |
+| media        | media, shared              |
+| shared       | shared                     |
 
-| Source type        | Allowed dependency types       |
-| ------------------ | ------------------------------ |
-| `type:app`         | feature, data-access, ui, util |
-| `type:feature`     | data-access, ui, util          |
-| `type:data-access` | data-access, util              |
-| `type:ui`          | ui, util                       |
-| `type:util`        | util                           |
+Reserve `scope:app` for composition roots. Category groups, categories and markers belong to `scope:maps`. A resource endpoint does not require an independent frontend scope.
 
-| Source scope   | Allowed dependency scopes |
-| -------------- | ------------------------- |
-| `scope:web`    | web, shared               |
-| `scope:editor` | editor, shared            |
-| `scope:shared` | shared                    |
+| Source platform | Allowed target platforms |
+| --------------- | ------------------------ |
+| admin           | admin, shared            |
+| web             | web, shared              |
+| shared          | shared                   |
 
-Both dimensions apply together. ESLint uses Nx `allSourceTags` constraints so a
-source missing either dimension has no matching permission for cross-project
-imports. Targets must satisfy both dimensions too. Circular dependency checks
-remain enabled. This checks imports, not unused project metadata; it is not a
-general-purpose validator of tags or non-TypeScript dependencies.
+Use tags such as `type:data-access`, `scope:games`, `platform:shared`. A source missing a dimension has no matching cross-project import permission, and targets must satisfy every dimension. Circular checks remain enabled. These rules validate imports rather than unused metadata or tag cardinality.
 
-The future editor application uses `type:app` and `scope:editor` and talks to a
-separate local ASP.NET Core API backed by SQLite. The public web application
-cannot import editor-only libraries. Shared map UI/utilities use `scope:shared`
-so both applications can reuse them. Map/progress browser storage and viewer
-workflows normally use `scope:web`; choose scopes by consumers, not directory
-names. Shared code must not import either application's data-access layer.
+Shared Helm primitives live under `libs/shared/ui` as one non-buildable Nx project, `ui-helm`, tagged `type:ui`, `scope:shared`, `platform:shared`. Spartan components and UI-specific helpers live under `src/lib/helm` as separate entrypoints such as `@spartan-ng/helm/button` and `@spartan-ng/helm/utils`; they do not have separate project/configuration files. Our own reusable components go directly under `src/lib` (no `components` directory) and are exported through `src/index.ts` as `@game-atlas/shared/ui`. Theme tokens live in `libs/shared/ui/src/theme/styles.css`, registered before application CSS in each app’s `project.json` build `styles` array. Use semantic colors and existing component variants. Admin owns a three-way theme preference, persisted through ngxtension `injectLocalStorage`. It updates a head color-scheme meta tag; shared `light-dark()` tokens and the Tailwind dark variant honor forced light/dark and live system mode. The shared `ThemeSwitcher` remains a controlled UI component. Browser-only packages such as the future map viewer initialize in browser render hooks.
 
-## Validation
+## Verification
 
 ```sh
-npm exec nx build web
-npm exec nx lint web
-npm exec nx test web
-npm exec nx e2e web-e2e
+npm exec nx -- run-many -t lint
+npm exec nx -- run-many -t test --projects=admin,games-data-access,web
+npm exec nx -- run-many -t build --projects=admin,web
+npm exec nx -- run games-data-access:generate-api
 ```
 
-Install Playwright browser binaries when setting up a new environment:
-`npm exec playwright install`. E2E runs Chromium, Firefox and WebKit against the
-static build on port 4200; stop any unrelated server on that port first.
+E2E tests are deferred for now. Verify changes with focused unit tests, lint and production builds.
 
-Nx preserves caching for build, lint, unit and E2E tasks. Project inputs include
-project configuration and styles; the root PostCSS file is a shared input. The
-root flat ESLint config is an explicit lint input, and project ESLint configs are
-covered by project inputs. Nx also hashes relevant root TypeScript configuration
-and package dependencies. Include future root config imports in task inputs when
-they are added.
-
-Keep ECMAScript `#private`, the ban on leading underscores, explicit function
-return types and the existing strict application TypeScript settings. Spartan's
-theme tokens are defined in `styles.css`; its preset maps those tokens to
-Tailwind utilities. Generate Helm components only for an actual requested UI.
+Keep Nx caching for normal build/lint/test tasks. HTTP generation is explicitly uncached; do not add it as a prerequisite of build. Root ESLint and relevant project configurations remain task inputs. Prettier and ESLint follow frontend conventions; any narrow generated-source exceptions leave handwritten checks and domain/platform boundaries intact.

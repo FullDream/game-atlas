@@ -15,8 +15,17 @@
 		"skipDefaultLibCheck": true,
 		"strict": false,
 		"paths": {
-			"@game-atlas/games/feature-catalog": ["./libs/games/feature-catalog/src/index.ts"],
-			"@game-atlas/games/data-access": ["./libs/games/data-access/src/index.ts"]
+			"@game-atlas/games/data-access": ["./libs/games/data-access/src/index.ts"],
+			"@spartan-ng/helm/sidebar": ["./libs/shared/ui/src/lib/helm/sidebar/src/index.ts"],
+			"@spartan-ng/helm/utils": ["./libs/shared/ui/src/lib/helm/utils/src/index.ts"],
+			"@spartan-ng/helm/button": ["./libs/shared/ui/src/lib/helm/button/src/index.ts"],
+			"@spartan-ng/helm/input": ["./libs/shared/ui/src/lib/helm/input/src/index.ts"],
+			"@spartan-ng/helm/separator": ["./libs/shared/ui/src/lib/helm/separator/src/index.ts"],
+			"@spartan-ng/helm/sheet": ["./libs/shared/ui/src/lib/helm/sheet/src/index.ts"],
+			"@spartan-ng/helm/skeleton": ["./libs/shared/ui/src/lib/helm/skeleton/src/index.ts"],
+			"@spartan-ng/helm/tooltip": ["./libs/shared/ui/src/lib/helm/tooltip/src/index.ts"],
+			"@spartan-ng/helm": ["./libs/shared/ui/src/index.ts"],
+			"@game-atlas/shared/ui": ["./libs/shared/ui/src/index.ts"]
 		}
 	},
 	"exclude": ["node_modules", "tmp"]

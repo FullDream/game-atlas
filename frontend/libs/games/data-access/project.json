@@ -4,19 +4,27 @@
 	"sourceRoot": "libs/games/data-access/src",
 	"prefix": "lib",
 	"projectType": "library",
-	"tags": ["type:data-access", "scope:shared"],
+	"tags": ["type:data-access", "scope:games", "platform:shared"],
 	"targets": {
 		"test": {
 			"executor": "@angular/build:unit-test",
-			"inputs": ["default", "^production", "{workspaceRoot}/apps/web/project.json"],
+			"inputs": ["default", "^production", "{workspaceRoot}/apps/admin/project.json"],
 			"options": {
-				"buildTarget": "web:build:development",
+				"buildTarget": "admin:build:development",
 				"tsConfig": "libs/games/data-access/tsconfig.spec.json",
 				"watch": false
 			}
 		},
 		"lint": {
 			"executor": "@nx/eslint:lint"
+		},
+		"generate-api": {
+			"executor": "nx:run-commands",
+			"cache": false,
+			"options": {
+				"command": "orval --config libs/games/data-access/orval.config.ts",
+				"cwd": "{workspaceRoot}"
+			}
 		}
 	}
 }
