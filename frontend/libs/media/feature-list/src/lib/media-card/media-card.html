@@ -16,7 +16,7 @@
 		"
 		[queryParams]="media.type === 'folder' ? { folderId: media.id, limit: limit() === 24 ? null : limit() } : null"
 		[queryParamsHandling]="media.type === 'folder' ? 'replace' : 'preserve'"
-		class="focus-visible:outline-ring block w-full text-left focus-visible:outline-2"
+		class="block w-full text-left focus-visible:outline-none"
 		(click)="opened.emit($event)"
 		[attr.aria-label]="(media.type === 'folder' ? 'Open folder ' : 'View ') + media.name"
 	>

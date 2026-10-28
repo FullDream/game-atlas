@@ -45,7 +45,7 @@ import { MediaThumbnail } from '../media-thumbnail/media-thumbnail'
 	],
 	host: {
 		role: 'article',
-		class: 'group block min-w-0 rounded-lg bg-card hover:shadow-sm relative overflow-hidden border transition-[border-color,box-shadow] delay-0 data-[drop-allowed=true]:border-primary/50 data-[drop-active=true]:delay-[160ms] data-[drop-active=true]:ring-2 data-[drop-active=true]:ring-primary',
+		class: 'group block min-w-0 rounded-lg bg-card hover:shadow-sm relative overflow-hidden border transition-[border-color,box-shadow] delay-0 has-[>a:focus-visible]:border-ring has-[>a:focus-visible]:ring-3 has-[>a:focus-visible]:ring-ring/50 data-[drop-allowed=true]:border-primary/50 data-[drop-active=true]:delay-[160ms] data-[drop-active=true]:ring-2 data-[drop-active=true]:ring-primary',
 		'[attr.data-drop-allowed]': 'dropAllowed()',
 		'[attr.data-drop-active]': 'dropActive()',
 		'[attr.data-skeleton]': 'skeleton() || null',

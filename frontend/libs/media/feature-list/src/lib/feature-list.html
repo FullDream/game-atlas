@@ -37,7 +37,7 @@
 	/>
 </ng-template>
 
-<div class="gap-2 px-4 py-4 sm:px-6 lg:px-8 flex shrink-0 items-center">
+<div class="gap-2 px-4 pt-4 pb-3 sm:px-6 lg:px-8 flex shrink-0 items-center">
 	<a
 		ui-button
 		cdkDropList
@@ -66,7 +66,7 @@
 	</label>
 </div>
 
-<div class="media-content min-h-0 px-4 pb-4 sm:px-6 lg:px-8 flex-1 overflow-y-auto">
+<div class="media-content min-h-0 px-4 pt-1 pb-4 sm:px-6 lg:px-8 flex-1 overflow-y-auto">
 	@if (loadError(); as error) {
 		<ui-error-state class="mb-4" icon="matCloudOffRound" [variant]="mediaQuery.data() ? 'compact' : 'default'">
 			<ng-container uiErrorStateHeading>
@@ -163,8 +163,8 @@
 	) {
 		<div hlmEmpty class="border">
 			<div hlmEmptyHeader>
-				<div hlmEmptyMedia variant="icon">
-					<ng-icon name="matFolderRound" aria-hidden="true" />
+				<div hlmEmptyMedia variant="icon" class="size-16">
+					<ng-icon name="matFolderRound" class="text-[length:--spacing(10)]" aria-hidden="true" />
 				</div>
 				<h2 hlmEmptyTitle>{{ search().trim() ? 'No matches in this folder' : 'This folder is empty' }}</h2>
 				<p hlmEmptyDescription>
