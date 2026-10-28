@@ -14,10 +14,10 @@ import type { Observable } from 'rxjs'
 import type {
 	CreateMediaFolderRequest,
 	ListMediaParams,
-	MediaAssetDto,
-	MediaFolderDetailsDto,
-	MediaFolderDto,
-	PaginatedResultOfMediaItemDto,
+	MediaAsset,
+	MediaFolder,
+	MediaFolderDetails,
+	PaginatedResultOfMediaItem,
 	UpdateMediaAssetRequest,
 	UpdateMediaFolderRequest,
 	UploadMediaAssetRequest,
@@ -138,19 +138,19 @@ export class MediaService {
 	/**
 	 * @summary List media
 	 */
-	listMedia<TData = PaginatedResultOfMediaItemDto>(
+	listMedia<TData = PaginatedResultOfMediaItem>(
 		params?: ListMediaParams,
 		options?: HttpClientBodyOptions,
 	): Observable<TData>
-	listMedia<TData = PaginatedResultOfMediaItemDto>(
+	listMedia<TData = PaginatedResultOfMediaItem>(
 		params?: ListMediaParams,
 		options?: HttpClientEventOptions,
 	): Observable<HttpEvent<TData>>
-	listMedia<TData = PaginatedResultOfMediaItemDto>(
+	listMedia<TData = PaginatedResultOfMediaItem>(
 		params?: ListMediaParams,
 		options?: HttpClientResponseOptions,
 	): Observable<AngularHttpResponse<TData>>
-	listMedia<TData = PaginatedResultOfMediaItemDto>(
+	listMedia<TData = PaginatedResultOfMediaItem>(
 		params?: ListMediaParams,
 		options?: HttpClientObserveOptions,
 	): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
@@ -181,16 +181,16 @@ export class MediaService {
 	/**
 	 * @summary Get media folder
 	 */
-	getMediaFolder<TData = MediaFolderDetailsDto>(id: string, options?: HttpClientBodyOptions): Observable<TData>
-	getMediaFolder<TData = MediaFolderDetailsDto>(
+	getMediaFolder<TData = MediaFolderDetails>(id: string, options?: HttpClientBodyOptions): Observable<TData>
+	getMediaFolder<TData = MediaFolderDetails>(
 		id: string,
 		options?: HttpClientEventOptions,
 	): Observable<HttpEvent<TData>>
-	getMediaFolder<TData = MediaFolderDetailsDto>(
+	getMediaFolder<TData = MediaFolderDetails>(
 		id: string,
 		options?: HttpClientResponseOptions,
 	): Observable<AngularHttpResponse<TData>>
-	getMediaFolder<TData = MediaFolderDetailsDto>(
+	getMediaFolder<TData = MediaFolderDetails>(
 		id: string,
 		options?: HttpClientObserveOptions,
 	): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
@@ -216,22 +216,22 @@ export class MediaService {
 	/**
 	 * @summary Update media folder
 	 */
-	updateMediaFolder<TData = MediaFolderDto>(
+	updateMediaFolder<TData = MediaFolder>(
 		id: string,
 		updateMediaFolderRequest: UpdateMediaFolderRequest,
 		options?: HttpClientBodyOptions,
 	): Observable<TData>
-	updateMediaFolder<TData = MediaFolderDto>(
+	updateMediaFolder<TData = MediaFolder>(
 		id: string,
 		updateMediaFolderRequest: UpdateMediaFolderRequest,
 		options?: HttpClientEventOptions,
 	): Observable<HttpEvent<TData>>
-	updateMediaFolder<TData = MediaFolderDto>(
+	updateMediaFolder<TData = MediaFolder>(
 		id: string,
 		updateMediaFolderRequest: UpdateMediaFolderRequest,
 		options?: HttpClientResponseOptions,
 	): Observable<AngularHttpResponse<TData>>
-	updateMediaFolder<TData = MediaFolderDto>(
+	updateMediaFolder<TData = MediaFolder>(
 		id: string,
 		updateMediaFolderRequest: UpdateMediaFolderRequest,
 		options?: HttpClientObserveOptions,
@@ -290,19 +290,19 @@ export class MediaService {
 	/**
 	 * @summary Create media folder
 	 */
-	createMediaFolder<TData = MediaFolderDto>(
+	createMediaFolder<TData = MediaFolder>(
 		createMediaFolderRequest: CreateMediaFolderRequest,
 		options?: HttpClientBodyOptions,
 	): Observable<TData>
-	createMediaFolder<TData = MediaFolderDto>(
+	createMediaFolder<TData = MediaFolder>(
 		createMediaFolderRequest: CreateMediaFolderRequest,
 		options?: HttpClientEventOptions,
 	): Observable<HttpEvent<TData>>
-	createMediaFolder<TData = MediaFolderDto>(
+	createMediaFolder<TData = MediaFolder>(
 		createMediaFolderRequest: CreateMediaFolderRequest,
 		options?: HttpClientResponseOptions,
 	): Observable<AngularHttpResponse<TData>>
-	createMediaFolder<TData = MediaFolderDto>(
+	createMediaFolder<TData = MediaFolder>(
 		createMediaFolderRequest: CreateMediaFolderRequest,
 		options?: HttpClientObserveOptions,
 	): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
@@ -328,19 +328,19 @@ export class MediaService {
 	/**
 	 * @summary Upload media asset
 	 */
-	uploadMediaAsset<TData = MediaAssetDto>(
+	uploadMediaAsset<TData = MediaAsset>(
 		uploadMediaAssetRequest: UploadMediaAssetRequest,
 		options?: HttpClientBodyOptions,
 	): Observable<TData>
-	uploadMediaAsset<TData = MediaAssetDto>(
+	uploadMediaAsset<TData = MediaAsset>(
 		uploadMediaAssetRequest: UploadMediaAssetRequest,
 		options?: HttpClientEventOptions,
 	): Observable<HttpEvent<TData>>
-	uploadMediaAsset<TData = MediaAssetDto>(
+	uploadMediaAsset<TData = MediaAsset>(
 		uploadMediaAssetRequest: UploadMediaAssetRequest,
 		options?: HttpClientResponseOptions,
 	): Observable<AngularHttpResponse<TData>>
-	uploadMediaAsset<TData = MediaAssetDto>(
+	uploadMediaAsset<TData = MediaAsset>(
 		uploadMediaAssetRequest: UploadMediaAssetRequest,
 		options?: HttpClientObserveOptions,
 	): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
@@ -381,22 +381,22 @@ export class MediaService {
 	/**
 	 * @summary Update media asset
 	 */
-	updateMediaAsset<TData = MediaAssetDto>(
+	updateMediaAsset<TData = MediaAsset>(
 		id: string,
 		updateMediaAssetRequest: UpdateMediaAssetRequest,
 		options?: HttpClientBodyOptions,
 	): Observable<TData>
-	updateMediaAsset<TData = MediaAssetDto>(
+	updateMediaAsset<TData = MediaAsset>(
 		id: string,
 		updateMediaAssetRequest: UpdateMediaAssetRequest,
 		options?: HttpClientEventOptions,
 	): Observable<HttpEvent<TData>>
-	updateMediaAsset<TData = MediaAssetDto>(
+	updateMediaAsset<TData = MediaAsset>(
 		id: string,
 		updateMediaAssetRequest: UpdateMediaAssetRequest,
 		options?: HttpClientResponseOptions,
 	): Observable<AngularHttpResponse<TData>>
-	updateMediaAsset<TData = MediaAssetDto>(
+	updateMediaAsset<TData = MediaAsset>(
 		id: string,
 		updateMediaAssetRequest: UpdateMediaAssetRequest,
 		options?: HttpClientObserveOptions,
@@ -454,11 +454,11 @@ export class MediaService {
 	}
 }
 
-export type ListMediaClientResult = NonNullable<PaginatedResultOfMediaItemDto>
-export type GetMediaFolderClientResult = NonNullable<MediaFolderDetailsDto>
-export type UpdateMediaFolderClientResult = NonNullable<MediaFolderDto>
+export type ListMediaClientResult = NonNullable<PaginatedResultOfMediaItem>
+export type GetMediaFolderClientResult = NonNullable<MediaFolderDetails>
+export type UpdateMediaFolderClientResult = NonNullable<MediaFolder>
 export type DeleteMediaFolderClientResult = NonNullable<void>
-export type CreateMediaFolderClientResult = NonNullable<MediaFolderDto>
-export type UploadMediaAssetClientResult = NonNullable<MediaAssetDto>
-export type UpdateMediaAssetClientResult = NonNullable<MediaAssetDto>
+export type CreateMediaFolderClientResult = NonNullable<MediaFolder>
+export type UploadMediaAssetClientResult = NonNullable<MediaAsset>
+export type UpdateMediaAssetClientResult = NonNullable<MediaAsset>
 export type DeleteMediaAssetClientResult = NonNullable<void>

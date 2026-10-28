@@ -6,11 +6,11 @@
  */
 
 export * from './create-game-request'
-export * from './game-dto'
 export * from './game-sort-by'
 export * from './game-status'
+export * from './game'
 export * from './list-games-params'
-export * from './paginated-result-of-game-dto'
+export * from './paginated-result-of-game'
 export * from './problem-details'
 export * from './sort-direction'
 export * from './update-game-request-status'

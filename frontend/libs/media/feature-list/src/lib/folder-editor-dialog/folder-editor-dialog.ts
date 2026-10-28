@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core'
 import { disabled, form, FormField, FormRoot, maxLength, required } from '@angular/forms/signals'
-import { MediaQueryOptions, type MediaFolderDto } from '@game-atlas/media/data-access'
+import { MediaQueryOptions, type MediaFolder } from '@game-atlas/media/data-access'
 import { Button } from '@game-atlas/shared/ui'
 import { getDirtyValues } from '@game-atlas/shared/util'
 import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
@@ -11,7 +11,7 @@ import { injectMutation } from '@tanstack/angular-query-experimental'
 import { getMediaErrorMessage } from '../get-media-error-message'
 
 type FolderEditorContext = {
-	folder: MediaFolderDto | null
+	folder: MediaFolder | null
 	parentId: string | null
 }
 

@@ -4,10 +4,10 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
-import type { ImageAssetDtoImageAssetDtoType } from './image-asset-dto-image-asset-dto-type'
+import type { ImageAssetType } from './image-asset-type'
 
-export type ImageAssetDtoImageAssetDto = {
-	type: ImageAssetDtoImageAssetDtoType
+export type ImageAsset = {
+	type: ImageAssetType
 	/** @nullable */
 	width: number | null
 	/** @nullable */

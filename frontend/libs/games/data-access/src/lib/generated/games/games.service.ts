@@ -11,13 +11,7 @@ import { Injectable, inject } from '@angular/core'
 
 import type { Observable } from 'rxjs'
 
-import type {
-	CreateGameRequest,
-	GameDto,
-	ListGamesParams,
-	PaginatedResultOfGameDto,
-	UpdateGameRequest,
-} from '../models'
+import type { CreateGameRequest, Game, ListGamesParams, PaginatedResultOfGame, UpdateGameRequest } from '../models'
 
 import type { HttpHeaders, HttpResponse as AngularHttpResponse } from '@angular/common/http'
 
@@ -135,19 +129,19 @@ export class GamesService {
 	 * Lists all game statuses with offset/limit pagination and optional name search. Search ignores ASCII case. Without sortBy, ordering is unspecified.
 	 * @summary List games
 	 */
-	listGames<TData = PaginatedResultOfGameDto>(
+	listGames<TData = PaginatedResultOfGame>(
 		params?: ListGamesParams,
 		options?: HttpClientBodyOptions,
 	): Observable<TData>
-	listGames<TData = PaginatedResultOfGameDto>(
+	listGames<TData = PaginatedResultOfGame>(
 		params?: ListGamesParams,
 		options?: HttpClientEventOptions,
 	): Observable<HttpEvent<TData>>
-	listGames<TData = PaginatedResultOfGameDto>(
+	listGames<TData = PaginatedResultOfGame>(
 		params?: ListGamesParams,
 		options?: HttpClientResponseOptions,
 	): Observable<AngularHttpResponse<TData>>
-	listGames<TData = PaginatedResultOfGameDto>(
+	listGames<TData = PaginatedResultOfGame>(
 		params?: ListGamesParams,
 		options?: HttpClientObserveOptions,
 	): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
@@ -179,19 +173,16 @@ export class GamesService {
 	 * Creates a draft with a client-supplied unique slug. Trims required strings. Returns the complete stored game.
 	 * @summary Create game
 	 */
-	createGame<TData = GameDto>(
-		createGameRequest: CreateGameRequest,
-		options?: HttpClientBodyOptions,
-	): Observable<TData>
-	createGame<TData = GameDto>(
+	createGame<TData = Game>(createGameRequest: CreateGameRequest, options?: HttpClientBodyOptions): Observable<TData>
+	createGame<TData = Game>(
 		createGameRequest: CreateGameRequest,
 		options?: HttpClientEventOptions,
 	): Observable<HttpEvent<TData>>
-	createGame<TData = GameDto>(
+	createGame<TData = Game>(
 		createGameRequest: CreateGameRequest,
 		options?: HttpClientResponseOptions,
 	): Observable<AngularHttpResponse<TData>>
-	createGame<TData = GameDto>(
+	createGame<TData = Game>(
 		createGameRequest: CreateGameRequest,
 		options?: HttpClientObserveOptions,
 	): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
@@ -218,22 +209,22 @@ export class GamesService {
 	 * Updates supplied fields using JSON Merge Patch semantics with either supported media type. Supply at least one mutable field. Omitted fields are preserved; null is invalid. Identity and timestamps are read-only. Status supports draft and published. Unchanged values preserve updatedAt. Returns the complete stored game.
 	 * @summary Update game
 	 */
-	updateGame<TData = GameDto>(
+	updateGame<TData = Game>(
 		id: string,
 		updateGameRequest: UpdateGameRequest,
 		options?: HttpClientBodyOptions,
 	): Observable<TData>
-	updateGame<TData = GameDto>(
+	updateGame<TData = Game>(
 		id: string,
 		updateGameRequest: UpdateGameRequest,
 		options?: HttpClientEventOptions,
 	): Observable<HttpEvent<TData>>
-	updateGame<TData = GameDto>(
+	updateGame<TData = Game>(
 		id: string,
 		updateGameRequest: UpdateGameRequest,
 		options?: HttpClientResponseOptions,
 	): Observable<AngularHttpResponse<TData>>
-	updateGame<TData = GameDto>(
+	updateGame<TData = Game>(
 		id: string,
 		updateGameRequest: UpdateGameRequest,
 		options?: HttpClientObserveOptions,
@@ -289,7 +280,7 @@ export class GamesService {
 	}
 }
 
-export type ListGamesClientResult = NonNullable<PaginatedResultOfGameDto>
-export type CreateGameClientResult = NonNullable<GameDto>
-export type UpdateGameClientResult = NonNullable<GameDto>
+export type ListGamesClientResult = NonNullable<PaginatedResultOfGame>
+export type CreateGameClientResult = NonNullable<Game>
+export type UpdateGameClientResult = NonNullable<Game>
 export type DeleteGameClientResult = NonNullable<void>

@@ -8,9 +8,9 @@ import { MutationObserver } from '@tanstack/angular-query-experimental'
 import { reconcileMediaList } from './utils'
 import { MediaService } from './generated/media/media.service'
 import { provideMediaBaseUrl } from './generated/api.base-url'
-import type { ImageAssetDto, PaginatedResultOfMediaItemDto, MediaItemDto } from './generated/models'
+import type { ImageAsset, PaginatedResultOfMediaItem, MediaItem } from './generated/models'
 
-const image: ImageAssetDto = {
+const image: ImageAsset = {
 	type: 'image',
 	id: 'image-id',
 	name: 'Image',
@@ -26,7 +26,7 @@ const image: ImageAssetDto = {
 	updatedAt: '2026-01-01T00:00:00Z',
 }
 
-function listing(items: MediaItemDto[], total = items.length): PaginatedResultOfMediaItemDto {
+function listing(items: MediaItem[], total = items.length): PaginatedResultOfMediaItem {
 	return { items, total, offset: 0, limit: 24 }
 }
 
@@ -126,7 +126,7 @@ describe('Media data access', () => {
 		expect(request.request.body).toEqual({ alt: 'Updated' })
 		request.flush({ ...image, alt: 'Updated' })
 		await pending
-		const result = client.getQueryData<PaginatedResultOfMediaItemDto>(key)
+		const result = client.getQueryData<PaginatedResultOfMediaItem>(key)
 
 		expect(result?.items[0]).toMatchObject({ alt: 'Updated' })
 		expect(result?.items[1]).toMatchObject({ preview: { alt: 'Updated' } })
@@ -141,11 +141,11 @@ describe('Media data access', () => {
 		const result = reconcileMediaList(data, {}, null, { ...image, id: 'new', name: 'Alpha' })
 
 		client.setQueryData(key, result.data)
-		expect(client.getQueryData<PaginatedResultOfMediaItemDto>(key)?.items.map(item => item.name)).toEqual([
+		expect(client.getQueryData<PaginatedResultOfMediaItem>(key)?.items.map(item => item.name)).toEqual([
 			'Alpha',
 			'Image',
 		])
-		expect(client.getQueryData<PaginatedResultOfMediaItemDto>(key)?.total).toBe(2)
+		expect(client.getQueryData<PaginatedResultOfMediaItem>(key)?.total).toBe(2)
 	})
 
 	it('invalidates incomplete and filtered affected lists without reloading unrelated folders', async () => {
@@ -181,15 +181,15 @@ describe('Media data access', () => {
 		rejectedRequest.flush({ detail: 'In use' }, { status: 409, statusText: 'Conflict' })
 
 		await checked
-		expect(client.getQueryData<PaginatedResultOfMediaItemDto>(key)?.items).toEqual([image])
+		expect(client.getQueryData<PaginatedResultOfMediaItem>(key)?.items).toEqual([image])
 		const success = new MutationObserver(client, TestBed.inject(MediaQueryOptions).remove()).mutate(image)
 
 		const successfulRequest = await vi.waitFor(() => http.expectOne('/api/media/assets/image-id'))
 
 		successfulRequest.flush(null, { status: 204, statusText: 'No content' })
 		await success
-		expect(client.getQueryData<PaginatedResultOfMediaItemDto>(key)?.items).toEqual([])
-		expect(client.getQueryData<PaginatedResultOfMediaItemDto>(key)?.total).toBe(0)
+		expect(client.getQueryData<PaginatedResultOfMediaItem>(key)?.items).toEqual([])
+		expect(client.getQueryData<PaginatedResultOfMediaItem>(key)?.total).toBe(0)
 	})
 
 	it('preserves explicit null when clearing a cover', async () => {

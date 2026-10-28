@@ -8,8 +8,8 @@ import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/route
 import {
 	mediaParent,
 	MediaQueryOptions,
-	type MediaFolderDto,
-	type MediaItemDto,
+	type MediaFolder,
+	type MediaItem,
 	type MediaUploadMutation,
 } from '@game-atlas/media/data-access'
 import { Button, ErrorState, PageHeaderPortal, PendingChanges, type WorkspaceBreadcrumb } from '@game-atlas/shared/ui'
@@ -220,7 +220,7 @@ export class FeatureList {
 		this.#uploadMediaMutation.mutate({ ...upload.variables, controller: new AbortController() })
 	}
 
-	protected openFolderEditor(folder: MediaFolderDto | null = null): void {
+	protected openFolderEditor(folder: MediaFolder | null = null): void {
 		this.#dialogService.open(
 			FolderEditorDialog,
 			undefined,
@@ -229,11 +229,11 @@ export class FeatureList {
 		)
 	}
 
-	protected moveItem(item: MediaItemDto): void {
+	protected moveItem(item: MediaItem): void {
 		this.#whenLeavingAllowed(() => {
 			this.#dismissDetails()
 
-			this.#dialogService.open<{ mode: 'move'; item: MediaItemDto; folderId: string | null }, MediaItemDto>(
+			this.#dialogService.open<{ mode: 'move'; item: MediaItem; folderId: string | null }, MediaItem>(
 				MediaPickerDialog,
 				undefined,
 				{ mode: 'move', item, folderId: mediaParent(item) },
@@ -242,7 +242,7 @@ export class FeatureList {
 		})
 	}
 
-	protected removeItem(item: MediaItemDto): void {
+	protected removeItem(item: MediaItem): void {
 		this.#whenLeavingAllowed(() => {
 			const dialog = this.#dialogService.open(
 				ConfirmationDialog,

@@ -49,7 +49,8 @@ public class ListGamesOpenApiTests
 
 		Assert.Equal(new[] { "items", "limit", "offset", "total" },
 			properties.EnumerateObject().Select(property => property.Name).Order());
-		Assert.Contains("GameDto", properties.GetProperty("items").GetProperty("items")
+		Assert.Equal("#/components/schemas/PaginatedResultOfGame", reference);
+		Assert.Equal("#/components/schemas/Game", properties.GetProperty("items").GetProperty("items")
 			.GetProperty("$ref").GetString());
 	}
 

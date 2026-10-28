@@ -9,6 +9,7 @@ using GameAtlas.Api.Games;
 using GameAtlas.Api.Markers;
 using GameAtlas.Api.OpenApi.Optional;
 using GameAtlas.Api.OpenApi.Parameters;
+using GameAtlas.Api.OpenApi.Schemas;
 using GameAtlas.Api.OpenApi.Validation;
 using GameAtlas.Api.Serialization;
 using GameAtlas.Api.Serialization.Optional;
@@ -77,10 +78,12 @@ public static class DependencyInjection
 		services.AddOpenApiValidation();
 		services.AddOpenApi(options =>
 		{
+			options.CreateSchemaReferenceId = PublicSchemaNames.CreateReferenceId;
 			options.AddOperationTransformer<Maps.MapOperationTransformer>();
 			options.AddOptionalSupport();
 			options.AddOperationTransformer<CamelCaseQueryParametersTransformer>();
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
+			options.AddDocumentTransformer<MediaSchemaTransformer>();
 		});
 
 		return services;

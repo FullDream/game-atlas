@@ -17,18 +17,18 @@ import { MediaService } from './generated/media/media.service'
 import type {
 	CreateMediaFolderRequest,
 	ListMediaParams,
-	MediaAssetDto,
-	MediaFolderDetailsDto,
-	MediaFolderDto,
-	MediaItemDto,
-	PaginatedResultOfMediaItemDto,
+	MediaAsset,
+	MediaFolderDetails,
+	MediaFolder,
+	MediaItem,
+	PaginatedResultOfMediaItem,
 	UpdateMediaAssetRequest,
 	UpdateMediaFolderRequest,
 } from './generated/models'
 import type { MediaUploadStateOptions, UploadMediaVariables } from './upload-media-variables'
 import { mediaParent, reconcileMediaFolder, reconcileMediaList } from './utils'
 
-type CachedMedia = PaginatedResultOfMediaItemDto | MediaFolderDetailsDto
+type CachedMedia = PaginatedResultOfMediaItem | MediaFolderDetails
 
 type MediaCacheSnapshot = {
 	key: QueryKey
@@ -38,7 +38,7 @@ type MediaCacheSnapshot = {
 }
 
 type OptimisticMediaContext = {
-	next: MediaItemDto | null
+	next: MediaItem | null
 	snapshots: MediaCacheSnapshot[]
 }
 
@@ -61,10 +61,10 @@ export class MediaQueryOptions {
 	readonly uploadKey = ['media', 'upload'] as const
 	readonly uploadProgress = this.#uploadProgress.asReadonly()
 
-	list(params: ListMediaParams = {}): CreateQueryOptions<PaginatedResultOfMediaItemDto, HttpErrorResponse> {
+	list(params: ListMediaParams = {}): CreateQueryOptions<PaginatedResultOfMediaItem, HttpErrorResponse> {
 		const normalized = mediaListParams(params)
 
-		return queryOptions<PaginatedResultOfMediaItemDto, HttpErrorResponse>({
+		return queryOptions<PaginatedResultOfMediaItem, HttpErrorResponse>({
 			queryKey: ['media', 'list', normalized],
 			staleTime: 30_000,
 			queryFn: ({ signal }) => toPromise(this.#mediaService.listMedia(normalized), signal),
@@ -78,8 +78,8 @@ export class MediaQueryOptions {
 		})
 	}
 
-	folder(id: string | null): CreateQueryOptions<MediaFolderDetailsDto, HttpErrorResponse> {
-		return queryOptions<MediaFolderDetailsDto, HttpErrorResponse>({
+	folder(id: string | null): CreateQueryOptions<MediaFolderDetails, HttpErrorResponse> {
+		return queryOptions<MediaFolderDetails, HttpErrorResponse>({
 			queryKey: ['media', 'folder', id],
 			enabled: !!id,
 			staleTime: 30_000,
@@ -91,15 +91,15 @@ export class MediaQueryOptions {
 		})
 	}
 
-	getCachedFolder(id: string | null): MediaFolderDto | undefined {
+	getCachedFolder(id: string | null): MediaFolder | undefined {
 		if (!id) return undefined
 
-		let latestFolder: MediaFolderDto | undefined
+		let latestFolder: MediaFolder | undefined
 		let updatedAt = -1
 
 		for (const query of this.#queryClient.getQueryCache().findAll({ queryKey: ['media'] })) {
 			const data = query.state.data as CachedMedia | undefined
-			let folder: MediaFolderDto | undefined
+			let folder: MediaFolder | undefined
 
 			if (query.queryKey[1] === 'folder' && data && 'folder' in data && data.folder.id === id) {
 				folder = data.folder
@@ -118,7 +118,7 @@ export class MediaQueryOptions {
 		return latestFolder
 	}
 
-	createFolder(): CreateMutationOptions<MediaFolderDto, HttpErrorResponse, CreateMediaFolderRequest> {
+	createFolder(): CreateMutationOptions<MediaFolder, HttpErrorResponse, CreateMediaFolderRequest> {
 		return {
 			mutationKey: ['media', 'create-folder'],
 			mutationFn: request => toPromise(this.#mediaService.createMediaFolder(request)),
@@ -127,7 +127,7 @@ export class MediaQueryOptions {
 	}
 
 	updateFolder(): CreateMutationOptions<
-		MediaFolderDto,
+		MediaFolder,
 		HttpErrorResponse,
 		{ id: string; patch: UpdateMediaFolderRequest },
 		OptimisticMediaContext | undefined
@@ -155,7 +155,7 @@ export class MediaQueryOptions {
 	}
 
 	updateAsset(): CreateMutationOptions<
-		MediaAssetDto,
+		MediaAsset,
 		HttpErrorResponse,
 		{ id: string; patch: UpdateMediaAssetRequest },
 		OptimisticMediaContext | undefined
@@ -183,7 +183,7 @@ export class MediaQueryOptions {
 		}
 	}
 
-	remove(): CreateMutationOptions<void, HttpErrorResponse, MediaItemDto> {
+	remove(): CreateMutationOptions<void, HttpErrorResponse, MediaItem> {
 		return {
 			mutationKey: ['media', 'delete'],
 			mutationFn: item =>
@@ -196,7 +196,7 @@ export class MediaQueryOptions {
 		}
 	}
 
-	upload(): CreateMutationOptions<MediaAssetDto, HttpErrorResponse, UploadMediaVariables> {
+	upload(): CreateMutationOptions<MediaAsset, HttpErrorResponse, UploadMediaVariables> {
 		return {
 			mutationKey: this.uploadKey,
 			retry: false,
@@ -267,12 +267,12 @@ export class MediaQueryOptions {
 		}
 	}
 
-	#findCachedItem(id: string): MediaItemDto | undefined {
-		const folder = this.#queryClient.getQueryData<MediaFolderDetailsDto>(['media', 'folder', id])?.folder
+	#findCachedItem(id: string): MediaItem | undefined {
+		const folder = this.#queryClient.getQueryData<MediaFolderDetails>(['media', 'folder', id])?.folder
 
 		if (folder) return folder
 
-		for (const [, data] of this.#queryClient.getQueriesData<PaginatedResultOfMediaItemDto>({
+		for (const [, data] of this.#queryClient.getQueriesData<PaginatedResultOfMediaItem>({
 			queryKey: ['media', 'list'],
 		})) {
 			const item = data?.items.find(item => item.id === id)
@@ -286,7 +286,7 @@ export class MediaQueryOptions {
 		return undefined
 	}
 
-	#affectedQueries(previous: MediaItemDto | null, next: MediaItemDto | null): Query[] {
+	#affectedQueries(previous: MediaItem | null, next: MediaItem | null): Query[] {
 		const entity = next ?? previous
 
 		if (!entity) return []
@@ -325,7 +325,7 @@ export class MediaQueryOptions {
 		})
 	}
 
-	async #updateCache(previous: MediaItemDto | null, next: MediaItemDto | null): Promise<OptimisticMediaContext> {
+	async #updateCache(previous: MediaItem | null, next: MediaItem | null): Promise<OptimisticMediaContext> {
 		const queries = this.#affectedQueries(previous, next)
 
 		await Promise.all(
@@ -349,11 +349,7 @@ export class MediaQueryOptions {
 		return { next, snapshots }
 	}
 
-	async #commit(
-		previous: MediaItemDto | null,
-		next: MediaItemDto | null,
-		context?: OptimisticMediaContext,
-	): Promise<void> {
+	async #commit(previous: MediaItem | null, next: MediaItem | null, context?: OptimisticMediaContext): Promise<void> {
 		const pending =
 			context?.snapshots.filter(
 				snapshot => snapshot.refresh || this.#queryClient.getQueryData(snapshot.key) !== snapshot.optimistic,

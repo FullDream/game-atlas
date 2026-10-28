@@ -4,10 +4,10 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
-import type { MediaFolderDtoMediaFolderDtoType } from './media-folder-dto-media-folder-dto-type'
+import type { MediaFolderType } from './media-folder-type'
 
-export type MediaFolderDtoMediaFolderDto = {
-	type: MediaFolderDtoMediaFolderDtoType
+export type MediaFolder = {
+	type: MediaFolderType
 	/** @nullable */
 	parentId: string | null
 	itemsCount: number

@@ -12,7 +12,7 @@ namespace GameAtlas.IntegrationTests;
 public sealed class MediaBrowseTests
 {
 	[Fact]
-	public async Task ListingIncludesCurrentFolderAndAncestorsIndependentlyOfSearchAndPagination()
+	public async Task FolderDetailsProvideContextIndependentlyOfListingSearchAndPagination()
 	{
 		await using var factory = new GameApiFactory();
 
@@ -25,19 +25,20 @@ public sealed class MediaBrowseTests
 		var leaf = await leafResponse.Content.ReadFromJsonAsync<MediaFolderDto>();
 
 		await client.PostAsJsonAsync("/media/folders", new { name = "Child", parentId = leaf!.Id });
-		var listing = await client.GetFromJsonAsync<MediaListResult>(
+		var listing = await client.GetFromJsonAsync<PaginatedResult<MediaItemDto>>(
 			$"/media?folderId={leaf.Id}&search=absent&offset=100");
 
 		Assert.Empty(listing!.Items);
 		Assert.Equal(0, listing.Total);
-		Assert.Equal(leaf.Id, listing.Folder!.Id);
-		Assert.Equal(1, listing.Folder.ItemsCount);
-		Assert.Equal([top.Id, middle.Id], listing.Ancestors.Select(parent => parent.Id));
-		Assert.Equal(["Top", "Middle"], listing.Ancestors.Select(parent => parent.Name));
-		var root = await client.GetFromJsonAsync<MediaListResult>("/media");
+		var details = await client.GetFromJsonAsync<MediaFolderDetailsDto>($"/media/folders/{leaf.Id}");
 
-		Assert.Null(root!.Folder);
-		Assert.Empty(root.Ancestors);
+		Assert.Equal(leaf.Id, details!.Folder.Id);
+		Assert.Equal(1, details.Folder.ItemsCount);
+		Assert.Equal([top.Id, middle.Id], details.Ancestors.Select(parent => parent.Id));
+		Assert.Equal(["Top", "Middle"], details.Ancestors.Select(parent => parent.Name));
+		var root = await client.GetFromJsonAsync<PaginatedResult<MediaItemDto>>("/media");
+
+		Assert.Equal(top.Id, Assert.Single(root!.Items).Id);
 		using var missing = await client.GetAsync($"/media?folderId={Guid.CreateVersion7()}");
 
 		Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);

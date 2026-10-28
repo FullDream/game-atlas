@@ -4,9 +4,9 @@ import { TestBed } from '@angular/core/testing'
 import { firstValueFrom } from 'rxjs'
 import { provideGamesBaseUrl } from './generated/api.base-url'
 import { GamesService } from './generated/games/games.service'
-import type { GameDto, UpdateGameRequest } from './generated/models'
+import type { Game, UpdateGameRequest } from './generated/models'
 
-const game: GameDto = {
+const game: Game = {
 	id: '019a0000-0000-7000-8000-000000000001',
 	name: 'GameAtlas',
 	slug: 'game-atlas',

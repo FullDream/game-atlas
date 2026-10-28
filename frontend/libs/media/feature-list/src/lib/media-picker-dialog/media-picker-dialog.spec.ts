@@ -2,7 +2,7 @@ import { DIALOG_DATA } from '@angular/cdk/dialog'
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http'
 import { signal } from '@angular/core'
 import { ComponentFixture, TestBed } from '@angular/core/testing'
-import { MediaService, type MediaItemDto } from '@game-atlas/media/data-access'
+import { MediaService, type MediaItem } from '@game-atlas/media/data-access'
 import { BrnDialogRef } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
@@ -14,7 +14,7 @@ import { MediaPickerDialog } from './media-picker-dialog'
 
 describe('MediaPickerDialog', () => {
 	let fixture: ComponentFixture<MediaPickerDialog>
-	let context: { mode: 'image' | 'move'; item?: MediaItemDto; folderId: string | null }
+	let context: { mode: 'image' | 'move'; item?: MediaItem; folderId: string | null }
 	let close: ReturnType<typeof vi.fn>
 	let service: {
 		listMedia: ReturnType<typeof vi.fn>

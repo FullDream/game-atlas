@@ -1,23 +1,18 @@
 import { flatMap, map, pipe, sortBy, uniqueBy } from 'remeda'
-import type {
-	ListMediaParams,
-	MediaItemDto,
-	PaginatedResultOfMediaItemDto,
-	MediaFolderDetailsDto,
-} from './generated/models'
+import type { ListMediaParams, MediaItem, PaginatedResultOfMediaItem, MediaFolderDetails } from './generated/models'
 
 const encoder = new TextEncoder()
 
-export function mediaParent(item: MediaItemDto): string | null {
+export function mediaParent(item: MediaItem): string | null {
 	return item.type === 'folder' ? item.parentId : item.folderId
 }
 
 export function reconcileMediaList(
-	data: PaginatedResultOfMediaItemDto,
+	data: PaginatedResultOfMediaItem,
 	params: ListMediaParams,
-	previous: MediaItemDto | null,
-	next: MediaItemDto | null,
-): { data: PaginatedResultOfMediaItemDto; invalidate: boolean } {
+	previous: MediaItem | null,
+	next: MediaItem | null,
+): { data: PaginatedResultOfMediaItem; invalidate: boolean } {
 	const entity = next ?? previous
 
 	if (!entity) return { data, invalidate: false }
@@ -31,7 +26,7 @@ export function reconcileMediaList(
 		!params.search && data.offset === 0 && data.items.length === data.total && data.total + delta <= data.limit
 	const items = pipe(
 		data.items,
-		flatMap((item): MediaItemDto[] => {
+		flatMap((item): MediaItem[] => {
 			if (item.id === entity.id) return next && newParent === parent ? [next] : []
 
 			if (next?.type === 'image' && item.type === 'video' && item.preview?.id === next.id)
@@ -72,10 +67,10 @@ export function reconcileMediaList(
 }
 
 export function reconcileMediaFolder(
-	data: MediaFolderDetailsDto,
-	previous: MediaItemDto | null,
-	next: MediaItemDto | null,
-): { data: MediaFolderDetailsDto; invalidate: boolean } {
+	data: MediaFolderDetails,
+	previous: MediaItem | null,
+	next: MediaItem | null,
+): { data: MediaFolderDetails; invalidate: boolean } {
 	const entity = next ?? previous
 	const delta =
 		Number(!!next && mediaParent(next) === data.folder.id) -

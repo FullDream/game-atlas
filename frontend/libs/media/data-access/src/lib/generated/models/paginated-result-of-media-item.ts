@@ -4,10 +4,10 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
-import type { MediaItemDto } from './media-item-dto'
+import type { MediaItem } from './media-item'
 
-export type PaginatedResultOfMediaItemDto = {
-	items: MediaItemDto[]
+export type PaginatedResultOfMediaItem = {
+	items: MediaItem[]
 	limit: number
 	offset: number
 	total: number

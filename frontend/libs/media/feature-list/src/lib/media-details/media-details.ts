@@ -5,9 +5,9 @@ import { disabled, form, FormField, FormRoot, maxLength, required } from '@angul
 import { ActivatedRoute, Router, ROUTER_OUTLET_DATA } from '@angular/router'
 import {
 	MediaQueryOptions,
-	type ImageAssetDto,
-	type MediaAssetDto,
-	type PaginatedResultOfMediaItemDto,
+	type ImageAsset,
+	type MediaAsset,
+	type PaginatedResultOfMediaItem,
 } from '@game-atlas/media/data-access'
 import { Button, PendingChanges } from '@game-atlas/shared/ui'
 import { getDirtyValues } from '@game-atlas/shared/util'
@@ -26,7 +26,7 @@ import { MediaThumbnail } from '../media-thumbnail/media-thumbnail'
 import { MediaDetailsDismiss } from './media-details-dismiss'
 
 type MediaDetailsOutletData = {
-	listing: PaginatedResultOfMediaItemDto | undefined
+	listing: PaginatedResultOfMediaItem | undefined
 	loading: boolean
 	error: unknown
 }
@@ -75,8 +75,8 @@ export class MediaDetails {
 	#confirmation: Observable<boolean> | null = null
 
 	protected readonly selectedAsset = linkedSignal<
-		{ id: string; listing: PaginatedResultOfMediaItemDto | undefined },
-		MediaAssetDto | null
+		{ id: string; listing: PaginatedResultOfMediaItem | undefined },
+		MediaAsset | null
 	>({
 		source: () => ({ id: this.id(), listing: this.outletData().listing }),
 		computation: ({ id, listing }, previous) => {
@@ -207,14 +207,14 @@ export class MediaDetails {
 		})
 	}
 
-	protected choosePreview(image: ImageAssetDto | null): void {
+	protected choosePreview(image: ImageAsset | null): void {
 		this.preview.set(image)
 		this.#model.update(draft => ({ ...draft, previewAssetId: image?.id ?? null }))
 		this.mediaForm.previewAssetId().markAsDirty()
 	}
 
 	protected chooseCover(): void {
-		const dialog = this.#dialogService.open<{ mode: 'image'; folderId: string | null }, ImageAssetDto>(
+		const dialog = this.#dialogService.open<{ mode: 'image'; folderId: string | null }, ImageAsset>(
 			MediaPickerDialog,
 			undefined,
 			{ mode: 'image', folderId: this.selectedAsset()?.folderId ?? null },
@@ -226,7 +226,7 @@ export class MediaDetails {
 		})
 	}
 
-	#createFormModel(asset: MediaAssetDto | null): MediaFormModel {
+	#createFormModel(asset: MediaAsset | null): MediaFormModel {
 		return {
 			name: asset?.name ?? '',
 			alt: asset?.type === 'image' ? asset.alt : '',

@@ -6,7 +6,7 @@
  */
 import type { GameStatus } from './game-status'
 
-export type GameDto = {
+export type Game = {
 	id: string
 	name: string
 	slug: string

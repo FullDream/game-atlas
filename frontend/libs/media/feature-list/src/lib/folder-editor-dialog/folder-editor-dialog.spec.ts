@@ -2,7 +2,7 @@ import { DIALOG_DATA } from '@angular/cdk/dialog'
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http'
 import { signal } from '@angular/core'
 import { ComponentFixture, TestBed } from '@angular/core/testing'
-import { MediaService, type MediaFolderDto } from '@game-atlas/media/data-access'
+import { MediaService, type MediaFolder } from '@game-atlas/media/data-access'
 import { BrnDialogRef } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
@@ -13,7 +13,7 @@ import { FolderEditorDialog } from './folder-editor-dialog'
 
 describe('FolderEditorDialog', () => {
 	let fixture: ComponentFixture<FolderEditorDialog>
-	let context: { folder: MediaFolderDto | null; parentId: string | null }
+	let context: { folder: MediaFolder | null; parentId: string | null }
 	let service: { createMediaFolder: ReturnType<typeof vi.fn>; updateMediaFolder: ReturnType<typeof vi.fn> }
 	let close: ReturnType<typeof vi.fn>
 
@@ -111,7 +111,7 @@ describe('FolderEditorDialog', () => {
 	})
 
 	it('locks controls during submission and prevents duplicate requests', async () => {
-		const response = new Subject<MediaFolderDto>()
+		const response = new Subject<MediaFolder>()
 
 		service.createMediaFolder.mockReturnValue(response)
 		const { input, form, save } = await render()

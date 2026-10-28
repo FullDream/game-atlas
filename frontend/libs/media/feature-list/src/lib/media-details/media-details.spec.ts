@@ -1,7 +1,7 @@
 import { signal, type WritableSignal } from '@angular/core'
 import { ComponentFixture, TestBed } from '@angular/core/testing'
 import { provideRouter, ROUTER_OUTLET_DATA } from '@angular/router'
-import { MediaService, type MediaAssetDto, type PaginatedResultOfMediaItemDto } from '@game-atlas/media/data-access'
+import { MediaService, type MediaAsset, type PaginatedResultOfMediaItem } from '@game-atlas/media/data-access'
 import { PendingChanges } from '@game-atlas/shared/ui'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
@@ -13,7 +13,7 @@ import { MediaDetails } from './media-details'
 
 describe('MediaDetails', () => {
 	let fixture: ComponentFixture<MediaDetails>
-	let outletData: WritableSignal<{ listing: PaginatedResultOfMediaItemDto; loading: boolean; error: unknown }>
+	let outletData: WritableSignal<{ listing: PaginatedResultOfMediaItem; loading: boolean; error: unknown }>
 	let updateMediaAsset: ReturnType<typeof vi.fn>
 
 	beforeEach(() => {
@@ -156,7 +156,7 @@ describe('MediaDetails', () => {
 	})
 
 	it('prevents leaving while a save is pending and unlocks after success', async () => {
-		const response = new Subject<MediaAssetDto>()
+		const response = new Subject<MediaAsset>()
 
 		updateMediaAsset.mockReturnValue(response)
 		const input = await render()

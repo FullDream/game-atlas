@@ -1,6 +1,6 @@
 import { booleanAttribute, Component, computed, input, output } from '@angular/core'
 import { RouterLink } from '@angular/router'
-import type { MediaItemDto } from '@game-atlas/media/data-access'
+import type { MediaItem } from '@game-atlas/media/data-access'
 import { Button, TooltipOnOverflow } from '@game-atlas/shared/ui'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
@@ -53,7 +53,7 @@ import { MediaThumbnail } from '../media-thumbnail/media-thumbnail'
 	},
 })
 export class MediaCard {
-	readonly item = input<MediaItemDto>()
+	readonly item = input<MediaItem>()
 	readonly skeleton = input(false, { transform: booleanAttribute })
 	readonly limit = input(24)
 	readonly busy = input(false)

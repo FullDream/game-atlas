@@ -4,10 +4,10 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
-import type { GameDto } from './game-dto'
+import type { Game } from './game'
 
-export type PaginatedResultOfGameDto = {
-	items: GameDto[]
+export type PaginatedResultOfGame = {
+	items: Game[]
 	limit: number
 	offset: number
 	total: number

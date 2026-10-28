@@ -18,3 +18,10 @@ Applies to HTTP endpoints, request and response contracts, API clients and contr
 - Handle unexpected library and database exceptions centrally as HTTP 500 responses, without converting them to `Result`. Log exception details and do not expose them to clients.
 - Translate specifically recognized database constraint conflicts to their agreed HTTP error responses; do not treat every database exception as a conflict.
 - Serialize enums as camelCase strings in the API. Document query enum values in camelCase and accept names case-insensitively through the shared endpoint convention; keep request properties strongly typed as enums.
+
+## OpenAPI schemas
+
+- Keep C# DTO names internal to the implementation. Public schema identifiers omit the `Dto` suffix, including generic arguments: `GameDto` becomes `Game` and `PaginatedResult<MediaItemDto>` becomes `PaginatedResultOfMediaItem`. Request, result, and enum names retain their existing meaning. Compose naming with `Optional<T>` inlining so PATCH presence and nullability stay intact.
+- Reuse canonical `MediaFolder`, `ImageAsset`, and `VideoAsset` schemas from `MediaItem` and `MediaAsset` unions, concrete responses, and nested properties. Union references and discriminator mappings must target the same canonical components; do not expose parent-prefixed duplicates.
+- Concrete media schemas are ordinary objects with required literal `type` values and no single-variant discriminator wrapper. Video `preview` is nullable `ImageAsset`; nullable composition is separate from polymorphism. Keep true mixed unions and the runtime serialization attributes, which ensure exactly one `type` property in HTTP responses.
+- Apply normalization in the API OpenAPI layer and reject conflicting concrete representations before merging. Renaming schemas requires regenerating existing frontend clients and migrating their consumers in the same change. Continue serving the document and Scalar in development and generating clients explicitly over HTTP.

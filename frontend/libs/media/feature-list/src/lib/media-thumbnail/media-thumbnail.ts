@@ -1,6 +1,6 @@
 import { NgOptimizedImage } from '@angular/common'
 import { Component, computed, input, signal } from '@angular/core'
-import type { ImageAssetDto } from '@game-atlas/media/data-access'
+import type { ImageAsset } from '@game-atlas/media/data-access'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { matBrokenImageRound } from '@ng-icons/material-symbols/round'
 
@@ -15,7 +15,7 @@ import { matBrokenImageRound } from '@ng-icons/material-symbols/round'
 	},
 })
 export class MediaThumbnail {
-	readonly image = input.required<ImageAssetDto>()
+	readonly image = input.required<ImageAsset>()
 
 	protected readonly failedUrl = signal<string | null>(null)
 	protected readonly unavailable = computed(() => this.failedUrl() === this.image().url)

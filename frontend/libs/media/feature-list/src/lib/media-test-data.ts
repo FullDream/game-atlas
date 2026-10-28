@@ -1,11 +1,6 @@
-import type {
-	ImageAssetDto,
-	MediaAssetDto,
-	MediaFolderDto,
-	PaginatedResultOfMediaItemDto,
-} from '@game-atlas/media/data-access'
+import type { ImageAsset, MediaAsset, MediaFolder, PaginatedResultOfMediaItem } from '@game-atlas/media/data-access'
 
-export const imageAsset: ImageAssetDto = {
+export const imageAsset: ImageAsset = {
 	type: 'image',
 	id: '019a1234-5678-7000-8000-000000000001',
 	name: 'Forest',
@@ -21,7 +16,7 @@ export const imageAsset: ImageAssetDto = {
 	updatedAt: '2026-10-27T12:00:00Z',
 }
 
-export const mediaFolder: MediaFolderDto = {
+export const mediaFolder: MediaFolder = {
 	type: 'folder',
 	id: '019a1234-5678-7000-8000-000000000002',
 	name: 'Landscapes',
@@ -31,7 +26,7 @@ export const mediaFolder: MediaFolderDto = {
 	updatedAt: '2026-10-27T12:00:00Z',
 }
 
-export const videoAsset: MediaAssetDto = {
+export const videoAsset: MediaAsset = {
 	type: 'video',
 	id: '019a1234-5678-7000-8000-000000000003',
 	name: 'Forest walk',
@@ -44,7 +39,7 @@ export const videoAsset: MediaAssetDto = {
 	updatedAt: '2026-10-27T12:00:00Z',
 }
 
-export const mediaListing: PaginatedResultOfMediaItemDto = {
+export const mediaListing: PaginatedResultOfMediaItem = {
 	items: [mediaFolder, imageAsset, videoAsset],
 	offset: 0,
 	limit: 24,

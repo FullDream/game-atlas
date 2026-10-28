@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { MediaQueryOptions, type ImageAssetDto, type MediaItemDto } from '@game-atlas/media/data-access'
+import { MediaQueryOptions, type ImageAsset, type MediaItem } from '@game-atlas/media/data-access'
 import { Button } from '@game-atlas/shared/ui'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { matFolderRound } from '@ng-icons/material-symbols/round'
@@ -12,7 +12,7 @@ import { getMediaErrorMessage } from '../get-media-error-message'
 import { MediaThumbnail } from '../media-thumbnail/media-thumbnail'
 
 type MediaPickerContext =
-	{ mode: 'image'; folderId: string | null } | { mode: 'move'; item: MediaItemDto; folderId: string | null }
+	{ mode: 'image'; folderId: string | null } | { mode: 'move'; item: MediaItem; folderId: string | null }
 
 @Component({
 	selector: 'media-picker-dialog',
@@ -48,7 +48,7 @@ export class MediaPickerDialog {
 
 	protected readonly getMediaErrorMessage = getMediaErrorMessage
 
-	protected readonly selectedImage = signal<ImageAssetDto | null>(null)
+	protected readonly selectedImage = signal<ImageAsset | null>(null)
 
 	protected readonly busy = computed(
 		() => this.#updateFolderMutation.isPending() || this.#updateAssetMutation.isPending(),
@@ -99,7 +99,7 @@ export class MediaPickerDialog {
 		}
 
 		const callbacks = {
-			onSuccess: (updated: MediaItemDto) => this.dialog.close(updated),
+			onSuccess: (updated: MediaItem) => this.dialog.close(updated),
 			onError: (error: unknown) => toast.error(getMediaErrorMessage(error)),
 		}
 

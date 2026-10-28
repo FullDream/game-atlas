@@ -8,8 +8,8 @@ import { provideRouter, Router, RouterOutlet, withComponentInputBinding } from '
 import {
 	MediaService,
 	type ListMediaParams,
-	type MediaFolderDetailsDto,
-	type PaginatedResultOfMediaItemDto,
+	type MediaFolderDetails,
+	type PaginatedResultOfMediaItem,
 } from '@game-atlas/media/data-access'
 import { PageHeaderOutlet, WorkspaceBreadcrumbs } from '@game-atlas/shared/ui'
 import { toast } from '@spartan-ng/brain/sonner'
@@ -104,7 +104,7 @@ describe('FeatureList routing and interactions', () => {
 	})
 
 	it('shows a responsive two-row skeleton grid on the first request', async () => {
-		const response = new Subject<PaginatedResultOfMediaItemDto>()
+		const response = new Subject<PaginatedResultOfMediaItem>()
 
 		service.listMedia.mockReturnValue(response)
 		fixture = TestBed.createComponent(MediaTestHost)
@@ -127,8 +127,8 @@ describe('FeatureList routing and interactions', () => {
 	})
 
 	it.each([0, 3, 24, 25])('uses the cached folder count %s while directory requests are pending', async count => {
-		const response = new Subject<PaginatedResultOfMediaItemDto>()
-		const context = new Subject<MediaFolderDetailsDto>()
+		const response = new Subject<PaginatedResultOfMediaItem>()
+		const context = new Subject<MediaFolderDetails>()
 
 		service.listMedia.mockReturnValueOnce(
 			of({ ...mediaListing, items: [{ ...mediaFolder, itemsCount: count }, ...mediaListing.items.slice(1)] }),
@@ -162,7 +162,7 @@ describe('FeatureList routing and interactions', () => {
 		['pagination', '/media?offset=24', 24, 24],
 		['page size', '/media?limit=48', 0, 48],
 	])('keeps previous cards during %s changes in the same directory', async (change, url, offset, limit) => {
-		const response = new Subject<PaginatedResultOfMediaItemDto>()
+		const response = new Subject<PaginatedResultOfMediaItem>()
 		const element = await render()
 
 		service.listMedia.mockReturnValue(response)

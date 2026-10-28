@@ -26,7 +26,7 @@ public class GameOpenApiTests
 		Assert.All(statusSchema.GetProperty("enum").EnumerateArray(), value =>
 			Assert.Equal(JsonValueKind.String, value.ValueKind));
 		Assert.Contains(statusSchema.GetProperty("enum").EnumerateArray(), value => value.GetString() == "draft");
-		var dto = schemas.GetProperty("GameDto").GetProperty("properties");
+		var dto = schemas.GetProperty("Game").GetProperty("properties");
 
 		foreach (var property in new[] { "id", "name", "slug", "image", "createdAt", "updatedAt", "status" })
 			Assert.True(dto.TryGetProperty(property, out _));

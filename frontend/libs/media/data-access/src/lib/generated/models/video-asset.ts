@@ -4,17 +4,12 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
-import type { MediaAssetDtoImageAssetDtoType } from './media-asset-dto-image-asset-dto-type'
+import type { ImageAsset } from './image-asset'
+import type { VideoAssetType } from './video-asset-type'
 
-export type MediaAssetDtoImageAssetDto = {
-	type: MediaAssetDtoImageAssetDtoType
-	/** @nullable */
-	width: number | null
-	/** @nullable */
-	height: number | null
-	alt: string
-	/** @nullable */
-	placeholder: string | null
+export type VideoAsset = {
+	type: VideoAssetType
+	preview: null | ImageAsset
 	/** @nullable */
 	folderId: string | null
 	/** Public static URL with GET/HEAD, validators and byte ranges; no database lookup. Crash-orphaned files may remain accessible by known URL. */

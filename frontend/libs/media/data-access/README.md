@@ -25,7 +25,7 @@ Deletion waits for server success before removing cached items; refusals keep th
 
 Feature-local reconciliation helpers live in src/lib/utils.ts. Remeda pipelines handle immutable replacements, deduplication and sorting, preserving SQLite UTF-8 BINARY name order and targeted invalidation for incomplete pages.
 
-Lists use PaginatedResultOfMediaItemDto (items, limit, offset, total), default limit 24 and API maximum 120. MediaFolderDetailsDto comes from the independent folder(id) query and is cached by folder ID, without search or pagination in its key. Optimistic snapshots and rollback cover both list items and folder metadata/ancestor names; moving a folder invalidates only affected ancestor paths.
+Lists use PaginatedResultOfMediaItem (items, limit, offset, total), default limit 24 and API maximum 120. MediaFolderDetails comes from the independent folder(id) query and is cached by folder ID, without search or pagination in its key. Optimistic snapshots and rollback cover both list items and folder metadata/ancestor names; moving a folder invalidates only affected ancestor paths.
 
 List placeholderData uses keepPreviousData only when the previous and next folder IDs match, preserving results while search, offset or limit changes. Directory changes start without previous results. getCachedFolder exposes known folder metadata from detail and listing caches without issuing another request; the feature uses its item count when rendering loading skeletons.
 

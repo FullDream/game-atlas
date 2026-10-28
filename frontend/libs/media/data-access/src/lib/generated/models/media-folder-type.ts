@@ -5,7 +5,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type MediaFolderBreadcrumbDto = {
-	id: string
-	name: string
-}
+export type MediaFolderType = 'folder'

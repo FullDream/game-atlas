@@ -3,9 +3,9 @@ import { inject, Service } from '@angular/core'
 import { queryOptions } from '@tanstack/angular-query-experimental'
 import { toPromise } from '@game-atlas/shared/util'
 import { GamesService } from './generated/games/games.service'
-import type { ListGamesParams, PaginatedResultOfGameDto } from './generated/models'
+import type { ListGamesParams, PaginatedResultOfGame } from './generated/models'
 
-type GamesListOptions = ReturnType<typeof queryOptions<PaginatedResultOfGameDto, HttpErrorResponse>>
+type GamesListOptions = ReturnType<typeof queryOptions<PaginatedResultOfGame, HttpErrorResponse>>
 
 @Service()
 export class GamesQueries {
@@ -20,7 +20,7 @@ export class GamesQueries {
 			sortDirection: params.sortDirection ?? (params.sortBy ? 'asc' : undefined),
 		}
 
-		return queryOptions<PaginatedResultOfGameDto, HttpErrorResponse>({
+		return queryOptions<PaginatedResultOfGame, HttpErrorResponse>({
 			queryKey: ['games', 'list', normalized],
 			queryFn: ({ signal }) => toPromise(this.#api.listGames(normalized), signal),
 		})

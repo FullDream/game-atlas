@@ -7,17 +7,17 @@ namespace GameAtlas.Application.Tests;
 public class MediaDtoTests
 {
 	[Fact]
-	public void SpecializedPaginationKeepsAFlatShapeWithoutChangingGamePagination()
+	public void MediaAndGamePaginationShareAFlatShape()
 	{
 		var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
-		var media = new MediaListResult([], 20, 0, 0, null, []);
+		var media = new PaginatedResult<MediaItemDto>([], 20, 0, 0);
 		var pagination = new PaginatedResult<string>([], 20, 0, 0);
 		using var mediaJson = JsonDocument.Parse(JsonSerializer.Serialize(media, options));
 		using var paginationJson = JsonDocument.Parse(JsonSerializer.Serialize(pagination, options));
 
-		Assert.Equal(6, mediaJson.RootElement.EnumerateObject().Count());
-		Assert.Equal(JsonValueKind.Null, mediaJson.RootElement.GetProperty("folder").ValueKind);
-		Assert.Empty(mediaJson.RootElement.GetProperty("ancestors").EnumerateArray());
+		Assert.Equal(4, mediaJson.RootElement.EnumerateObject().Count());
+		Assert.False(mediaJson.RootElement.TryGetProperty("folder", out _));
+		Assert.False(mediaJson.RootElement.TryGetProperty("ancestors", out _));
 		Assert.Equal(4, paginationJson.RootElement.EnumerateObject().Count());
 		Assert.Equal(20, paginationJson.RootElement.GetProperty("limit").GetInt32());
 	}
