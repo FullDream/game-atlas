@@ -5,9 +5,13 @@ The root is represented by an omitted or null folder ID, not by a persisted fold
 
 ## Browsing
 
-`GET /media?folderId={id}&offset=0&limit=20&search={text}` returns
-`{ items, limit, offset, total }`. Offset must be nonnegative; limit is 1 through 100.
+`GET /media?folderId={id}&offset=0&limit=24&search={text}` returns
+`{ items, limit, offset, total }` using `PaginatedResult<MediaItemDto>`. Offset must be nonnegative; limit is 1 through 120 (default 24).
 Omit `folderId` to browse the root. An unknown folder returns 404.
+`GET /media/folders/{id}` returns `{ folder, ancestors }`. `folder` is the complete selected folder.
+`ancestors` contains `{ id, name }` parents
+from the topmost to the nearest, excluding the current folder and synthetic root; no request is made for the synthetic root.
+Search and pagination never filter this navigation context. It can be cached independently of list pages.
 
 Only immediate contents are returned. Folders come first, then image and video assets together;
 each group is ordered by name and ID. Search is a trimmed literal name substring, ignoring ASCII case.

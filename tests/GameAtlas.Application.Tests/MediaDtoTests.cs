@@ -1,10 +1,27 @@
 using System.Text.Json;
+using GameAtlas.Application.Common.Pagination;
 using GameAtlas.Application.Media;
 
 namespace GameAtlas.Application.Tests;
 
 public class MediaDtoTests
 {
+	[Fact]
+	public void SpecializedPaginationKeepsAFlatShapeWithoutChangingGamePagination()
+	{
+		var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+		var media = new MediaListResult([], 20, 0, 0, null, []);
+		var pagination = new PaginatedResult<string>([], 20, 0, 0);
+		using var mediaJson = JsonDocument.Parse(JsonSerializer.Serialize(media, options));
+		using var paginationJson = JsonDocument.Parse(JsonSerializer.Serialize(pagination, options));
+
+		Assert.Equal(6, mediaJson.RootElement.EnumerateObject().Count());
+		Assert.Equal(JsonValueKind.Null, mediaJson.RootElement.GetProperty("folder").ValueKind);
+		Assert.Empty(mediaJson.RootElement.GetProperty("ancestors").EnumerateArray());
+		Assert.Equal(4, paginationJson.RootElement.EnumerateObject().Count());
+		Assert.Equal(20, paginationJson.RootElement.GetProperty("limit").GetInt32());
+	}
+
 	[Fact]
 	public void SharedConcreteAndUnionShapesEmitExactlyOneDiscriminator()
 	{

@@ -1,0 +1,30 @@
+{
+	"name": "media-data-access",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/media/data-access/src",
+	"prefix": "media",
+	"projectType": "library",
+	"tags": ["type:data-access", "scope:media", "platform:shared"],
+	"targets": {
+		"test": {
+			"executor": "@angular/build:unit-test",
+			"inputs": ["default", "^production", "{workspaceRoot}/apps/admin/project.json"],
+			"options": {
+				"buildTarget": "admin:build:development",
+				"tsConfig": "libs/media/data-access/tsconfig.spec.json",
+				"watch": false
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"generate-api": {
+			"executor": "nx:run-commands",
+			"cache": false,
+			"options": {
+				"command": "orval --config libs/media/data-access/orval.config.ts",
+				"cwd": "{workspaceRoot}"
+			}
+		}
+	}
+}

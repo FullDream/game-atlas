@@ -1,0 +1,23 @@
+{
+	"name": "media-feature-list",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/media/feature-list/src",
+	"prefix": "media",
+	"projectType": "library",
+	"tags": ["type:feature", "scope:media", "platform:admin"],
+	"targets": {
+		"test": {
+			"executor": "@angular/build:unit-test",
+			"inputs": ["default", "^production", "{workspaceRoot}/apps/admin/project.json"],
+			"options": {
+				"buildTarget": "admin:build:development",
+				"tsConfig": "libs/media/feature-list/tsconfig.spec.json",
+				"setupFiles": ["libs/media/feature-list/src/test-setup.ts"],
+				"watch": false
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

@@ -1,0 +1,68 @@
+<div class="gap-1 text-xs text-muted-foreground sm:order-none sm:text-sm order-1 flex items-center whitespace-nowrap">
+	<b>{{ totalItems() }}</b>
+	{{ totalItems() === 1 ? totalItemLabel() : totalItemsLabel() }} |
+	<b>{{ lastPageNumber() }}</b>
+	{{ lastPageNumber() === 1 ? pageLabel() : pagesLabel() }}
+</div>
+
+@if (lastPageNumber() > 1) {
+	<nav hlmPagination class="mx-0 sm:order-none sm:ml-auto sm:w-auto order-3 w-full">
+		<ul hlmPaginationContent>
+			@if (showEdges() && !isFirstPageActive()) {
+				<li hlmPaginationItem>
+					<hlm-pagination-previous
+						[link]="link()"
+						[queryParams]="{ offset: currentPage() === 2 ? null : (currentPage() - 2) * limit() }"
+						queryParamsHandling="merge"
+						[text]="previousLabel()"
+						[aria-label]="previousAriaLabel()"
+					/>
+				</li>
+			}
+
+			@for (page of pages(); track $index) {
+				<li hlmPaginationItem>
+					@if (page === '...') {
+						<hlm-pagination-ellipsis />
+					} @else {
+						<a
+							hlmPaginationLink
+							[link]="currentPage() !== page ? link() : undefined"
+							[queryParams]="{ offset: page === 1 ? null : (page - 1) * limit() }"
+							queryParamsHandling="merge"
+							[isActive]="currentPage() === page"
+						>
+							{{ page }}
+						</a>
+					}
+				</li>
+			}
+
+			@if (showEdges() && !isLastPageActive()) {
+				<li hlmPaginationItem>
+					<hlm-pagination-next
+						[link]="link()"
+						[queryParams]="{ offset: currentPage() * limit() }"
+						queryParamsHandling="merge"
+						[text]="nextLabel()"
+						[aria-label]="nextAriaLabel()"
+					/>
+				</li>
+			}
+		</ul>
+	</nav>
+}
+
+<!-- Show Page Size selector -->
+<hlm-select [(value)]="limit" class="sm:order-none sm:ml-0 order-2 ml-auto">
+	<hlm-select-trigger class="w-fit" aria-label="Items per page">
+		<hlm-select-value />
+	</hlm-select-trigger>
+	<hlm-select-content *hlmSelectPortal>
+		<hlm-select-group>
+			@for (pageSize of pageSizesWithCurrent(); track pageSize) {
+				<hlm-select-item [value]="pageSize">{{ pageSize }}</hlm-select-item>
+			}
+		</hlm-select-group>
+	</hlm-select-content>
+</hlm-select>

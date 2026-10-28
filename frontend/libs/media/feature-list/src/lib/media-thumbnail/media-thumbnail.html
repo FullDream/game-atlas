@@ -1,0 +1,15 @@
+@if (unavailable()) {
+	<div class="min-h-24 gap-2 text-muted-foreground flex h-full flex-col items-center justify-center">
+		<ng-icon name="matBrokenImageRound" size="30" aria-hidden="true" />
+		<span class="text-xs">Image unavailable</span>
+	</div>
+} @else {
+	<img
+		[ngSrc]="image().url"
+		[alt]="image().alt"
+		fill
+		[placeholder]="image().placeholder ?? false"
+		class="object-contain"
+		(error)="failedUrl.set(image().url)"
+	/>
+}

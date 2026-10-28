@@ -1,0 +1,136 @@
+<hlm-sheet side="right" state="open" [disableClose]="true" aria-label="File details">
+	<hlm-sheet-content
+		*hlmSheetPortal
+		mediaDetailsDismiss
+		(dismissRequested)="requestClose()"
+		[showCloseButton]="false"
+		class="data-[side=right]:sm:max-w-md gap-0 p-0 overflow-y-auto data-[side=right]:w-full"
+	>
+		<section class="p-5">
+			<header class="mb-5 gap-3 flex items-center justify-between">
+				<h2 hlmSheetTitle class="font-semibold">File details</h2>
+				<button
+					ui-button
+					variant="ghost"
+					size="sm"
+					[disabled]="mediaForm().submitting()"
+					(click)="requestClose()"
+				>
+					Close
+				</button>
+			</header>
+
+			@if (selectedAsset(); as asset) {
+				@if (asset.type === 'image') {
+					<media-thumbnail class="aspect-video rounded-lg border" [image]="asset" />
+				} @else {
+					<video
+						class="aspect-video rounded-lg bg-muted w-full"
+						controls
+						preload="metadata"
+						[src]="asset.url"
+						[poster]="poster()"
+						(error)="videoError.set(true)"
+					></video>
+
+					@if (videoError()) {
+						<p role="status" class="mt-2 text-sm text-muted-foreground">
+							Video unavailable or unsupported by this browser.
+						</p>
+					}
+				}
+
+				<form class="mt-5 gap-4 flex flex-col" [formRoot]="mediaForm">
+					<hlm-field>
+						<label hlmFieldLabel for="media-details-name">Name</label>
+						<input id="media-details-name" hlmInput [formField]="mediaForm.name" />
+					</hlm-field>
+
+					@if (asset.type === 'image') {
+						<hlm-field>
+							<label hlmFieldLabel for="media-details-alt">Alternative text</label>
+							<input id="media-details-alt" hlmInput [formField]="mediaForm.alt" />
+							<p hlmFieldDescription>Shared wherever this image is used.</p>
+						</hlm-field>
+					} @else {
+						<div class="gap-2 flex flex-col">
+							<span class="text-sm font-medium">Video cover</span>
+
+							@if (preview(); as preview) {
+								<media-thumbnail class="h-28 rounded-lg" [image]="preview" />
+							}
+
+							<div class="gap-2 flex">
+								<button
+									type="button"
+									ui-button
+									variant="outline"
+									size="sm"
+									[disabled]="mediaForm().submitting()"
+									(click)="chooseCover()"
+								>
+									Choose image
+								</button>
+								<button
+									type="button"
+									ui-button
+									variant="ghost"
+									size="sm"
+									[disabled]="!preview() || mediaForm().submitting()"
+									(click)="choosePreview(null)"
+								>
+									Remove cover
+								</button>
+							</div>
+						</div>
+					}
+
+					@if (errorMessage()) {
+						<hlm-field-error forceShow>{{ errorMessage() }}</hlm-field-error>
+					}
+
+					<button
+						ui-button
+						[loading]="mediaForm().submitting()"
+						class="w-full"
+						[disabled]="!mediaForm().dirty()"
+					>
+						Save changes
+					</button>
+				</form>
+
+				<dl class="mt-6 gap-x-4 gap-y-3 pt-5 text-xs grid grid-cols-[auto_1fr] border-t">
+					<dt class="text-muted-foreground">Format</dt>
+					<dd>{{ asset.contentType }}</dd>
+					<dt class="text-muted-foreground">Size</dt>
+					<dd>{{ asset.byteLength / 1024 / 1024 | number: '1.0-2' }} MiB</dd>
+
+					@if (asset.type === 'image') {
+						<dt class="text-muted-foreground">Dimensions</dt>
+						<dd>{{ asset.width ?? 'Unknown' }} × {{ asset.height ?? 'Unknown' }}</dd>
+					}
+
+					<dt class="text-muted-foreground">Created</dt>
+					<dd>{{ asset.createdAt | date: 'medium' }}</dd>
+					<dt class="text-muted-foreground">Updated</dt>
+					<dd>{{ asset.updatedAt | date: 'medium' }}</dd>
+					<dt class="text-muted-foreground">ID</dt>
+					<dd class="break-all">{{ asset.id }}</dd>
+				</dl>
+			} @else if (outletData().loading) {
+				<div role="status" class="min-h-40 gap-3 text-muted-foreground flex items-center justify-center">
+					<hlm-spinner />
+					Loading file details…
+				</div>
+			} @else {
+				<p role="status" class="py-8 text-sm text-muted-foreground">
+					{{
+						outletData().error
+							? 'Could not load file details. Retry the library request.'
+							: 'This file is no longer on the current page.'
+					}}
+				</p>
+			}
+		</section>
+	</hlm-sheet-content>
+</hlm-sheet>

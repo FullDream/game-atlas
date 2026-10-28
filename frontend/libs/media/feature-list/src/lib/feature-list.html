@@ -1,0 +1,200 @@
+<ng-template
+	uiPageHeaderPortal
+	[breadcrumbs]="breadcrumbs()"
+	[loading]="mediaQuery.isFetching() || folderQuery.isFetching()"
+>
+	<button
+		ui-button
+		variant="outline"
+		size="icon"
+		class="sm:w-auto sm:px-3"
+		icon="matCreateNewFolderRound"
+		aria-label="New folder"
+		hlmTooltip="New folder"
+		[tooltipDisabled]="showActionLabels()"
+		(click)="openFolderEditor()"
+	>
+		<span class="sm:inline hidden">New folder</span>
+	</button>
+	<button
+		ui-button
+		size="icon"
+		class="sm:w-auto sm:px-3"
+		icon="matUploadRound"
+		aria-label="Upload file"
+		hlmTooltip="Upload file"
+		[tooltipDisabled]="showActionLabels()"
+		(click)="fileInput.click()"
+	>
+		<span class="sm:inline hidden">Upload file</span>
+	</button>
+	<input
+		#fileInput
+		type="file"
+		class="hidden"
+		accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml,video/mp4,video/webm"
+		(change)="uploadFile($event)"
+	/>
+</ng-template>
+
+<div class="gap-2 px-4 py-4 sm:px-6 lg:px-8 flex shrink-0 items-center">
+	<a
+		ui-button
+		cdkDropList
+		cdkMonitorElementFocus
+		class="media-parent-target"
+		[cdkDropListData]="currentFolder()?.parentId ?? null"
+		[cdkDropListDisabled]="!folderId() || !currentFolder() || busy()"
+		[cdkDropListSortingDisabled]="true"
+		[cdkDropListEnterPredicate]="acceptsDrop"
+		(cdkDropListDropped)="dropped($event)"
+		variant="outline"
+		size="icon"
+		icon="matArrowUpwardRound"
+		aria-label="Up one folder"
+		hlmTooltip="Up one folder"
+		[routerLink]="folderId() && currentFolder() ? [{ outlets: { details: null } }] : null"
+		[queryParams]="{
+			folderId: currentFolder()?.parentId,
+			limit: limit() === 24 ? null : limit(),
+		}"
+		[disabled]="!folderId() || !currentFolder()"
+	></a>
+	<label class="min-w-0 sm:max-w-sm flex-1">
+		<span class="sr-only">Search this folder</span>
+		<input hlmInput placeholder="Search this folder…" [(ngModel)]="search" (ngModelChange)="offset.set(0)" />
+	</label>
+</div>
+
+<div class="media-content min-h-0 px-4 pb-4 sm:px-6 lg:px-8 flex-1 overflow-y-auto">
+	@if (loadError(); as error) {
+		<ui-error-state class="mb-4" icon="matCloudOffRound" [variant]="mediaQuery.data() ? 'compact' : 'default'">
+			<ng-container uiErrorStateHeading>
+				@if (mediaQuery.data()) {
+					Couldn't refresh your library
+				} @else {
+					Couldn't load your library
+				}
+			</ng-container>
+			<ng-container uiErrorStateDescription>
+				{{ mediaQuery.data() ? 'Your loaded files are still shown. ' : '' }}{{ getMediaErrorMessage(error) }}
+			</ng-container>
+
+			<button
+				ui-button
+				variant="outline"
+				icon="matRefreshRound"
+				[loading]="mediaQuery.isFetching() || folderQuery.isFetching()"
+				(click)="retry()"
+			>
+				Retry
+			</button>
+
+			@if (folderId()) {
+				<a ui-button variant="ghost" routerLink="/media">Back to library</a>
+			}
+		</ui-error-state>
+	}
+
+	<div
+		class="media-grid"
+		cdkDropList
+		[cdkDropListConnectedTo]="dropLists().slice()"
+		[cdkDropListSortingDisabled]="true"
+		[cdkDropListHasAnchor]="true"
+		[attr.aria-busy]="mediaQuery.isFetching()"
+		[attr.data-skeleton-rows]="mediaQuery.isPending() && skeletonItemCount() === null ? 2 : null"
+	>
+		@for (upload of uploadMutations(); track upload.submittedAt + ':' + upload.variables.key) {
+			<media-upload-card
+				[upload]="upload"
+				[percent]="uploadProgress()[upload.variables.key] ?? null"
+				(retry)="retryUpload(upload)"
+				(removed)="upload.remove()"
+			/>
+		}
+
+		@if (mediaQuery.isLoading()) {
+			@for (index of skeletonItems(); track index) {
+				<media-card skeleton />
+			}
+		}
+
+		@for (item of mediaQuery.data()?.items ?? []; track item.id) {
+			<media-card
+				cdkDrag
+				cdkDropList
+				[cdkDragData]="item.id"
+				cdkDragPreviewClass="media-drag-preview"
+				[cdkDragDisabled]="busy()"
+				[cdkDragStartDelay]="{ touch: 220, mouse: 80 }"
+				[cdkDropListData]="item.id"
+				[cdkDropListDisabled]="item.type !== 'folder' || busy()"
+				[cdkDropListSortingDisabled]="true"
+				[cdkDropListEnterPredicate]="acceptsDrop"
+				[class.media-folder-target]="item.type === 'folder'"
+				[dropActive]="hoveredFolder() === item.id"
+				(cdkDragStarted)="dragged.set(item.id)"
+				(cdkDragEnded)="endDrag()"
+				(cdkDropListEntered)="hoveredFolder.set(item.id)"
+				(cdkDropListExited)="hoveredFolder.set(null)"
+				(cdkDropListDropped)="dropped($event)"
+				[item]="item"
+				[limit]="limit()"
+				[busy]="busy()"
+				[dropAllowed]="item.type === 'folder' && canDrop(item.id)"
+				(opened)="rememberOpener($event)"
+				(renamed)="item.type === 'folder' && openFolderEditor(item)"
+				(moved)="moveItem(item)"
+				(deleted)="removeItem(item)"
+			/>
+		}
+	</div>
+
+	@if (mediaQuery.isPending()) {
+		<span role="status" class="sr-only">Loading your library…</span>
+	}
+
+	@if (
+		mediaQuery.isSuccess() &&
+		!mediaQuery.isPlaceholderData() &&
+		!mediaQuery.data().items.length &&
+		!uploadMutations().length
+	) {
+		<div hlmEmpty class="border">
+			<div hlmEmptyHeader>
+				<div hlmEmptyMedia variant="icon">
+					<ng-icon name="matFolderRound" aria-hidden="true" />
+				</div>
+				<h2 hlmEmptyTitle>{{ search().trim() ? 'No matches in this folder' : 'This folder is empty' }}</h2>
+				<p hlmEmptyDescription>
+					{{
+						search().trim()
+							? 'Try another name or clear your search.'
+							: 'Upload a file or create a folder to get started.'
+					}}
+				</p>
+			</div>
+		</div>
+	}
+</div>
+
+@if (mediaQuery.data(); as data) {
+	<hlm-numbered-pagination-query-params
+		class="min-h-16 bg-background px-4 sm:px-6 lg:px-8 shrink-0 border-t"
+		[(offset)]="offset"
+		[(limit)]="limit"
+		(limitChange)="offset.set(0)"
+		[totalItems]="data.total"
+		[pageSizes]="[24, 48, 72, 96, 120]"
+		[maxSize]="showActionLabels() ? 7 : 5"
+		totalItemLabel="item"
+		totalItemsLabel="items"
+	/>
+}
+
+<router-outlet
+	name="details"
+	[routerOutletData]="{ listing: mediaQuery.data(), loading: mediaQuery.isPending(), error: mediaQuery.error() }"
+	(deactivate)="restoreFocus()"
+/>

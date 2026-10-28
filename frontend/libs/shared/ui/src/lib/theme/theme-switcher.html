@@ -1,0 +1,29 @@
+@if (compact()) {
+	<button
+		type="button"
+		class="size-8 rounded-md hover:bg-accent focus-visible:outline-ring flex items-center justify-center focus-visible:outline-2"
+		[attr.aria-label]="active().label + '. Switch theme'"
+		[hlmTooltip]="active().label + '. Switch theme'"
+		(click)="cycle()"
+	>
+		<ng-icon [name]="active().icon" aria-hidden="true" />
+	</button>
+} @else {
+	@for (option of options; track option.value) {
+		<label
+			class="size-8 rounded-md text-sm hover:bg-accent hover:text-accent-foreground has-checked:bg-secondary has-checked:text-secondary-foreground has-focus-visible:ring-ring/50 relative flex cursor-pointer items-center justify-center transition-colors has-focus-visible:ring-2"
+			[hlmTooltip]="option.label"
+		>
+			<input
+				type="radio"
+				class="sr-only"
+				[name]="groupName"
+				[value]="option.value"
+				[checked]="value() === option.value"
+				(change)="value.set(option.value)"
+			/>
+			<ng-icon [name]="option.icon" />
+			<span class="sr-only">{{ option.label }}</span>
+		</label>
+	}
+}

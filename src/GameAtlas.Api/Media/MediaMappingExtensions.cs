@@ -10,7 +10,7 @@ internal static class MediaMappingExtensions
 		new(id, request.Name, request.FolderId, request.Alt, request.PreviewAssetId);
 
 	internal static Application.Media.ListMedia.ListMedia ToQuery(this ListMediaRequest request) =>
-		new(request.FolderId, request.Offset ?? 0, request.Limit ?? 20, request.Search);
+		new(request.FolderId, request.Offset ?? 0, request.Limit ?? 24, request.Search);
 
 	internal static CreateMediaFolder ToCommand(this CreateMediaFolderRequest request) =>
 		new(request.Name, request.ParentId);

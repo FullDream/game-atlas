@@ -1,0 +1,18 @@
+<button
+	brnSelectTrigger
+	brnFieldControlDescribedBy
+	[forceInvalid]="forceInvalid()"
+	[id]="buttonId()"
+	[attr.aria-label]="ariaLabel()"
+	[class]="computedClass()"
+	[aria-invalid]="ariaInvalidInput()"
+	[attr.data-size]="size()"
+	data-slot="select-trigger"
+>
+	<ng-content />
+	<ng-icon
+		name="matKeyboardArrowDownRound"
+		class="text-muted-foreground text-[length:--spacing(4)] ms-auto"
+		aria-hidden="true"
+	/>
+</button>

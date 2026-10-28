@@ -11,7 +11,7 @@ public sealed record ListMediaRequest
 	[FromQuery, DefaultValue(0)]
 	public int? Offset { get; init; }
 
-	[FromQuery, DefaultValue(20)]
+	[FromQuery, DefaultValue(24)]
 	public int? Limit { get; init; }
 
 	[FromQuery]

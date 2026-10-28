@@ -1,0 +1,68 @@
+@let uploadState = upload();
+
+<div class="bg-muted relative aspect-[4/3] overflow-hidden">
+	@if (preview(); as previewUrl) {
+		<img [src]="previewUrl" alt="" class="inset-0 absolute h-full w-full object-contain" />
+	} @else {
+		<div class="inset-0 text-muted-foreground absolute flex items-center justify-center">
+			<ng-icon name="matImageRound" size="36" aria-hidden="true" />
+		</div>
+	}
+
+	<div
+		class="inset-0 gap-2 bg-black/50 px-2 text-white backdrop-blur-sm absolute flex flex-col items-center justify-center text-center"
+		role="status"
+		aria-live="polite"
+	>
+		@if (uploadState.status === 'error') {
+			<ng-icon name="matErrorRound" size="24" aria-hidden="true" />
+		} @else if (indeterminate()) {
+			<hlm-spinner class="size-5" />
+		} @else {
+			<span class="text-xl font-semibold tabular-nums">{{ percent() }}%</span>
+		}
+
+		<span class="text-xs font-medium" [hlmTooltip]="error()" [tooltipDisabled]="!error()">
+			{{ status() }}
+		</span>
+
+		@if (uploadState.status === 'error') {
+			<div class="gap-2 flex">
+				<button
+					ui-button
+					size="icon-sm"
+					variant="secondary"
+					icon="matRefreshRound"
+					aria-label="Retry upload"
+					hlmTooltip="Retry upload"
+					(click)="retry.emit()"
+				></button>
+				<button
+					ui-button
+					size="icon-sm"
+					variant="secondary"
+					icon="matCloseRound"
+					aria-label="Remove upload"
+					hlmTooltip="Remove upload"
+					(click)="removed.emit()"
+				></button>
+			</div>
+		}
+	</div>
+
+	<hlm-progress
+		class="inset-x-0 bottom-0 absolute rounded-none"
+		[value]="progressValue()"
+		[getValueLabel]="progressLabel"
+		[attr.aria-label]="'File upload: ' + status()"
+	>
+		<hlm-progress-indicator [variant]="progressVariant()" />
+	</hlm-progress>
+</div>
+
+<div class="p-2.5 pr-8">
+	<p class="text-xs font-medium truncate" [hlmTooltip]="uploadState.variables.file.name" uiTooltipOnOverflow>
+		{{ uploadState.variables.file.name }}
+	</p>
+	<p class="mt-1 text-muted-foreground truncate text-[11px]">{{ uploadState.variables.file.type || 'File' }}</p>
+</div>

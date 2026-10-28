@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http'
 import { inject, Service } from '@angular/core'
 import { queryOptions } from '@tanstack/angular-query-experimental'
-import { firstValueFrom, fromEvent, mergeMap, takeUntil, throwError } from 'rxjs'
+import { toPromise } from '@game-atlas/shared/util'
 import { GamesService } from './generated/games/games.service'
 import type { ListGamesParams, PaginatedResultOfGameDto } from './generated/models'
 
@@ -22,19 +22,7 @@ export class GamesQueries {
 
 		return queryOptions<PaginatedResultOfGameDto, HttpErrorResponse>({
 			queryKey: ['games', 'list', normalized],
-			queryFn: ({ signal }) => this.#load(normalized, signal),
+			queryFn: ({ signal }) => toPromise(this.#api.listGames(normalized), signal),
 		})
-	}
-
-	#load(params: ListGamesParams, signal: AbortSignal): Promise<PaginatedResultOfGameDto> {
-		if (signal.aborted) {
-			return Promise.reject(new DOMException('The request was aborted.', 'AbortError'))
-		}
-
-		const aborted = fromEvent(signal, 'abort').pipe(
-			mergeMap(() => throwError(() => new DOMException('The request was aborted.', 'AbortError'))),
-		)
-
-		return firstValueFrom(this.#api.listGames(params).pipe(takeUntil(aborted)))
 	}
 }

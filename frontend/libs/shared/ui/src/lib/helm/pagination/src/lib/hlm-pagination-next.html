@@ -1,0 +1,12 @@
+<a
+	hlmPaginationLink
+	[class]="computedClass()"
+	[link]="link()"
+	[queryParams]="queryParams()"
+	[queryParamsHandling]="queryParamsHandling()"
+	[size]="size()"
+	[attr.aria-label]="ariaLabel()"
+>
+	<span [class]="labelClass()">{{ text() }}</span>
+	<ng-icon name="matChevronRightRound" class="rtl:rotate-180" aria-hidden="true" />
+</a>

@@ -1,0 +1,104 @@
+<div
+	#measurement
+	aria-hidden="true"
+	inert
+	class="gap-1.5 text-xs sm:gap-2.5 pointer-events-none invisible absolute flex w-max items-center"
+>
+	<span data-workspace class="sm:block hidden">Workspace</span>
+	<span hlmBreadcrumbSeparator></span>
+	<hlm-breadcrumb-ellipsis />
+	@for (item of items(); track $index) {
+		<span data-label class="max-w-28 truncate">{{ item.label }}</span>
+	}
+</div>
+
+<nav hlmBreadcrumb aria-label="Breadcrumb">
+	<ol hlmBreadcrumbList class="text-xs flex-nowrap">
+		<li hlmBreadcrumbItem class="sm:flex hidden shrink-0">Workspace</li>
+		<li hlmBreadcrumbSeparator class="sm:flex hidden"></li>
+
+		@if (first(); as item) {
+			<li hlmBreadcrumbItem class="min-w-0">
+				<a
+					hlmBreadcrumbLink
+					[routerLink]="item.url"
+					[queryParams]="item.queryParams"
+					cdkDropList
+					[cdkDropListData]="item"
+					[cdkDropListDisabled]="!item.drop"
+					[cdkDropListSortingDisabled]="true"
+					[cdkDropListEnterPredicate]="acceptsDrop"
+					(cdkDropListDropped)="drop($event)"
+					[class.media-breadcrumb-target]="!!item.drop"
+					class="max-w-28 truncate"
+				>
+					{{ item.label }}
+				</a>
+			</li>
+			<li hlmBreadcrumbSeparator></li>
+		}
+
+		@if (hidden().length) {
+			<li hlmBreadcrumbItem>
+				<button
+					class="rounded focus-visible:outline-ring focus-visible:outline-2"
+					[hlmDropdownMenuTrigger]="ancestors"
+					aria-label="Show hidden breadcrumbs"
+				>
+					<hlm-breadcrumb-ellipsis />
+				</button>
+				<ng-template #ancestors>
+					<div hlmDropdownMenu>
+						@for (item of hidden(); track $index) {
+							<a
+								hlmDropdownMenuItem
+								[routerLink]="item.url"
+								[queryParams]="item.queryParams"
+								cdkDropList
+								[cdkDropListData]="item"
+								[cdkDropListDisabled]="!item.drop"
+								[cdkDropListSortingDisabled]="true"
+								[cdkDropListEnterPredicate]="acceptsDrop"
+								(cdkDropListDropped)="drop($event)"
+								[class.media-breadcrumb-target]="!!item.drop"
+							>
+								{{ item.label }}
+							</a>
+						}
+					</div>
+				</ng-template>
+			</li>
+			<li hlmBreadcrumbSeparator></li>
+		}
+
+		@for (item of tail(); track $index; let last = $last) {
+			<li hlmBreadcrumbItem class="min-w-0">
+				@if (last) {
+					<span hlmBreadcrumbPage class="truncate" [hlmTooltip]="item.label" uiTooltipOnOverflow>
+						{{ item.label }}
+					</span>
+				} @else {
+					<a
+						hlmBreadcrumbLink
+						[routerLink]="item.url"
+						[queryParams]="item.queryParams"
+						class="max-w-28 truncate"
+						cdkDropList
+						[cdkDropListData]="item"
+						[cdkDropListDisabled]="!item.drop"
+						[cdkDropListSortingDisabled]="true"
+						[cdkDropListEnterPredicate]="acceptsDrop"
+						(cdkDropListDropped)="drop($event)"
+						[class.media-breadcrumb-target]="!!item.drop"
+					>
+						{{ item.label }}
+					</a>
+				}
+			</li>
+
+			@if (!last) {
+				<li hlmBreadcrumbSeparator></li>
+			}
+		}
+	</ol>
+</nav>

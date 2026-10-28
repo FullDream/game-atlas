@@ -1,0 +1,9 @@
+<h2 class="text-lg font-semibold">{{ context.title }}</h2>
+<p class="mt-2 text-sm text-muted-foreground">{{ context.description }}</p>
+
+<div class="mt-6 gap-2 flex flex-wrap justify-end">
+	<button ui-button variant="outline" (click)="dialog.close(false)">{{ context.cancel }}</button>
+	<button ui-button [variant]="context.destructive ? 'destructive' : 'default'" (click)="dialog.close(true)">
+		{{ context.confirm }}
+	</button>
+</div>

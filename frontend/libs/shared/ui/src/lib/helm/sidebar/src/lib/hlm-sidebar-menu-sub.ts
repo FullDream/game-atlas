@@ -13,7 +13,7 @@ export class HlmSidebarMenuSub {
 	constructor() {
 		classes(
 			() =>
-				'mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-s border-sidebar-border px-2.5 py-0.5 group-data-[collapsible=icon]:hidden rtl:-translate-x-px',
+				'mx-3.5 min-w-0 gap-1 border-sidebar-border px-2.5 py-0.5 flex translate-x-px flex-col border-s group-data-[collapsible=icon]:hidden rtl:-translate-x-px',
 		)
 	}
 }

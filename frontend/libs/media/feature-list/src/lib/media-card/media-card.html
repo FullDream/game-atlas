@@ -1,0 +1,85 @@
+@if (skeleton()) {
+	<hlm-skeleton class="aspect-[4/3] rounded-none" />
+	<div class="p-2.5 pr-8">
+		<p class="text-xs font-medium">
+			<hlm-skeleton class="h-[1lh] w-3/4" />
+		</p>
+		<p class="mt-1 text-[11px]">
+			<hlm-skeleton class="h-[1lh] w-1/2" />
+		</p>
+	</div>
+} @else if (item(); as media) {
+	<a
+		[hlmContextMenuTrigger]="actions"
+		[routerLink]="
+			media.type === 'folder' ? [{ outlets: { details: null } }] : [{ outlets: { details: ['files', media.id] } }]
+		"
+		[queryParams]="media.type === 'folder' ? { folderId: media.id, limit: limit() === 24 ? null : limit() } : null"
+		[queryParamsHandling]="media.type === 'folder' ? 'replace' : 'preserve'"
+		class="focus-visible:outline-ring block w-full text-left focus-visible:outline-2"
+		(click)="opened.emit($event)"
+		[attr.aria-label]="(media.type === 'folder' ? 'Open folder ' : 'View ') + media.name"
+	>
+		@if (media.type === 'folder') {
+			<div
+				class="bg-muted/50 flex aspect-[4/3] items-center justify-center transition-colors"
+				[class.bg-accent]="dropAllowed()"
+			>
+				<ng-icon [name]="folderIcon()" size="36" aria-hidden="true" />
+			</div>
+		} @else if (media.type === 'image') {
+			<media-thumbnail class="aspect-[4/3]" [image]="media" />
+		} @else if (media.preview) {
+			<media-thumbnail class="aspect-[4/3]" [image]="media.preview" />
+		} @else {
+			<div class="bg-muted flex aspect-[4/3] items-center justify-center">
+				<ng-icon name="matVideoLibraryRound" size="36" aria-hidden="true" />
+			</div>
+		}
+
+		<div class="p-2.5 pr-8">
+			<p class="text-xs font-medium truncate" [hlmTooltip]="media.name" uiTooltipOnOverflow>{{ media.name }}</p>
+			<p class="mt-1 text-muted-foreground truncate text-[11px]">
+				@if (dropActive()) {
+					Release to move here
+				} @else if (dropAllowed()) {
+					Drop to move here
+				} @else {
+					{{ media.type === 'folder' ? media.itemsCount + ' items' : media.contentType }}
+				}
+			</p>
+		</div>
+	</a>
+
+	<button
+		ui-button
+		variant="ghost"
+		size="icon-sm"
+		class="bottom-3 right-1 absolute"
+		icon="matMoreVertRound"
+		hlmTooltip="Actions"
+		[hlmDropdownMenuTrigger]="actions"
+		[attr.aria-label]="'Actions for ' + media.name"
+		[disabled]="busy()"
+	></button>
+
+	<ng-template #actions>
+		<div hlmDropdownMenu>
+			@if (media.type === 'folder') {
+				<button hlmDropdownMenuItem (triggered)="renamed.emit()" [disabled]="busy()">
+					<ng-icon name="matEditRound" aria-hidden="true" />
+					Rename
+				</button>
+			}
+
+			<button hlmDropdownMenuItem (triggered)="moved.emit()" [disabled]="busy()">
+				<ng-icon name="matDriveFileMoveRound" aria-hidden="true" />
+				Move
+			</button>
+			<button hlmDropdownMenuItem variant="destructive" (triggered)="deleted.emit()" [disabled]="busy()">
+				<ng-icon name="matDeleteRound" aria-hidden="true" />
+				Delete
+			</button>
+		</div>
+	</ng-template>
+}

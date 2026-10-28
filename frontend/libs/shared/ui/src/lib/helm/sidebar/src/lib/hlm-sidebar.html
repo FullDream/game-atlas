@@ -1,0 +1,42 @@
+<ng-template #contentContainer>
+	<ng-content />
+</ng-template>
+
+@if (collapsible() === 'none') {
+	<ng-container *ngTemplateOutlet="contentContainer"></ng-container>
+} @else if (sidebarService.isMobile()) {
+	<hlm-sheet
+		[side]="side()"
+		[state]="sidebarService.openMobile() ? 'open' : 'closed'"
+		(stateChanged)="sidebarService.setOpenMobile($event === 'open')"
+	>
+		<hlm-sheet-content
+			*hlmSheetPortal="let ctx"
+			data-slot="sidebar"
+			data-sidebar="sidebar"
+			data-mobile="true"
+			class="bg-sidebar p-0 text-sidebar-foreground h-svh w-(--sidebar-width) [&>button]:hidden"
+			[style.--sidebar-width]="sidebarWidthMobile()"
+		>
+			<hlm-sheet-header class="sr-only">
+				<h2 hlmSheetTitle>{{ srOnlySheetTitle() }}</h2>
+				<p hlmSheetDescription>{{ srOnlySheetDescription() }}</p>
+			</hlm-sheet-header>
+			<div class="flex h-full w-full flex-col">
+				<ng-container *ngTemplateOutlet="contentContainer" />
+			</div>
+		</hlm-sheet-content>
+	</hlm-sheet>
+} @else {
+	<!-- Sidebar gap on desktop -->
+	<div data-slot="sidebar-gap" [class]="sidebarGapComputedClass()"></div>
+	<div data-slot="sidebar-container" [attr.data-side]="dataSide()" [class]="sidebarContainerComputedClass()">
+		<div
+			data-sidebar="sidebar"
+			data-slot="sidebar-inner"
+			class="bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-sidebar-border flex size-full flex-col group-data-[variant=floating]:ring-1"
+		>
+			<ng-container *ngTemplateOutlet="contentContainer" />
+		</div>
+	</div>
+}

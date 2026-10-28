@@ -10,6 +10,7 @@ import { injectHlmSidebarConfig } from './hlm-sidebar.token'
 	selector: 'hlm-sidebar',
 	exportAs: 'hlmSidebar',
 	imports: [NgTemplateOutlet, HlmSheetImports],
+	templateUrl: './hlm-sidebar.html',
 	host: {
 		'[attr.data-slot]': 'dataSlot()',
 		'[attr.data-state]': 'dataState()',
@@ -17,50 +18,6 @@ import { injectHlmSidebarConfig } from './hlm-sidebar.token'
 		'[attr.data-variant]': 'dataVariant()',
 		'[attr.data-side]': 'dataSide()',
 	},
-	template: `
-		<ng-template #contentContainer>
-			<ng-content />
-		</ng-template>
-
-		@if (collapsible() === 'none') {
-			<ng-container *ngTemplateOutlet="contentContainer"></ng-container>
-		} @else if (sidebarService.isMobile()) {
-			<hlm-sheet
-				[side]="side()"
-				[state]="sidebarService.openMobile() ? 'open' : 'closed'"
-				(stateChanged)="sidebarService.setOpenMobile($event === 'open')"
-			>
-				<hlm-sheet-content
-					*hlmSheetPortal="let ctx"
-					data-slot="sidebar"
-					data-sidebar="sidebar"
-					data-mobile="true"
-					class="bg-sidebar p-0 text-sidebar-foreground h-svh w-(--sidebar-width) [&>button]:hidden"
-					[style.--sidebar-width]="sidebarWidthMobile()"
-				>
-					<hlm-sheet-header class="sr-only">
-						<h2 hlmSheetTitle>{{ srOnlySheetTitle() }}</h2>
-						<p hlmSheetDescription>{{ srOnlySheetDescription() }}</p>
-					</hlm-sheet-header>
-					<div class="flex h-full w-full flex-col">
-						<ng-container *ngTemplateOutlet="contentContainer" />
-					</div>
-				</hlm-sheet-content>
-			</hlm-sheet>
-		} @else {
-			<!-- Sidebar gap on desktop -->
-			<div data-slot="sidebar-gap" [class]="sidebarGapComputedClass()"></div>
-			<div data-slot="sidebar-container" [attr.data-side]="dataSide()" [class]="sidebarContainerComputedClass()">
-				<div
-					data-sidebar="sidebar"
-					data-slot="sidebar-inner"
-					class="bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-sidebar-border flex size-full flex-col group-data-[variant=floating]:ring-1"
-				>
-					<ng-container *ngTemplateOutlet="contentContainer" />
-				</div>
-			</div>
-		}
-	`,
 })
 export class HlmSidebar {
 	protected readonly sidebarService = inject(HlmSidebarService)
@@ -86,6 +43,7 @@ export class HlmSidebar {
 	)
 
 	public readonly sidebarContainerClass = input<ClassValue>('')
+
 	protected readonly sidebarContainerComputedClass = computed(() =>
 		hlm(
 			'inset-y-0 data-[side=left]:left-0 data-[side=right]:right-0 md:flex fixed z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',

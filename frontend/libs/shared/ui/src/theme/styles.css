@@ -64,3 +64,24 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+/* CDK placeholders originate from a different component view. */
+.media-grid .cdk-drag-placeholder > *,
+.media-grid .cdk-drag-anchor > * {
+	visibility: hidden;
+}
+
+.media-breadcrumb-target > .cdk-drag-placeholder {
+	display: none;
+}
+
+.media-breadcrumb-target.cdk-drop-list-receiving {
+	border-radius: var(--radius);
+	outline: 1px dashed var(--ring);
+	outline-offset: 3px;
+}
+
+.media-breadcrumb-target.cdk-drop-list-dragging {
+	background: var(--accent);
+	color: var(--accent-foreground);
+}

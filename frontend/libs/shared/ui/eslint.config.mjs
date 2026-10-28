@@ -40,6 +40,12 @@ export default [
 		},
 	},
 	{
+		files: ['**/button/button.ts'],
+		rules: {
+			'@angular-eslint/component-selector': ['error', { type: 'attribute', prefix: 'ui', style: 'kebab-case' }],
+		},
+	},
+	{
 		files: ['**/*.html'],
 		// Override or add rules here
 		rules: {

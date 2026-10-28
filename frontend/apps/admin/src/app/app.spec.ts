@@ -1,19 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing'
-import { Router, provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router'
 import { Title } from '@angular/platform-browser'
-import { provideLocalStorageImpl } from 'ngxtension/inject-local-storage'
+import { Router, provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router'
+import { MediaService } from '@game-atlas/media/data-access'
 import { HlmSidebarService } from '@spartan-ng/helm/sidebar'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
-import { App } from './app'
-import { appRoutes } from './app.routes'
+import { provideTanStackQuery, QueryClient } from '@tanstack/angular-query-experimental'
+import { provideLocalStorageImpl } from 'ngxtension/inject-local-storage'
+import { of } from 'rxjs'
 import { AdminTitleStrategy } from './admin-title-strategy'
+import { App } from './app'
+import { APP_ROUTES } from './app.routes'
 
 async function render(path = '/games'): Promise<ComponentFixture<App>> {
 	const fixture = TestBed.createComponent(App)
 
 	await TestBed.inject(Router).navigateByUrl(path)
 	await fixture.whenStable()
-	fixture.detectChanges()
 
 	return fixture
 }
@@ -21,6 +23,7 @@ async function render(path = '/games'): Promise<ComponentFixture<App>> {
 describe('Administration shell', () => {
 	beforeEach(async () => {
 		localStorage.clear()
+		document.cookie = 'sidebar_state=; path=/; max-age=0'
 		document.head.insertAdjacentHTML(
 			'beforeend',
 			`
@@ -29,18 +32,46 @@ describe('Administration shell', () => {
 		`,
 		)
 
+		vi.stubGlobal(
+			'ResizeObserver',
+			class {
+				observe = vi.fn()
+				unobserve = vi.fn()
+				disconnect = vi.fn()
+			},
+		)
+		vi.stubGlobal(
+			'matchMedia',
+			vi.fn((query: string) => ({
+				matches: query.includes('min-width'),
+				media: query,
+				addEventListener: vi.fn(),
+				removeEventListener: vi.fn(),
+				addListener: vi.fn(),
+				removeListener: vi.fn(),
+			})),
+		)
+
 		await TestBed.configureTestingModule({
 			imports: [App],
 			providers: [
-				provideRouter(appRoutes, withComponentInputBinding()),
+				provideRouter(APP_ROUTES, withComponentInputBinding()),
 				{ provide: TitleStrategy, useClass: AdminTitleStrategy },
 				provideSpartanHlm(),
 				provideLocalStorageImpl(localStorage),
+				provideTanStackQuery(new QueryClient({ defaultOptions: { queries: { retry: false } } })),
+				{
+					provide: MediaService,
+					useValue: {
+						listMedia: () => of({ items: [], total: 0, limit: 20, offset: 0, folder: null, ancestors: [] }),
+					},
+				},
 			],
 		}).compileComponents()
 	})
 
 	afterEach(() => {
+		TestBed.resetTestingModule()
 		vi.unstubAllGlobals()
 		localStorage.clear()
 		document.head
@@ -91,6 +122,8 @@ describe('Administration shell', () => {
 			'matchMedia',
 			vi.fn().mockImplementation(() => ({
 				matches: true,
+				addListener: vi.fn(),
+				removeListener: vi.fn(),
 				addEventListener: vi.fn(),
 				removeEventListener: vi.fn(),
 			})),
@@ -111,11 +144,37 @@ describe('Administration shell', () => {
 		expect(TestBed.inject(Router).url).toBe('/media')
 	})
 
+	it('keeps theme controls in the sidebar and cycles the compact button', async () => {
+		const fixture = await render()
+		const element = fixture.nativeElement as HTMLElement
+		const sidebar = fixture.debugElement.injector.get(HlmSidebarService)
+
+		expect(element.querySelector('[data-sidebar="footer"] ui-theme-switcher input')).not.toBeNull()
+		expect(element.querySelector('main header ui-theme-switcher')).toBeNull()
+		sidebar.setOpen(false)
+		await fixture.whenStable()
+		const button = element.querySelector<HTMLButtonElement>('ui-theme-switcher button')
+
+		expect(element.querySelector('ui-theme-switcher input')).toBeNull()
+		expect(button?.getAttribute('aria-label')).toContain('Default theme')
+		button?.click()
+		await fixture.whenStable()
+		expect(button?.getAttribute('aria-label')).toContain('Dark theme')
+		button?.click()
+		await fixture.whenStable()
+		expect(button?.getAttribute('aria-label')).toContain('Light theme')
+		button?.click()
+		await fixture.whenStable()
+		expect(button?.getAttribute('aria-label')).toContain('Default theme')
+	})
+
 	it('dismisses mobile navigation with Escape and restores focus to its trigger', async () => {
 		vi.stubGlobal(
 			'matchMedia',
 			vi.fn().mockImplementation(() => ({
 				matches: true,
+				addListener: vi.fn(),
+				removeListener: vi.fn(),
 				addEventListener: vi.fn(),
 				removeEventListener: vi.fn(),
 			})),

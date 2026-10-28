@@ -1,0 +1,50 @@
+<brn-sonner-toaster
+	[class]="computedClass()"
+	[invert]="invert()"
+	[theme]="theme()"
+	[position]="position()"
+	[hotKey]="hotKey()"
+	[richColors]="richColors()"
+	[expand]="expand()"
+	[duration]="duration()"
+	[visibleToasts]="visibleToasts()"
+	[closeButton]="closeButton()"
+	[toastOptions]="computedToastOptions()"
+	[offset]="offset()"
+	[style]="userStyle()"
+>
+	<ng-template #loadingIcon>
+		<ng-icon name="matProgressActivityRound" class="text-base [&>svg]:motion-safe:animate-spin overflow-visible!" />
+	</ng-template>
+	<ng-template #successIcon>
+		<ng-icon name="matCheckCircleRound" class="text-base overflow-visible!" />
+	</ng-template>
+	<ng-template #errorIcon>
+		<ng-icon name="matErrorRound" class="text-base overflow-visible!" />
+	</ng-template>
+	<ng-template #infoIcon>
+		<ng-icon name="matInfoRound" class="text-base overflow-visible!" />
+	</ng-template>
+	<ng-template #warningIcon>
+		<ng-icon name="matWarningRound" class="text-base overflow-visible!" />
+	</ng-template>
+	<button
+		*brnToastAction="let action; let toast = toast"
+		[style]="toast.actionButtonStyle"
+		hlmBtn
+		size="sm"
+		(click)="action.onClick($event)"
+	>
+		{{ action.label }}
+	</button>
+	<button
+		*brnToastCancelAction="let cancel; let toast = toast"
+		[style]="toast.cancelButtonStyle"
+		hlmBtn
+		size="sm"
+		variant="secondary"
+		(click)="cancel.onClick($event)"
+	>
+		{{ cancel.label }}
+	</button>
+</brn-sonner-toaster>

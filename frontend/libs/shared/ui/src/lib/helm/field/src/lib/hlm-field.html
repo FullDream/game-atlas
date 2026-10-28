@@ -1,0 +1,7 @@
+<ng-content />
+
+@for (error of errors(); track error) {
+	<hlm-field-error [validator]="error.kind" [forceShow]="true">
+		{{ error.message }}
+	</hlm-field-error>
+}

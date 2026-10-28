@@ -1,0 +1,118 @@
+<a
+	href="#main-content"
+	class="top-3 left-3 -translate-y-24 rounded-md bg-background px-4 py-2 text-sm text-foreground focus:translate-y-0 fixed z-50 border"
+>
+	Skip to content
+</a>
+<div
+	uiPageHeaderOutlet
+	#pageHeader="uiPageHeaderOutlet"
+	hlmSidebarWrapper
+	sidebarWidth="15rem"
+	sidebarWidthIcon="3.5rem"
+	class="h-dvh overflow-hidden"
+>
+	<hlm-sidebar
+		collapsible="icon"
+		srOnlySheetTitle="Navigation"
+		srOnlySheetDescription="Choose an administration section."
+	>
+		<div hlmSidebarHeader class="h-16 px-3 group-data-[collapsible=icon]:px-2 justify-center">
+			<a
+				routerLink="/games"
+				aria-label="GameAtlas administration home"
+				class="min-w-0 gap-3 rounded-lg ring-ring flex items-center outline-none focus-visible:ring-2"
+			>
+				<span
+					class="size-9 rounded-xl bg-sidebar-primary text-sidebar-primary-foreground flex shrink-0 items-center justify-center"
+					aria-hidden="true"
+				>
+					<ng-icon name="matMapRound" size="19" />
+				</span>
+				<span class="min-w-0 group-data-[collapsible=icon]:hidden">
+					<span class="text-sm font-semibold tracking-tight block">GameAtlas</span>
+					<span class="text-xs text-sidebar-foreground/60 block">Administration</span>
+				</span>
+			</a>
+		</div>
+
+		<div hlmSidebarContent>
+			<nav id="primary-navigation" aria-label="Main navigation" hlmSidebarGroup>
+				<div hlmSidebarGroupLabel>Workspace</div>
+				<ul hlmSidebarMenu>
+					@for (item of navigation; track item.path) {
+						<li hlmSidebarMenuItem>
+							<a
+								hlmSidebarMenuButton
+								[routerLink]="item.path"
+								routerLinkActive
+								#active="routerLinkActive"
+								[isActive]="active.isActive"
+								ariaCurrentWhenActive="page"
+								[attr.aria-label]="item.label"
+								[tooltip]="item.label"
+							>
+								<ng-icon [name]="item.icon" aria-hidden="true" />
+								<span>{{ item.label }}</span>
+							</a>
+						</li>
+					}
+				</ul>
+			</nav>
+		</div>
+
+		<div hlmSidebarFooter class="h-16 px-2 py-0 shrink-0 items-center justify-center border-t">
+			<ui-theme-switcher
+				[compact]="!sidebar.isMobile() && !sidebar.open()"
+				[value]="themeSettings.preference()"
+				(valueChange)="themeSettings.preference.set($event)"
+			/>
+		</div>
+	</hlm-sidebar>
+
+	<main
+		cdkDropListGroup
+		hlmSidebarInset
+		id="main-content"
+		tabindex="-1"
+		class="min-h-0 min-w-0 h-dvh overflow-hidden outline-none"
+	>
+		<header
+			class="top-0 h-16 gap-2 sm:gap-4 bg-background px-4 sm:px-7 sticky z-10 flex shrink-0 items-center border-b"
+		>
+			<button
+				hlmSidebarTrigger
+				type="button"
+				srOnlyText="Toggle navigation"
+				aria-label="Toggle navigation"
+				aria-controls="primary-navigation"
+				[attr.aria-expanded]="sidebar.isMobile() ? sidebar.openMobile() : sidebar.open()"
+			></button>
+			<span class="h-5 bg-border w-px" aria-hidden="true"></span>
+			<div class="min-w-0 flex-1">
+				<ui-workspace-breadcrumbs
+					[items]="pageHeader.breadcrumbs().length ? pageHeader.breadcrumbs() : [{ label: heading() }]"
+				/>
+				<h1 class="sr-only">{{ heading() }}</h1>
+			</div>
+
+			@if (navigationLoading() || pageHeader.loading()) {
+				<hlm-progress
+					[value]="null"
+					aria-label="Loading page"
+					class="inset-x-0 bottom-0 h-0.5 absolute rounded-none"
+				>
+					<hlm-progress-indicator />
+				</hlm-progress>
+			}
+
+			<div class="gap-2 flex shrink-0 items-center empty:hidden">
+				<ng-template [cdkPortalOutlet]="pageHeader.portal()" />
+			</div>
+		</header>
+
+		<div class="min-h-0 flex flex-1 flex-col overflow-hidden">
+			<router-outlet />
+		</div>
+	</main>
+</div>

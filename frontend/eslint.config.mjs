@@ -73,7 +73,6 @@ export default [
 						{
 							name: '@angular/forms',
 							importNames: [
-								'FormsModule',
 								'ReactiveFormsModule',
 								'FormControl',
 								'FormGroup',
@@ -85,7 +84,6 @@ export default [
 								'UntypedFormGroup',
 								'UntypedFormArray',
 								'UntypedFormBuilder',
-								'NgModel',
 								'NgForm',
 								'NgModelGroup',
 								'FormControlDirective',

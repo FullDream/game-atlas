@@ -1,0 +1,31 @@
+<h2 class="text-lg font-semibold">{{ context.folder ? 'Rename folder' : 'New folder' }}</h2>
+
+<form class="mt-5 gap-4 flex flex-col" [formRoot]="folderForm">
+	<hlm-field>
+		<label hlmFieldLabel for="folder-editor-name">Name</label>
+		<input id="folder-editor-name" hlmInput [formField]="folderForm.name" autocomplete="off" />
+	</hlm-field>
+
+	@if (errorMessage()) {
+		<hlm-field-error forceShow>{{ errorMessage() }}</hlm-field-error>
+	}
+
+	<div class="gap-2 flex justify-end">
+		<button
+			type="button"
+			ui-button
+			variant="outline"
+			[disabled]="folderForm().submitting()"
+			(click)="dialog.close()"
+		>
+			Cancel
+		</button>
+		<button
+			ui-button
+			[loading]="folderForm().submitting()"
+			[disabled]="context.folder !== null && !folderForm().dirty()"
+		>
+			Save
+		</button>
+	</div>
+</form>

@@ -1,0 +1,23 @@
+@if (icon(); as icon) {
+	<span
+		class="size-14 rounded-2xl bg-muted text-muted-foreground group-data-[variant=compact]/error-state:size-10 group-data-[variant=compact]/error-state:rounded-xl flex shrink-0 items-center justify-center"
+	>
+		<ng-icon [name]="icon" [size]="variant() === 'compact' ? '22' : '28'" aria-hidden="true" />
+	</span>
+}
+
+<div
+	class="min-w-0 max-w-md group-data-[variant=compact]/error-state:max-w-none group-data-[variant=compact]/error-state:flex-1"
+>
+	<h2 class="font-medium" [class.text-sm]="variant() === 'compact'">
+		<ng-content select="[uiErrorStateHeading]" />
+	</h2>
+
+	<p class="mt-2 text-sm text-muted-foreground group-data-[variant=compact]/error-state:mt-1 empty:hidden">
+		<ng-content select="[uiErrorStateDescription]" />
+	</p>
+</div>
+
+<div class="gap-3 flex flex-wrap justify-center group-data-[variant=compact]/error-state:justify-start empty:hidden">
+	<ng-content />
+</div>

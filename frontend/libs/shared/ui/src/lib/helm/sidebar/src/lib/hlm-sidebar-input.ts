@@ -13,6 +13,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmSidebarInput {
 	constructor() {
-		classes(() => 'h-8 w-full bg-background shadow-none')
+		classes(() => 'h-8 bg-background w-full shadow-none')
 	}
 }

@@ -6,6 +6,7 @@
 	"semi": false,
 	"bracketSpacing": true,
 	"printWidth": 120,
+	"htmlWhitespaceSensitivity": "ignore",
 	"endOfLine": "auto",
 	"arrowParens": "avoid",
 	"tailwindStylesheet": "./apps/web/src/styles.css",

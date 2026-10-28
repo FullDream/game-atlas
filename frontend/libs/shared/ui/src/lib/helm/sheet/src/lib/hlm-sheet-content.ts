@@ -12,22 +12,13 @@ import { HlmSheetClose } from './hlm-sheet-close'
 	selector: 'hlm-sheet-content',
 	exportAs: 'hlmSheetContent',
 	imports: [HlmButton, HlmSheetClose, NgIcon],
+	templateUrl: './hlm-sheet-content.html',
 	providers: [provideIcons({ matCloseRound })],
 	host: {
 		'data-slot': 'sheet-content',
 		'[attr.data-side]': 'sideProvider.side()',
 		'[attr.data-state]': 'state()',
 	},
-	template: `
-		<ng-content />
-
-		@if (showCloseButton()) {
-			<button hlmBtn variant="ghost" size="icon-sm" class="end-4 top-4 absolute" hlmSheetClose>
-				<span class="sr-only">Close</span>
-				<ng-icon name="matCloseRound" />
-			</button>
-		}
-	`,
 })
 export class HlmSheetContent {
 	readonly #stateProvider = injectExposesStateProvider({ host: true })

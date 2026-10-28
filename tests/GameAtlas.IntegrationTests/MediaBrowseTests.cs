@@ -12,6 +12,38 @@ namespace GameAtlas.IntegrationTests;
 public sealed class MediaBrowseTests
 {
 	[Fact]
+	public async Task ListingIncludesCurrentFolderAndAncestorsIndependentlyOfSearchAndPagination()
+	{
+		await using var factory = new GameApiFactory();
+
+		await factory.MigrateAsync();
+		using var client = factory.CreateHttpsClient();
+		var top = await MediaFolderTests.CreateAsync(client, "Top");
+		var middleResponse = await client.PostAsJsonAsync("/media/folders", new { name = "Middle", parentId = top.Id });
+		var middle = await middleResponse.Content.ReadFromJsonAsync<MediaFolderDto>();
+		var leafResponse = await client.PostAsJsonAsync("/media/folders", new { name = "Leaf", parentId = middle!.Id });
+		var leaf = await leafResponse.Content.ReadFromJsonAsync<MediaFolderDto>();
+
+		await client.PostAsJsonAsync("/media/folders", new { name = "Child", parentId = leaf!.Id });
+		var listing = await client.GetFromJsonAsync<MediaListResult>(
+			$"/media?folderId={leaf.Id}&search=absent&offset=100");
+
+		Assert.Empty(listing!.Items);
+		Assert.Equal(0, listing.Total);
+		Assert.Equal(leaf.Id, listing.Folder!.Id);
+		Assert.Equal(1, listing.Folder.ItemsCount);
+		Assert.Equal([top.Id, middle.Id], listing.Ancestors.Select(parent => parent.Id));
+		Assert.Equal(["Top", "Middle"], listing.Ancestors.Select(parent => parent.Name));
+		var root = await client.GetFromJsonAsync<MediaListResult>("/media");
+
+		Assert.Null(root!.Folder);
+		Assert.Empty(root.Ancestors);
+		using var missing = await client.GetAsync($"/media?folderId={Guid.CreateVersion7()}");
+
+		Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+	}
+
+	[Fact]
 	public async Task LargerMixedPagesKeepQueryCountConstantAndSearchTreatsWildcardsLiterally()
 	{
 		var capture = new SqlReadCapture();

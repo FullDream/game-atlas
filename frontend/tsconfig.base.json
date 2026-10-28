@@ -25,7 +25,21 @@
 			"@spartan-ng/helm/skeleton": ["./libs/shared/ui/src/lib/helm/skeleton/src/index.ts"],
 			"@spartan-ng/helm/tooltip": ["./libs/shared/ui/src/lib/helm/tooltip/src/index.ts"],
 			"@spartan-ng/helm": ["./libs/shared/ui/src/index.ts"],
-			"@game-atlas/shared/ui": ["./libs/shared/ui/src/index.ts"]
+			"@game-atlas/shared/ui": ["./libs/shared/ui/src/index.ts"],
+			"@game-atlas/media/data-access": ["./libs/media/data-access/src/index.ts"],
+			"@game-atlas/media/feature-list": ["./libs/media/feature-list/src/index.ts"],
+			"@spartan-ng/helm/breadcrumb": ["./libs/shared/ui/src/lib/helm/breadcrumb/src/index.ts"],
+			"@spartan-ng/helm/dropdown-menu": ["./libs/shared/ui/src/lib/helm/dropdown-menu/src/index.ts"],
+			"@spartan-ng/helm/context-menu": ["./libs/shared/ui/src/lib/helm/context-menu/src/index.ts"],
+			"@spartan-ng/helm/spinner": ["./libs/shared/ui/src/lib/helm/spinner/src/index.ts"],
+			"@spartan-ng/helm/sonner": ["./libs/shared/ui/src/lib/helm/sonner/src/index.ts"],
+			"@spartan-ng/helm/pagination": ["./libs/shared/ui/src/lib/helm/pagination/src/index.ts"],
+			"@spartan-ng/helm/select": ["./libs/shared/ui/src/lib/helm/select/src/index.ts"],
+			"@game-atlas/shared/util": ["./libs/shared/util/src/index.ts"],
+			"@spartan-ng/helm/field": ["./libs/shared/ui/src/lib/helm/field/src/index.ts"],
+			"@spartan-ng/helm/label": ["./libs/shared/ui/src/lib/helm/label/src/index.ts"],
+			"@spartan-ng/helm/progress": ["./libs/shared/ui/src/lib/helm/progress/src/index.ts"],
+			"@spartan-ng/helm/empty": ["./libs/shared/ui/src/lib/helm/empty/src/index.ts"]
 		}
 	},
 	"exclude": ["node_modules", "tmp"]

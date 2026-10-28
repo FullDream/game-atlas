@@ -7,24 +7,15 @@ import { classes } from '@spartan-ng/helm/utils'
 	selector: 'hlm-sidebar-menu-skeleton,div[hlmSidebarMenuSkeleton]',
 	exportAs: 'hlmSidebarMenuSkeleton',
 	imports: [HlmSkeletonImports],
+	templateUrl: './hlm-sidebar-menu-skeleton.html',
 	host: {
 		'data-slot': 'sidebar-menu-skeleton',
 		'data-sidebar': 'menu-skeleton',
 	},
-	template: `
-		@if (showIcon()) {
-			<hlm-skeleton data-sidebar="menu-skeleton-icon" class="size-4 rounded-md" />
-		} @else {
-			<hlm-skeleton
-				data-sidebar="menu-skeleton-text"
-				class="h-4 max-w-(--skeleton-width) flex-1"
-				[style.--skeleton-width]="width"
-			/>
-		}
-	`,
 })
 export class HlmSidebarMenuSkeleton {
 	public readonly showIcon = input<boolean, BooleanInput>(false, { transform: booleanAttribute })
+
 	protected readonly width = `${Math.floor(Math.random() * 40) + 50}%`
 
 	constructor() {

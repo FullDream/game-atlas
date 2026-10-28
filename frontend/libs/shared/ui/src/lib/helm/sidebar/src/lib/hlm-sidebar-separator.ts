@@ -13,6 +13,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmSidebarSeparator {
 	constructor() {
-		classes(() => 'mx-2 w-auto bg-sidebar-border')
+		classes(() => 'mx-2 bg-sidebar-border w-auto')
 	}
 }

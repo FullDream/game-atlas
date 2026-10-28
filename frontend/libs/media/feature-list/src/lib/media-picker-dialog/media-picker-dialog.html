@@ -1,0 +1,105 @@
+<h2 class="text-lg font-semibold">{{ context.mode === 'image' ? 'Choose a video cover' : 'Move item' }}</h2>
+
+<nav aria-label="Folder path" class="my-4 gap-1 text-sm flex flex-wrap items-center">
+	<button ui-button variant="ghost" size="sm" (click)="navigateToFolder(null)">Library</button>
+
+	@for (parent of folderQuery.data()?.ancestors ?? []; track parent.id) {
+		<span aria-hidden="true">/</span>
+		<button ui-button variant="ghost" size="sm" (click)="navigateToFolder(parent.id)">{{ parent.name }}</button>
+	}
+
+	@if (folderQuery.data()?.folder; as folder) {
+		<span aria-hidden="true">/</span>
+		<span aria-current="page" class="px-2">{{ folder.name }}</span>
+	}
+</nav>
+
+<label class="mb-4 block">
+	<span class="sr-only">Search this folder</span>
+	<input hlmInput placeholder="Search this folder" [(ngModel)]="search" (ngModelChange)="offset.set(0)" />
+</label>
+
+<div class="min-h-40 overflow-auto" [attr.aria-busy]="mediaQuery.isFetching()">
+	@if (mediaQuery.isPending()) {
+		<p role="status" class="py-8 text-muted-foreground text-center">Loading…</p>
+	}
+
+	@if (mediaQuery.isError()) {
+		<p role="alert">{{ getMediaErrorMessage(mediaQuery.error()) }}</p>
+		<button ui-button variant="outline" [loading]="mediaQuery.isFetching()" (click)="mediaQuery.refetch()">
+			Retry
+		</button>
+	}
+
+	<div class="gap-3 sm:grid-cols-4 grid grid-cols-2">
+		@for (item of mediaQuery.data()?.items ?? []; track item.id) {
+			@if (item.type === 'folder') {
+				<button
+					class="min-h-28 gap-2 rounded-lg p-3 hover:bg-accent focus-visible:ring-ring flex flex-col items-center justify-center border focus-visible:ring-2"
+					[disabled]="context.mode === 'move' && item.id === context.item.id"
+					(click)="navigateToFolder(item.id)"
+				>
+					<ng-icon name="matFolderRound" size="30" class="text-muted-foreground" aria-hidden="true" />
+					<span class="text-sm max-w-full truncate">{{ item.name }}</span>
+				</button>
+			} @else if (context.mode === 'image' && item.type === 'image') {
+				<button
+					class="rounded-lg p-1 focus-visible:ring-ring overflow-hidden border focus-visible:ring-2"
+					[class.ring-2]="selectedImage()?.id === item.id"
+					[attr.aria-pressed]="selectedImage()?.id === item.id"
+					(click)="selectedImage.set(item)"
+				>
+					<media-thumbnail class="rounded aspect-square" [image]="item" />
+					<span class="p-2 text-sm block truncate">{{ item.name }}</span>
+				</button>
+			}
+		}
+	</div>
+
+	@if (mediaQuery.isSuccess() && !hasChoices()) {
+		<p class="py-8 text-sm text-muted-foreground text-center">
+			No eligible items on this page. Try another page or folder.
+		</p>
+	}
+</div>
+
+<div class="mt-4 gap-2 pt-4 flex items-center justify-between border-t">
+	<button ui-button variant="outline" size="sm" [disabled]="offset() === 0" (click)="offset.set(offset() - 24)">
+		Previous
+	</button>
+	<span class="text-sm text-muted-foreground">
+		{{ mediaQuery.data()?.total ? offset() + 1 : 0 }}–{{ offset() + (mediaQuery.data()?.items?.length ?? 0) }} of
+		{{ mediaQuery.data()?.total ?? 0 }}
+	</span>
+	<button
+		ui-button
+		variant="outline"
+		size="sm"
+		[disabled]="offset() + 24 >= (mediaQuery.data()?.total ?? 0)"
+		(click)="offset.set(offset() + 24)"
+	>
+		Next
+	</button>
+</div>
+
+@if (errorMessage()) {
+	<p role="alert" class="mt-3 text-sm text-destructive">{{ errorMessage() }}</p>
+}
+
+<div class="mt-5 gap-2 flex justify-end">
+	<button ui-button variant="outline" [disabled]="busy()" (click)="dialog.close()">Cancel</button>
+	<button
+		ui-button
+		[loading]="busy()"
+		[disabled]="
+			busy() ||
+			mediaQuery.isError() ||
+			mediaQuery.isPending() ||
+			(folderId() !== null && !folderQuery.isSuccess()) ||
+			(context.mode === 'image' ? !selectedImage() : forbidden())
+		"
+		(click)="confirm()"
+	>
+		{{ context.mode === 'image' ? 'Use image' : 'Move here' }}
+	</button>
+</div>

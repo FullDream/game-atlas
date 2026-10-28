@@ -1,0 +1,14 @@
+<span
+	class="gap-2 col-start-1 row-start-1 inline-flex items-center justify-center"
+	[style.visibility]="loading() ? 'hidden' : null"
+>
+	@if (icon(); as name) {
+		<ng-icon [name]="name" aria-hidden="true" />
+	}
+
+	<ng-content />
+</span>
+
+@if (loading()) {
+	<hlm-spinner class="absolute" />
+}
