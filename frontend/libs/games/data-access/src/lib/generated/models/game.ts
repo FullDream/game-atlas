@@ -5,12 +5,13 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { GameStatus } from './game-status'
+import type { ImageAsset } from './image-asset'
 
 export type Game = {
 	id: string
 	name: string
 	slug: string
-	image: string
+	image: ImageAsset
 	createdAt: string
 	updatedAt: string
 	status: GameStatus

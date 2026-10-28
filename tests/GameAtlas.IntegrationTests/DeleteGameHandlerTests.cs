@@ -72,9 +72,10 @@ public class DeleteGameHandlerTests
 	internal static async Task<Game> SeedAsync(
 		GameApiFactory factory, string slug, GameStatus status = GameStatus.Draft)
 	{
+		await MediaTestData.EnsureCoverAsync(factory);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var game = Game.Create("Game", slug, "cover").Value!;
+		var game = Game.Create("Game", slug, MediaTestData.CoverId).Value!;
 
 		Assert.True(game.Update(status: status).IsSuccess);
 		context.Games.Add(game);
@@ -88,7 +89,7 @@ public class DeleteGameHandlerTests
 		Assert.Equal(expected.Id, actual.Id);
 		Assert.Equal(expected.Name, actual.Name);
 		Assert.Equal(expected.Slug, actual.Slug);
-		Assert.Equal(expected.Image, actual.Image);
+		Assert.Equal(expected.ImageAssetId, actual.ImageAssetId);
 		Assert.Equal(expected.Status, actual.Status);
 		Assert.Equal(expected.CreatedAt, actual.CreatedAt);
 		Assert.Equal(expected.UpdatedAt, actual.UpdatedAt);

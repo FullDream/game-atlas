@@ -35,7 +35,7 @@ public class UpdateGameOpenApiTests
 		Assert.True(id.GetProperty("required").GetBoolean());
 		Assert.Equal("uuid", id.GetProperty("schema").GetProperty("format").GetString());
 
-		foreach (var (field, limit) in new[] { ("name", 200), ("slug", 200), ("image", 2048) })
+		foreach (var (field, limit) in new[] { ("name", 200), ("slug", 200) })
 		{
 			var fieldSchema = Resolve(root, properties.GetProperty(field));
 
@@ -47,6 +47,9 @@ public class UpdateGameOpenApiTests
 		Assert.Equal(@"\A[a-z0-9]+(-[a-z0-9]+)*\z", Resolve(root, properties.GetProperty("slug"))
 			.GetProperty("pattern").GetString());
 		Assert.False(properties.TryGetProperty("mapId", out _));
+		Assert.False(properties.TryGetProperty("image", out _));
+		Assert.Equal("uuid", properties.GetProperty("imageAssetId").GetProperty("format").GetString());
+		Assert.False(AllowsNull(root, properties.GetProperty("imageAssetId")));
 		Assert.False(AllowsNull(root, properties.GetProperty("status")));
 		var status = Resolve(root, properties.GetProperty("status"));
 

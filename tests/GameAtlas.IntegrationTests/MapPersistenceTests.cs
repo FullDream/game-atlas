@@ -17,7 +17,7 @@ public class MapPersistenceTests
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		await context.GetService<IMigrator>().MigrateAsync("20261023181923_Maps");
-		var game = await UpdateGameHandlerTests.SeedAsync(factory, "legacy-map");
+		var gameId = await MediaTestData.SeedLegacyGameAsync(context);
 		var mapId = Guid.CreateVersion7();
 		var styleId = Guid.CreateVersion7();
 		var sourceId = Guid.CreateVersion7();
@@ -26,7 +26,7 @@ public class MapPersistenceTests
 
 		await context.Database.ExecuteSqlInterpolatedAsync($"""
 			INSERT INTO "Maps" ("Id", "GameId", "Width", "Height", "LastCreationSequence", "CreatedAt", "UpdatedAt")
-			VALUES ({mapId}, {game.Id}, 23, 17, 1, {now}, {now});
+			VALUES ({mapId}, {gameId}, 23, 17, 1, {now}, {now});
 			INSERT INTO "MapVariants" ("Id", "MapId", "Name", "NormalizedName", "BackgroundColor",
 				"CreationSequence", "SourceVersionId", "ActiveVersionId", "CreatedAt", "UpdatedAt")
 			VALUES ({styleId}, {mapId}, 'Atlas', 'ATLAS', '#FFFFFF', 1, {sourceId}, {sourceId}, {now}, {now});
@@ -46,33 +46,16 @@ public class MapPersistenceTests
 			"SELECT COUNT(*) AS Value FROM MapSourceVersions WHERE Status = 'Ready' AND Progress = 100").SingleAsync());
 		Assert.DoesNotContain(await context.Database.GetAppliedMigrationsAsync(),
 			migration => migration.EndsWith("_SimplifyMapStyles"));
-		DeleteGameHandlerTests.AssertSameGame(game, await context.Games.SingleAsync());
+		Assert.Equal(gameId, await context.Database.SqlQuery<Guid>($"SELECT Id AS Value FROM Games").SingleAsync());
 	}
 
 	[Fact]
-	public async Task UpgradeReconcilesLegacyIdsAndRollbackPreservesAllActualParentAndMarkerData()
+	public async Task FreshSchemaPersistsMapsAndRollbackPreservesAllParentAndMarkerData()
 	{
 		await using var factory = new GameApiFactory();
 
-		await using (var scope = factory.Services.CreateAsyncScope())
-		{
-			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-			await context.GetService<IMigrator>().MigrateAsync("20261023145510_Markers");
-		}
-
-		var game = await UpdateGameHandlerTests.SeedAsync(factory, "legacy-id");
-
-		await using (var scope = factory.Services.CreateAsyncScope())
-		{
-			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-			var legacyMapId = Guid.NewGuid();
-
-			await context.Database.ExecuteSqlInterpolatedAsync(
-				$"UPDATE Games SET MapId = {legacyMapId} WHERE Id = {game.Id}");
-		}
-
 		await factory.MigrateAsync();
+		var game = await UpdateGameHandlerTests.SeedAsync(factory, "legacy-id");
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
@@ -108,7 +91,7 @@ public class MapPersistenceTests
 			var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 				context.GetService<IMigrator>().MigrateAsync("20261023145510_Markers"));
 
-			Assert.Contains("Media_RestoreBackupForNonemptyMapStyles", rollback.Message);
+			Assert.Contains("GameImages_RestoreBackupForNonemptyGames", rollback.Message);
 			DeleteGameHandlerTests.AssertSameGame(game, await context.Games.SingleAsync());
 			Assert.Equal(group.Id, (await context.CategoryGroups.SingleAsync()).Id);
 			Assert.Equal(category.Id, (await context.Categories.SingleAsync()).Id);

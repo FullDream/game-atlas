@@ -1,3 +1,3 @@
 namespace GameAtlas.Api.Games;
 
-public sealed record CreateGameRequest(string? Name, string? Slug, string? Image);
+public sealed record CreateGameRequest(string? Name, string? Slug, Guid? ImageAssetId);

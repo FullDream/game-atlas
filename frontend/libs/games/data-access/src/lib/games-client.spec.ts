@@ -10,7 +10,21 @@ const game: Game = {
 	id: '019a0000-0000-7000-8000-000000000001',
 	name: 'GameAtlas',
 	slug: 'game-atlas',
-	image: 'cover',
+	image: {
+		type: 'image',
+		id: '019a0000-0000-7000-8000-000000000112',
+		folderId: null,
+		name: 'Cover',
+		url: '/media/files/019a0000-0000-7000-8000-000000000112',
+		contentType: 'image/png',
+		byteLength: 64,
+		width: 64,
+		height: 48,
+		alt: '',
+		placeholder: null,
+		createdAt: '2026-10-25T00:00:00Z',
+		updatedAt: '2026-10-25T00:00:00Z',
+	},
 	status: 'draft',
 	createdAt: '2026-10-25T00:00:00Z',
 	updatedAt: '2026-10-25T00:00:00Z',
@@ -80,7 +94,7 @@ describe('Generated Games client', () => {
 
 	it('creates drafts through the generated operation', async () => {
 		const pending = firstValueFrom(
-			TestBed.inject(GamesService).createGame({ name: game.name, slug: game.slug, image: game.image }),
+			TestBed.inject(GamesService).createGame({ name: game.name, slug: game.slug, imageAssetId: game.image.id }),
 		)
 		const request = TestBed.inject(HttpTestingController).expectOne('/api/games')
 

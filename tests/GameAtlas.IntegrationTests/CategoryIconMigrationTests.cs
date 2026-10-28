@@ -18,7 +18,13 @@ public sealed class CategoryIconMigrationTests
 		var migrator = context.GetService<IMigrator>();
 
 		await migrator.MigrateAsync("20261024135813_MediaLibrary");
-		var (game, group) = await CategoryTestData.ParentAsync(factory);
+		var gameId = await MediaTestData.SeedLegacyGameAsync(context);
+		var map = GameAtlas.Domain.Maps.Map.Create(gameId, "World", 1, 1).Value!;
+		context.Maps.Add(map);
+		await context.SaveChangesAsync();
+		var group = GameAtlas.Domain.CategoryGroups.CategoryGroup.Create(map.Id, "Group", 1).Value!;
+		context.CategoryGroups.Add(group);
+		await context.SaveChangesAsync();
 		var id = Guid.CreateVersion7();
 		var created = new DateTimeOffset(2026, 10, 1, 10, 0, 0, TimeSpan.Zero);
 
@@ -35,6 +41,6 @@ public sealed class CategoryIconMigrationTests
 			.SingleAsync();
 
 		Assert.Equal("/legacy/icon.svg", original);
-		Assert.Equal(game.Id, (await context.Games.SingleAsync()).Id);
+		Assert.Equal(gameId, await context.Database.SqlQuery<Guid>($"SELECT Id AS Value FROM Games").SingleAsync());
 	}
 }

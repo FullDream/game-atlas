@@ -17,7 +17,8 @@ public sealed class DeleteMediaAssetHandler(IApplicationDbContext context, IMedi
 			if (!await context.MediaAssets.AnyAsync(asset => asset.Id == command.Id, cancellationToken))
 				return MediaOperationErrors.AssetNotFound;
 
-			if (await context.Categories.AnyAsync(category => category.IconAssetId == command.Id, cancellationToken) ||
+			if (await context.Games.AnyAsync(game => game.ImageAssetId == command.Id, cancellationToken) ||
+				await context.Categories.AnyAsync(category => category.IconAssetId == command.Id, cancellationToken) ||
 				await context.MapStyles.AnyAsync(style => style.SourceAssetId == command.Id, cancellationToken) ||
 				await context.Markers.AnyAsync(marker => marker.Media.Any(item => item.AssetId == command.Id), cancellationToken) ||
 				await context.MediaAssets.OfType<VideoAsset>()

@@ -39,10 +39,10 @@ public sealed class ListGamesHandler(IApplicationDbContext context)
 		if (ordered is not null)
 			query = ordered.ThenBy(game => game.Id);
 
-		var games = await query.Skip(request.Offset).Take(request.Limit).ToDto()
+		var games = await query.Skip(request.Offset).Take(request.Limit).Include(game => game.Image)
 			.ToArrayAsync(cancellationToken);
 
-		return new PaginatedResult<GameDto>(games,
+		return new PaginatedResult<GameDto>(games.Select(game => game.ToDto()).ToArray(),
 			request.Limit, request.Offset, total);
 	}
 }

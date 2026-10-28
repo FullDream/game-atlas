@@ -37,7 +37,7 @@ Accept: application/json
 {
   "name": "Elden Ring",
   "slug": "elden-ring",
-  "image": "elden-ring-cover"
+  "imageAssetId": "{{imageAssetId}}"
 }
 
 ###
@@ -49,7 +49,7 @@ Accept: application/json
 
 {
   "name": "Elden Ring Updated",
-  "image": "updated-cover"
+  "imageAssetId": "{{imageAssetId}}"
 }
 
 ###

@@ -12,6 +12,6 @@ public sealed record UpdateGameRequest
 {
 	public Optional<string?> Name { get; init; }
 	public Optional<string?> Slug { get; init; }
-	public Optional<string?> Image { get; init; }
+	public Optional<Guid?> ImageAssetId { get; init; }
 	public Optional<GameStatus?> Status { get; init; }
 }

@@ -103,7 +103,7 @@ public class DeleteGameApiTests
 		Assert.Equal(HttpStatusCode.NoContent, deletion.StatusCode);
 		using var response = update
 			? await client.PatchAsJsonAsync($"/games/{other.Id}", new { slug = "available" })
-			: await client.PostAsJsonAsync("/games", new { name = "New", slug = "available", image = "cover" });
+			: await client.PostAsJsonAsync("/games", new { name = "New", slug = "available", imageAssetId = MediaTestData.CoverId });
 		using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 		var id = body.RootElement.GetProperty("id").GetGuid();
 

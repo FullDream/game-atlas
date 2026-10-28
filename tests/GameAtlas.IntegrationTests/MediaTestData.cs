@@ -11,6 +11,34 @@ namespace GameAtlas.IntegrationTests;
 
 internal static class MediaTestData
 {
+	internal static readonly Guid CoverId = Guid.Parse("019a0000-0000-7000-8000-000000000115");
+
+	internal static async Task<Guid> SeedLegacyGameAsync(ApplicationDbContext context)
+	{
+		var id = Guid.CreateVersion7();
+		var now = DateTimeOffset.UtcNow.UtcTicks;
+		await context.Database.ExecuteSqlAsync($"""
+			INSERT INTO Games (Id, Name, Slug, Image, CreatedAt, UpdatedAt, Status)
+			VALUES ({id}, 'Game', 'legacy', 'cover', {now}, {now}, 'Draft')
+			""");
+		return id;
+	}
+
+	internal static async Task EnsureCoverAsync(GameApiFactory factory)
+	{
+		await using var scope = factory.Services.CreateAsyncScope();
+		await EnsureCoverAsync(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
+	}
+
+	internal static async Task EnsureCoverAsync(ApplicationDbContext context)
+	{
+		if (await context.MediaAssets.AnyAsync(asset => asset.Id == CoverId))
+			return;
+
+		context.MediaAssets.Add(ImageAsset.Create(CoverId, "Fixture cover", null, "image/png", 64, 64, 48).Value!);
+		await context.SaveChangesAsync();
+	}
+
 	internal static readonly Guid IconId = Guid.Parse("019a0000-0000-7000-8000-000000000111");
 	internal static readonly Guid ImageId = Guid.Parse("019a0000-0000-7000-8000-000000000112");
 	internal static readonly Guid VideoId = Guid.Parse("019a0000-0000-7000-8000-000000000113");

@@ -17,9 +17,6 @@ public sealed class CreateGameValidation : AbstractValidator<CreateGame>
 			.Matches(@"\A[a-z0-9]+(-[a-z0-9]+)*\z")
 			.OverridePropertyName(nameof(CreateGame.Slug));
 
-		RuleFor(command => command.Image == null ? null : command.Image.Trim())
-			.NotEmpty()
-			.MaximumLength(GameMetadataLimits.ImageMaxLength)
-			.OverridePropertyName(nameof(CreateGame.Image));
+		RuleFor(command => command.ImageAssetId).NotNull().NotEqual(Guid.Empty);
 	}
 }

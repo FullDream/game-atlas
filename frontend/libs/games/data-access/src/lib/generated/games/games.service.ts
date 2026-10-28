@@ -170,7 +170,7 @@ export class GamesService {
 		})
 	}
 	/**
-	 * Creates a draft with a client-supplied unique slug. Trims required strings. Returns the complete stored game.
+	 * Creates a draft with a client-supplied unique slug. Trims name and slug; imageAssetId must select an existing library image. Returns the complete stored game with its ImageAsset.
 	 * @summary Create game
 	 */
 	createGame<TData = Game>(createGameRequest: CreateGameRequest, options?: HttpClientBodyOptions): Observable<TData>

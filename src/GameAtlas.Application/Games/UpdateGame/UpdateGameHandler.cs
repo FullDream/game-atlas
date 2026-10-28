@@ -1,4 +1,5 @@
 using GameAtlas.Application.Abstractions.Persistence;
+using GameAtlas.Application.Media;
 using GameAtlas.Domain.Result;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,8 @@ public sealed class UpdateGameHandler(IApplicationDbContext context) : ICommandH
 {
 	public async ValueTask<Result<GameDto>> Handle(UpdateGame command, CancellationToken cancellationToken)
 	{
-		var game = await context.Games.AsTracking()
+		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
+		var game = await context.Games.AsTracking().Include(game => game.Image)
 			.SingleOrDefaultAsync(game => game.Id == command.Id, cancellationToken);
 
 		if (game is null)
@@ -26,7 +28,19 @@ public sealed class UpdateGameHandler(IApplicationDbContext context) : ICommandH
 				return UpdateGameErrors.SlugConflict;
 		}
 
-		var result = game.Update(command.Name, command.Slug, command.Image, command.Status);
+		var image = game.Image;
+
+		if (command.ImageAssetId.IsSpecified && command.ImageAssetId.Value is { } imageId)
+		{
+			var selected = await context.FindImageAsync(imageId, cancellationToken);
+
+			if (selected.IsFailure)
+				return selected.Errors;
+
+			image = selected.Value;
+		}
+
+		var result = game.Update(command.Name, command.Slug, command.ImageAssetId, command.Status);
 
 		if (result.IsFailure)
 			return result.Errors;
@@ -34,6 +48,8 @@ public sealed class UpdateGameHandler(IApplicationDbContext context) : ICommandH
 		if (result.Value)
 			await context.SaveChangesAsync(cancellationToken);
 
-		return game.ToDto();
+		await transaction.CommitAsync(cancellationToken);
+
+		return game.ToDto(image.ToDto());
 	}
 }

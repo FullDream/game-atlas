@@ -24,13 +24,14 @@ public class CreateGameApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureCoverAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		var mapId = mapMode == "supplied" ? Guid.NewGuid() : (Guid?)null;
 		var input = new Dictionary<string, object?>
 		{
 			["name"] = " Elden Ring ",
 			["slug"] = " elden-ring-2 ",
-			["image"] = " cover ",
+			["imageAssetId"] = MediaTestData.CoverId,
 			["status"] = "published",
 			["id"] = Guid.Empty,
 			["createdAt"] = "2000-01-01T00:00:00Z"
@@ -48,7 +49,7 @@ public class CreateGameApiTests
 		Assert.Equal(7, body.GetProperty("id").GetGuid().Version);
 		Assert.Equal("Elden Ring", body.GetProperty("name").GetString());
 		Assert.Equal("elden-ring-2", body.GetProperty("slug").GetString());
-		Assert.Equal("cover", body.GetProperty("image").GetString());
+		Assert.Equal(MediaTestData.CoverId, body.GetProperty("image").GetProperty("id").GetGuid());
 		Assert.Equal("draft", body.GetProperty("status").GetString());
 		var createdAt = body.GetProperty("createdAt").GetDateTimeOffset();
 
@@ -62,7 +63,7 @@ public class CreateGameApiTests
 		Assert.Equal(createdAt, stored.CreatedAt);
 		Assert.Equal("Elden Ring", stored.Name);
 		Assert.Equal("elden-ring-2", stored.Slug);
-		Assert.Equal("cover", stored.Image);
+		Assert.Equal(MediaTestData.CoverId, stored.ImageAssetId);
 		Assert.Equal(GameStatus.Draft, stored.Status);
 
 		Assert.False(body.TryGetProperty("mapId", out _));
@@ -70,12 +71,12 @@ public class CreateGameApiTests
 
 	public static IEnumerable<object[]> InvalidInputs()
 	{
-		foreach (var field in new[] { "name", "slug", "image" })
+		foreach (var field in new[] { "name", "slug" })
 		{
 			foreach (var value in new string?[] { null, "", " " })
 				yield return [field, value!];
 
-			yield return [field, new string('a', field == "image" ? 2049 : 201)];
+			yield return [field, new string('a', 201)];
 		}
 
 		foreach (var slug in new[] { "Upper", "two words", "two--words", "-game", "game-", "игра" })
@@ -89,8 +90,9 @@ public class CreateGameApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureCoverAsync(factory);
 		using var client = factory.CreateHttpsClient();
-		var input = new Dictionary<string, object?> { ["name"] = "Game", ["slug"] = "game", ["image"] = "cover" };
+		var input = new Dictionary<string, object?> { ["name"] = "Game", ["slug"] = "game", ["imageAssetId"] = MediaTestData.CoverId };
 
 		input[field] = value;
 		using var response = await client.PostAsJsonAsync("/games", input);
@@ -106,6 +108,7 @@ public class CreateGameApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureCoverAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var invalid = await client.PostAsJsonAsync("/games", new { });
 
@@ -114,7 +117,7 @@ public class CreateGameApiTests
 		{
 			name = new string('n', 200),
 			slug = new string('s', 200),
-			image = new string('i', 2048)
+			imageAssetId = MediaTestData.CoverId
 		});
 
 		Assert.Equal(HttpStatusCode.OK, valid.StatusCode);
@@ -128,6 +131,7 @@ public class CreateGameApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureCoverAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsync("/games",
 			new StringContent(input, Encoding.UTF8, "application/json"));
@@ -142,15 +146,16 @@ public class CreateGameApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureCoverAsync(factory);
 		using var client = factory.CreateHttpsClient();
-		var input = new { name = "Game", slug = "game", image = "cover" };
+		var input = new { name = "Game", slug = "game", imageAssetId = MediaTestData.CoverId };
 		using var success = await client.PostAsJsonAsync("/games", input);
 		using var conflict = await client.PostAsJsonAsync("/games", input);
 
 		Assert.Equal(HttpStatusCode.OK, success.StatusCode);
 		await AssertProblemAsync(conflict, HttpStatusCode.Conflict);
 		var concurrent = await Task.WhenAll(Enumerable.Range(0, 2).Select(_ =>
-			client.PostAsJsonAsync("/games", new { name = "Game", slug = "raced-game", image = "cover" })));
+			client.PostAsJsonAsync("/games", new { name = "Game", slug = "raced-game", imageAssetId = MediaTestData.CoverId })));
 
 		try
 		{
@@ -174,7 +179,7 @@ public class CreateGameApiTests
 
 		Assert.False(File.Exists(factory.DatabasePath));
 		using var response = await client.PostAsJsonAsync("/games",
-			new { name = "Game", slug = "game", image = "cover" });
+			new { name = "Game", slug = "game", imageAssetId = MediaTestData.CoverId });
 
 		await AssertProblemAsync(response, HttpStatusCode.InternalServerError);
 		await using var scope = factory.Services.CreateAsyncScope();
@@ -189,11 +194,12 @@ public class CreateGameApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureCoverAsync(factory);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 		var invalid = await mediator.Send(new CreateGame(null, null, null));
-		var valid = await mediator.Send(new CreateGame(" Game ", " game ", " cover "));
-		var duplicate = await mediator.Send(new CreateGame("Other", "game", "cover"));
+		var valid = await mediator.Send(new CreateGame(" Game ", " game ", MediaTestData.CoverId));
+		var duplicate = await mediator.Send(new CreateGame("Other", "game", MediaTestData.CoverId));
 
 		Assert.True(invalid.IsFailure);
 		Assert.True(valid.IsSuccess);
@@ -209,12 +215,13 @@ public class CreateGameApiTests
 		await using var source = new GameApiFactory();
 
 		await source.MigrateAsync();
+		await MediaTestData.EnsureCoverAsync(source);
 		await using var scope = source.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-		context.Games.Add(Game.Create("Game", "game", "cover").Value!);
+		context.Games.Add(Game.Create("Game", "game", MediaTestData.CoverId).Value!);
 		await context.SaveChangesAsync();
-		context.Games.Add(Game.Create("Other", "game", "cover").Value!);
+		context.Games.Add(Game.Create("Other", "game", MediaTestData.CoverId).Value!);
 		var exception = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 		var classifier = new SqlitePersistenceFailureClassifier();
 
@@ -222,9 +229,10 @@ public class CreateGameApiTests
 		await using var failing = new GameApiFactory(interceptor: new ThrowOnSave(exception));
 
 		await failing.MigrateAsync();
+		await MediaTestData.EnsureCoverAsync(failing);
 		using var client = failing.CreateHttpsClient();
 		using var response = await client.PostAsJsonAsync("/games",
-			new { name = "New", slug = "new", image = "cover" });
+			new { name = "New", slug = "new", imageAssetId = MediaTestData.CoverId });
 
 		await AssertProblemAsync(response, HttpStatusCode.Conflict);
 		await AssertCountAsync(failing, 0);
@@ -241,7 +249,7 @@ public class CreateGameApiTests
 		public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
 			DbContextEventData eventData, InterceptionResult<int> result,
 			CancellationToken cancellationToken = default) =>
-			throw exception;
+			eventData.Context!.ChangeTracker.Entries<Game>().Any() ? throw exception : ValueTask.FromResult(result);
 	}
 
 	private static async Task<JsonElement> AssertProblemAsync(HttpResponseMessage response, HttpStatusCode expected)

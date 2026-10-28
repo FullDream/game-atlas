@@ -38,7 +38,7 @@ public class GameTimestampTests
 				""");
 		}
 
-		await context.Database.MigrateAsync();
+		await context.GetService<IMigrator>().MigrateAsync("20261022195257_OrderableGameTimestamps");
 		var query = (field, descending) switch
 		{
 			("createdAt", false) => context.Games.OrderBy(game => game.CreatedAt),
@@ -48,7 +48,7 @@ public class GameTimestampTests
 		};
 		var pageQuery = query.ThenBy(game => game.Id).Skip(1).Take(2);
 		var sql = pageQuery.ToQueryString();
-		var games = await pageQuery.ToListAsync();
+		var games = await pageQuery.Select(game => new { game.CreatedAt, game.UpdatedAt }).ToListAsync();
 		var expected = descending ? instants.OrderDescending() : instants.Order();
 
 		Assert.Contains("ORDER BY", sql);

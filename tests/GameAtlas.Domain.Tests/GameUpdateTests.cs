@@ -5,20 +5,22 @@ namespace GameAtlas.Domain.Tests;
 
 public class GameUpdateTests
 {
+	private static readonly Guid coverId = Guid.NewGuid();
+	private static readonly Guid otherId = Guid.NewGuid();
 	[Fact]
 	public void UpdatesAllMutableFieldsAndPreservesIdentityAndCreationTime()
 	{
-		var game = Game.Create("Game", "game", "cover").Value!;
+		var game = Game.Create("Game", "game", coverId).Value!;
 		var id = game.Id;
 		var createdAt = game.CreatedAt;
 		var before = DateTimeOffset.UtcNow;
-		var result = game.Update(" Updated ", " updated ", " new-cover ", GameStatus.Published);
+		var result = game.Update(" Updated ", " updated ", otherId, GameStatus.Published);
 
 		Assert.True(result.IsSuccess);
 		Assert.True(result.Value);
 		Assert.Equal("Updated", game.Name);
 		Assert.Equal("updated", game.Slug);
-		Assert.Equal("new-cover", game.Image);
+		Assert.Equal(otherId, game.ImageAssetId);
 		Assert.Equal(GameStatus.Published, game.Status);
 		Assert.Equal(id, game.Id);
 		Assert.Equal(createdAt, game.CreatedAt);
@@ -29,12 +31,12 @@ public class GameUpdateTests
 	[Fact]
 	public void PreservesOmissionsAndCanReturnToDraft()
 	{
-		var game = Game.Create("Game", "game", "cover").Value!;
+		var game = Game.Create("Game", "game", coverId).Value!;
 
 		Assert.True(game.Update(status: GameStatus.Published).Value);
 		Assert.True(game.Update(name: "Updated").Value);
 		Assert.Equal("game", game.Slug);
-		Assert.Equal("cover", game.Image);
+		Assert.Equal(coverId, game.ImageAssetId);
 		Assert.Equal(GameStatus.Published, game.Status);
 		Assert.True(game.Update(status: GameStatus.Draft).Value);
 		Assert.Equal(GameStatus.Draft, game.Status);
@@ -43,10 +45,10 @@ public class GameUpdateTests
 	[Fact]
 	public void DoesNotTouchTimestampForUnspecifiedOrNormalizedEqualValues()
 	{
-		var game = Game.Create("Game", "game", "cover").Value!;
+		var game = Game.Create("Game", "game", coverId).Value!;
 		var updatedAt = game.UpdatedAt;
 		var empty = game.Update();
-		var same = game.Update(" Game ", " game ", " cover ", GameStatus.Draft);
+		var same = game.Update(" Game ", " game ", coverId, GameStatus.Draft);
 
 		Assert.True(empty.IsSuccess);
 		Assert.False(empty.Value);
@@ -64,15 +66,15 @@ public class GameUpdateTests
 	[InlineData("игра")]
 	public void RejectsInvalidMetadataWithoutApplyingAnyChanges(string? slug)
 	{
-		var game = Game.Create("Game", "game", "cover").Value!;
+		var game = Game.Create("Game", "game", coverId).Value!;
 		var updatedAt = game.UpdatedAt;
-		var result = game.Update("New", Optional<string?>.From(slug), "new-cover", GameStatus.Published);
+		var result = game.Update("New", Optional<string?>.From(slug), otherId, GameStatus.Published);
 
 		Assert.True(result.IsFailure);
 		Assert.Contains(result.Errors, error => error.Property == nameof(Game.Slug));
 		Assert.Equal("Game", game.Name);
 		Assert.Equal("game", game.Slug);
-		Assert.Equal("cover", game.Image);
+		Assert.Equal(coverId, game.ImageAssetId);
 		Assert.Equal(GameStatus.Draft, game.Status);
 		Assert.Equal(updatedAt, game.UpdatedAt);
 	}
@@ -80,9 +82,9 @@ public class GameUpdateTests
 	[Fact]
 	public void RejectsRequiredNullsAndUndefinedStatus()
 	{
-		var game = Game.Create("Game", "game", "cover").Value!;
+		var game = Game.Create("Game", "game", coverId).Value!;
 		var result = game.Update(
-			Optional<string?>.From(null), Optional<string?>.From(null), Optional<string?>.From(null),
+			Optional<string?>.From(null), Optional<string?>.From(null), Optional<Guid?>.From(null),
 			status: Optional<GameStatus?>.From(null));
 
 		Assert.True(result.IsFailure);
@@ -93,10 +95,22 @@ public class GameUpdateTests
 	}
 
 	[Fact]
+	public void RejectsEmptyImageWithoutApplyingOtherChanges()
+	{
+		var game = Game.Create("Game", "game", coverId).Value!;
+		var result = game.Update(name: "Changed", imageAssetId: Guid.Empty);
+
+		Assert.Equal(GameErrors.ImageRequired, Assert.Single(result.Errors!));
+		Assert.Equal("Game", game.Name);
+		Assert.Equal(coverId, game.ImageAssetId);
+		Assert.Equal(game.CreatedAt, game.UpdatedAt);
+	}
+
+	[Fact]
 	public void DoesNotEnforceTechnicalLengthLimits()
 	{
-		var game = Game.Create("Game", "game", "cover").Value!;
-		var result = game.Update(new string('n', 201), new string('s', 201), new string('i', 2049));
+		var game = Game.Create("Game", "game", coverId).Value!;
+		var result = game.Update(new string('n', 201), new string('s', 201), otherId);
 
 		Assert.True(result.IsSuccess);
 		Assert.True(result.Value);

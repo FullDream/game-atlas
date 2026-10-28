@@ -33,7 +33,7 @@ public class MapOwnershipMigrationTests
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		await context.GetService<IMigrator>().MigrateAsync("20261023210838_SimplifyMapStyles");
-		var game = await UpdateGameHandlerTests.SeedAsync(factory, "legacy");
+		var gameId = await MediaTestData.SeedLegacyGameAsync(context);
 		var group = Guid.CreateVersion7();
 		var category = Guid.CreateVersion7();
 		var marker = Guid.CreateVersion7();
@@ -42,7 +42,7 @@ public class MapOwnershipMigrationTests
 
 		await context.Database.ExecuteSqlInterpolatedAsync($"""
 			INSERT INTO CategoryGroups (Id, GameId, Name, NormalizedName, "Order", CreatedAt, UpdatedAt)
-			VALUES ({group}, {game.Id}, 'Resources', 'RESOURCES', 3, {now}, {now});
+			VALUES ({group}, {gameId}, 'Resources', 'RESOURCES', 3, {now}, {now});
 			INSERT INTO Categories (Id, CategoryGroupId, Name, NormalizedName, Icon, Color, "Order", CreatedAt, UpdatedAt)
 			VALUES ({category}, {group}, 'Chest', 'CHEST', 'icon', '#FFFFFF', 2, {now}, {now});
 			INSERT INTO Markers (Id, CategoryId, Name, Description, PositionX, PositionY, CreatedAt, UpdatedAt)

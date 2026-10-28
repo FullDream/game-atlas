@@ -16,7 +16,8 @@ public sealed class GameConfiguration : IEntityTypeConfiguration<Game>
 		builder.Property(game => game.Name).HasMaxLength(GameMetadataLimits.NameMaxLength).IsRequired();
 		builder.Property(game => game.Slug).HasMaxLength(GameMetadataLimits.SlugMaxLength).IsRequired();
 		builder.HasIndex(game => game.Slug).IsUnique();
-		builder.Property(game => game.Image).HasMaxLength(GameMetadataLimits.ImageMaxLength).IsRequired();
+		builder.HasOne(game => game.Image).WithMany().HasForeignKey(game => game.ImageAssetId)
+			.OnDelete(DeleteBehavior.Restrict).IsRequired();
 		builder.Property(game => game.Status).HasConversion<string>().IsRequired();
 		builder.Property(game => game.CreatedAt).HasConversion<UtcTimestampConverter>();
 		builder.Property(game => game.UpdatedAt).HasConversion<UtcTimestampConverter>();

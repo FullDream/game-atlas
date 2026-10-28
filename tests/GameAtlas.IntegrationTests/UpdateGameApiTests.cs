@@ -20,13 +20,14 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+		await MediaTestData.EnsureIconAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		var mapId = (await MapTestData.SeedAsync(factory, game.Id)).Id;
 		var input = JsonSerializer.Serialize(new
 		{
 			name = " Updated ",
 			slug = " updated ",
-			image = " new-cover ",
+			imageAssetId = MediaTestData.IconId,
 			status = "published"
 		});
 		using var response = await PatchAsync(client, game.Id, input, mediaType);
@@ -39,7 +40,7 @@ public class UpdateGameApiTests
 		Assert.Equal(game.CreatedAt, value.GetProperty("createdAt").GetDateTimeOffset());
 		Assert.Equal("Updated", value.GetProperty("name").GetString());
 		Assert.Equal("updated", value.GetProperty("slug").GetString());
-		Assert.Equal("new-cover", value.GetProperty("image").GetString());
+		Assert.Equal(MediaTestData.IconId, value.GetProperty("image").GetProperty("id").GetGuid());
 		Assert.False(value.TryGetProperty("mapId", out _));
 		Assert.Equal("published", value.GetProperty("status").GetString());
 		var updatedAt = value.GetProperty("updatedAt").GetDateTimeOffset();
@@ -51,7 +52,7 @@ public class UpdateGameApiTests
 		Assert.Equal(updatedAt, stored.UpdatedAt);
 		Assert.Equal("Updated", stored.Name);
 		Assert.Equal("updated", stored.Slug);
-		Assert.Equal("new-cover", stored.Image);
+		Assert.Equal(MediaTestData.IconId, stored.ImageAssetId);
 		Assert.Equal(GameStatus.Published, stored.Status);
 		using var nameOnly = await PatchAsync(client, game.Id, "{\"name\":\"Renamed\"}", mediaType);
 		var renamed = await LoadAsync(factory, game.Id);
@@ -59,7 +60,7 @@ public class UpdateGameApiTests
 		Assert.Equal(HttpStatusCode.OK, nameOnly.StatusCode);
 		Assert.Equal("Renamed", renamed.Name);
 		Assert.Equal(stored.Slug, renamed.Slug);
-		Assert.Equal(stored.Image, renamed.Image);
+		Assert.Equal(stored.ImageAssetId, renamed.ImageAssetId);
 		Assert.Equal(stored.Status, renamed.Status);
 		using var clearAndDraft = await PatchAsync(client, game.Id, "{\"status\":\"draft\"}", mediaType);
 		var draft = await LoadAsync(factory, game.Id);
@@ -73,7 +74,7 @@ public class UpdateGameApiTests
 	[Theory]
 	[InlineData("name", "Renamed")]
 	[InlineData("slug", "renamed")]
-	[InlineData("image", "plain-image")]
+	[InlineData("imageAssetId", "019a0000-0000-7000-8000-000000000111")]
 	[InlineData("status", "published")]
 	public async Task CanUpdateEachFieldIndependently(string field, string value)
 	{
@@ -81,6 +82,7 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+		await MediaTestData.EnsureIconAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, game.Id,
 			JsonSerializer.Serialize(new Dictionary<string, string> { [field] = value }), "application/json");
@@ -89,7 +91,7 @@ public class UpdateGameApiTests
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 		Assert.Equal(field == "name" ? value : game.Name, stored.Name);
 		Assert.Equal(field == "slug" ? value : game.Slug, stored.Slug);
-		Assert.Equal(field == "image" ? value : game.Image, stored.Image);
+		Assert.Equal(field == "imageAssetId" ? Guid.Parse(value) : game.ImageAssetId, stored.ImageAssetId);
 		Assert.Equal(field == "status" ? GameStatus.Published : game.Status, stored.Status);
 	}
 
@@ -98,12 +100,12 @@ public class UpdateGameApiTests
 		var inputs = new (string Body, int Status)[]
 		{
 			("{}", 422), ("{\"name\":null}", 422), ("{\"slug\":null}", 422),
-			("{\"image\":null}", 422), ("{\"status\":null}", 422),
-			("{\"name\":\"New\",\"image\":\" \"}", 422),
+			("{\"imageAssetId\":null}", 422), ("{\"status\":null}", 422),
+			("{\"name\":\"New\",\"imageAssetId\":null}", 422),
 			("{\"slug\":\"bad--slug\"}", 422), ("{\"slug\":\"Upper\"}", 422),
 			(JsonSerializer.Serialize(new { name = new string('n', 201) }), 422),
 			(JsonSerializer.Serialize(new { slug = new string('s', 201) }), 422),
-			(JsonSerializer.Serialize(new { image = new string('i', 2049) }), 422),
+			(JsonSerializer.Serialize(new { image = new string('i', 2049) }), 400),
 			("{", 400), ("[]", 400), ("null", 400), ("5", 400), ("\"text\"", 400),
 			("{\"name\":5}", 400), ("{\"slug\":false}", 400), ("{\"image\":{}}", 400),
 			("{\"mapId\":\"bad\"}", 400), ("{\"status\":\"unknown\"}", 400),
@@ -128,6 +130,7 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+		await MediaTestData.EnsureIconAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, game.Id, body, mediaType);
 
@@ -145,9 +148,10 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+		await MediaTestData.EnsureIconAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, game.Id,
-			"{\"name\":\" Game \",\"slug\":\" game \",\"image\":\" cover \",\"status\":\"draft\"}", mediaType);
+			JsonSerializer.Serialize(new { name = " Game ", slug = " game ", imageAssetId = game.ImageAssetId, status = "draft" }), mediaType);
 		using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -168,6 +172,7 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+		await MediaTestData.EnsureIconAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, game.Id, body, mediaType);
 
@@ -203,6 +208,7 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+		await MediaTestData.EnsureIconAsync(factory);
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "taken");
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, game.Id,
@@ -223,6 +229,7 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+		await MediaTestData.EnsureIconAsync(factory);
 		var rival = await UpdateGameHandlerTests.SeedAsync(factory, "rival");
 
 		interceptor.RivalId = rival.Id;
@@ -251,9 +258,9 @@ public class UpdateGameApiTests
 
 	private static void AssertSameGame(Game expected, Game actual)
 	{
-		Assert.Equal((expected.Id, expected.Name, expected.Slug, expected.Image,
+		Assert.Equal((expected.Id, expected.Name, expected.Slug, expected.ImageAssetId,
 			expected.Status, expected.CreatedAt, expected.UpdatedAt),
-			(actual.Id, actual.Name, actual.Slug, actual.Image,
+			(actual.Id, actual.Name, actual.Slug, actual.ImageAssetId,
 				actual.Status, actual.CreatedAt, actual.UpdatedAt));
 	}
 

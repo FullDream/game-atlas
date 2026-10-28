@@ -1,4 +1,5 @@
 using GameAtlas.Application.Abstractions.Persistence;
+using GameAtlas.Application.Media;
 using GameAtlas.Domain.Games;
 using GameAtlas.Domain.Result;
 using Mediator;
@@ -10,10 +11,16 @@ public sealed class CreateGameHandler(IApplicationDbContext context) : ICommandH
 {
 	public async ValueTask<Result<GameDto>> Handle(CreateGame command, CancellationToken cancellationToken)
 	{
-		var result = Game.Create(command.Name, command.Slug, command.Image);
+		var result = Game.Create(command.Name, command.Slug, command.ImageAssetId);
 
 		if (result.IsFailure)
 			return result.Errors;
+
+		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
+		var image = await context.FindImageAsync(command.ImageAssetId!.Value, cancellationToken);
+
+		if (image.IsFailure)
+			return image.Errors;
 
 		var game = result.Value;
 
@@ -23,6 +30,8 @@ public sealed class CreateGameHandler(IApplicationDbContext context) : ICommandH
 		context.Games.Add(game);
 		await context.SaveChangesAsync(cancellationToken);
 
-		return game.ToDto();
+		await transaction.CommitAsync(cancellationToken);
+
+		return game.ToDto(image.Value.ToDto());
 	}
 }

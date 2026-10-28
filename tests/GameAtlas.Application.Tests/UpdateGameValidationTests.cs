@@ -26,10 +26,10 @@ public class UpdateGameValidationTests
 	public async Task RejectsSpecifiedInvalidStringsWithOriginalFieldNames(string? value)
 	{
 		var input = Optional<string?>.From(value);
-		var result = await validator.ValidateAsync(new UpdateGame(Guid.NewGuid(), input, input, input));
+		var result = await validator.ValidateAsync(new UpdateGame(Guid.NewGuid(), input, input, Optional<Guid?>.From(null)));
 
 		Assert.False(result.IsValid);
-		Assert.Equal(new[] { "Image", "Name", "Slug" },
+		Assert.Equal(new[] { "ImageAssetId", "Name", "Slug" },
 			result.Errors.Select(error => error.PropertyName).Distinct().Order());
 	}
 
@@ -41,12 +41,12 @@ public class UpdateGameValidationTests
 		var result = await validator.ValidateAsync(new UpdateGame(Guid.NewGuid(),
 			" " + new string('n', 200 + excess) + " ",
 			" " + new string('s', 200 + excess) + " ",
-			" " + new string('i', 2048 + excess) + " "));
+			Guid.NewGuid()));
 
 		Assert.Equal(valid, result.IsValid);
 
 		if (!valid)
-			Assert.Equal(new[] { "Image", "Name", "Slug" }, result.Errors.Select(error => error.PropertyName).Order());
+			Assert.Equal(new[] { "Name", "Slug" }, result.Errors.Select(error => error.PropertyName).Order());
 	}
 
 	[Theory]

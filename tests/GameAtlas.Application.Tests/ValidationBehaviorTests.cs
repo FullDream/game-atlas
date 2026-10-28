@@ -53,7 +53,7 @@ public class ValidationBehaviorTests
 		var behavior = new ValidationBehavior<CreateGame, Result<GameDto>>(validators);
 		var calls = 0;
 
-		await behavior.Handle(new CreateGame("Game", "game", "cover"), (_, _) =>
+		await behavior.Handle(new CreateGame("Game", "game", Guid.NewGuid()), (_, _) =>
 		{
 			calls++;
 			order.Add(3);
@@ -72,31 +72,30 @@ public class ValidationBehaviorTests
 
 		source.Cancel();
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
-			await behavior.Handle(new CreateGame("Game", "game", "cover"), (_, _) =>
+			await behavior.Handle(new CreateGame("Game", "game", Guid.NewGuid()), (_, _) =>
 				throw new InvalidOperationException("Handler must not run."), source.Token));
 	}
 
 	[Fact]
 	public async Task CreateGameValidatorChecksTrimmedValuesWithoutMutatingInput()
 	{
-		var command = new CreateGame($" {new string('n', 200)} ", " elden-ring ", " cover ");
+		var command = new CreateGame($" {new string('n', 200)} ", " elden-ring ", Guid.NewGuid());
 		var validator = new CreateGameValidation();
 		var result = await validator.ValidateAsync(command);
 
 		Assert.True(result.IsValid);
 		Assert.Equal(" elden-ring ", command.Slug);
-		Assert.False((await validator.ValidateAsync(new CreateGame(null, "INVALID", " "))).IsValid);
+		Assert.False((await validator.ValidateAsync(new CreateGame(null, "INVALID", null))).IsValid);
 	}
 
 	[Theory]
-	[InlineData(201, 1, 1, "Name")]
-	[InlineData(1, 201, 1, "Slug")]
-	[InlineData(1, 1, 2049, "Image")]
+	[InlineData(201, 1, "Name")]
+	[InlineData(1, 201, "Slug")]
 	public async Task CreateGameValidatorRejectsOverLimitMetadata(
-		int nameLength, int slugLength, int imageLength, string property)
+		int nameLength, int slugLength, string property)
 	{
 		var command = new CreateGame(new string('n', nameLength), new string('s', slugLength),
-			new string('i', imageLength));
+			Guid.NewGuid());
 		var result = await new CreateGameValidation().ValidateAsync(command);
 
 		Assert.False(result.IsValid);

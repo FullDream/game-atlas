@@ -17,7 +17,7 @@ public static class GameErrors
 		new("Game.Slug.Required", "Slug is required.", nameof(Game.Slug), ErrorType.Validation);
 
 	public static readonly Error ImageRequired =
-		new("Game.Image.Required", "Image is required.", nameof(Game.Image), ErrorType.Validation);
+		new("Game.Image.Required", "Image is required.", nameof(Game.ImageAssetId), ErrorType.Validation);
 
 	public static readonly Error InvalidSlug = new(
 		"Game.Slug.Format",

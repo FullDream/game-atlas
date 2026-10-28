@@ -46,7 +46,7 @@ public class ListGamesApiTests
 			Assert.Equal(7, item.EnumerateObject().Count());
 			Assert.Equal(game.Name, item.GetProperty("name").GetString());
 			Assert.Equal(game.Slug, item.GetProperty("slug").GetString());
-			Assert.Equal(game.Image, item.GetProperty("image").GetString());
+			Assert.Equal(game.ImageAssetId, item.GetProperty("image").GetProperty("id").GetGuid());
 			Assert.False(item.TryGetProperty("mapId", out _));
 			Assert.Equal(game.CreatedAt, item.GetProperty("createdAt").GetDateTimeOffset());
 			Assert.Equal(game.UpdatedAt, item.GetProperty("updatedAt").GetDateTimeOffset());
@@ -109,7 +109,7 @@ public class ListGamesApiTests
 		Assert.Equal(5, page.GetProperty("total").GetInt32());
 		var sql = capture.Commands.Last();
 
-		Assert.True(sql.LastIndexOf("ORDER BY", StringComparison.Ordinal) <
+		Assert.True(sql.IndexOf("ORDER BY", StringComparison.Ordinal) <
 			sql.LastIndexOf("LIMIT", StringComparison.Ordinal));
 	}
 
@@ -208,10 +208,11 @@ public class ListGamesApiTests
 	private static async Task<Game[]> SeedAsync(GameApiFactory factory, string[] names)
 	{
 		await factory.MigrateAsync();
+		await MediaTestData.EnsureCoverAsync(factory);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var start = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-		var games = names.Select((name, index) => Game.Create(name, "game-" + index, "image").Value!)
+		var games = names.Select((name, index) => Game.Create(name, "game-" + index, MediaTestData.CoverId).Value!)
 			.ToArray();
 
 		for (var index = 0; index < games.Length; index++)

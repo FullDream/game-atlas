@@ -21,10 +21,11 @@ public static class Endpoints
 							 "Search ignores ASCII case. Without sortBy, ordering is unspecified.");
 
 		games.MapPost("", CreateGameAsync)
+			.ProducesProblem(StatusCodes.Status404NotFound)
 			.WithName("CreateGame")
 			.WithSummary("Create game")
 			.WithDescription("Creates a draft with a client-supplied unique slug. " +
-							 "Trims required strings. Returns the complete stored game.");
+							 "Trims name and slug; imageAssetId must select an existing library image. Returns the complete stored game with its ImageAsset.");
 
 		games.MapPatch("/{id}", UpdateGameAsync)
 			.WithName("UpdateGame")

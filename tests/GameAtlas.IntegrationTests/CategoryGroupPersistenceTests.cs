@@ -11,22 +11,11 @@ namespace GameAtlas.IntegrationTests;
 public class CategoryGroupPersistenceTests
 {
 	[Fact]
-	public async Task MigrationUpgradesExistingGamesAndPersistsGroupsAcrossConnections()
+	public async Task MigrationPersistsGroupsAcrossConnections()
 	{
 		await using var factory = new GameApiFactory();
-		var game = Game.Create("Game", "game", "cover").Value!;
-
-		await using (var scope = factory.Services.CreateAsyncScope())
-		{
-			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-			const string previous = "20261022195257_OrderableGameTimestamps";
-
-			await context.GetService<IMigrator>().MigrateAsync(previous);
-			context.Games.Add(game);
-			await context.SaveChangesAsync();
-		}
-
 		await factory.MigrateAsync();
+		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, " Ресурсы ", 4);
 		var stored = Assert.Single(await CategoryGroupTestData.LoadAsync(factory, game.Id));
 

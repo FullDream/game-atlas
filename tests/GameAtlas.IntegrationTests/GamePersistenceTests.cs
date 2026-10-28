@@ -14,11 +14,12 @@ public sealed class GamePersistenceTests : IDisposable
 	[Fact]
 	public async Task MigrationPersistsMetadataAcrossConnectionsWithStringStatus()
 	{
-		var game = Game.Create(" Game ", " game ", " cover ").Value!;
+		var game = Game.Create(" Game ", " game ", MediaTestData.CoverId).Value!;
 
 		await using (var context = CreateContext())
 		{
 			await context.Database.MigrateAsync();
+			await MediaTestData.EnsureCoverAsync(context);
 			context.Games.Add(game);
 			await context.SaveChangesAsync();
 		}
@@ -29,7 +30,7 @@ public sealed class GamePersistenceTests : IDisposable
 		Assert.Equal(game.Id, stored.Id);
 		Assert.Equal(game.Name, stored.Name);
 		Assert.Equal(game.Slug, stored.Slug);
-		Assert.Equal(game.Image, stored.Image);
+		Assert.Equal(game.ImageAssetId, stored.ImageAssetId);
 		Assert.Equal(game.CreatedAt, stored.CreatedAt);
 		Assert.Equal(game.UpdatedAt, stored.UpdatedAt);
 		Assert.Equal(GameStatus.Draft, stored.Status);
@@ -46,10 +47,11 @@ public sealed class GamePersistenceTests : IDisposable
 		await using var context = CreateContext();
 
 		await context.Database.MigrateAsync();
-		context.Games.AddRange(Game.Create("Game", "first", "image").Value!,
-			Game.Create("Game", "second", "image").Value!);
+		await MediaTestData.EnsureCoverAsync(context);
+		context.Games.AddRange(Game.Create("Game", "first", MediaTestData.CoverId).Value!,
+			Game.Create("Game", "second", MediaTestData.CoverId).Value!);
 		await context.SaveChangesAsync();
-		context.Games.Add(Game.Create("Other", "first", "image").Value!);
+		context.Games.Add(Game.Create("Other", "first", MediaTestData.CoverId).Value!);
 		await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 		Assert.Equal(2, await context.Games.CountAsync());
 	}

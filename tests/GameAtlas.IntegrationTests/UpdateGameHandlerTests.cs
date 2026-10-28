@@ -24,7 +24,7 @@ public class UpdateGameHandlerTests
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-			var result = await mediator.Send(new UpdateGame(game.Id, " Updated ", " updated ", " image ",
+			var result = await mediator.Send(new UpdateGame(game.Id, " Updated ", " updated ", MediaTestData.CoverId,
 				GameStatus.Published));
 
 			Assert.True(result.IsSuccess);
@@ -41,7 +41,7 @@ public class UpdateGameHandlerTests
 		Assert.Equal(game.CreatedAt, stored.CreatedAt);
 		Assert.Equal("Updated", stored.Name);
 		Assert.Equal("updated", stored.Slug);
-		Assert.Equal("image", stored.Image);
+		Assert.Equal(MediaTestData.CoverId, stored.ImageAssetId);
 		Assert.Equal(GameStatus.Published, stored.Status);
 		var returned = await reloadScope.ServiceProvider.GetRequiredService<IMediator>().Send(
 			new UpdateGame(game.Id, Status: GameStatus.Draft));
@@ -87,9 +87,9 @@ public class UpdateGameHandlerTests
 		var game = await SeedAsync(factory, "game");
 		await using var scope = factory.Services.CreateAsyncScope();
 		var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-		var unchanged = await mediator.Send(new UpdateGame(game.Id, " Game ", " game ", " cover ",
+		var unchanged = await mediator.Send(new UpdateGame(game.Id, " Game ", " game ", MediaTestData.CoverId,
 			GameStatus.Draft));
-		var invalid = await mediator.Send(new UpdateGame(game.Id, Name: "New", Image: " "));
+		var invalid = await mediator.Send(new UpdateGame(game.Id, Name: "New", ImageAssetId: Optional<Guid?>.From(null)));
 		var empty = await mediator.Send(new UpdateGame(game.Id));
 
 		Assert.True(unchanged.IsSuccess);
@@ -148,9 +148,10 @@ public class UpdateGameHandlerTests
 
 	internal static async Task<Game> SeedAsync(GameApiFactory factory, string slug)
 	{
+		await MediaTestData.EnsureCoverAsync(factory);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var game = Game.Create("Game", slug, "cover").Value!;
+		var game = Game.Create("Game", slug, MediaTestData.CoverId).Value!;
 
 		context.Games.Add(game);
 		await context.SaveChangesAsync();

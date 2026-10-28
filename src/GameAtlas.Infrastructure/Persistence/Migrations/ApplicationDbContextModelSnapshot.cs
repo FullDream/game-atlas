@@ -115,9 +115,7 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.IsRequired()
 						.HasColumnType("TEXT");
 
-					b.Property<string>("Image")
-						.IsRequired()
-						.HasMaxLength(2048)
+					b.Property<Guid>("ImageAssetId")
 						.HasColumnType("TEXT");
 
 					b.Property<string>("Name")
@@ -139,6 +137,8 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.HasColumnType("TEXT");
 
 					b.HasKey("Id");
+
+					b.HasIndex("ImageAssetId");
 
 					b.HasIndex("Slug")
 						.IsUnique();
@@ -495,6 +495,17 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.HasForeignKey("MapId")
 						.OnDelete(DeleteBehavior.Cascade)
 						.IsRequired();
+				});
+
+			modelBuilder.Entity("GameAtlas.Domain.Games.Game", b =>
+				{
+					b.HasOne("GameAtlas.Domain.Media.ImageAsset", "Image")
+						.WithMany()
+						.HasForeignKey("ImageAssetId")
+						.OnDelete(DeleteBehavior.Restrict)
+						.IsRequired();
+
+					b.Navigation("Image");
 				});
 
 			modelBuilder.Entity("GameAtlas.Domain.Maps.Map", b =>

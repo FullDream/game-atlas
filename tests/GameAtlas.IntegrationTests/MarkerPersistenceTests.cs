@@ -72,7 +72,7 @@ public class MarkerPersistenceTests
 		var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 			reloaded.GetService<IMigrator>().MigrateAsync("20261023114301_Categories"));
 
-		Assert.Contains("Media_RestoreBackupForNonemptyMarkerAssets", rollback.Message);
+		Assert.Contains("GameImages_RestoreBackupForNonemptyGames", rollback.Message);
 
 		Assert.Equal(game.Id, (await reloaded.Games.SingleAsync()).Id);
 		Assert.Equal(group.Id, (await reloaded.CategoryGroups.SingleAsync()).Id);

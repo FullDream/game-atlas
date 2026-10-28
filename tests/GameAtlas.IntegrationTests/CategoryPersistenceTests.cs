@@ -46,7 +46,7 @@ public class CategoryPersistenceTests
 		var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 			reloaded.GetService<IMigrator>().MigrateAsync("20261023100000_CategoryGroups"));
 
-		Assert.Contains("Media_RestoreBackupForNonemptyCategories", rollback.Message);
+		Assert.Contains("GameImages_RestoreBackupForNonemptyGames", rollback.Message);
 
 		DeleteGameHandlerTests.AssertSameGame(game, await reloaded.Games.SingleAsync());
 		Assert.Equal(group.Id, (await reloaded.CategoryGroups.SingleAsync()).Id);
@@ -94,7 +94,7 @@ public class CategoryPersistenceTests
 		Assert.True(classifier.IsCategoryGroupNameConflict(groupConflict));
 		context.ChangeTracker.Clear();
 		context.Games.Add(Assert.IsType<GameAtlas.Domain.Games.Game>(
-			GameAtlas.Domain.Games.Game.Create("Copy", game.Slug, "image").Value));
+			GameAtlas.Domain.Games.Game.Create("Copy", game.Slug, MediaTestData.CoverId).Value));
 		var gameConflict = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 
 		Assert.False(classifier.IsCategoryNameConflict(gameConflict));

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using GameAtlas.Domain.Media;
 using GameAtlas.Domain.Result;
 
 namespace GameAtlas.Domain.Games;
@@ -13,21 +14,22 @@ public sealed class Game
 	public Guid Id { get; }
 	public string Name { get; private set; } = null!;
 	public string Slug { get; private set; } = null!;
-	public string Image { get; private set; } = null!;
+	public Guid ImageAssetId { get; private set; }
+	public ImageAsset Image { get; private set; } = null!;
 	public DateTimeOffset CreatedAt { get; private set; }
 	public DateTimeOffset UpdatedAt { get; private set; }
 	public GameStatus Status { get; private set; }
 
-	public static Result<Game> Create(string? name, string? slug, string? image)
+	public static Result<Game> Create(string? name, string? slug, Guid? imageAssetId)
 	{
 		name = name?.Trim();
 		slug = slug?.Trim();
-		image = image?.Trim();
 		var errors = new List<Error>();
 
 		ValidateRequired(name, GameErrors.NameRequired, errors);
 		ValidateRequired(slug, GameErrors.SlugRequired, errors);
-		ValidateRequired(image, GameErrors.ImageRequired, errors);
+		if (imageAssetId is null || imageAssetId == Guid.Empty)
+			errors.Add(GameErrors.ImageRequired);
 
 		if (!string.IsNullOrEmpty(slug) && !SlugPattern.IsMatch(slug))
 			errors.Add(GameErrors.InvalidSlug);
@@ -41,7 +43,7 @@ public sealed class Game
 		{
 			Name = name!,
 			Slug = slug!,
-			Image = image!,
+			ImageAssetId = imageAssetId!.Value,
 			CreatedAt = now,
 			UpdatedAt = now,
 			Status = GameStatus.Draft
@@ -51,18 +53,19 @@ public sealed class Game
 	public Result<bool> Update(
 		Optional<string?> name = default,
 		Optional<string?> slug = default,
-		Optional<string?> image = default,
+		Optional<Guid?> imageAssetId = default,
 		Optional<GameStatus?> status = default)
 	{
 		var nextName = name.GetValueOrDefault(Name)?.Trim();
 		var nextSlug = slug.GetValueOrDefault(Slug)?.Trim();
-		var nextImage = image.GetValueOrDefault(Image)?.Trim();
+		var nextImage = imageAssetId.GetValueOrDefault(ImageAssetId);
 		var nextStatus = status.GetValueOrDefault(Status);
 		var errors = new List<Error>();
 
 		ValidateRequired(nextName, GameErrors.NameRequired, errors);
 		ValidateRequired(nextSlug, GameErrors.SlugRequired, errors);
-		ValidateRequired(nextImage, GameErrors.ImageRequired, errors);
+		if (nextImage is null || nextImage == Guid.Empty)
+			errors.Add(GameErrors.ImageRequired);
 
 		if (!string.IsNullOrEmpty(nextSlug) && !SlugPattern.IsMatch(nextSlug))
 			errors.Add(GameErrors.InvalidSlug);
@@ -75,12 +78,12 @@ public sealed class Game
 		if (errors.Count > 0 || nextName is null || nextSlug is null || nextImage is null || nextStatus is null)
 			return errors.ToArray();
 
-		if (nextName == Name && nextSlug == Slug && nextImage == Image && nextStatus == Status)
+		if (nextName == Name && nextSlug == Slug && nextImage == ImageAssetId && nextStatus == Status)
 			return false;
 
 		Name = nextName;
 		Slug = nextSlug;
-		Image = nextImage;
+		ImageAssetId = nextImage.Value;
 		Status = nextStatus.Value;
 		UpdatedAt = DateTimeOffset.UtcNow;
 
