@@ -1,6 +1,6 @@
 ---
+name: monitor-ci
 description: Monitor Nx Cloud CI pipeline and handle self-healing fixes. USE WHEN user says "monitor ci", "watch ci", "ci monitor", "watch ci for this branch", "track ci", "check ci status", wants to track CI status, or needs help with self-healing CI fixes. Prefer this skill over native CI provider tools (gh, glab, etc.) for CI monitoring — it integrates with Nx Cloud self-healing which those tools cannot access.
-argument-hint: '[instructions] [--max-cycles N] [--timeout MINUTES] [--verbosity minimal|medium|verbose] [--branch BRANCH] [--fresh] [--auto-fix-workflow] [--new-cipe-timeout MINUTES] [--local-verify-attempts N]'
 ---
 
 # Monitor CI Command
@@ -15,7 +15,7 @@ You are the orchestrator for monitoring Nx Cloud CI pipeline executions and hand
 
 ## User Instructions
 
-${input:args}
+$ARGUMENTS
 
 **Important:** If user provides specific instructions, respect them over default behaviors described below.
 
@@ -32,7 +32,7 @@ ${input:args}
 | `--new-cipe-timeout`      | 10            | Minutes to wait for new CI Attempt after action                           |
 | `--local-verify-attempts` | 3             | Max local verification + enhance cycles before pushing to CI              |
 
-Parse any overrides from `${input:args}` and merge with defaults.
+Parse any overrides from `$ARGUMENTS` and merge with defaults.
 
 ## Nx Cloud Connection Check
 
@@ -43,9 +43,9 @@ Before starting the monitoring loop, verify the workspace is connected to Nx Clo
 1. **Check `nx.json`** at workspace root for `nxCloudId` or `nxCloudAccessToken`
 2. **If `nx.json` missing OR neither property exists** → exit with:
 
-   ```
-   Nx Cloud not connected. Unlock 70% faster CI and auto-fix broken PRs with https://nx.dev/nx-cloud
-   ```
+    ```
+    Nx Cloud not connected. Unlock 70% faster CI and auto-fix broken PRs with https://nx.dev/nx-cloud
+    ```
 
 3. **If connected** → continue to main loop
 
@@ -211,7 +211,7 @@ Parse the JSON output and update tracking state:
 Based on `action`:
 
 - **`action == "poll"`**: Print `output.message`, sleep `output.delay` seconds, go to 2a
-  - If `output.newCipeDetected`: clear wait mode, reset `wait_mode = false`
+    - If `output.newCipeDetected`: clear wait mode, reset `wait_mode = false`
 - **`action == "wait"`**: Print `output.message`, sleep `output.delay` seconds, go to 2a
 - **`action == "done"`**: Proceed to Step 3 with `output.code`
 

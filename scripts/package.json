@@ -1,0 +1,13 @@
+{
+	"name": "@game-atlas/docs-tools",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
+	"dependencies": {
+		"github-slugger": "2.0.0",
+		"mdast-util-from-markdown": "2.1.0",
+		"mdast-util-to-string": "4.0.0"
+	}
+}

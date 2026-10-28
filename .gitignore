@@ -44,3 +44,6 @@ coverage/
 *.sqlite3-*
 **/storage/maps/
 **/storage/media/
+
+# Repository documentation tooling
+scripts/node_modules/

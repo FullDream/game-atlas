@@ -16,7 +16,7 @@ context: |
   - TanStack Query Angular with handwritten query-options classes
   - Orval Angular HttpClient generation per domain through OpenAPI tag filtering
   - Shared games/data-access for admin and web; union enums and type aliases
-  - Frontend conventions and module boundaries are defined in frontend/AGENTS.md
+  - Frontend guidance starts at frontend/AGENTS.md; module boundaries are in docs/frontend/architecture.md
 
   Architectural principles:
   - Separate domain logic from infrastructure.
@@ -31,10 +31,10 @@ context: |
     Do not use PUT. All mutable request fields are optional: omission preserves
     the current value, explicit null clears only nullable fields, objects merge
     recursively, and arrays are replaced as a whole.
-  - Follow the HTTP updates conventions in AGENTS.md, including Optional<T>,
+  - Follow the HTTP updates conventions in docs/api-conventions.md, including Optional<T>,
     atomic updates, and rejection of empty patches, unknown or read-only fields,
     and unsupported media types.
-  - Follow AGENTS.md for implementation conventions, including feature organization,
+  - Follow docs/backend.md and docs/styleguide.md for implementation conventions, including feature organization,
     persistence access, mapping, validation, error handling, and migration execution.
 
 rules:
