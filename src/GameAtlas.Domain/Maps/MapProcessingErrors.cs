@@ -4,6 +4,9 @@ namespace GameAtlas.Domain.Maps;
 
 public static class MapProcessingErrors
 {
+	public static readonly Error Interrupted = new(
+		"Map.Style.Interrupted", "Processing was interrupted by a server shutdown. Retry processing.");
+
 	public static readonly Error ProcessingFailed = new(
 		"Map.Style.ProcessingFailed", "The image could not be processed. Retry processing or create another style.");
 

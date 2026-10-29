@@ -1,3 +1,4 @@
+using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Maps.Storage;
 using GameAtlas.Domain.Result;
@@ -6,11 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameAtlas.Application.Maps.DeleteMapStyle;
 
-public sealed class DeleteMapStyleHandler(IApplicationDbContext context, IMapCleanup cleanup)
+public sealed class DeleteMapStyleHandler(IApplicationDbContext context, IMapCleanup cleanup, IMapMutationLock mutationLock,
+	IMapNotifications notifications)
 	: ICommandHandler<DeleteMapStyle, Result>
 {
 	public async ValueTask<Result> Handle(DeleteMapStyle command, CancellationToken cancellationToken)
 	{
+		using var mutationLease = await mutationLock.EnterAsync(cancellationToken);
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
 		var map = await context.Maps.AsTracking().ForMap(command.GameId, command.MapId).WithStyles()
 			.SingleOrDefaultAsync(cancellationToken);
@@ -26,6 +29,11 @@ public sealed class DeleteMapStyleHandler(IApplicationDbContext context, IMapCle
 		cleanup.Schedule(map.Id, command.StyleId);
 		await context.SaveChangesAsync(cancellationToken);
 		await transaction.CommitAsync(cancellationToken);
+
+		cleanup.Dispatch();
+		mutationLease.Dispose();
+		await notifications.ProcessingUpdatedAsync(new MapProcessingDto(map.Id, command.StyleId, null, null, 0, null,
+			Deleted: true));
 
 		return Result.Success();
 	}

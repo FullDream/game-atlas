@@ -233,9 +233,6 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.HasMaxLength(200)
 						.HasColumnType("TEXT");
 
-					b.Property<int>("Progress")
-						.HasColumnType("INTEGER");
-
 					b.Property<Guid>("SourceAssetId")
 						.HasColumnType("TEXT");
 

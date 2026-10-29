@@ -1,11 +1,12 @@
 using GameAtlas.Domain.Maps;
 using GameAtlas.Application.Media;
+using GameAtlas.Application.Maps.Processing;
 
 namespace GameAtlas.Application.Maps;
 
 public static class MapMappingExtensions
 {
-	public static MapDto ToDto(this Map map) => new(
+	public static MapDto ToDto(this Map map, IMapProgress? progress = null) => new(
 		map.Id,
 		map.GameId,
 		map.Name,
@@ -19,11 +20,11 @@ public static class MapMappingExtensions
 		map.Geometry.Resolutions,
 		map.DefaultStyleId,
 		map.Styles.OrderBy(style => style.CreationSequence)
-			.Select(style => style.ToDto()).ToArray(),
+			.Select(style => style.ToDto(progress)).ToArray(),
 		map.CreatedAt,
 		map.UpdatedAt);
 
-	public static MapStyleDto ToDto(this MapStyle style)
+	public static MapStyleDto ToDto(this MapStyle style, IMapProgress? progress = null)
 	{
 		var error = style.ErrorCode is { } code && style.ErrorMessage is { } message
 			? new MapProcessingErrorDto(code, message)
@@ -38,7 +39,7 @@ public static class MapMappingExtensions
 			style.BackgroundColor,
 			style.Source.ToDto(),
 			style.Status,
-			style.Progress,
+			progress?.Read(style) ?? (style.Status == MapProcessingStatus.Ready ? 100 : 0),
 			error,
 			template,
 			style.CreatedAt,

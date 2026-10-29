@@ -34,51 +34,39 @@ public class MapAcceptanceTests
 		var roads = map.Styles.Last();
 		var processor = factory.Services.GetRequiredService<MapProcessor>();
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
-		using var viewer = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token);
-		using var events = await client.GetAsync($"{MapTestData.PathFor(game.Id)}/events",
-			HttpCompletionOption.ResponseHeadersRead, viewer.Token);
-		using var reader = new StreamReader(await events.Content.ReadAsStreamAsync(timeout.Token));
+		await using var reader = new MapHubViewer(factory);
 
-		Assert.Equal("snapshot", (await MapEventStreamTests.ReadEventAsync(reader, timeout.Token)).Event);
+		await reader.StartAsync(map.Id, timeout.Token);
 		Assert.True(await processor.RunNextAsync(timeout.Token));
 		Assert.True(await processor.RunNextAsync(timeout.Token));
-		var partial = await UntilAsync(reader, data =>
-			data.GetProperty("styles")[0].GetProperty("status").GetString() == "failed" &&
-			data.GetProperty("styles")[1].GetProperty("status").GetString() == "ready", timeout.Token);
+		await reader.UntilStyleAsync(data => data.GetProperty("id").GetGuid() == atlas.Id &&
+			data.GetProperty("status").GetString() == "failed", timeout.Token);
+		await reader.UntilStyleAsync(data => data.GetProperty("id").GetGuid() == roads.Id &&
+			data.GetProperty("status").GetString() == "ready", timeout.Token);
 
-		Assert.Equal(roads.Id, partial.GetProperty("defaultStyleId").GetGuid());
+		await processor.CleanupAsync(timeout.Token);
 		using var retryFirst = await client.PostAsync(
 			$"{MapTestData.PathFor(game.Id)}/styles/{atlas.Id}/retry", null);
 
 		Assert.Equal(HttpStatusCode.OK, retryFirst.StatusCode);
-		Assert.True(await processor.RunNextAsync(timeout.Token));
-		var firstReady = await UntilAsync(reader, data =>
-			data.GetProperty("styles")[0].GetProperty("status").GetString() == "ready", timeout.Token);
+		await using var retryViewer = new MapHubViewer(factory);
 
-		Assert.Equal(atlas.Id, firstReady.GetProperty("defaultStyleId").GetGuid());
+		await retryViewer.StartAsync(map.Id, timeout.Token);
+		Assert.True(await processor.RunNextAsync(timeout.Token));
+		await retryViewer.UntilStyleAsync(data => data.GetProperty("id").GetGuid() == atlas.Id &&
+			data.GetProperty("status").GetString() == "ready", timeout.Token);
+		using var readyRead = await client.GetAsync(MapTestData.PathFor(game.Id));
+
+		Assert.Equal(atlas.Id, (await MapTestData.ReadAsync(readyRead)).DefaultStyleId);
 		using var patch = await client.PatchAsJsonAsync($"{MapTestData.PathFor(game.Id)}/styles/{atlas.Id}",
 			new { name = "Atlas new", backgroundColor = "#abc" });
 		var updated = (await patch.Content.ReadFromJsonAsync<MapStyleDto>(MapTestData.JsonOptions))!;
-		var published = await UntilAsync(reader, data =>
-			data.GetProperty("styles")[0].GetProperty("name").GetString() == "Atlas new", timeout.Token);
-
-		Assert.Equal("#AABBCC", published.GetProperty("styles")[0].GetProperty("backgroundColor").GetString());
+		Assert.Equal("#AABBCC", updated.BackgroundColor);
 		var tileUrl = updated.TilesUrlTemplate!.Replace("{z}", "0").Replace("{x}", "0").Replace("{y}", "0");
 		using var tile = await client.GetAsync(tileUrl);
 		using var pixels = NetVips.Image.NewFromBuffer(await tile.Content.ReadAsByteArrayAsync());
 
 		Assert.Equal(0d, pixels[0, 0][0]);
-		viewer.Cancel();
-		events.Dispose();
-		using var reconnectCancellation = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token);
-		using var reconnected = await client.GetAsync($"{MapTestData.PathFor(game.Id)}/events",
-			HttpCompletionOption.ResponseHeadersRead, reconnectCancellation.Token);
-		using var reconnectedReader = new StreamReader(await reconnected.Content.ReadAsStreamAsync(timeout.Token));
-		var snapshot = await MapEventStreamTests.ReadEventAsync(reconnectedReader, timeout.Token);
-
-		Assert.Equal("snapshot", snapshot.Event);
-		Assert.Equal("ready", snapshot.Data.GetProperty("styles")[0].GetProperty("status").GetString());
-		reconnectCancellation.Cancel();
 		using var deleteDefault = await client.DeleteAsync($"{MapTestData.PathFor(game.Id)}/styles/{atlas.Id}");
 		using var readRemaining = await client.GetAsync(MapTestData.PathFor(game.Id));
 		var remaining = await MapTestData.ReadAsync(readRemaining);
@@ -116,15 +104,4 @@ public class MapAcceptanceTests
 		await processor.CleanupAsync(timeout.Token);
 	}
 
-	private static async Task<JsonElement> UntilAsync(StreamReader reader, Func<JsonElement, bool> predicate,
-		CancellationToken cancellationToken)
-	{
-		while (true)
-		{
-			var item = await MapEventStreamTests.ReadEventAsync(reader, cancellationToken);
-
-			if (item.Event is "snapshot" or "progress" && predicate(item.Data))
-				return item.Data;
-		}
-	}
 }

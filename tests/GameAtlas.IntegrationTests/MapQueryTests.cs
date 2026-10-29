@@ -55,7 +55,7 @@ public class MapQueryTests
 	}
 
 	[Fact]
-	public async Task LargeSseSnapshotsUseFreshContextsAndAtMostTwoQueriesPerSnapshot()
+	public async Task GroupMembershipDoesNotReadOrPollEvenForManyStyles()
 	{
 		var capture = new SnapshotQueries();
 		await using var factory = new GameApiFactory(interceptor: capture);
@@ -75,19 +75,17 @@ public class MapQueryTests
 
 		capture.Contexts.Clear();
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-		using var events = await client.GetAsync($"{MapTestData.PathFor(game.Id)}/events",
-			HttpCompletionOption.ResponseHeadersRead, timeout.Token);
-		using var reader = new StreamReader(await events.Content.ReadAsStreamAsync(timeout.Token));
-		var snapshot = await MapEventStreamTests.ReadEventAsync(reader, timeout.Token);
+		await using var viewer = new MapHubViewer(factory);
 
-		Assert.Equal(100, snapshot.Data.GetProperty("styles").GetArrayLength());
+		await viewer.StartAsync(MapTestData.MapIdFor(game.Id), timeout.Token);
+		await viewer.JoinAsync(MapTestData.MapIdFor(game.Id), timeout.Token);
+		await viewer.JoinAsync(Guid.NewGuid(), timeout.Token);
 
-		while (capture.Contexts.Count < 2)
-			await Task.Delay(50, timeout.Token);
-
-		Assert.Contains(2, capture.Contexts.Values);
-		Assert.All(capture.Contexts.Values, count => Assert.InRange(count, 1, 2));
-		timeout.Cancel();
+		Assert.Empty(capture.Contexts);
+		Assert.False(viewer.HasProcessingEvents);
+		await viewer.UnwatchAsync(timeout.Token);
+		await Task.Delay(1200, timeout.Token);
+		Assert.Empty(capture.Contexts);
 	}
 
 	private sealed class SnapshotQueries : DbCommandInterceptor

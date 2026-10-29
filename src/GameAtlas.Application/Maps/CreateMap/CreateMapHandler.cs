@@ -1,3 +1,4 @@
+using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Domain.Result;
@@ -6,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameAtlas.Application.Maps.CreateMap;
 
-public sealed class CreateMapHandler(IApplicationDbContext context) : ICommandHandler<CreateMap, Result<MapDto>>
+public sealed class CreateMapHandler(IApplicationDbContext context, IMapMutationLock mutationLock) : ICommandHandler<CreateMap, Result<MapDto>>
 {
 	public async ValueTask<Result<MapDto>> Handle(CreateMap command, CancellationToken cancellationToken)
 	{
+		using var mutationLease = await mutationLock.EnterAsync(cancellationToken);
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
 
 		if (!await context.Games.AnyAsync(game => game.Id == command.GameId, cancellationToken))

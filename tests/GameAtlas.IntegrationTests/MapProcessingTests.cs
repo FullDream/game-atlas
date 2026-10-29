@@ -91,6 +91,7 @@ public class MapProcessingTests
 		Assert.Equal(atlas.Id, requeued!.Id);
 		Assert.Equal(0, requeued.Progress);
 		Assert.Null(requeued.Error);
+		await processor.CleanupAsync(CancellationToken.None);
 		Assert.True(await processor.RunNextAsync(CancellationToken.None));
 		using var readyRead = await client.GetAsync(MapTestData.PathFor(game.Id));
 		var ready = await MapTestData.ReadAsync(readyRead);
@@ -140,7 +141,7 @@ public class MapProcessingTests
 	}
 
 	[Fact]
-	public async Task InterruptedAttemptRecoversAtZeroAndOldCallbacksCannotPublish()
+	public async Task InterruptedAttemptFailsAndRequiresManualRetry()
 	{
 		await using var factory = new GameApiFactory();
 
@@ -160,7 +161,6 @@ public class MapProcessingTests
 
 			oldAttempt = style.AttemptId;
 			Assert.True(style.Claim(oldAttempt).IsSuccess);
-			Assert.True(style.ReportProgress(oldAttempt, 90).IsSuccess);
 			await context.SaveChangesAsync();
 		}
 
@@ -173,12 +173,15 @@ public class MapProcessingTests
 			var style = await context.MapStyles.SingleAsync();
 
 			Assert.Equal(id, style.Id);
-			Assert.Equal(0, style.Progress);
-			Assert.Equal(MapProcessingStatus.Queued, style.Status);
-			Assert.NotEqual(oldAttempt, style.AttemptId);
+			Assert.Equal(MapProcessingStatus.Failed, style.Status);
+			Assert.Equal(oldAttempt, style.AttemptId);
 			Assert.True(style.Publish(oldAttempt).IsFailure);
 		}
 
+		await processor.CleanupAsync(CancellationToken.None);
+		using var retry = await client.PostAsync($"{MapTestData.PathFor(game.Id)}/styles/{id}/retry", null);
+
+		retry.EnsureSuccessStatusCode();
 		Assert.True(await processor.RunNextAsync(CancellationToken.None));
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));
 		var ready = await MapTestData.ReadAsync(read);

@@ -215,34 +215,25 @@ public class MapTests
 		var attempt = style.AttemptId;
 		var other = map.Styles.Last();
 
-		Assert.True(style.ReportProgress(attempt, 50).IsFailure);
 		Assert.True(style.Claim(attempt).IsSuccess);
 		Assert.True(style.Claim(attempt).IsFailure);
-		Assert.True(style.ReportProgress(attempt, 60).IsSuccess);
-		Assert.True(style.ReportProgress(attempt, -1).IsSuccess);
-		Assert.Equal(60, style.Progress);
-		Assert.True(style.ReportProgress(attempt, 200).IsSuccess);
-		Assert.Equal(99, style.Progress);
 		Assert.True(other.Publish(attempt).IsFailure);
 		Assert.True(style.Publish(Guid.NewGuid()).IsFailure);
 		Assert.Null(map.DefaultStyleId);
 		Assert.True(style.Fail(attempt).IsSuccess);
-		Assert.Equal(99, style.Progress);
 		Assert.NotNull(style.ErrorMessage);
 		Assert.True(style.Retry().IsSuccess);
 		Assert.NotEqual(attempt, style.AttemptId);
-		Assert.Equal(0, style.Progress);
 		Assert.Null(style.ErrorCode);
 		Assert.True(style.Fail(attempt).IsFailure);
 		Assert.True(style.Retry().IsFailure);
 		Publish(style);
-		Assert.Equal(100, style.Progress);
 		Assert.Equal(style.Id, map.DefaultStyleId);
 		Assert.True(style.Retry().IsFailure);
 	}
 
 	[Fact]
-	public void RecoveryResetsOnlyInterruptedWorkAndPreservesOriginalMetadata()
+	public void RecoveryFailsOnlyInterruptedWorkAndPreservesOriginalMetadata()
 	{
 		var map = Create(Input());
 		var style = map.Styles.Single();
@@ -251,16 +242,15 @@ public class MapTests
 		var attempt = style.AttemptId;
 
 		Assert.True(style.Claim(attempt).IsSuccess);
-		Assert.True(style.ReportProgress(attempt, 80).IsSuccess);
 		Assert.True(style.Recover());
-		Assert.NotEqual(attempt, style.AttemptId);
-		Assert.Equal(0, style.Progress);
+		Assert.Equal(attempt, style.AttemptId);
+		Assert.Equal(MapProcessingStatus.Failed, style.Status);
+		Assert.Equal(MapProcessingErrors.Interrupted.Code, style.ErrorCode);
 		Assert.Null(map.DefaultStyleId);
 		Assert.Equal("png", style.Format);
 		Assert.Equal(100, style.ByteLength);
 		Assert.True(style.Publish(attempt).IsFailure);
-		Assert.True(style.Claim(style.AttemptId).IsSuccess);
-		Assert.True(style.Fail(style.AttemptId).IsSuccess);
+		Assert.True(style.Claim(style.AttemptId).IsFailure);
 		Assert.False(style.Recover());
 		Assert.Null(map.DefaultStyleId);
 		Assert.True(style.Retry().IsSuccess);

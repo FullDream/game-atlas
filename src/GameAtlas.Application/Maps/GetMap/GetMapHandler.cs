@@ -1,3 +1,4 @@
+using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Domain.Result;
 using Mediator;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameAtlas.Application.Maps.GetMap;
 
-public sealed class GetMapHandler(IApplicationDbContext context) : IQueryHandler<GetMap, Result<MapDto>>
+public sealed class GetMapHandler(IApplicationDbContext context, IMapProgress progress) : IQueryHandler<GetMap, Result<MapDto>>
 {
 	public async ValueTask<Result<MapDto>> Handle(GetMap query, CancellationToken cancellationToken)
 	{
@@ -13,7 +14,7 @@ public sealed class GetMapHandler(IApplicationDbContext context) : IQueryHandler
 		var map = await context.Maps.ForMap(query.GameId,
 			query.MapId).WithStyles().SingleOrDefaultAsync(cancellationToken);
 
-		Result<MapDto> result = map is null ? MapOperationErrors.NotFound : map.ToDto();
+		Result<MapDto> result = map is null ? MapOperationErrors.NotFound : map.ToDto(progress);
 
 		await transaction.CommitAsync(cancellationToken);
 

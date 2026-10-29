@@ -5,7 +5,7 @@ namespace GameAtlas.IntegrationTests;
 public class MapOpenApiTests
 {
 	[Fact]
-	public async Task DocumentsNineOperationsAndStaticTileContractWithoutChangingMarkerUnions()
+	public async Task DocumentsEightOperationsAndStaticTileContractWithoutChangingMarkerUnions()
 	{
 		await using var factory = new GameApiFactory("Development");
 		using var client = factory.CreateHttpsClient();
@@ -17,12 +17,12 @@ public class MapOpenApiTests
 		var operations = mapPaths.SelectMany(path => path.Value.EnumerateObject())
 			.Where(property => new[] { "get", "post", "patch", "delete", "put" }.Contains(property.Name)).ToArray();
 
-		Assert.Equal(9, operations.Length);
+		Assert.Equal(8, operations.Length);
 		Assert.DoesNotContain(operations, operation => operation.Name == "put");
 		Assert.Equal(new[]
 		{
 			"AddMapStyle", "CreateMap", "DeleteMap", "DeleteMapStyle", "GetMap", "ListMaps",
-			"RetryMapStyle", "StreamMapProgress", "UpdateMapStyle"
+			"RetryMapStyle", "UpdateMapStyle"
 		}, operations.Select(operation => operation.Value.GetProperty("operationId").GetString()).Order());
 		var create = paths.GetProperty("/games/{gameId}/maps").GetProperty("post");
 		var form = Resolve(root, create.GetProperty("requestBody").GetProperty("content")
@@ -63,10 +63,7 @@ public class MapOpenApiTests
 		Assert.Equal(new[] { "queued", "processing", "ready", "failed" },
 			Resolve(root, style.GetProperty("properties").GetProperty("status")).GetProperty("enum")
 				.EnumerateArray().Select(item => item.GetString()));
-		var events = paths.GetProperty("/games/{gameId}/maps/{mapId}/events").GetProperty("get");
-
-		Assert.True(events.GetProperty("responses").GetProperty("200").GetProperty("content")
-			.TryGetProperty("text/event-stream", out _));
+		Assert.False(paths.TryGetProperty("/games/{gameId}/maps/{mapId}/events", out _));
 		Assert.DoesNotContain(paths.EnumerateObject(), path => path.Name.Contains("/tiles/"));
 		Assert.Contains("without database checks", style.GetProperty("properties").GetProperty("tilesUrlTemplate")
 			.GetProperty("description").GetString());

@@ -4,6 +4,7 @@ using GameAtlas.Api.CategoryGroups;
 using GameAtlas.Api.Games;
 using GameAtlas.Api.Http;
 using GameAtlas.Api.Maps;
+using GameAtlas.Api.Maps.Events;
 using GameAtlas.Api.Markers;
 using GameAtlas.Api.Media;
 using GameAtlas.Api.Results;
@@ -46,6 +47,7 @@ api.MapCategories();
 api.MapMarkers();
 api.MapMaps();
 api.MapMedia();
+app.MapHub<MapHub>("/hubs/map");
 
 app.Run();
 

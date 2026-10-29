@@ -1,3 +1,5 @@
+using GameAtlas.Application.Maps;
+using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Application.Maps.Images;
 using GameAtlas.Application.Maps.Storage;
 using GameAtlas.Application.Media.Storage;
@@ -11,25 +13,43 @@ using Microsoft.Extensions.Logging;
 namespace GameAtlas.Infrastructure.Maps.Processing;
 
 public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storage, IMapImageProcessor images,
-	ILogger<MapProcessor> logger, IMediaStorage mediaStorage)
+	ILogger<MapProcessor> logger, IMediaStorage mediaStorage, MapProgressStore progressStore,
+	MapWorkQueue queue, IMapMutationLock mutationLock, IMapNotifications notifications)
 {
 	private readonly SemaphoreSlim writer = new(1, 1);
+
+	public Task WaitAsync(CancellationToken cancellationToken) => queue.WaitAsync(cancellationToken);
 
 	public async Task RecoverAsync(CancellationToken cancellationToken)
 	{
 		images.CheckCapabilities();
+		using var lease = await mutationLock.EnterAsync(cancellationToken);
 		await using var scope = scopes.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 		var styles = await context.MapStyles.AsTracking()
-			.Where(style => style.Status == MapProcessingStatus.Processing)
+			.Where(style => style.Status == MapProcessingStatus.Processing || style.Status == MapProcessingStatus.Queued)
+			.OrderBy(style => style.CreatedAt).ThenBy(style => style.CreationSequence).ThenBy(style => style.Id)
 			.ToListAsync(cancellationToken);
 
-		foreach (var style in styles)
-			style.Recover();
+		foreach (var style in styles.Where(style => style.Recover()))
+			context.Set<MapCleanupIntent>().Add(new MapCleanupIntent
+			{
+				MapId = style.MapId,
+				StyleId = style.Id,
+				OutputsOnly = true,
+				RetryAt = DateTimeOffset.UtcNow
+			});
 
 		await context.SaveChangesAsync(cancellationToken);
 		await transaction.CommitAsync(cancellationToken);
+		var intents = await context.Set<MapCleanupIntent>().ToArrayAsync(cancellationToken);
+
+		foreach (var intent in intents)
+			queue.ScheduleCleanup(intent.Id, intent.MapId!.Value, intent.StyleId, intent.RetryAt);
+
+		foreach (var style in styles.Where(style => style.Status == MapProcessingStatus.Queued))
+			queue.Enqueue(style.MapId, style.Id, style.AttemptId);
 	}
 
 	public async Task<bool> RunNextAsync(CancellationToken cancellationToken)
@@ -38,6 +58,8 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 
 		try
 		{
+			await CleanupCoreAsync(cancellationToken);
+
 			return await ProcessNextAsync(cancellationToken);
 		}
 		finally
@@ -53,7 +75,7 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		if (claim is null)
 			return false;
 
-		var progress = new MapProgressBuffer();
+		var progress = progressStore.Start(claim.StyleId, claim.AttemptId);
 		using var attemptCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 		Task? generation = null;
 		var reportedProgress = 0;
@@ -83,7 +105,8 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 
 				if (!generation.IsCompleted && currentProgress > reportedProgress)
 				{
-					await SaveProgressAsync(claim, currentProgress, cancellationToken);
+					await notifications.ProcessingUpdatedAsync(new MapProcessingDto(claim.MapId, claim.StyleId,
+						claim.AttemptId, MapProcessingStatus.Processing, currentProgress, null));
 					reportedProgress = currentProgress;
 				}
 			}
@@ -104,7 +127,7 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		{
 			await StopGenerationAsync(generation, attemptCancellation);
 			logger.LogError(exception, "Map style {StyleId} processing failed", claim.StyleId);
-			await FailAsync(claim, progress.Value, cancellationToken);
+			await FailAsync(claim, cancellationToken);
 		}
 
 		return true;
@@ -146,8 +169,13 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		await using var scope = scopes.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var now = DateTimeOffset.UtcNow;
-		var intents = await context.Set<MapCleanupIntent>().AsTracking().Where(intent => intent.RetryAt <= now)
-			.OrderBy(intent => intent.RetryAt).Take(100).ToListAsync(cancellationToken);
+		var due = queue.DueCleanup();
+
+		if (due.Length == 0)
+			return;
+
+		var intents = await context.Set<MapCleanupIntent>().AsTracking().Where(intent => due.Contains(intent.Id))
+			.ToListAsync(cancellationToken);
 
 		foreach (var intent in intents)
 		{
@@ -186,6 +214,16 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		}
 
 		await context.SaveChangesAsync(cancellationToken);
+
+		foreach (var id in due)
+		{
+			var retry = intents.FirstOrDefault(intent => intent.Id == id && context.Entry(intent).State != EntityState.Detached);
+
+			if (retry is null)
+				queue.CompleteCleanup(id);
+			else
+				queue.ScheduleCleanup(retry.Id, retry.MapId!.Value, retry.StyleId, retry.RetryAt);
+		}
 	}
 
 	private static async Task<bool> IsReferencedAsync(ApplicationDbContext context, MapCleanupIntent intent,
@@ -201,65 +239,79 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 
 	private async Task<Claim?> ClaimAsync(CancellationToken cancellationToken)
 	{
-		await using var scope = scopes.CreateAsyncScope();
-		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-		var target = await context.MapStyles.AsTracking().Include(style => style.Source)
-			.Where(style => style.Status == MapProcessingStatus.Queued)
-			.OrderBy(style => style.CreatedAt).ThenBy(style => style.CreationSequence).ThenBy(style => style.Id)
-			.FirstOrDefaultAsync(cancellationToken);
+		while (queue.TryTake(out var item))
+		{
+			using var lease = await mutationLock.EnterAsync(cancellationToken);
+			await using var scope = scopes.CreateAsyncScope();
+			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+			await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+			var target = await context.MapStyles.AsTracking().Include(style => style.Source)
+				.Where(style => style.Id == item!.StyleId && style.AttemptId == item.AttemptId &&
+					style.Status == MapProcessingStatus.Queued)
+				.FirstOrDefaultAsync(cancellationToken);
 
-		if (target is null)
-			return null;
+			if (target is null)
+				continue;
 
-		var result = target.Claim(target.AttemptId);
+			var result = target.Claim(target.AttemptId);
 
-		if (result.IsFailure)
-			return null;
+			if (result.IsFailure)
+				continue;
 
-		await context.SaveChangesAsync(cancellationToken);
-		await transaction.CommitAsync(cancellationToken);
+			await context.SaveChangesAsync(cancellationToken);
+			await transaction.CommitAsync(cancellationToken);
 
-		return new Claim(target.MapId, target.Id, target.AttemptId, target.SourceAssetId, target.Width, target.Height);
-	}
+			var dto = target.ToDto(progressStore);
 
-	private async Task SaveProgressAsync(Claim claim, int progress, CancellationToken cancellationToken)
-	{
-		await using var scope = scopes.CreateAsyncScope();
-		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-		var style = await LoadAsync(context, claim, cancellationToken);
+			lease.Dispose();
+			await notifications.StyleUpdatedAsync(target.MapId, dto);
 
-		if (style is null || style.ReportProgress(claim.AttemptId, progress).IsFailure)
-			return;
+			return new Claim(target.MapId, target.Id, target.AttemptId, target.SourceAssetId, target.Width, target.Height);
+		}
 
-		await context.SaveChangesAsync(cancellationToken);
-		await transaction.CommitAsync(cancellationToken);
+		return null;
 	}
 
 	private async Task PublishAsync(Claim claim, CancellationToken cancellationToken)
 	{
+		using var lease = await mutationLock.EnterAsync(cancellationToken);
 		await using var scope = scopes.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 		var style = await LoadAsync(context, claim, cancellationToken);
 
+		MapCleanupIntent? cleanup = null;
+
 		if (style is null || style.Publish(claim.AttemptId).IsFailure)
 		{
-			context.Set<MapCleanupIntent>().Add(new MapCleanupIntent
+			cleanup = new MapCleanupIntent
 			{
 				MapId = claim.MapId,
 				StyleId = claim.StyleId,
 				RetryAt = DateTimeOffset.UtcNow
-			});
+			};
+			context.Set<MapCleanupIntent>().Add(cleanup);
 		}
 
 		await context.SaveChangesAsync(cancellationToken);
 		await transaction.CommitAsync(cancellationToken);
+
+		if (cleanup is not null)
+		{
+			queue.ScheduleCleanup(cleanup.Id, claim.MapId, claim.StyleId, cleanup.RetryAt);
+
+			return;
+		}
+
+		var dto = style!.ToDto(progressStore);
+
+		lease.Dispose();
+		await notifications.StyleUpdatedAsync(claim.MapId, dto);
 	}
 
-	private async Task FailAsync(Claim claim, int progress, CancellationToken cancellationToken)
+	private async Task FailAsync(Claim claim, CancellationToken cancellationToken)
 	{
+		using var lease = await mutationLock.EnterAsync(cancellationToken);
 		await using var scope = scopes.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
@@ -268,26 +320,31 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		if (style is null)
 			return;
 
-		style.ReportProgress(claim.AttemptId, progress);
 		var result = style.Fail(claim.AttemptId);
 
 		if (result.IsFailure)
 			return;
 
-		context.Set<MapCleanupIntent>().Add(new MapCleanupIntent
+		var cleanup = new MapCleanupIntent
 		{
 			MapId = claim.MapId,
 			StyleId = claim.StyleId,
 			OutputsOnly = true,
 			RetryAt = DateTimeOffset.UtcNow
-		});
+		};
+		context.Set<MapCleanupIntent>().Add(cleanup);
 
 		await context.SaveChangesAsync(cancellationToken);
 		await transaction.CommitAsync(cancellationToken);
+		queue.ScheduleCleanup(cleanup.Id, claim.MapId, claim.StyleId, cleanup.RetryAt);
+		var dto = style.ToDto(progressStore);
+
+		lease.Dispose();
+		await notifications.StyleUpdatedAsync(claim.MapId, dto);
 	}
 
 	private static Task<MapStyle?> LoadAsync(ApplicationDbContext context, Claim claim,
-		CancellationToken cancellationToken) => context.MapStyles.AsTracking()
+		CancellationToken cancellationToken) => context.MapStyles.AsTracking().Include(style => style.Source)
 		.Where(style => style.Id == claim.StyleId && style.MapId == claim.MapId)
 		.SingleOrDefaultAsync(cancellationToken);
 

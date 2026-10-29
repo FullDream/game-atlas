@@ -26,7 +26,6 @@ public sealed class MapStyle
 	public int Height => checked((int)(Source.Height ?? 0));
 	public long ByteLength => Source.ByteLength;
 	public MapProcessingStatus Status { get; private set; }
-	public int Progress { get; private set; }
 	public string? ErrorCode { get; private set; }
 	public string? ErrorMessage { get; private set; }
 	public Guid AttemptId { get; private set; }
@@ -93,29 +92,12 @@ public sealed class MapStyle
 		return Result.Result.Success();
 	}
 
-	public Result.Result ReportProgress(Guid attemptId, int progress)
-	{
-		if (!IsCurrentAttempt(attemptId))
-			return MapProcessingErrors.StaleAttempt;
-
-		var nextProgress = Math.Max(Progress, Math.Clamp(progress, 0, 99));
-
-		if (nextProgress != Progress)
-		{
-			Progress = nextProgress;
-			UpdatedAt = DateTimeOffset.UtcNow;
-		}
-
-		return Result.Result.Success();
-	}
-
 	public Result.Result Publish(Guid attemptId)
 	{
 		if (!IsCurrentAttempt(attemptId))
 			return MapProcessingErrors.StaleAttempt;
 
 		Status = MapProcessingStatus.Ready;
-		Progress = 100;
 		UpdatedAt = DateTimeOffset.UtcNow;
 
 		return Result.Result.Success();
@@ -149,7 +131,9 @@ public sealed class MapStyle
 		if (Status != MapProcessingStatus.Processing)
 			return false;
 
-		Reset();
+		Fail(AttemptId);
+		ErrorCode = MapProcessingErrors.Interrupted.Code;
+		ErrorMessage = MapProcessingErrors.Interrupted.Message;
 
 		return true;
 	}
@@ -160,7 +144,6 @@ public sealed class MapStyle
 	private void Reset()
 	{
 		Status = MapProcessingStatus.Queued;
-		Progress = 0;
 		ErrorCode = null;
 		ErrorMessage = null;
 		AttemptId = Guid.CreateVersion7();

@@ -11,9 +11,8 @@ GET {{host}}/games/{{gameId}}/maps
 ### Read complete map and geometry
 GET {{host}}/games/{{gameId}}/maps/{{mapId}}
 
-### Current snapshot followed by changes and idle heartbeats
-GET {{host}}/games/{{gameId}}/maps/{{mapId}}/events
-Accept: text/event-stream
+### Negotiate SignalR (use a SignalR client for JoinMap; see README)
+POST {{host}}/hubs/map/negotiate?negotiateVersion=1
 
 ### Create an empty coordinate space before uploading any style
 POST {{host}}/games/{{gameId}}/maps

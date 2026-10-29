@@ -159,11 +159,12 @@ public class MapFaultTests
 		var storage = factory.Services.GetRequiredService<IMapStorage>();
 
 		Assert.True(File.Exists(factory.Services.GetRequiredService<IMediaStorage>().AssetPath(style.Source.Id)));
+		await factory.Services.GetRequiredService<MapProcessor>().RecoverAsync(CancellationToken.None);
 		Assert.True(await factory.Services.GetRequiredService<MapProcessor>().RunNextAsync(CancellationToken.None));
 	}
 
 	[Fact]
-	public async Task CompletePyramidIsPublicBeforeReadyCommitAndRecoveryRebuildsIt()
+	public async Task CompletePyramidIsRemovedWhenInterruptedPublicationFailsAtStartup()
 	{
 		await using var factory = new GameApiFactory();
 
@@ -205,10 +206,12 @@ public class MapFaultTests
 		var restarted = ActivatorUtilities.CreateInstance<MapProcessor>(factory.Services);
 
 		await restarted.RecoverAsync(CancellationToken.None);
-		Assert.True(await restarted.RunNextAsync(CancellationToken.None));
+		await restarted.CleanupAsync(CancellationToken.None);
+		Assert.False(await restarted.RunNextAsync(CancellationToken.None));
+		Assert.False(Directory.Exists(storage.TilesPath(map.Id, dto.Id)));
 		using var ready = await client.GetAsync(MapTestData.PathFor(game.Id));
 
-		Assert.Equal(MapProcessingStatus.Ready, (await MapTestData.ReadAsync(ready)).Styles.Single().Status);
+		Assert.Equal(MapProcessingStatus.Failed, (await MapTestData.ReadAsync(ready)).Styles.Single().Status);
 	}
 
 	[Fact]
@@ -252,6 +255,7 @@ public class MapFaultTests
 		faults.FailCleanup = false;
 		var restarted = ActivatorUtilities.CreateInstance<MapProcessor>(factory.Services);
 
+		await restarted.RecoverAsync(CancellationToken.None);
 		await restarted.CleanupAsync(CancellationToken.None);
 		Assert.True(File.Exists(factory.Services.GetRequiredService<IMediaStorage>().AssetPath(style.Source.Id)));
 	}

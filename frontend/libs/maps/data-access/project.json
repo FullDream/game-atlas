@@ -1,0 +1,23 @@
+{
+	"name": "maps-data-access",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/maps/data-access/src",
+	"prefix": "maps",
+	"projectType": "library",
+	"tags": ["type:data-access", "scope:maps", "platform:shared"],
+	"targets": {
+		"generate-api": {
+			"executor": "nx:run-commands",
+			"cache": false,
+			"options": { "command": "orval --config libs/maps/data-access/orval.config.ts" }
+		},
+		"typecheck": {
+			"executor": "nx:run-commands",
+			"cache": true,
+			"options": { "command": "tsc --project libs/maps/data-access/tsconfig.lib.json --noEmit" }
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

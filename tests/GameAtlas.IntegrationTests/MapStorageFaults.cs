@@ -7,4 +7,5 @@ internal sealed class MapStorageFaults
 	public bool FailAfterPromotion { get; init; }
 	public bool FailAfterPublicationMove { get; set; }
 	public bool FailCleanup { get; set; }
+	public Guid? CleanupStyleId { get; set; }
 }

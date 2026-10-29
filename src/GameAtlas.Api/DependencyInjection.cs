@@ -79,7 +79,7 @@ public static class DependencyInjection
 		services.AddOpenApi(options =>
 		{
 			options.CreateSchemaReferenceId = PublicSchemaNames.CreateReferenceId;
-			options.AddOperationTransformer<Maps.MapOperationTransformer>();
+
 			options.AddOptionalSupport();
 			options.AddOperationTransformer<CamelCaseQueryParametersTransformer>();
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();

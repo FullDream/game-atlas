@@ -18,8 +18,23 @@ internal sealed class MapFaultStorage(IMapStorage inner, MapStorageFaults faults
 			throw new IOException("Injected failure after immutable directory move.");
 	}
 
-	public void DeleteWork(Guid map, Guid style) => inner.DeleteWork(map, style);
-	public void DeleteTiles(Guid map, Guid style) => inner.DeleteTiles(map, style);
+	public void DeleteWork(Guid map, Guid style)
+	{
+		CheckCleanup(style);
+		inner.DeleteWork(map, style);
+	}
+
+	public void DeleteTiles(Guid map, Guid style)
+	{
+		CheckCleanup(style);
+		inner.DeleteTiles(map, style);
+	}
+
+	private void CheckCleanup(Guid style)
+	{
+		if (faults.FailCleanup && (faults.CleanupStyleId is null || faults.CleanupStyleId == style))
+			throw new IOException("Injected temporary output cleanup failure.");
+	}
 
 	public void DeleteOwned(Guid map, Guid? style = null)
 	{

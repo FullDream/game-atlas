@@ -1,5 +1,4 @@
 using GameAtlas.Api.Http;
-using GameAtlas.Api.Maps.Events;
 using GameAtlas.Api.Results;
 using GameAtlas.Application.Maps;
 using GameAtlas.Application.Maps.CreateMap;
@@ -21,9 +20,6 @@ public static class Endpoints
 		maps.MapGet("", ListMapsAsync).WithName("ListMaps").WithSummary("List maps");
 
 		maps.MapGet("/{mapId}", GetMapAsync).WithName("GetMap").WithSummary("Get map");
-		maps.MapGet("/{mapId}/events", StreamMapProgressAsync).WithName("StreamMapProgress")
-			.WithSummary("Stream map progress").Produces(StatusCodes.Status200OK, contentType: "text/event-stream")
-			.ProducesProblem(404).ProducesProblem(500);
 
 		maps.MapPost("", CreateMapAsync).WithName("CreateMap").WithSummary("Create map")
 			.Accepts<CreateMapRequest>("application/json")
@@ -56,10 +52,6 @@ public static class Endpoints
 
 	private static async Task<OutcomeResult<MapDto>> GetMapAsync(Guid gameId, Guid mapId, IMediator mediator,
 		CancellationToken cancellationToken) => await mediator.Send(new GetMap(gameId, mapId), cancellationToken);
-
-	private static Task<IResult> StreamMapProgressAsync(Guid gameId, Guid mapId, HttpContext context,
-		MapEventStream events,
-		CancellationToken cancellationToken) => events.OpenAsync(gameId, mapId, context, cancellationToken);
 
 	private static async Task<OutcomeResult<MapDto>> CreateMapAsync(Guid gameId, CreateMapRequest request,
 		IMediator mediator, CancellationToken cancellationToken) =>

@@ -33,7 +33,7 @@ Applies to generated API configuration, handwritten query options and their feat
 
 ## Current libraries and integration
 
-Keep the Games public alias `@game-atlas/games/data-access`. Its `generate-api` target selects only Games and referenced schemas. Add maps and media clients as needed rather than generating the whole backend into every domain.
+Keep the Games public alias `@game-atlas/games/data-access`. Its `generate-api` target selects only Games and referenced schemas. Maps now has shared `libs/maps/data-access` with Maps-only REST generation, handwritten HTTP query/mutation options. See its [consumer API](../../frontend/libs/maps/data-access/README.md). Frontend SignalR processing subscriptions are deferred; the package and WebSocket proxy configuration remain in place.
 
 Generated sources are formatted by a post-generation hook. Runtime API addressing is independently supplied through generated base-URL DI providers. See [TypeScript style](../styleguide.md#typescript-and-angular-templates) for model typing conventions.
 

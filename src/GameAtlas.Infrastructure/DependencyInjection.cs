@@ -1,5 +1,6 @@
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Maps.Images;
+using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Application.Maps.Storage;
 using GameAtlas.Application.Media.Storage;
 using GameAtlas.Application.Media.Inspection;
@@ -49,6 +50,11 @@ public static class DependencyInjection
 		services.AddSingleton<IMapImageProcessor, VipsMapImageProcessor>();
 		services.AddScoped<IMapCleanup, MapCleanup>();
 		services.AddSingleton<MapProcessor>();
+		services.AddSingleton<MapProgressStore>();
+		services.AddSingleton<IMapProgress>(provider => provider.GetRequiredService<MapProgressStore>());
+		services.AddSingleton<MapWorkQueue>();
+		services.AddSingleton<IMapProcessingQueue>(provider => provider.GetRequiredService<MapWorkQueue>());
+		services.AddSingleton<IMapMutationLock, MapMutationLock>();
 		services.AddHostedService<MapProcessingService>();
 
 		return services;
