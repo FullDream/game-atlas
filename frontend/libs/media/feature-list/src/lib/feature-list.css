@@ -1,4 +1,4 @@
-@reference '../../../../shared/ui/src/theme/styles.css';
+@reference '#theme.css';
 
 .media-content {
 	container: feature-list / inline-size;

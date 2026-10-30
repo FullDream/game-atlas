@@ -21,7 +21,7 @@ import { injectMutation } from '@tanstack/angular-query-experimental'
 import { defaultIfEmpty, finalize, map, Observable, of, shareReplay, take, tap } from 'rxjs'
 import { ConfirmationDialog } from '../confirmation-dialog/confirmation-dialog'
 import { getMediaErrorMessage } from '../get-media-error-message'
-import { MediaPickerDialog } from '../media-picker-dialog/media-picker-dialog'
+import { MediaPickerDialog } from '@game-atlas/shared/ui'
 import { MediaThumbnail } from '../media-thumbnail/media-thumbnail'
 import { MediaDetailsDismiss } from './media-details-dismiss'
 
@@ -214,10 +214,10 @@ export class MediaDetails {
 	}
 
 	protected chooseCover(): void {
-		const dialog = this.#dialogService.open<{ mode: 'image'; folderId: string | null }, ImageAsset>(
+		const dialog = this.#dialogService.open<{ mode: 'image' }, ImageAsset>(
 			MediaPickerDialog,
 			undefined,
-			{ mode: 'image', folderId: this.selectedAsset()?.folderId ?? null },
+			{ mode: 'image' },
 			{ ariaLabel: 'Choose a video cover' },
 		)
 

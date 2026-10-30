@@ -1,6 +1,6 @@
 # GameAtlas administration
 
-Browser-only Angular SPA with responsive Spartan navigation, a Games foundation page and a Media library for browsing folders, uploading files, editing metadata, moving items and confirmed deletion. Authentication is not implemented yet.
+Browser-only Angular SPA with responsive Spartan navigation, Games listing and dedicated creation/editing pages with publication and confirmed deletion and a Media library for browsing folders, uploading files, editing metadata, moving items and confirmed deletion. Authentication is not implemented yet.
 
 The root `App` hosts routing and toasts. `layout/layout` owns the persistent sidebar and page header around child routes, following the frontend layout and IAM feature organization in [headless-cms](https://github.com/FullDream/headless-cms/tree/main/frontend). Features contribute breadcrumbs, actions and loading state through `PageHeaderPortal`; navigation loading is tracked in the layout. Media is lazy loaded from `@game-atlas/media/feature-list`.
 
@@ -24,3 +24,7 @@ The sidebar collapses to icons on desktop and opens as a dismissible overlay on 
 The sidebar theme control offers Light, Default (system) and Dark. `ThemeSettings` uses ngxtension `injectLocalStorage` to persist the raw `game-atlas.theme` value and synchronize changes between tabs. The color-scheme meta tag is `light`, `light dark` or `dark`; CSS `light-dark()` tokens follow the active scheme, including live system changes. A synchronous script at the beginning of `<body>`, before `<app-root>`, reads the stored preference before Angular bootstraps. Unknown saved values fall back to system mode.
 
 Matching `theme-color` hints suggest white or dark zinc for supporting browser toolbars. System mode uses media queries; explicit Light/Dark activates only the selected hint. Both the early startup script and runtime preference changes keep the hints synchronized. Browsers decide which surrounding UI, if any, uses the suggested color.
+
+## Games routes
+
+/games hosts the searchable, sortable, paginated catalog. /games/new creates a draft; /games/:id loads its metadata directly through GET /games/{id}, including after reload. Cover selection uses the existing Media library. Status changes are saved with metadata. Deletion confirms removal of all game-owned maps and content while keeping library media. Public web and map editing are separate work.

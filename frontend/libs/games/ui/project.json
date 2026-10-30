@@ -1,0 +1,13 @@
+{
+	"name": "games-ui",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/games/ui/src",
+	"prefix": "games",
+	"projectType": "library",
+	"tags": ["type:ui", "scope:games", "platform:admin"],
+	"targets": {
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

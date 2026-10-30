@@ -25,3 +25,7 @@ Applies to HTTP endpoints, request and response contracts, API clients and contr
 - Reuse canonical `MediaFolder`, `ImageAsset`, and `VideoAsset` schemas from `MediaItem` and `MediaAsset` unions, concrete responses, and nested properties. Union references and discriminator mappings must target the same canonical components; do not expose parent-prefixed duplicates.
 - Concrete media schemas are ordinary objects with required literal `type` values and no single-variant discriminator wrapper. Video `preview` is nullable `ImageAsset`; nullable composition is separate from polymorphism. Keep true mixed unions and the runtime serialization attributes, which ensure exactly one `type` property in HTTP responses.
 - Apply normalization in the API OpenAPI layer and reject conflicting concrete representations before merging. Renaming schemas requires regenerating existing frontend clients and migrating their consumers in the same change. Continue serving the document and Scalar in development and generating clients explicitly over HTTP.
+
+## Game retrieval
+
+GET /games/{id} returns a draft or published game with the same seven fields as listing: id, name, slug, image, createdAt, updatedAt and status. The image is the canonical ImageAsset; maps are retrieved separately. Retrieval does not change timestamps. Valid missing or deleted identifiers return 404 ProblemDetails; malformed UUID identifiers return 400. OpenAPI exposes the operation as GetGame under the Games tag.

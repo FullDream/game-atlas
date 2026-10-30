@@ -1,0 +1,19 @@
+@let editor = context();
+
+<h2 class="text-sm font-semibold text-destructive">Delete this game</h2>
+<p class="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+	Permanently remove this game, all its maps and their content. Images and files in the media library are kept. This
+	action cannot be undone.
+</p>
+<button
+	ui-button
+	type="button"
+	variant="destructive"
+	class="mt-5"
+	[loading]="editor.deleting"
+	[disabled]="editor.busy"
+	(click)="editor.deleteGame()"
+	icon="matDeleteRound"
+>
+	Delete game
+</button>

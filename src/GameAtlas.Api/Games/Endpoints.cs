@@ -4,6 +4,7 @@ using GameAtlas.Application.Common.Pagination;
 using GameAtlas.Application.Games;
 using GameAtlas.Application.Games.CreateGame;
 using GameAtlas.Application.Games.DeleteGame;
+using GameAtlas.Application.Games.GetGame;
 using Mediator;
 
 namespace GameAtlas.Api.Games;
@@ -19,6 +20,12 @@ public static class Endpoints
 			.WithSummary("List games")
 			.WithDescription("Lists all game statuses with offset/limit pagination and optional name search. " +
 							 "Search ignores ASCII case. Without sortBy, ordering is unspecified.");
+
+		games.MapGet("/{id}", GetGameAsync)
+			.ProducesProblem(StatusCodes.Status404NotFound)
+			.WithName("GetGame")
+			.WithSummary("Get game")
+			.WithDescription("Returns a draft or published game with its complete library image. Missing games return 404.");
 
 		games.MapPost("", CreateGameAsync)
 			.ProducesProblem(StatusCodes.Status404NotFound)
@@ -45,6 +52,10 @@ public static class Endpoints
 
 		return games;
 	}
+
+	private static async Task<OutcomeResult<GameDto>> GetGameAsync(
+		Guid id, IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(new GetGame(id), cancellationToken);
 
 	private static async Task<OutcomeResult<GameDto>> CreateGameAsync(
 		CreateGameRequest request, IMediator mediator, CancellationToken cancellationToken) =>

@@ -12,15 +12,29 @@ export const APP_ROUTES: Routes = [
 			{
 				path: 'games',
 				title: 'Games',
-				loadComponent: foundation,
-				data: {
-					section: 'Games',
-					headline: 'A home for every game.',
-					description: 'Organize the games behind your maps, places and discoveries.',
-					note: 'Game management will be available here.',
-					icon: 'matSportsEsportsRound',
-				},
+				data: { section: 'Games' },
+				children: [
+					{
+						path: '',
+						pathMatch: 'full',
+						loadChildren: () =>
+							import('@game-atlas/games/feature-list').then(module => module.GAMES_ROUTES),
+					},
+					{
+						path: 'new',
+						title: 'New game',
+						loadChildren: () =>
+							import('@game-atlas/games/feature-create').then(module => module.GAME_CREATE_ROUTES),
+					},
+					{
+						path: ':id',
+						title: 'Edit game',
+						loadChildren: () =>
+							import('@game-atlas/games/feature-editor').then(module => module.GAME_EDITOR_ROUTES),
+					},
+				],
 			},
+
 			{
 				path: 'media',
 				title: 'Media',

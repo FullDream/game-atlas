@@ -40,3 +40,7 @@ Generated sources are formatted by a post-generation hook. Runtime API addressin
 The non-buildable `libs/shared/util` library (`type:util`, `scope:shared`, `platform:shared`) exports `toPromise` for Observable-to-Promise conversion at transport boundaries. Cancellation rejects with signal.reason and unsubscribes HTTP. See [Angular conventions](angular.md) for dialog and guard Observables.
 
 Do not introduce a generic repository, base-query framework, additional state store or overlapping httpResource cache. Apply the cache rules above to Media rename, move and deletion, with feature-owned error toasts. Refused deletions keep the item visible. Template layout and multiline declaration spacing are defined in the [style guide](../styleguide.md#typescript-and-angular-templates).
+
+## Cross-domain picker and query options
+
+Domain data-access must not inspect another domain's cache or import its models/options. Shared picker contracts and MEDIA_PICKER_SOURCE live in shared/util; the application provides the Media adapter. Keep query-option factories direct and readable: inject QueryClient normally, use mutation callback context where appropriate, retain source timestamps for initialData, and prefer built-in mutation scopes over custom promise-lock queues or Injector.get accessors.

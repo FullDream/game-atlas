@@ -1,0 +1,8 @@
+@reference '#theme.css';
+
+.game-banner {
+	@apply bg-[linear-gradient(125deg,color-mix(in_srgb,var(--muted)_70%,var(--primary)_8%),var(--muted),color-mix(in_srgb,var(--muted)_75%,var(--primary)_12%))];
+}
+.game-card-heading {
+	@apply [&>:not(.game-cover)]:translate-y-3 @[60rem]/games:group-data-[layout=list]/game-card:[&>:not(.game-cover)]:translate-y-0;
+}

@@ -28,9 +28,9 @@
 				<ng-icon [name]="folderIcon()" size="36" aria-hidden="true" />
 			</div>
 		} @else if (media.type === 'image') {
-			<media-thumbnail class="aspect-[4/3]" [image]="media" />
+			<ui-media-thumbnail class="aspect-[4/3]" [image]="media" />
 		} @else if (media.preview) {
-			<media-thumbnail class="aspect-[4/3]" [image]="media.preview" />
+			<ui-media-thumbnail class="aspect-[4/3]" [image]="media.preview" />
 		} @else {
 			<div class="bg-muted flex aspect-[4/3] items-center justify-center">
 				<ng-icon name="matVideoLibraryRound" size="36" aria-hidden="true" />

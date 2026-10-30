@@ -1,0 +1,132 @@
+<ng-template uiPageHeaderPortal [breadcrumbs]="breadcrumbs()" [loading]="loading()">
+	<a
+		ui-button
+		variant="outline"
+		routerLink="/games"
+		queryParamsHandling="preserve"
+		[disabled]="fields().submitting() || deleting()"
+	>
+		Cancel
+	</a>
+	<button
+		ui-button
+		type="submit"
+		form="game-editor-form"
+		icon="matSaveRound"
+		[loading]="fields().submitting()"
+		[disabled]="deleting() || !fields().dirty() || !game.data()"
+	>
+		Save changes
+	</button>
+</ng-template>
+@if (game.isPending()) {
+	<div class="p-4 md:p-6 max-w-304 mx-auto w-full" role="status" aria-label="Loading game" aria-busy="true">
+		<div class="mb-6 gap-5 flex items-center" aria-hidden="true">
+			<hlm-skeleton class="size-20" />
+			<div class="min-w-0 gap-2 flex flex-1 flex-col">
+				<div class="gap-3 flex flex-wrap items-center">
+					<hlm-skeleton class="h-8 w-52 max-w-full" />
+					<hlm-skeleton class="h-6 w-14" />
+				</div>
+				<hlm-skeleton class="h-5 w-20" />
+			</div>
+		</div>
+		<div class="mb-5 gap-2 flex flex-wrap" aria-hidden="true">
+			@for (tab of [0, 1, 2, 3]; track tab) {
+				<hlm-skeleton class="h-9 w-24" />
+			}
+		</div>
+		<games-fields skeleton editing />
+	</div>
+} @else if (game.isError() && (missing() || !game.data())) {
+	<ui-error-state class="m-6" icon="matCloudOffRound">
+		<ng-container uiErrorStateHeading>{{ missing() ? 'Game not found' : 'Could not load game' }}</ng-container>
+		<ng-container uiErrorStateDescription>
+			{{ missing() ? 'This game may have been deleted.' : 'Check your connection and try again.' }}
+		</ng-container>
+		@if (!missing()) {
+			<button ui-button variant="outline" icon="matRefreshRound" (click)="game.refetch()">Retry</button>
+		}
+		<a ui-button variant="outline" routerLink="/games" queryParamsHandling="preserve">Back to games</a>
+	</ui-error-state>
+} @else {
+	<form [formRoot]="fields" id="game-editor-form" class="p-4 md:p-6 max-w-304 mx-auto w-full">
+		<header class="mb-6">
+			@if (game.data(); as current) {
+				<div class="gap-5 flex items-center">
+					<ui-media-thumbnail class="size-20 rounded-lg bg-muted shrink-0 border" [image]="current.image" />
+					<div class="min-w-0">
+						<div class="gap-3 flex flex-wrap items-center">
+							<h1 class="text-2xl font-semibold tracking-tight truncate">{{ current.name }}</h1>
+							<span
+								class="font-semibold inline-flex items-center rounded-[.45rem] px-[.6rem] py-[.3rem] text-[.7rem]"
+								[class]="
+									current.status === 'published'
+										? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+										: 'bg-muted text-muted-foreground'
+								"
+							>
+								{{ current.status === 'published' ? 'Published' : 'Draft' }}
+							</span>
+						</div>
+						<p class="mt-2 text-sm text-muted-foreground">{{ current.slug }}</p>
+					</div>
+				</div>
+			}
+		</header>
+		@if (id() && game.isError()) {
+			<div hlmAlert class="mb-5 has-data-[slot=alert-action]:pr-28">
+				<ng-icon name="matCloudOffRound" aria-hidden="true" />
+				<h2 hlmAlertTitle>Couldn’t refresh this game</h2>
+				<p hlmAlertDescription>You’re viewing the last loaded version. Your edits are preserved.</p>
+				<div hlmAlertAction>
+					<button
+						ui-button
+						type="button"
+						variant="outline"
+						size="sm"
+						icon="matRefreshRound"
+						[loading]="game.isFetching()"
+						[disabled]="game.isFetching()"
+						(click)="game.refetch()"
+					>
+						Retry
+					</button>
+				</div>
+			</div>
+		}
+		@if (error()) {
+			<p role="alert" class="mb-5 text-sm text-destructive">{{ error() }}</p>
+		}
+
+		<div hlmTabs [tab]="activeTab()" activationMode="manual" class="gap-5">
+			<div
+				hlmTabsList
+				variant="line"
+				aria-label="Game settings"
+				class="gap-y-3 max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto"
+			>
+				<button hlmTabsTrigger="general" [routerLink]="['./']" queryParamsHandling="preserve">
+					<ng-icon name="matEditRound" aria-hidden="true" />
+					General
+				</button>
+				<button hlmTabsTrigger="maps" routerLink="maps" queryParamsHandling="preserve">
+					<ng-icon name="matMapRound" aria-hidden="true" />
+					Maps
+					<span class="text-xs text-muted-foreground">(—)</span>
+				</button>
+				<button hlmTabsTrigger="seo" routerLink="seo" queryParamsHandling="preserve">
+					<ng-icon name="matSellRound" aria-hidden="true" />
+					SEO
+				</button>
+				<button hlmTabsTrigger="danger-zone" routerLink="danger-zone" queryParamsHandling="preserve">
+					<ng-icon name="matDeleteRound" aria-hidden="true" />
+					Danger zone
+				</button>
+			</div>
+			<div [hlmTabsContent]="activeTab()">
+				<router-outlet [routerOutletData]="outletData()" />
+			</div>
+		</div>
+	</form>
+}

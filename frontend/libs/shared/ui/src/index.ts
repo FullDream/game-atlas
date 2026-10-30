@@ -10,3 +10,6 @@ export { WorkspaceBreadcrumbs } from './lib/navigation/workspace-breadcrumbs'
 export type { WorkspaceBreadcrumb } from './lib/navigation/workspace-navigation'
 
 export { TooltipOnOverflow } from './lib/tooltip/tooltip-on-overflow'
+export { ConfirmationDialog, type Confirmation } from './lib/confirmation-dialog/confirmation-dialog'
+export { MediaThumbnail } from './lib/media-thumbnail/media-thumbnail'
+export { MediaPickerDialog } from './lib/media-picker-dialog/media-picker-dialog'

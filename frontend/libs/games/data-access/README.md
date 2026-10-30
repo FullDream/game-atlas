@@ -2,9 +2,10 @@
 
 Shared backend access for admin and web: `type:data-access`, `scope:games`, `platform:shared`. Import from `@game-atlas/games/data-access`.
 
-- `GamesService`: generated list/create/update/delete transport.
+- `GamesService`: generated list/detail/create/update/delete transport.
 - Generated type aliases: `Game`, `ListGamesParams`, `UpdateGameRequest`, paginated responses and ProblemDetails contracts.
-- `GamesQueries`: handwritten list `queryOptions`, reusable by components or QueryClient.
+- `GamesQueryOptions`: handwritten list/detail query options and mutation options, reusable by components or QueryClient.
+- `getGameErrorMessage`: common HTTP/ProblemDetails messages for Games feature mutations.
 - `provideGamesBaseUrl`: application-owned runtime API addressing.
 
 ## Generation
@@ -29,9 +30,9 @@ Future domain libraries follow the same pattern: maps selects `Maps`, `Category 
 
 Applications provide Angular HTTP, TanStack Query and `provideGamesBaseUrl('/api')` (or another base URL). Admin development routes `/api` to its backend. Web can reuse the same library with its own providers; the library imports no application code.
 
-`GamesQueries.list(params)` normalizes backend pagination/search defaults, includes request parameters in its cache key and preserves unspecified sorting. Sort direction defaults to `asc` only when sortBy is supplied. Invalid direction-without-field input is not silently discarded. Generated Observables are converted to Promises at the query boundary; cancellation unsubscribes the request, and HttpErrorResponse/ProblemDetails remain failures.
+`GamesQueryOptions.getList(params)` normalizes backend pagination/search defaults, includes request parameters in its cache key and preserves unspecified sorting. Sort direction defaults to `asc` only when sortBy is supplied. Invalid direction-without-field input is not silently discarded. Generated Observables are converted to Promises at the query boundary; cancellation unsubscribes the request, and HttpErrorResponse/ProblemDetails remain failures.
 
-No mutations or invalidation policy are wrapped yet. There is no game-by-ID operation. UUID-v7 server identifiers remain strings, timestamps remain API strings, and PATCH omission is preserved rather than filled with nulls. The static GamesCatalog model/parser/JSON loader has been removed.
+GamesQueryOptions.getById(id) seeds initial data from the freshest matching successful cached list and preserves that list dataUpdatedAt as initialDataUpdatedAt. Detail and list queries share a 30-second stale time. Existing detail data wins; uncached or stale reads use GetGame with cancellation. create() writes the returned server-owned game into its detail cache. update() uses per-game TanStack mutation scopes, applies known detail edits optimistically and rolls back on failure before replacing with authoritative success data. Cover previews belong to the editor; data-access never inspects another domain cache. delete() uses the same mutation scope and retains cached data until server success, then cancels obsolete reads, removes details, removes stale list occurrences and invalidates lists. Mutations invalidate parameterized list prefixes when membership or pagination cannot be reconstructed safely; newly authoritative details are not immediately invalidated. UI reactions belong to feature callbacks. UUID-v7 server identifiers remain strings, timestamps remain API strings, and PATCH omission is preserved rather than filled with nulls. The static GamesCatalog model/parser/JSON loader has been removed.
 
 ```sh
 npm exec nx -- test games-data-access

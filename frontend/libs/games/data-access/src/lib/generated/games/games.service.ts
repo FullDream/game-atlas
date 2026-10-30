@@ -206,6 +206,36 @@ export class GamesService {
 		})
 	}
 	/**
+	 * Returns a draft or published game with its complete library image. Missing games return 404.
+	 * @summary Get game
+	 */
+	getGame<TData = Game>(id: string, options?: HttpClientBodyOptions): Observable<TData>
+	getGame<TData = Game>(id: string, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>
+	getGame<TData = Game>(id: string, options?: HttpClientResponseOptions): Observable<AngularHttpResponse<TData>>
+	getGame<TData = Game>(
+		id: string,
+		options?: HttpClientObserveOptions,
+	): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+		if (options?.observe === 'events') {
+			return this.http.get<TData>(`${this.baseUrl}/games/${id}`, {
+				...(options as Omit<NonNullable<typeof options>, 'observe'>),
+				observe: 'events',
+			})
+		}
+
+		if (options?.observe === 'response') {
+			return this.http.get<TData>(`${this.baseUrl}/games/${id}`, {
+				...(options as Omit<NonNullable<typeof options>, 'observe'>),
+				observe: 'response',
+			})
+		}
+
+		return this.http.get<TData>(`${this.baseUrl}/games/${id}`, {
+			...(options as Omit<NonNullable<typeof options>, 'observe'>),
+			observe: 'body',
+		})
+	}
+	/**
 	 * Updates supplied fields using JSON Merge Patch semantics with either supported media type. Supply at least one mutable field. Omitted fields are preserved; null is invalid. Identity and timestamps are read-only. Status supports draft and published. Unchanged values preserve updatedAt. Returns the complete stored game.
 	 * @summary Update game
 	 */
@@ -282,5 +312,6 @@ export class GamesService {
 
 export type ListGamesClientResult = NonNullable<PaginatedResultOfGame>
 export type CreateGameClientResult = NonNullable<Game>
+export type GetGameClientResult = NonNullable<Game>
 export type UpdateGameClientResult = NonNullable<Game>
 export type DeleteGameClientResult = NonNullable<void>

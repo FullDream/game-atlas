@@ -4,7 +4,7 @@
 		mediaDetailsDismiss
 		(dismissRequested)="requestClose()"
 		[showCloseButton]="false"
-		class="data-[side=right]:sm:max-w-md gap-0 p-0 overflow-y-auto data-[side=right]:w-full"
+		class="data-[side=right]:sm:max-w-md gap-0 p-0 [scrollbar-gutter:stable] overflow-y-auto data-[side=right]:w-full"
 	>
 		<section class="p-5">
 			<header class="mb-5 gap-3 flex items-center justify-between">
@@ -22,7 +22,7 @@
 
 			@if (selectedAsset(); as asset) {
 				@if (asset.type === 'image') {
-					<media-thumbnail class="aspect-video rounded-lg border" [image]="asset" />
+					<ui-media-thumbnail class="aspect-video rounded-lg border" [image]="asset" />
 				} @else {
 					<video
 						class="aspect-video rounded-lg bg-muted w-full"
@@ -57,7 +57,7 @@
 							<span class="text-sm font-medium">Video cover</span>
 
 							@if (preview(); as preview) {
-								<media-thumbnail class="h-28 rounded-lg" [image]="preview" />
+								<ui-media-thumbnail class="h-28 rounded-lg" [image]="preview" />
 							}
 
 							<div class="gap-2 flex">

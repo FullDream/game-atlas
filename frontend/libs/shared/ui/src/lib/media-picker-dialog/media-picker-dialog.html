@@ -1,0 +1,139 @@
+<header class="px-5 pt-5 pb-4">
+	<div class="gap-4 flex items-start justify-between">
+		<div>
+			<h2 class="text-lg font-semibold">Choose an image</h2>
+			<p class="mt-1 text-sm text-muted-foreground">Browse your library and select an image to use.</p>
+		</div>
+		<button
+			ui-button
+			variant="ghost"
+			size="icon-sm"
+			icon="matCloseRound"
+			aria-label="Close image picker"
+			(click)="dialog.close()"
+		></button>
+	</div>
+	<label class="mt-4 relative block">
+		<span class="sr-only">Search images and folders</span>
+		<ng-icon
+			name="matSearchRound"
+			class="left-3 text-muted-foreground pointer-events-none absolute top-1/2 -translate-y-1/2"
+			aria-hidden="true"
+		/>
+		<input
+			hlmInput
+			class="pl-9"
+			placeholder="Search images and folders…"
+			[(ngModel)]="search"
+			(ngModelChange)="offset.set(0)"
+		/>
+	</label>
+	<nav aria-label="Folder path" class="mt-3 gap-1 text-sm flex flex-wrap items-center">
+		<button ui-button variant="ghost" size="sm" (click)="navigateTo(-1)">Library</button>
+		@for (folder of path(); track folder.id; let index = $index) {
+			<ng-icon name="matChevronRightRound" aria-hidden="true" class="text-muted-foreground" />
+			<button
+				ui-button
+				variant="ghost"
+				size="sm"
+				(click)="navigateTo(index)"
+				[attr.aria-current]="$last ? 'page' : null"
+			>
+				{{ folder.name }}
+			</button>
+		}
+	</nav>
+</header>
+<div class="picker-content" [attr.aria-busy]="mediaQuery.isFetching()">
+	@if (mediaQuery.isPending()) {
+		<span class="sr-only" role="status">Loading images…</span>
+		<div class="picker-grid" aria-hidden="true">
+			@for (index of skeletons; track index) {
+				<div class="rounded-xl p-2 border">
+					<hlm-skeleton class="aspect-square w-full" />
+					<hlm-skeleton class="mt-3 h-4 w-3/4" />
+					<hlm-skeleton class="mt-2 h-3 w-1/2" />
+				</div>
+			}
+		</div>
+	} @else if (mediaQuery.isError()) {
+		<div class="py-10 text-center">
+			<p role="alert" class="mb-4 text-sm text-muted-foreground">
+				{{ getMediaErrorMessage(mediaQuery.error()) }}
+			</p>
+			<button ui-button variant="outline" (click)="mediaQuery.refetch()">Retry</button>
+		</div>
+	} @else {
+		<div class="picker-grid">
+			@for (item of mediaQuery.data()?.items ?? []; track item.id) {
+				<button
+					hlmAttachment
+					orientation="vertical"
+					class="picker-card w-full cursor-pointer text-left has-data-[slot=attachment-content]:w-full"
+					[class.selected]="selectedImage()?.id === item.id"
+					[attr.aria-pressed]="item.type === 'image' ? selectedImage()?.id === item.id : null"
+					(click)="item.type === 'folder' ? openFolder(item) : selectedImage.set(item)"
+				>
+					<div hlmAttachmentMedia [variant]="item.type === 'image' ? 'image' : 'icon'">
+						@if (item.type === 'folder') {
+							<ng-icon name="matFolderRound" size="40" aria-hidden="true" />
+						} @else {
+							<ui-media-thumbnail class="size-full" [image]="item" />
+						}
+					</div>
+					<div hlmAttachmentContent class="w-full">
+						<span hlmAttachmentTitle>{{ item.name }}</span>
+						<span hlmAttachmentDescription>
+							@if (item.type === 'folder') {
+								Folder
+							} @else {
+								{{ item.width }} × {{ item.height }} ·
+								{{ item.contentType.split('/')[1].toUpperCase() }}
+							}
+						</span>
+					</div>
+					@if (selectedImage()?.id === item.id) {
+						<span class="selection-mark"><ng-icon name="matCheckCircleRound" aria-hidden="true" /></span>
+					}
+				</button>
+			}
+		</div>
+		@if (!hasChoices()) {
+			<p class="py-12 text-sm text-muted-foreground text-center">
+				No images or folders found. Try another search.
+			</p>
+		}
+	}
+</div>
+<footer class="picker-footer">
+	<div class="gap-2 flex items-center">
+		<button
+			ui-button
+			variant="outline"
+			size="icon-sm"
+			icon="matChevronLeftRound"
+			aria-label="Previous page"
+			[disabled]="offset() === 0 || mediaQuery.isFetching()"
+			(click)="offset.set(offset() - 24)"
+		></button>
+		<span class="text-xs text-muted-foreground whitespace-nowrap" aria-live="polite">
+			{{ mediaQuery.data()?.total ? offset() + 1 : 0 }}–{{
+				offset() + (mediaQuery.data()?.items?.length ?? 0)
+			}}
+			of {{ mediaQuery.data()?.total ?? 0 }}
+		</span>
+		<button
+			ui-button
+			variant="outline"
+			size="icon-sm"
+			icon="matChevronRightRound"
+			aria-label="Next page"
+			[disabled]="offset() + 24 >= (mediaQuery.data()?.total ?? 0) || mediaQuery.isFetching()"
+			(click)="offset.set(offset() + 24)"
+		></button>
+	</div>
+	<div class="gap-2 flex items-center">
+		<button ui-button variant="outline" (click)="dialog.close()">Cancel</button>
+		<button ui-button [disabled]="!selectedImage()" (click)="dialog.close(selectedImage())">Use image</button>
+	</div>
+</footer>

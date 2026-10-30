@@ -1,0 +1,26 @@
+<ng-template uiPageHeaderPortal [breadcrumbs]="breadcrumbs">
+	<a
+		ui-button
+		variant="outline"
+		routerLink="/games"
+		queryParamsHandling="preserve"
+		[disabled]="fields().submitting()"
+	>
+		Cancel
+	</a>
+	<button ui-button type="submit" form="game-create-form" icon="matAddRound" [loading]="fields().submitting()">
+		Create game
+	</button>
+</ng-template>
+<form [formRoot]="fields" id="game-create-form" class="p-4 md:p-6 max-w-304 mx-auto w-full">
+	<header class="mb-6">
+		<h1 class="text-2xl font-semibold tracking-tight">Create game</h1>
+		<p class="mt-2 text-sm text-muted-foreground">
+			Add a new game to GameAtlas. After creating, you can organize its maps and content.
+		</p>
+	</header>
+	@if (error()) {
+		<p role="alert" class="mb-5 text-sm text-destructive">{{ error() }}</p>
+	}
+	<games-fields [fields]="fields" [cover]="cover()" [busy]="fields().submitting()" (chooseCover)="chooseCover()" />
+</form>

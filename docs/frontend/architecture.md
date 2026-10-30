@@ -10,7 +10,7 @@ The workspace uses Angular 22, Nx 23, TypeScript 6, Tailwind CSS 4 and Spartan U
 
 Build with `npm exec nx -- build admin`. Deploy `dist/apps/admin/browser` to static hosting with an `index.html` fallback for application routes and real 404s for missing assets. Production needs an explicit reverse-proxy or application base-URL configuration; the development proxy is not deployed. No production Node.js renderer is required.
 
-Games remains a foundation destination. Media provides folder browsing, upload, metadata editing, cover selection, moving and confirmed deletion through the library API. The sidebar supports desktop collapse and mobile overlays. There is no dashboard, fake account or authentication flow. Maps will be reached through a game, with groups/categories/markers inside a selected map; those screens are not scaffolded yet.
+Games provides a searchable, sortable, paginated catalog and dedicated /games/new and /games/:id editors, with library image selection, draft/publication controls and confirmed cascading deletion. Media provides folder browsing, upload, metadata editing, cover selection, moving and confirmed deletion through the library API. The sidebar supports desktop collapse and mobile overlays. There is no dashboard, fake account or authentication flow. Maps will be reached through a game, with groups/categories/markers inside a selected map; those screens are not scaffolded yet.
 
 `web` retains static prerendering and hydration, but currently has only a neutral entry. The earlier catalog component, fixture, parsing model and prerender HTTP interception have been removed. Public product features and publication strategy are separate work. Do not import administration-only code into web.
 
@@ -19,7 +19,7 @@ Games remains a foundation destination. Media provides folder browsing, upload, 
 - Tag each project with exactly one type (`type:app`, `type:feature`, `type:ui`, `type:data-access`, or `type:util`), one domain scope, and one platform. Do not use `type:shell`.
 - Domain scopes are `scope:games`, `scope:maps`, `scope:media`, and `scope:shared`. Category groups, categories, and markers belong to `scope:maps`. Reserve `scope:app` for application composition roots.
 - Platforms are `platform:admin`, `platform:web`, and `platform:shared`. Keep admin and web libraries isolated; platform-shared libraries depend only on other platform-shared libraries.
-- Games and maps may depend on media and domain-shared libraries; media depends only on media and domain-shared libraries. Domain-shared libraries depend only on other domain-shared libraries.
+- Domain libraries depend only on their own domain and shared libraries. Games, maps and media do not import one another. Cross-domain integration uses shared contracts with adapters wired at the application composition root. Domain-shared libraries depend only on other domain-shared libraries.
 - Follow the dependency directions in `eslint.config.mjs`; type, scope and platform constraints all apply. A project missing any dimension has no permission for cross-project imports.
 - Prefer non-buildable internal libraries. Create libraries only when needed.
 - Admin is a browser SPA in `apps/admin`. Web remains a separate statically prerendered neutral entry while its product features are rebuilt. Do not restore the removed static GamesCatalog, its fixture or UUID-v4-only parser.
@@ -27,7 +27,8 @@ Games remains a foundation destination. Media provides folder browsing, upload, 
 ## Feature layout
 
 - Place a multi-file component used by only one parent in its own folder inside that parent's functional folder. Keep components shared by multiple parents in a common functional area, each in its own folder when they have multiple files. Do not add a redundant grouping directory to a data-access library when its handwritten files already form one feature; place them directly in src/lib beside generated.
-- Group frontend files by functionality. When a component or feature has multiple related files (including templates and tests), colocate them in a dedicated functional folder. Avoid flat resource directories and type-based folders such as `components`, `services` or `models`.
+- A feature library already provides the functional boundary for its root component. Place the root component, template, styles, route configuration and root-specific helpers directly in `src/lib`; do not add a redundant `src/lib/feature-list`, `src/lib/game-editor` or `src/lib/game-create` wrapper. Name root component files and classes after the library: `feature-list.ts` / `FeatureList`, `feature-editor.ts` / `FeatureEditor`, `feature-create.ts` / `FeatureCreate`. Keep nested components in their own functional folders beside the root files, such as `game-card` or `game-general`.
+- Group frontend files by functionality. Colocate each nested or reusable multi-file component in its own functional folder; the feature library’s `src/lib` is the root component’s folder. Avoid type-based folders such as `components`, `services` or `models`.
 
 Media uses a compact grid, context menus and folder drag/drop, a right-side details drawer, header breadcrumbs with overflow, an independently scrolling center and bottom pagination. Query and mutation options live in `MediaQueryOptions`; UI uses `injectQuery`/`injectMutation` without a separate cache service.
 
@@ -61,8 +62,8 @@ Every project has one type, domain scope and platform tag. These are independent
 | Source scope | Allowed target scopes      |
 | ------------ | -------------------------- |
 | app          | games, maps, media, shared |
-| games        | games, media, shared       |
-| maps         | maps, media, shared        |
+| games        | games, shared              |
+| maps         | maps, shared               |
 | media        | media, shared              |
 | shared       | shared                     |
 
@@ -75,3 +76,11 @@ Reserve `scope:app` for composition roots. Category groups, categories and marke
 | shared          | shared                   |
 
 Use tags such as `type:data-access`, `scope:games`, `platform:shared`. A source missing a dimension has no matching cross-project import permission, and targets must satisfy every dimension. Circular checks remain enabled. These rules validate imports rather than unused metadata or tag cardinality.
+
+## Games management
+
+Admin composes Games routes from three independent libraries: libs/games/feature-list at /games, libs/games/feature-create at /games/new and libs/games/feature-editor at /games/:id. All use type:feature, scope:games and platform:admin; feature libraries do not import one another. Each library exports its own lazy route configuration, including its own guards. libs/games/ui (type:ui, scope:games, platform:admin) owns GameFields, its skeleton mode, the form model/schema; it depends only on shared UI/util contracts and never imports data-access. Shared libs/games/data-access remains the only Games transport/options boundary and exports getGameErrorMessage for both form features. Detail queries use a cached list item and its original dataUpdatedAt when available. Successful creation seeds the persisted detail; updates apply known detail metadata optimistically with rollback; deletion retains data until server success, then removes detail and reconciles lists. Use built-in per-game TanStack mutation scopes and feature submission guards instead of custom promise queues.
+
+ConfirmationDialog, MediaThumbnail and the ready-to-use MediaPickerDialog live in shared/ui. The picker calls injectQuery and injectMutation internally through MEDIA_PICKER_SOURCE, whose contract lives in shared/util. MediaPickerAdapter in Media data-access implements the port; apps/admin binds it using useExisting. Domain consumers never import Media code. Do not add MediaPickerView/MediaPickerSession controllers or domain-specific UI libraries to bridge domains.
+
+Games uses the reference card/settings layout: Grid/List views, card cover and banner area, statistic placeholders and map previews; the editor has General, Maps, SEO and Danger zone tabs. Only name, slug, cover and publication status are API-backed. Description, banner, release date, developer, SEO and maps screens remain explicitly labelled frontend placeholders, as requested; no unsupported fields are sent to the backend.

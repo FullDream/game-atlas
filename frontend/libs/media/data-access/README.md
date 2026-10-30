@@ -36,3 +36,9 @@ Upload options own only a readonly progress registry indexed by the key in uploa
 The typed uploadState(folderId) factory provides filters/select for injectMutationState. Selected values include a remove action and submittedAt; consumers never manipulate MutationCache. HTTP events remain inline in upload().mutationFn. The remove action hides cache deletion inside options. Retry cleanup happens in onMutate by local upload key.
 
 Folder/asset update variables are { id, patch }. Options resolve the optimistic baseline from folder details, mixed list items or embedded video previews; caller DTO snapshots are not accepted. With no cached baseline, the request still executes without a fabricated entity and success invalidates Media queries conservatively. Normal cached updates retain optimistic reconciliation and rollback.
+
+## Picker adapter
+
+MediaPickerAdapter implements the attachment-only MediaPickerSource port from shared/util. The application binds MEDIA_PICKER_SOURCE to this adapter. The shared dialog owns injectQuery, image selection and folder breadcrumbs, with no move operations. The adapter reads the current folder across transport pages, filters eligible folders and images before pagination, and returns accurate totals so excluded videos do not leave gaps in picker pages. The destination-folder dialog stays inside the Media feature and uses MediaQueryOptions mutations directly.
+
+MediaQueryOptions.folderChoices reads the selected folder across transport pages and paginates only folders. The destination dialog uses the same compact Attachment grid and footer as image selection; files do not consume destination-page slots. Self and descendant destinations remain blocked.

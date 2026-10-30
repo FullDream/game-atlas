@@ -1,0 +1,12 @@
+@reference '#theme.css';
+
+.games-grid,
+.games-list {
+	@apply gap-4 grid grid-cols-1 items-start @[46rem]/games:grid-cols-2;
+}
+.games-grid {
+	@apply @[68rem]/games:grid-cols-3 @[90rem]/games:grid-cols-4 @[134rem]/games:grid-cols-6;
+}
+.games-list {
+	@apply @[60rem]/games:grid-cols-1;
+}

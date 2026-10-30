@@ -91,6 +91,38 @@ export class MediaQueryOptions {
 		})
 	}
 
+	folderChoices(params: ListMediaParams = {}): CreateQueryOptions<PaginatedResultOfMediaItem, HttpErrorResponse> {
+		const normalized = mediaListParams(params)
+
+		return queryOptions<PaginatedResultOfMediaItem, HttpErrorResponse>({
+			queryKey: ['media', 'folder-choices', normalized],
+			queryFn: async ({ signal }) => {
+				const folders: MediaFolder[] = []
+				let offset = 0
+				let total = 0
+
+				do {
+					const page = await toPromise(
+						this.#mediaService.listMedia({ folderId: normalized.folderId, offset, limit: 120 }),
+						signal,
+					)
+
+					total = page.total
+					folders.push(...page.items.filter((item): item is MediaFolder => item.type === 'folder'))
+					offset += 120
+				} while (offset < total)
+
+				const filtered = folders.filter(folder =>
+					folder.name.toLowerCase().includes(normalized.search?.toLowerCase() ?? ''),
+				)
+				const start = normalized.offset ?? 0
+				const limit = normalized.limit ?? 24
+
+				return { items: filtered.slice(start, start + limit), offset: start, limit, total: filtered.length }
+			},
+		})
+	}
+
 	getCachedFolder(id: string | null): MediaFolder | undefined {
 		if (!id) return undefined
 

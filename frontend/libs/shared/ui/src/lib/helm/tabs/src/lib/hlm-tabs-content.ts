@@ -1,0 +1,19 @@
+import { Directive, input } from '@angular/core'
+import { BrnTabsContent } from '@spartan-ng/brain/tabs'
+import { classes } from '@spartan-ng/helm/utils'
+
+@Directive({
+	selector: '[hlmTabsContent]',
+	exportAs: 'hlmTabsContent',
+	hostDirectives: [{ directive: BrnTabsContent, inputs: ['brnTabsContent: hlmTabsContent'] }],
+	host: {
+		'data-slot': 'tabs-content',
+	},
+})
+export class HlmTabsContent {
+	readonly contentFor = input.required<string>({ alias: 'hlmTabsContent' })
+
+	constructor() {
+		classes(() => 'text-sm flex-1 outline-none')
+	}
+}

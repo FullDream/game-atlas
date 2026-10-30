@@ -40,7 +40,18 @@
 			"@spartan-ng/helm/label": ["./libs/shared/ui/src/lib/helm/label/src/index.ts"],
 			"@spartan-ng/helm/progress": ["./libs/shared/ui/src/lib/helm/progress/src/index.ts"],
 			"@spartan-ng/helm/empty": ["./libs/shared/ui/src/lib/helm/empty/src/index.ts"],
-			"@game-atlas/maps/data-access": ["./libs/maps/data-access/src/index.ts"]
+			"@game-atlas/maps/data-access": ["./libs/maps/data-access/src/index.ts"],
+			"@game-atlas/games/feature-list": ["./libs/games/feature-list/src/index.ts"],
+			"@spartan-ng/helm/tabs": ["./libs/shared/ui/src/lib/helm/tabs/src/index.ts"],
+			"@spartan-ng/helm/attachment": ["./libs/shared/ui/src/lib/helm/attachment/src/index.ts"],
+			"@spartan-ng/helm/toggle-group": ["./libs/shared/ui/src/lib/helm/toggle-group/src/index.ts"],
+			"@spartan-ng/helm/toggle": ["./libs/shared/ui/src/lib/helm/toggle/src/index.ts"],
+			"@spartan-ng/helm/input-group": ["./libs/shared/ui/src/lib/helm/input-group/src/index.ts"],
+			"@spartan-ng/helm/textarea": ["./libs/shared/ui/src/lib/helm/textarea/src/index.ts"],
+			"@spartan-ng/helm/alert": ["./libs/shared/ui/src/lib/helm/alert/src/index.ts"],
+			"@game-atlas/games/feature-editor": ["./libs/games/feature-editor/src/index.ts"],
+			"@game-atlas/games/feature-create": ["./libs/games/feature-create/src/index.ts"],
+			"@game-atlas/games/ui": ["./libs/games/ui/src/index.ts"]
 		}
 	},
 	"exclude": ["node_modules", "tmp"]

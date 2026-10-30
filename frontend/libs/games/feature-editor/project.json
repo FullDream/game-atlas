@@ -1,0 +1,13 @@
+{
+	"name": "games-feature-editor",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/games/feature-editor/src",
+	"prefix": "games",
+	"projectType": "library",
+	"tags": ["type:feature", "scope:games", "platform:admin"],
+	"targets": {
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

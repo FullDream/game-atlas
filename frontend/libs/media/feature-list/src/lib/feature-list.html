@@ -66,7 +66,7 @@
 	</label>
 </div>
 
-<div class="media-content min-h-0 px-4 pt-1 pb-4 sm:px-6 lg:px-8 flex-1 overflow-y-auto">
+<div class="media-content min-h-0 px-4 pt-1 pb-4 sm:px-6 lg:px-8 flex-1 [scrollbar-gutter:stable] overflow-y-auto">
 	@if (loadError(); as error) {
 		<ui-error-state class="mb-4" icon="matCloudOffRound" [variant]="mediaQuery.data() ? 'compact' : 'default'">
 			<ng-container uiErrorStateHeading>

@@ -1,0 +1,10 @@
+@let editor = context();
+
+<games-fields
+	[fields]="editor.fields"
+	[cover]="editor.cover"
+	editing
+	[busy]="editor.busy"
+	(chooseCover)="editor.chooseCover()"
+	(statusChange)="editor.changeStatus($event)"
+/>

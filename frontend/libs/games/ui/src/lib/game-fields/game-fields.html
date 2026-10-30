@@ -1,0 +1,252 @@
+@if (skeleton()) {
+	<div aria-hidden="true">
+		<hlm-skeleton class="mb-6 h-5 w-36" />
+		<div class="gap-6 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-8 grid grid-cols-1">
+			<div class="min-w-0 gap-5 flex flex-col">
+				@for (field of ['name', 'slug']; track field) {
+					<div class="gap-2 flex flex-col">
+						<hlm-skeleton class="h-5 w-14" />
+						<hlm-skeleton class="h-9 w-full" />
+						@if (field === 'slug') {
+							<hlm-skeleton class="h-4 w-4/5" />
+						}
+					</div>
+				}
+				<div class="gap-2 flex flex-col">
+					<hlm-skeleton class="h-5 w-44" />
+					<div class="rounded-lg overflow-hidden border">
+						<div class="gap-2 p-2 flex border-b">
+							@for (tool of [0, 1, 2, 3]; track tool) {
+								<hlm-skeleton class="size-8" />
+							}
+						</div>
+						<div class="min-h-32 gap-3 p-3 flex flex-col">
+							<hlm-skeleton class="h-3 w-4/5" />
+							<hlm-skeleton class="h-3 w-3/5" />
+						</div>
+					</div>
+					<hlm-skeleton class="h-5 w-4/5" />
+				</div>
+				<div class="gap-4 sm:grid-cols-2 grid">
+					@for (field of ['release', 'developer']; track field) {
+						<div class="gap-2 flex flex-col">
+							<hlm-skeleton class="h-5 w-24" />
+							<hlm-skeleton class="h-9 w-full" />
+						</div>
+					}
+				</div>
+				@if (editing()) {
+					<div class="gap-2 flex flex-col">
+						<hlm-skeleton class="h-5 w-32" />
+						<hlm-skeleton class="h-9 w-full" />
+					</div>
+				}
+			</div>
+			<div class="min-w-0 gap-6 flex flex-col">
+				<div class="gap-2 flex flex-col">
+					<hlm-skeleton class="h-5 w-24" />
+					<div class="gap-4 p-4 flex flex-wrap items-center rounded-[.65rem] border">
+						<hlm-skeleton class="size-30 rounded-lg shrink-0" />
+						<div class="gap-2 flex flex-col">
+							<hlm-skeleton class="h-5 w-32" />
+							<hlm-skeleton class="h-4 w-40" />
+							<hlm-skeleton class="h-4 w-32" />
+							<hlm-skeleton class="mt-2 h-9 w-28" />
+						</div>
+					</div>
+				</div>
+				<div class="gap-2 flex flex-col">
+					<hlm-skeleton class="h-5 w-44" />
+					<hlm-skeleton class="rounded-lg aspect-3/1 w-full" />
+					<hlm-skeleton class="h-4 w-4/5" />
+					<hlm-skeleton class="mt-1 h-9 w-28" />
+				</div>
+				<div class="gap-2 flex flex-col">
+					<hlm-skeleton class="h-4 w-full" />
+					<hlm-skeleton class="h-4 w-3/5" />
+				</div>
+			</div>
+		</div>
+	</div>
+} @else if (fields(); as formFields) {
+	<h2 class="mb-6 text-sm font-semibold">Basic information</h2>
+	<div class="gap-6 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-8 grid grid-cols-1">
+		<div class="min-w-0 gap-5 flex flex-col">
+			<hlm-field>
+				<label hlmFieldLabel for="game-name">
+					Name
+					<span class="text-destructive" aria-hidden="true">*</span>
+				</label>
+				<input
+					id="game-name"
+					hlmInput
+					[formField]="formFields.name"
+					autocomplete="off"
+					placeholder="e.g. Grand Theft Auto V"
+				/>
+			</hlm-field>
+			<hlm-field>
+				<label hlmFieldLabel for="game-slug">
+					Slug
+					<span class="text-destructive" aria-hidden="true">*</span>
+				</label>
+				<input
+					id="game-slug"
+					hlmInput
+					[formField]="formFields.slug"
+					autocomplete="off"
+					spellcheck="false"
+					placeholder="e.g. gta-v"
+				/>
+				<p hlmFieldDescription class="text-xs text-muted-foreground">
+					Used in URLs. Lowercase letters, numbers and single hyphens.
+				</p>
+			</hlm-field>
+			<hlm-field>
+				<label hlmFieldLabel [for]="description.id()">
+					Description
+					<span class="text-xs font-normal text-muted-foreground">Coming soon</span>
+				</label>
+				<div hlmInputGroup aria-disabled="true">
+					<div hlmInputGroupAddon align="block-start" class="border-b" aria-label="Description tools">
+						<hlm-toggle-group type="multiple" size="sm" disabled aria-label="Text formatting">
+							<button hlmToggleGroupItem value="bold" aria-label="Bold">
+								<ng-icon name="matFormatBoldRound" aria-hidden="true" />
+							</button>
+							<button hlmToggleGroupItem value="italic" aria-label="Italic">
+								<ng-icon name="matFormatItalicRound" aria-hidden="true" />
+							</button>
+							<button
+								ui-button
+								type="button"
+								variant="ghost"
+								size="icon-sm"
+								icon="matLinkRound"
+								disabled
+								aria-label="Add link"
+							></button>
+							<hlm-separator orientation="vertical" class="mx-2 h-4 data-vertical:self-center" />
+							<button hlmToggleGroupItem value="bulleted-list" aria-label="Bulleted list">
+								<ng-icon name="matFormatListBulletedRound" aria-hidden="true" />
+							</button>
+						</hlm-toggle-group>
+					</div>
+					<textarea
+						#description="hlmInputGroupTextarea"
+						hlmInputGroupTextarea
+						disabled
+						rows="5"
+						placeholder="Short description about the game…"
+						class="min-h-32"
+					></textarea>
+				</div>
+				<p hlmFieldDescription>Descriptions will be available in a future update.</p>
+			</hlm-field>
+			<div class="gap-4 sm:grid-cols-2 grid">
+				<div>
+					<label for="game-release" class="mb-2 text-sm font-medium block">Release date</label>
+					<div class="relative">
+						<ng-icon
+							name="matCalendarMonthRound"
+							class="left-3 text-muted-foreground absolute top-1/2 -translate-y-1/2"
+							aria-hidden="true"
+						/>
+						<input
+							id="game-release"
+							hlmInput
+							disabled
+							placeholder="Select date"
+							class="pl-9"
+							aria-describedby="game-additional-note"
+						/>
+					</div>
+				</div>
+				<div>
+					<label for="game-developer" class="mb-2 text-sm font-medium block">Developer</label>
+					<input
+						id="game-developer"
+						hlmInput
+						disabled
+						placeholder="e.g. Rockstar Games"
+						aria-describedby="game-additional-note"
+					/>
+				</div>
+			</div>
+			@if (editing()) {
+				<hlm-field>
+					<label hlmFieldLabel for="game-status">Publication status</label>
+					<input type="hidden" [formField]="formFields.status" />
+					<hlm-select
+						[value]="formFields.status().value()"
+						[itemToString]="statusLabel"
+						(valueChange)="statusChange.emit($event)"
+						[disabled]="busy()"
+					>
+						<hlm-select-trigger id="game-status" aria-label="Status" class="w-full">
+							<hlm-select-value />
+						</hlm-select-trigger>
+						<hlm-select-content *hlmSelectPortal>
+							<hlm-select-item value="draft">Draft</hlm-select-item>
+							<hlm-select-item value="published">Published</hlm-select-item>
+						</hlm-select-content>
+					</hlm-select>
+				</hlm-field>
+			}
+		</div>
+		<div class="min-w-0 gap-6 flex flex-col">
+			<hlm-field>
+				<label hlmFieldLabel for="game-cover">
+					Cover image
+					<span class="text-destructive" aria-hidden="true">*</span>
+				</label>
+				<input type="hidden" [formField]="formFields.imageAssetId" />
+				<div class="gap-4 border-border p-4 flex flex-wrap items-center rounded-[.65rem] border">
+					@if (cover(); as image) {
+						<ui-media-thumbnail class="game-cover-preview" [image]="image" />
+					} @else {
+						<div
+							class="game-cover-preview bg-muted/40 text-muted-foreground flex items-center justify-center border border-dashed"
+						>
+							<ng-icon name="matImageRound" size="36" aria-hidden="true" />
+						</div>
+					}
+					<div class="min-w-0">
+						<p class="text-sm font-medium">Choose cover image</p>
+						<p class="mt-1 text-xs text-muted-foreground">Select from your media library.</p>
+						<p class="mt-1 text-xs text-muted-foreground">Square images work best.</p>
+						<button
+							ui-button
+							id="game-cover"
+							type="button"
+							variant="outline"
+							class="mt-4"
+							[attr.aria-label]="cover() ? 'Change cover image' : 'Choose cover image'"
+							[disabled]="busy()"
+							(click)="chooseCover.emit()"
+						>
+							{{ cover() ? 'Change image' : 'Choose image' }}
+						</button>
+					</div>
+				</div>
+			</hlm-field>
+			<div>
+				<p class="mb-2 text-sm font-medium">
+					Banner image
+					<span class="ml-2 text-xs font-normal text-muted-foreground">Coming soon</span>
+				</p>
+				<div
+					class="banner-placeholder gap-2 rounded-lg border-border text-muted-foreground flex aspect-3/1 flex-col items-center justify-center border border-dashed text-[.7rem]"
+				>
+					<ng-icon class="opacity-40" name="matImageRound" size="32" aria-hidden="true" />
+					<span>Banner preview</span>
+				</div>
+				<p class="mt-2 text-xs text-muted-foreground">A wide image for the game header.</p>
+				<button ui-button type="button" variant="outline" class="mt-3" disabled>Change image</button>
+			</div>
+			<p id="game-additional-note" class="text-xs leading-relaxed text-muted-foreground">
+				Description, banner, release date and developer are preview fields. They will be available in a future
+				update.
+			</p>
+		</div>
+	</div>
+}

@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http'
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing'
 import { TestBed } from '@angular/core/testing'
 import { QueryClient } from '@tanstack/angular-query-experimental'
-import { GamesQueries } from './games-queries'
+import { GamesQueryOptions } from './games-query-options'
 import { provideGamesBaseUrl } from './generated/api.base-url'
 
 describe('GamesQueries', () => {
@@ -21,31 +21,31 @@ describe('GamesQueries', () => {
 	})
 
 	it('normalizes defaults and search without introducing sorting', () => {
-		const queries = TestBed.inject(GamesQueries)
+		const queries = TestBed.inject(GamesQueryOptions)
 
-		expect(queries.list().queryKey).toEqual(queries.list({ offset: 0, limit: 20, search: ' ' }).queryKey)
-		expect(queries.list({ search: ' atlas ' }).queryKey).toEqual(queries.list({ search: 'atlas' }).queryKey)
-		expect(queries.list().queryKey).not.toEqual(queries.list({ sortBy: 'name' }).queryKey)
-		expect(queries.list({ sortBy: 'name' }).queryKey).toEqual(
-			queries.list({ sortBy: 'name', sortDirection: 'asc' }).queryKey,
+		expect(queries.getList().queryKey).toEqual(queries.getList({ offset: 0, limit: 20, search: ' ' }).queryKey)
+		expect(queries.getList({ search: ' atlas ' }).queryKey).toEqual(queries.getList({ search: 'atlas' }).queryKey)
+		expect(queries.getList().queryKey).not.toEqual(queries.getList({ sortBy: 'name' }).queryKey)
+		expect(queries.getList({ sortBy: 'name' }).queryKey).toEqual(
+			queries.getList({ sortBy: 'name', sortDirection: 'asc' }).queryKey,
 		)
 	})
 
 	it('distinguishes pagination, search and sorting in cache keys', () => {
-		const queries = TestBed.inject(GamesQueries)
-		const base = queries.list().queryKey
+		const queries = TestBed.inject(GamesQueryOptions)
+		const base = queries.getList().queryKey
 
 		for (const params of [{ offset: 20 }, { limit: 10 }, { search: 'atlas' }, { sortBy: 'updatedAt' as const }]) {
-			expect(queries.list(params).queryKey).not.toEqual(base)
+			expect(queries.getList(params).queryKey).not.toEqual(base)
 		}
 
-		expect(queries.list({ sortBy: 'name', sortDirection: 'desc' }).queryKey).not.toEqual(
-			queries.list({ sortBy: 'name', sortDirection: 'asc' }).queryKey,
+		expect(queries.getList({ sortBy: 'name', sortDirection: 'desc' }).queryKey).not.toEqual(
+			queries.getList({ sortBy: 'name', sortDirection: 'asc' }).queryKey,
 		)
 	})
 
 	it('uses the generated transport and reuses cached data for an identical key', async () => {
-		const options = TestBed.inject(GamesQueries).list({ search: 'atlas' })
+		const options = TestBed.inject(GamesQueryOptions).getList({ search: 'atlas' })
 		const pending = client.fetchQuery(options)
 		const request = TestBed.inject(HttpTestingController).expectOne(req => req.url === '/api/games')
 		const result = { items: [], limit: 20, offset: 0, total: 0 }
@@ -60,7 +60,7 @@ describe('GamesQueries', () => {
 	})
 
 	it.each([422, 500])('retains HTTP %s as a rejected query with ProblemDetails', async status => {
-		const pending = client.fetchQuery(TestBed.inject(GamesQueries).list())
+		const pending = client.fetchQuery(TestBed.inject(GamesQueryOptions).getList())
 		const problem = { status, title: 'Request failed', errors: { Search: ['Invalid'] } }
 		const rejected = expect(pending).rejects.toMatchObject({ status, error: problem })
 		const request = TestBed.inject(HttpTestingController).expectOne(req => req.url === '/api/games')
@@ -70,7 +70,7 @@ describe('GamesQueries', () => {
 	})
 
 	it('cancels the underlying HTTP subscription when the query is cancelled', async () => {
-		const options = TestBed.inject(GamesQueries).list()
+		const options = TestBed.inject(GamesQueryOptions).getList()
 		const pending = client.fetchQuery(options)
 		const rejected = expect(pending).rejects.toThrow()
 		const request = TestBed.inject(HttpTestingController).expectOne(req => req.url === '/api/games')

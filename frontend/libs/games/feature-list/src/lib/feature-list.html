@@ -1,0 +1,135 @@
+<ng-template uiPageHeaderPortal [breadcrumbs]="breadcrumbs" [loading]="listing.isFetching()">
+	<a ui-button routerLink="/games/new" queryParamsHandling="preserve" icon="matAddRound">New game</a>
+</ng-template>
+<div
+	class="games-toolbar gap-5 p-4 @[640px]/games:px-6 @[640px]/games:pt-5 @[640px]/games:pb-6 flex flex-wrap items-center justify-between"
+>
+	<div class="min-w-0">
+		<h1 class="text-2xl font-semibold tracking-tight">Games</h1>
+		<p class="mt-1 text-sm text-muted-foreground">Manage games and their maps, categories and content.</p>
+	</div>
+	<div class="gap-3 flex w-full flex-wrap items-center @[640px]/games:w-auto">
+		<label class="games-search min-w-48 @[640px]/games:w-64 relative flex-1 @[640px]/games:flex-none">
+			<span class="sr-only">Search games</span>
+			<ng-icon
+				name="matSearchRound"
+				aria-hidden="true"
+				class="left-3 text-muted-foreground pointer-events-none absolute top-1/2 -translate-y-1/2"
+			/>
+			<input
+				hlmInput
+				class="pl-9"
+				placeholder="Search games…"
+				[(ngModel)]="search"
+				(ngModelChange)="offset.set(0)"
+			/>
+		</label>
+		<hlm-select [value]="sortSelection()" [itemToString]="sortLabel" (valueChange)="changeSort($event)">
+			<hlm-select-trigger aria-label="Sort games" class="min-w-44">
+				<ng-icon name="matSortRound" aria-hidden="true" />
+				<span class="text-muted-foreground">Sort:</span>
+				<hlm-select-value />
+			</hlm-select-trigger>
+			<hlm-select-content *hlmSelectPortal>
+				<hlm-select-item value="name:asc">Name A–Z</hlm-select-item>
+				<hlm-select-item value="name:desc">Name Z–A</hlm-select-item>
+				<hlm-select-item value="createdAt:desc">Newest first</hlm-select-item>
+				<hlm-select-item value="createdAt:asc">Oldest first</hlm-select-item>
+				<hlm-select-item value="updatedAt:desc">Recently updated</hlm-select-item>
+				<hlm-select-item value="updatedAt:asc">Least recently updated</hlm-select-item>
+			</hlm-select-content>
+		</hlm-select>
+		<div class="games-view-switch hidden @[60rem]/games:block">
+			<hlm-toggle-group
+				type="single"
+				variant="outline"
+				size="sm"
+				[nullable]="false"
+				[(ngModel)]="view"
+				aria-label="Display games"
+			>
+				<button hlmToggleGroupItem value="grid">
+					<ng-icon name="matGridViewRound" aria-hidden="true" />
+					Grid
+				</button>
+				<button hlmToggleGroupItem value="list">
+					<ng-icon name="matViewListRound" aria-hidden="true" />
+					List
+				</button>
+			</hlm-toggle-group>
+		</div>
+	</div>
+</div>
+<section
+	class="games-content min-h-0 px-4 pb-6 @[640px]/games:px-6 flex-1 scrollbar-gutter-stable overflow-auto"
+	aria-label="Games"
+	[attr.aria-busy]="listing.isFetching()"
+>
+	@if (listing.isError()) {
+		<ui-error-state class="mb-4" icon="matCloudOffRound" [variant]="listing.data() ? 'compact' : 'default'">
+			<ng-container uiErrorStateHeading>
+				@if (listing.data()) {
+					Couldn’t refresh your games
+				} @else {
+					Couldn’t load your games
+				}
+			</ng-container>
+			<ng-container uiErrorStateDescription>
+				{{ listing.data() ? 'Previous results are still shown. ' : '' }}Check your connection and try again.
+			</ng-container>
+			<button
+				ui-button
+				variant="outline"
+				icon="matRefreshRound"
+				[loading]="listing.isFetching()"
+				(click)="listing.refetch()"
+			>
+				Retry
+			</button>
+		</ui-error-state>
+	}
+
+	@if (listing.isPending()) {
+		<span role="status" class="sr-only">Loading games…</span>
+		<div [class]="view() === 'grid' ? 'games-grid' : 'games-list'">
+			@for (index of skeletons(); track index) {
+				<games-card skeleton [layout]="view()" />
+			}
+		</div>
+	} @else if (listing.data() && !listing.data()?.items?.length) {
+		<div hlmEmpty class="border">
+			<div hlmEmptyHeader>
+				<div hlmEmptyMedia variant="icon" class="size-16">
+					<ng-icon name="matSportsEsportsRound" class="text-[--spacing(10)]" aria-hidden="true" />
+				</div>
+				<h2 hlmEmptyTitle>{{ search() ? 'No matching games' : 'No games yet' }}</h2>
+				<p hlmEmptyDescription>
+					{{ search() ? 'Try another name or clear your search.' : 'Create a game to get started.' }}
+				</p>
+			</div>
+			<div hlmEmptyContent>
+				@if (search()) {
+					<button ui-button variant="outline" (click)="search.set(''); offset.set(0)">Clear search</button>
+				} @else {
+					<a ui-button routerLink="/games/new" queryParamsHandling="preserve" icon="matAddRound">
+						Create game
+					</a>
+				}
+			</div>
+		</div>
+	} @else if (listing.data()) {
+		<div [class]="view() === 'grid' ? 'games-grid' : 'games-list'">
+			@for (game of listing.data()?.items ?? []; track game.id) {
+				<games-card [game]="game" [layout]="view()" />
+			}
+		</div>
+	}
+</section>
+<hlm-numbered-pagination-query-params
+	class="games-pagination min-h-16 bg-background px-4 @[640px]/games:px-6 shrink-0 border-t"
+	[(offset)]="offset"
+	[(limit)]="limit"
+	(limitChange)="offset.set(0)"
+	[totalItems]="total()"
+	[pageSizes]="[24, 48, 72, 96]"
+/>

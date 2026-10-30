@@ -1,112 +1,86 @@
 import { Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { MediaQueryOptions, type ImageAsset, type MediaItem } from '@game-atlas/media/data-access'
+import { MediaQueryOptions, getMediaErrorMessage, type MediaItem } from '@game-atlas/media/data-access'
 import { Button } from '@game-atlas/shared/ui'
 import { NgIcon, provideIcons } from '@ng-icons/core'
-import { matFolderRound } from '@ng-icons/material-symbols/round'
-import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
-import { toast } from '@spartan-ng/brain/sonner'
+import {
+	matFolderRound,
+	matSearchRound,
+	matCloseRound,
+	matChevronLeftRound,
+	matChevronRightRound,
+} from '@ng-icons/material-symbols/round'
+import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 import { HlmInput } from '@spartan-ng/helm/input'
-import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental'
-import { getMediaErrorMessage } from '../get-media-error-message'
-import { MediaThumbnail } from '../media-thumbnail/media-thumbnail'
-
-type MediaPickerContext =
-	{ mode: 'image'; folderId: string | null } | { mode: 'move'; item: MediaItem; folderId: string | null }
-
+import { HlmAttachmentImports } from '@spartan-ng/helm/attachment'
+import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
+import { injectQuery, injectMutation } from '@tanstack/angular-query-experimental'
+type FolderPickerContext = { item: MediaItem; folderId: string | null }
 @Component({
-	selector: 'media-picker-dialog',
-	imports: [Button, HlmInput, NgIcon, MediaThumbnail, FormsModule],
+	selector: 'media-folder-picker-dialog',
+	imports: [Button, FormsModule, NgIcon, HlmInput, HlmAttachmentImports, HlmSkeleton],
 	templateUrl: './media-picker-dialog.html',
-	providers: [provideIcons({ matFolderRound })],
+	styleUrl: './media-picker-dialog.css',
+	providers: [
+		provideIcons({ matFolderRound, matSearchRound, matCloseRound, matChevronLeftRound, matChevronRightRound }),
+	],
 	host: {
-		'[attr.data-state]': 'dialog.state()',
-		class: 'flex max-h-[90dvh] w-[min(48rem,calc(100vw-2rem))] flex-col rounded-xl border bg-background p-5 text-foreground shadow-xl',
+		class: 'flex max-h-[90dvh] w-[min(52rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border bg-background text-foreground shadow-xl',
 	},
 })
 export class MediaPickerDialog {
-	protected readonly context = injectBrnDialogContext<MediaPickerContext>()
+	protected readonly context = injectBrnDialogContext<FolderPickerContext>()
 	protected readonly dialog = inject(BrnDialogRef)
-	readonly #mediaQueryOptions = inject(MediaQueryOptions)
-
+	readonly #options = inject(MediaQueryOptions)
 	protected readonly folderId = signal(this.context.folderId)
 	protected readonly offset = signal(0)
 	protected readonly search = signal('')
-
-	readonly #listParams = computed(() => ({
-		folderId: this.folderId() ?? undefined,
-		offset: this.offset(),
-		limit: 24,
-		search: this.search().trim(),
-	}))
-
-	protected readonly mediaQuery = injectQuery(() => this.#mediaQueryOptions.list(this.#listParams()))
-	protected readonly folderQuery = injectQuery(() => this.#mediaQueryOptions.folder(this.folderId()))
-
-	readonly #updateFolderMutation = injectMutation(() => this.#mediaQueryOptions.updateFolder())
-	readonly #updateAssetMutation = injectMutation(() => this.#mediaQueryOptions.updateAsset())
-
-	protected readonly getMediaErrorMessage = getMediaErrorMessage
-
-	protected readonly selectedImage = signal<ImageAsset | null>(null)
-
-	protected readonly busy = computed(
-		() => this.#updateFolderMutation.isPending() || this.#updateAssetMutation.isPending(),
+	protected readonly skeletons = Array.from({ length: 12 }, (value, index) => index)
+	protected readonly mediaQuery = injectQuery(() =>
+		this.#options.folderChoices({
+			folderId: this.folderId() ?? undefined,
+			offset: this.offset(),
+			limit: 24,
+			search: this.search(),
+		}),
 	)
-
+	protected readonly folderQuery = injectQuery(() => this.#options.folder(this.folderId()))
+	readonly #updateFolder = injectMutation(() => this.#options.updateFolder())
+	readonly #updateAsset = injectMutation(() => this.#options.updateAsset())
+	protected readonly busy = computed(() => this.#updateFolder.isPending() || this.#updateAsset.isPending())
+	protected readonly getMediaErrorMessage = getMediaErrorMessage
 	protected readonly errorMessage = computed(() => {
-		const error = this.#updateFolderMutation.error() ?? this.#updateAssetMutation.error()
+		const error = this.#updateFolder.error() ?? this.#updateAsset.error()
 
 		return error ? getMediaErrorMessage(error) : ''
 	})
-
-	protected readonly hasChoices = computed(() =>
-		this.mediaQuery
-			.data()
-			?.items.some(item => item.type === 'folder' || (this.context.mode === 'image' && item.type === 'image')),
+	protected readonly hasChoices = computed(() => this.mediaQuery.data()?.items.some(item => item.type === 'folder'))
+	protected readonly forbidden = computed(
+		() =>
+			this.context.item.type === 'folder' &&
+			(this.folderId() === this.context.item.id ||
+				!!this.folderQuery.data()?.ancestors.some(item => item.id === this.context.item.id)),
 	)
-
-	protected readonly forbidden = computed(() => {
-		if (this.context.mode !== 'move') return false
-
-		const item = this.context.item
-		const data = this.folderQuery.data()
-
-		return (
-			item.type === 'folder' &&
-			(data?.folder?.id === item.id || data?.ancestors.some(parent => parent.id === item.id))
-		)
-	})
-
 	protected navigateToFolder(id: string | null): void {
 		this.folderId.set(id)
 		this.offset.set(0)
 		this.search.set('')
-		this.selectedImage.set(null)
 	}
-
 	protected confirm(): void {
-		if (this.context.mode === 'image') {
-			this.dialog.close(this.selectedImage())
-
+		if (
+			this.busy() ||
+			this.forbidden() ||
+			this.mediaQuery.isFetching() ||
+			this.mediaQuery.isError() ||
+			(this.folderId() !== null && !this.folderQuery.isSuccess())
+		)
 			return
-		}
 
 		const item = this.context.item
+		const callbacks = { onSuccess: (updated: MediaItem) => this.dialog.close(updated) }
 
-		if (this.forbidden() || this.busy()) {
-			return
-		}
-
-		const callbacks = {
-			onSuccess: (updated: MediaItem) => this.dialog.close(updated),
-			onError: (error: unknown) => toast.error(getMediaErrorMessage(error)),
-		}
-
-		if (item.type === 'folder') {
-			this.#updateFolderMutation.mutate({ id: item.id, patch: { parentId: this.folderId() } }, callbacks)
-		} else {
-			this.#updateAssetMutation.mutate({ id: item.id, patch: { folderId: this.folderId() } }, callbacks)
-		}
+		if (item.type === 'folder')
+			this.#updateFolder.mutate({ id: item.id, patch: { parentId: this.folderId() } }, callbacks)
+		else this.#updateAsset.mutate({ id: item.id, patch: { folderId: this.folderId() } }, callbacks)
 	}
 }
