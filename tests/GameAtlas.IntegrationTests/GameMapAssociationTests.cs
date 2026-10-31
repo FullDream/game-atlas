@@ -26,7 +26,7 @@ public class GameMapAssociationTests
 		await MediaTestData.EnsureCoverAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var created = await client.PostAsync("/games", new StringContent(
-			"{\"name\":\"Game\",\"slug\":\"game\",\"imageAssetId\":\"019a0000-0000-7000-8000-000000000115\",\"mapId\":" + mapId + "}",
+			"{\"name\":\"Game\",\"slug\":\"game\",\"coverId\":\"019a0000-0000-7000-8000-000000000115\",\"mapId\":" + mapId + "}",
 			Encoding.UTF8, "application/json"));
 		var game = await created.Content.ReadFromJsonAsync<JsonElement>();
 

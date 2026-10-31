@@ -103,11 +103,8 @@
 				</p>
 			</hlm-field>
 			<hlm-field>
-				<label hlmFieldLabel [for]="description.id()">
-					Description
-					<span class="text-xs font-normal text-muted-foreground">Coming soon</span>
-				</label>
-				<div hlmInputGroup aria-disabled="true">
+				<label hlmFieldLabel [for]="description.id()">Description</label>
+				<div hlmInputGroup>
 					<div hlmInputGroupAddon align="block-start" class="border-b" aria-label="Description tools">
 						<hlm-toggle-group type="multiple" size="sm" disabled aria-label="Text formatting">
 							<button hlmToggleGroupItem value="bold" aria-label="Bold">
@@ -134,41 +131,40 @@
 					<textarea
 						#description="hlmInputGroupTextarea"
 						hlmInputGroupTextarea
-						disabled
+						[formField]="formFields.description"
 						rows="5"
 						placeholder="Short description about the game…"
 						class="min-h-32"
 					></textarea>
 				</div>
-				<p hlmFieldDescription>Descriptions will be available in a future update.</p>
+				<p hlmFieldDescription>Plain text. Formatting will be available in a future update.</p>
 			</hlm-field>
 			<div class="gap-4 sm:grid-cols-2 grid">
-				<div>
-					<label for="game-release" class="mb-2 text-sm font-medium block">Release date</label>
-					<div class="relative">
-						<ng-icon
-							name="matCalendarMonthRound"
-							class="left-3 text-muted-foreground absolute top-1/2 -translate-y-1/2"
-							aria-hidden="true"
+				<hlm-field>
+					<label hlmFieldLabel for="game-release">Release date</label>
+					<hlm-date-picker
+						captionLayout="dropdown"
+						[formField]="formFields.releaseDate"
+						[formatDate]="formatReleaseDate"
+						[autoCloseOnSelect]="true"
+						align="start"
+					>
+						<hlm-date-picker-input
+							inputId="game-release"
+							placeholder="dd.MM.yyyy"
+							showClear
+							[parseDate]="parseReleaseDate"
+							[formatInputDate]="formatReleaseDate"
 						/>
-						<input
-							id="game-release"
-							hlmInput
-							disabled
-							placeholder="Select date"
-							class="pl-9"
-							aria-describedby="game-additional-note"
-						/>
-					</div>
-				</div>
+					</hlm-date-picker>
+				</hlm-field>
 				<div>
 					<label for="game-developer" class="mb-2 text-sm font-medium block">Developer</label>
 					<input
 						id="game-developer"
 						hlmInput
-						disabled
+						[formField]="formFields.developer"
 						placeholder="e.g. Rockstar Games"
-						aria-describedby="game-additional-note"
 					/>
 				</div>
 			</div>
@@ -199,10 +195,10 @@
 					Cover image
 					<span class="text-destructive" aria-hidden="true">*</span>
 				</label>
-				<input type="hidden" [formField]="formFields.imageAssetId" />
+				<input type="hidden" [formField]="formFields.coverId" />
 				<div class="gap-4 border-border p-4 flex flex-wrap items-center rounded-[.65rem] border">
 					@if (cover(); as image) {
-						<ui-media-thumbnail class="game-cover-preview" [image]="image" />
+						<ui-media-thumbnail fit="cover" class="game-cover-preview" [image]="image" />
 					} @else {
 						<div
 							class="game-cover-preview bg-muted/40 text-muted-foreground flex items-center justify-center border border-dashed"
@@ -229,24 +225,47 @@
 					</div>
 				</div>
 			</hlm-field>
-			<div>
-				<p class="mb-2 text-sm font-medium">
-					Banner image
-					<span class="ml-2 text-xs font-normal text-muted-foreground">Coming soon</span>
-				</p>
-				<div
-					class="banner-placeholder gap-2 rounded-lg border-border text-muted-foreground flex aspect-3/1 flex-col items-center justify-center border border-dashed text-[.7rem]"
-				>
-					<ng-icon class="opacity-40" name="matImageRound" size="32" aria-hidden="true" />
-					<span>Banner preview</span>
+			<hlm-field>
+				<label hlmFieldLabel for="game-banner">Banner image</label>
+				<input type="hidden" [formField]="formFields.bannerId" />
+				@if (banner(); as image) {
+					<ui-media-thumbnail
+						fit="cover"
+						class="rounded-lg aspect-3/1 w-full overflow-hidden"
+						[image]="image"
+					/>
+				} @else {
+					<div
+						class="rounded-lg bg-muted text-muted-foreground flex aspect-3/1 w-full items-center justify-center border border-dashed"
+					>
+						<ng-icon name="matImageRound" size="32" aria-hidden="true" />
+					</div>
+				}
+				<p hlmFieldDescription>A wide image for the game header. Optional.</p>
+				<div class="gap-2 flex">
+					<button
+						ui-button
+						id="game-banner"
+						type="button"
+						variant="outline"
+						[disabled]="busy()"
+						(click)="chooseBanner.emit()"
+					>
+						{{ banner() ? 'Change image' : 'Choose image' }}
+					</button>
+					@if (banner()) {
+						<button
+							ui-button
+							type="button"
+							variant="ghost"
+							[disabled]="busy()"
+							(click)="removeBanner.emit()"
+						>
+							Remove banner
+						</button>
+					}
 				</div>
-				<p class="mt-2 text-xs text-muted-foreground">A wide image for the game header.</p>
-				<button ui-button type="button" variant="outline" class="mt-3" disabled>Change image</button>
-			</div>
-			<p id="game-additional-note" class="text-xs leading-relaxed text-muted-foreground">
-				Description, banner, release date and developer are preview fields. They will be available in a future
-				update.
-			</p>
+			</hlm-field>
 		</div>
 	</div>
 }

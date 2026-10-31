@@ -22,7 +22,7 @@ public class UpdateGameOpenApiTests
 		Assert.Equal(2, content.EnumerateObject().Count());
 		Assert.Equal(schema.GetRawText(), mergeSchema.GetRawText());
 		Assert.False(path.TryGetProperty("put", out _));
-		Assert.Equal(4, properties.EnumerateObject().Count());
+		Assert.Equal(8, properties.EnumerateObject().Count());
 		Assert.False(schema.TryGetProperty("required", out var required) && required.GetArrayLength() > 0);
 		Assert.False(schema.GetProperty("additionalProperties").GetBoolean());
 		Assert.Contains("at least one", operation.GetProperty("description").GetString());
@@ -48,8 +48,8 @@ public class UpdateGameOpenApiTests
 			.GetProperty("pattern").GetString());
 		Assert.False(properties.TryGetProperty("mapId", out _));
 		Assert.False(properties.TryGetProperty("image", out _));
-		Assert.Equal("uuid", properties.GetProperty("imageAssetId").GetProperty("format").GetString());
-		Assert.False(AllowsNull(root, properties.GetProperty("imageAssetId")));
+		Assert.Equal("uuid", properties.GetProperty("coverId").GetProperty("format").GetString());
+		Assert.False(AllowsNull(root, properties.GetProperty("coverId")));
 		Assert.False(AllowsNull(root, properties.GetProperty("status")));
 		var status = Resolve(root, properties.GetProperty("status"));
 
@@ -70,7 +70,7 @@ public class UpdateGameOpenApiTests
 		var dto = Resolve(root, responses.GetProperty("200").GetProperty("content")
 			.GetProperty("application/json").GetProperty("schema"));
 
-		Assert.Equal(new[] { "createdAt", "id", "image", "name", "slug", "status", "updatedAt" },
+		Assert.Equal(new[] { "banner", "categoriesCount", "cover", "createdAt", "description", "developer", "id", "maps", "markersCount", "name", "releaseDate", "slug", "status", "updatedAt" },
 			dto.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
 
 		foreach (var code in new[] { "400", "404", "409", "415", "422", "500" })
@@ -84,7 +84,7 @@ public class UpdateGameOpenApiTests
 		var createSchema = Resolve(root, paths.GetProperty("/games").GetProperty("post")
 			.GetProperty("requestBody").GetProperty("content").GetProperty("application/json").GetProperty("schema"));
 
-		Assert.Equal(3, createSchema.GetProperty("properties").EnumerateObject().Count());
+		Assert.Equal(7, createSchema.GetProperty("properties").EnumerateObject().Count());
 		Assert.Equal(new[] { "draft", "published" }, Resolve(root, dto.GetProperty("properties").GetProperty("status"))
 			.GetProperty("enum").EnumerateArray().Select(value => value.GetString()));
 		Assert.False(AllowsNull(root, dto.GetProperty("properties").GetProperty("status")));

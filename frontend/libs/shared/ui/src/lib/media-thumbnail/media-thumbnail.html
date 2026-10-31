@@ -9,7 +9,7 @@
 		[alt]="image().alt"
 		fill
 		[placeholder]="image().placeholder ?? false"
-		class="object-contain"
+		[style.object-fit]="fit()"
 		(error)="failedUrl.set(image().url)"
 	/>
 }

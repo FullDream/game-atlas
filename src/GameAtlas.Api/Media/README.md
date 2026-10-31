@@ -97,4 +97,4 @@ There are no media admission sessions, file leases, cleanup-intent tables, hoste
 
 ## Game covers
 
-Game imageAssetId references are protected uses: deleting a selected cover returns 409, even if its original file is missing. Replacing a cover or deleting a game releases that reference without deleting the asset. Explicit asset deletion succeeds only after all game and other resource references have been removed.
+Game coverId and bannerId references are protected uses: deleting a selected cover or banner returns 409, even if its original file is missing. Replacing a cover or deleting a game releases that reference without deleting the asset. Explicit asset deletion succeeds only after all game and other resource references have been removed.

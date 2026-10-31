@@ -3,6 +3,9 @@
 <games-fields
 	[fields]="editor.fields"
 	[cover]="editor.cover"
+	[banner]="editor.banner"
+	(chooseBanner)="editor.chooseBanner()"
+	(removeBanner)="editor.removeBanner()"
 	editing
 	[busy]="editor.busy"
 	(chooseCover)="editor.chooseCover()"

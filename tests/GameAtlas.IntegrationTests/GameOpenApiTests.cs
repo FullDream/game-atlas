@@ -27,12 +27,12 @@ public class GameOpenApiTests
 			Assert.Equal(JsonValueKind.String, value.ValueKind));
 		Assert.Contains(statusSchema.GetProperty("enum").EnumerateArray(), value => value.GetString() == "draft");
 		var dto = schemas.GetProperty("Game").GetProperty("properties");
-		Assert.Equal("#/components/schemas/ImageAsset", dto.GetProperty("image").GetProperty("$ref").GetString());
+		Assert.Equal("#/components/schemas/ImageAsset", dto.GetProperty("cover").GetProperty("$ref").GetString());
 		var request = schemas.GetProperty("CreateGameRequest").GetProperty("properties");
-		Assert.Equal("uuid", request.GetProperty("imageAssetId").GetProperty("format").GetString());
+		Assert.Equal("uuid", request.GetProperty("coverId").GetProperty("format").GetString());
 		Assert.False(request.TryGetProperty("image", out _));
 
-		foreach (var property in new[] { "id", "name", "slug", "image", "createdAt", "updatedAt", "status" })
+		foreach (var property in new[] { "id", "name", "slug", "cover", "banner", "releaseDate", "developer", "description", "markersCount", "categoriesCount", "maps", "createdAt", "updatedAt", "status" })
 			Assert.True(dto.TryGetProperty(property, out _));
 	}
 }

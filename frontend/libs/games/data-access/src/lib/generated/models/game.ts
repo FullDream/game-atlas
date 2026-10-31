@@ -4,6 +4,7 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
+import type { GameMap } from './game-map'
 import type { GameStatus } from './game-status'
 import type { ImageAsset } from './image-asset'
 
@@ -11,7 +12,17 @@ export type Game = {
 	id: string
 	name: string
 	slug: string
-	image: ImageAsset
+	cover: ImageAsset
+	banner: null | ImageAsset
+	/** @nullable */
+	releaseDate: string | null
+	/** @nullable */
+	developer: string | null
+	/** @nullable */
+	description: string | null
+	markersCount: number
+	categoriesCount: number
+	maps: GameMap[]
 	createdAt: string
 	updatedAt: string
 	status: GameStatus

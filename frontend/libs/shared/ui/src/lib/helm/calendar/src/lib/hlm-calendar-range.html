@@ -1,0 +1,100 @@
+<div class="space-y-4 inline-flex flex-col">
+	<!-- Header -->
+	<div class="gap-1.5 flex w-full items-center justify-between">
+		<ng-template #month>
+			<hlm-select brnCalendarMonthSelect class="order-1">
+				<hlm-select-trigger size="sm" [class]="selectClass">
+					<hlm-select-value />
+				</hlm-select-trigger>
+				<hlm-select-content *hlmSelectPortal class="max-h-80">
+					<hlm-select-group>
+						@for (month of i18n.config().months(); track month) {
+							<hlm-select-item [value]="month">{{ month }}</hlm-select-item>
+						}
+					</hlm-select-group>
+				</hlm-select-content>
+			</hlm-select>
+		</ng-template>
+		<ng-template #year>
+			<hlm-select brnCalendarYearSelect class="order-3">
+				<hlm-select-trigger size="sm" [class]="selectClass">
+					<hlm-select-value />
+				</hlm-select-trigger>
+				<hlm-select-content *hlmSelectPortal class="max-h-80">
+					<hlm-select-group>
+						@for (year of i18n.config().years(); track year) {
+							<hlm-select-item [value]="year">{{ year }}</hlm-select-item>
+						}
+					</hlm-select-group>
+				</hlm-select-content>
+			</hlm-select>
+		</ng-template>
+		@let heading = this.heading();
+
+		<button
+			brnCalendarPreviousButton
+			variant="ghost"
+			hlmBtn
+			class="p-0 order-first size-(--cell-size) select-none aria-disabled:opacity-50"
+		>
+			<ng-icon name="matChevronLeftRound" class="rtl:rotate-180" />
+		</button>
+
+		@switch (captionLayout()) {
+			@case ('dropdown') {
+				<ng-container [ngTemplateOutlet]="month" />
+				<ng-container [ngTemplateOutlet]="year" />
+			}
+			@case ('dropdown-months') {
+				<ng-container [ngTemplateOutlet]="month" />
+				<div brnCalendarHeader class="text-sm font-medium order-4">{{ heading.year }}</div>
+			}
+			@case ('dropdown-years') {
+				<div brnCalendarHeader class="text-sm font-medium order-2">{{ heading.month }}</div>
+				<ng-container [ngTemplateOutlet]="year" />
+			}
+			@case ('label') {
+				<div brnCalendarHeader class="text-sm font-medium order-5">{{ heading.header }}</div>
+			}
+		}
+
+		<button
+			brnCalendarNextButton
+			hlmBtn
+			variant="ghost"
+			class="p-0 order-last size-(--cell-size) select-none aria-disabled:opacity-50"
+		>
+			<ng-icon name="matChevronRightRound" class="rtl:rotate-180" />
+		</button>
+	</div>
+
+	<table class="space-y-1 w-full border-collapse" brnCalendarGrid>
+		<thead aria-hidden="true">
+			<tr class="flex">
+				<th
+					*brnCalendarWeekday="let weekday"
+					scope="col"
+					class="text-muted-foreground font-normal flex-1 rounded-(--cell-radius) text-[0.8rem] select-none"
+					[attr.aria-label]="i18n.config().labelWeekday(weekday)"
+				>
+					{{ i18n.config().formatWeekdayName(weekday) }}
+				</th>
+			</tr>
+		</thead>
+
+		<tbody role="rowgroup">
+			<tr *brnCalendarWeek="let week" class="mt-2 flex w-full">
+				@for (date of week; track dateAdapter.getTime(date)) {
+					<td
+						brnCalendarCell
+						class="group/day has-[button[data-range-start=true]]:bg-muted has-[button[data-range-start=true]]:after:bg-muted has-[button[data-range-end=true]]:bg-muted has-[button[data-range-end=true]]:after:bg-muted p-0 has-[button[data-range-end=true]]:after:inset-y-0 has-[button[data-range-end=true]]:after:start-0 has-[button[data-range-end=true]]:after:w-4 has-[button[data-range-start=true]]:after:inset-y-0 has-[button[data-range-start=true]]:after:end-0 has-[button[data-range-start=true]]:after:w-4 relative isolate z-0 aspect-square h-full w-full rounded-(--cell-radius) text-center select-none has-[button[data-range-end=true]]:rounded-e-(--cell-radius) has-[button[data-range-end=true]]:after:absolute has-[button[data-range-start=true]]:rounded-s-(--cell-radius) has-[button[data-range-start=true]]:after:absolute [&:first-child[data-selected=true]_button]:rounded-s-(--cell-radius) [&:last-child[data-selected=true]_button]:rounded-e-(--cell-radius)"
+					>
+						<button brnCalendarCellButton [date]="date" [class]="btnClass">
+							{{ dateAdapter.getDate(date) }}
+						</button>
+					</td>
+				}
+			</tr>
+		</tbody>
+	</table>
+</div>

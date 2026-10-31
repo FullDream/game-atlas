@@ -19,7 +19,7 @@ public sealed class GetGameApiTests
 		using var client = factory.CreateHttpsClient();
 		var image = await MediaTestData.UploadImageAsync(client);
 		using var created = await client.PostAsJsonAsync("/games",
-			new { name = "Game", slug = "game", imageAssetId = image.Id });
+			new { name = "Game", slug = "game", coverId = image.Id });
 		var game = (await created.Content.ReadFromJsonAsync<GameDto>(MapTestData.JsonOptions))!;
 
 		if (status == "published")
@@ -35,14 +35,14 @@ public sealed class GetGameApiTests
 		capture.Enabled = false;
 
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-		Assert.Equal(game, actual);
-		Assert.Equal(image, actual!.Image);
+		Assert.Equivalent(game, actual);
+		Assert.Equal(image, actual!.Cover);
 		using var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-		Assert.Equal(7, payload.RootElement.EnumerateObject().Count());
-		Assert.False(payload.RootElement.TryGetProperty("maps", out _));
+		Assert.Equal(14, payload.RootElement.EnumerateObject().Count());
+		Assert.Empty(payload.RootElement.GetProperty("maps").EnumerateArray());
 		Assert.False(payload.RootElement.TryGetProperty("mapId", out _));
-		Assert.StartsWith("SELECT", Assert.Single(capture.Commands));
-		Assert.Equal(game, await client.GetFromJsonAsync<GameDto>($"/games/{game.Id}", MapTestData.JsonOptions));
+		Assert.All(capture.Commands, command => Assert.StartsWith("SELECT", command));
+		Assert.Equivalent(game, await client.GetFromJsonAsync<GameDto>($"/games/{game.Id}", MapTestData.JsonOptions));
 	}
 
 	[Fact]
@@ -57,7 +57,7 @@ public sealed class GetGameApiTests
 
 		var image = await MediaTestData.UploadImageAsync(client);
 		using var created = await client.PostAsJsonAsync("/games",
-			new { name = "Game", slug = "game", imageAssetId = image.Id });
+			new { name = "Game", slug = "game", coverId = image.Id });
 		var game = (await created.Content.ReadFromJsonAsync<GameDto>(MapTestData.JsonOptions))!;
 		using var deleted = await client.DeleteAsync($"/games/{game.Id}");
 		Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);

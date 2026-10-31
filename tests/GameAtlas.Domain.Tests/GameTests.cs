@@ -19,7 +19,7 @@ public class GameTests
 		Assert.Equal(7, game.Id.Version);
 		Assert.Equal("Elden Ring", game.Name);
 		Assert.Equal("elden-ring-2", game.Slug);
-		Assert.Equal(coverId, game.ImageAssetId);
+		Assert.Equal(coverId, game.CoverId);
 		Assert.Equal(GameStatus.Draft, game.Status);
 		Assert.Equal(game.CreatedAt, game.UpdatedAt);
 		Assert.Equal(TimeSpan.Zero, game.CreatedAt.Offset);
@@ -55,7 +55,7 @@ public class GameTests
 	{
 		var result = Game.Create("Game", "game", Guid.Empty);
 
-		Assert.Equal(GameErrors.ImageRequired, Assert.Single(result.Errors!));
+		Assert.Equal(GameErrors.CoverRequired, Assert.Single(result.Errors!));
 	}
 
 	[Fact]

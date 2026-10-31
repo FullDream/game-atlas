@@ -21,6 +21,14 @@ export type UpdateGameRequest = {
 	 * @pattern \A[a-z0-9]+(-[a-z0-9]+)*\z
 	 */
 	slug?: string
-	imageAssetId?: string
+	coverId?: string
+	/** @nullable */
+	bannerId?: string | null
+	/** @nullable */
+	releaseDate?: string | null
+	/** @nullable */
+	developer?: string | null
+	/** @nullable */
+	description?: string | null
 	status?: UpdateGameRequestStatus
 }

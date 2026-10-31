@@ -51,7 +51,7 @@ public class MapQueryTests
 		using var catalog = await client.GetAsync("/games");
 
 		catalog.EnsureSuccessStatusCode();
-		Assert.Empty(capture.Contexts);
+		Assert.Equal(3, Assert.Single(capture.Contexts).Value);
 	}
 
 	[Fact]

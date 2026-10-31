@@ -31,7 +31,7 @@ public class CreateGameApiTests
 		{
 			["name"] = " Elden Ring ",
 			["slug"] = " elden-ring-2 ",
-			["imageAssetId"] = MediaTestData.CoverId,
+			["coverId"] = MediaTestData.CoverId,
 			["status"] = "published",
 			["id"] = Guid.Empty,
 			["createdAt"] = "2000-01-01T00:00:00Z"
@@ -45,11 +45,11 @@ public class CreateGameApiTests
 		var body = json.RootElement;
 
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-		Assert.Equal(7, body.EnumerateObject().Count());
+		Assert.Equal(14, body.EnumerateObject().Count());
 		Assert.Equal(7, body.GetProperty("id").GetGuid().Version);
 		Assert.Equal("Elden Ring", body.GetProperty("name").GetString());
 		Assert.Equal("elden-ring-2", body.GetProperty("slug").GetString());
-		Assert.Equal(MediaTestData.CoverId, body.GetProperty("image").GetProperty("id").GetGuid());
+		Assert.Equal(MediaTestData.CoverId, body.GetProperty("cover").GetProperty("id").GetGuid());
 		Assert.Equal("draft", body.GetProperty("status").GetString());
 		var createdAt = body.GetProperty("createdAt").GetDateTimeOffset();
 
@@ -63,7 +63,7 @@ public class CreateGameApiTests
 		Assert.Equal(createdAt, stored.CreatedAt);
 		Assert.Equal("Elden Ring", stored.Name);
 		Assert.Equal("elden-ring-2", stored.Slug);
-		Assert.Equal(MediaTestData.CoverId, stored.ImageAssetId);
+		Assert.Equal(MediaTestData.CoverId, stored.CoverId);
 		Assert.Equal(GameStatus.Draft, stored.Status);
 
 		Assert.False(body.TryGetProperty("mapId", out _));
@@ -92,7 +92,7 @@ public class CreateGameApiTests
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(factory);
 		using var client = factory.CreateHttpsClient();
-		var input = new Dictionary<string, object?> { ["name"] = "Game", ["slug"] = "game", ["imageAssetId"] = MediaTestData.CoverId };
+		var input = new Dictionary<string, object?> { ["name"] = "Game", ["slug"] = "game", ["coverId"] = MediaTestData.CoverId };
 
 		input[field] = value;
 		using var response = await client.PostAsJsonAsync("/games", input);
@@ -117,7 +117,7 @@ public class CreateGameApiTests
 		{
 			name = new string('n', 200),
 			slug = new string('s', 200),
-			imageAssetId = MediaTestData.CoverId
+			coverId = MediaTestData.CoverId
 		});
 
 		Assert.Equal(HttpStatusCode.OK, valid.StatusCode);
@@ -148,14 +148,14 @@ public class CreateGameApiTests
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(factory);
 		using var client = factory.CreateHttpsClient();
-		var input = new { name = "Game", slug = "game", imageAssetId = MediaTestData.CoverId };
+		var input = new { name = "Game", slug = "game", coverId = MediaTestData.CoverId };
 		using var success = await client.PostAsJsonAsync("/games", input);
 		using var conflict = await client.PostAsJsonAsync("/games", input);
 
 		Assert.Equal(HttpStatusCode.OK, success.StatusCode);
 		await AssertProblemAsync(conflict, HttpStatusCode.Conflict);
 		var concurrent = await Task.WhenAll(Enumerable.Range(0, 2).Select(_ =>
-			client.PostAsJsonAsync("/games", new { name = "Game", slug = "raced-game", imageAssetId = MediaTestData.CoverId })));
+			client.PostAsJsonAsync("/games", new { name = "Game", slug = "raced-game", coverId = MediaTestData.CoverId })));
 
 		try
 		{
@@ -179,7 +179,7 @@ public class CreateGameApiTests
 
 		Assert.False(File.Exists(factory.DatabasePath));
 		using var response = await client.PostAsJsonAsync("/games",
-			new { name = "Game", slug = "game", imageAssetId = MediaTestData.CoverId });
+			new { name = "Game", slug = "game", coverId = MediaTestData.CoverId });
 
 		await AssertProblemAsync(response, HttpStatusCode.InternalServerError);
 		await using var scope = factory.Services.CreateAsyncScope();
@@ -232,7 +232,7 @@ public class CreateGameApiTests
 		await MediaTestData.EnsureCoverAsync(failing);
 		using var client = failing.CreateHttpsClient();
 		using var response = await client.PostAsJsonAsync("/games",
-			new { name = "New", slug = "new", imageAssetId = MediaTestData.CoverId });
+			new { name = "New", slug = "new", coverId = MediaTestData.CoverId });
 
 		await AssertProblemAsync(response, HttpStatusCode.Conflict);
 		await AssertCountAsync(failing, 0);

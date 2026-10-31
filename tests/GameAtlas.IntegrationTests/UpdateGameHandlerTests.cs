@@ -41,7 +41,7 @@ public class UpdateGameHandlerTests
 		Assert.Equal(game.CreatedAt, stored.CreatedAt);
 		Assert.Equal("Updated", stored.Name);
 		Assert.Equal("updated", stored.Slug);
-		Assert.Equal(MediaTestData.CoverId, stored.ImageAssetId);
+		Assert.Equal(MediaTestData.CoverId, stored.CoverId);
 		Assert.Equal(GameStatus.Published, stored.Status);
 		var returned = await reloadScope.ServiceProvider.GetRequiredService<IMediator>().Send(
 			new UpdateGame(game.Id, Status: GameStatus.Draft));
@@ -89,7 +89,7 @@ public class UpdateGameHandlerTests
 		var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 		var unchanged = await mediator.Send(new UpdateGame(game.Id, " Game ", " game ", MediaTestData.CoverId,
 			GameStatus.Draft));
-		var invalid = await mediator.Send(new UpdateGame(game.Id, Name: "New", ImageAssetId: Optional<Guid?>.From(null)));
+		var invalid = await mediator.Send(new UpdateGame(game.Id, Name: "New", CoverId: Optional<Guid?>.From(null)));
 		var empty = await mediator.Send(new UpdateGame(game.Id));
 
 		Assert.True(unchanged.IsSuccess);

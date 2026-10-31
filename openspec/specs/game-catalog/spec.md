@@ -8,18 +8,18 @@ Maintain the game catalog by creating identifiable draft games with validated me
 
 ### Requirement: Create a draft game
 
-POST /games SHALL accept unauthenticated name, slug, and required imageAssetId input selecting an existing library image and return HTTP 200 with id, name, slug, image, createdAt, updatedAt, and string status. Response image SHALL be the complete canonical ImageAsset object. The server SHALL assign draft status and generate identity/timestamps. Game representations SHALL NOT include mapId, a selected map, or an embedded maps collection. Additional server-owned creation properties SHALL NOT assign maps.
+POST /games SHALL accept unauthenticated name, slug, and required coverId input selecting an existing library image and return HTTP 200 with id, name, slug, cover, banner, releaseDate, developer, description, markersCount, categoriesCount, maps, createdAt, updatedAt, and string status. Response cover SHALL be the complete canonical ImageAsset object. The server SHALL assign draft status and generate identity/timestamps. Game representations SHALL NOT include mapId or a selected map; read-only map summaries SHALL be included. Additional server-owned creation properties SHALL NOT assign maps.
 
 #### Scenario: Create a game before any maps
 
-- **WHEN** valid name, slug, and imageAssetId are submitted
-- **THEN** exactly one draft game is persisted and its seven fields are returned without mapId
+- **WHEN** valid name, slug, and coverId are submitted
+- **THEN** exactly one draft game is persisted and its expanded fields are returned without mapId
 - **AND** no map is created, including when extra mapId or status input is supplied
 
 #### Scenario: Create without a map
 
-- **WHEN** a client submits valid game name, slug, and imageAssetId
-- **THEN** HTTP 200 returns the seven-field draft game without mapId or an embedded maps list
+- **WHEN** a client submits valid game name, slug, and coverId
+- **THEN** HTTP 200 returns the expanded draft game without mapId and with read-only map summaries
 - **AND** no map is created
 
 #### Scenario: Create with a map identifier
@@ -50,7 +50,7 @@ The system SHALL generate each game's ID as UUID v7 and set createdAt and update
 
 ### Requirement: Normalize and validate game metadata
 
-The system SHALL trim name and slug and require nonempty strings of at most 200 characters each. Creation imageAssetId SHALL be a nonempty UUID selecting an existing library image. Missing/null/empty UUID SHALL return 422, malformed UUID input 400, missing assets 404, and video/folder references 422. Invalid input SHALL NOT create a game. Arbitrary image strings SHALL NOT satisfy image selection.
+The system SHALL trim name and slug and require nonempty strings of at most 200 characters each. Creation coverId SHALL be a nonempty UUID selecting an existing library image. Missing/null/empty UUID SHALL return 422, malformed UUID input 400, missing assets 404, and video/folder references 422. Invalid input SHALL NOT create a game. Arbitrary image strings SHALL NOT satisfy image selection.
 
 #### Scenario: Trim accepted input
 
@@ -59,12 +59,12 @@ The system SHALL trim name and slug and require nonempty strings of at most 200 
 
 #### Scenario: Accept an image string without URL syntax
 
-- **WHEN** only legacy image=`cover-image` is supplied without imageAssetId and all other fields are valid
-- **THEN** creation returns 422 for missing imageAssetId and creates no game
+- **WHEN** only legacy image=`cover-image` is supplied without coverId and all other fields are valid
+- **THEN** creation returns 422 for missing coverId and creates no game
 
 #### Scenario: Reject absent or empty required strings
 
-- **WHEN** name or slug is missing, null, empty, or whitespace-only, or imageAssetId is missing, null, or the empty UUID
+- **WHEN** name or slug is missing, null, empty, or whitespace-only, or coverId is missing, null, or the empty UUID
 - **THEN** the response is HTTP 422 validation ProblemDetails identifying invalid fields
 - **AND** no game is created
 
@@ -75,7 +75,7 @@ The system SHALL trim name and slug and require nonempty strings of at most 200 
 
 #### Scenario: Accept exact length limits
 
-- **WHEN** name has 200 characters, a syntactically valid unique slug has 200 characters, and imageAssetId selects a valid library image
+- **WHEN** name has 200 characters, a syntactically valid unique slug has 200 characters, and coverId selects a valid library image
 - **THEN** creation succeeds
 
 ### Requirement: Validate client-supplied slug syntax
@@ -129,28 +129,28 @@ Request failures SHALL use ProblemDetails. Malformed JSON SHALL return HTTP 400.
 
 ### Requirement: Durable game metadata
 
-Created games SHALL survive application restarts, preserving their seven returned fields. Status SHALL be stored as a string. Map ownership SHALL be persisted separately and SHALL NOT require restoring a singular mapId property on the game representation.
+Created games SHALL survive application restarts, preserving persisted metadata and image references. Status SHALL be stored as a string. Map ownership SHALL be persisted separately and SHALL NOT require restoring a singular mapId property on the game representation.
 
 #### Scenario: Reload persisted game
 
 - **WHEN** a successfully created game is loaded after reopening the database
-- **THEN** its ID, normalized metadata, timestamps, and Draft status match the seven-field creation response without mapId
+- **THEN** its ID, normalized metadata, timestamps, and Draft status match persisted creation metadata without mapId
 - **AND** the stored status is a string and separately created maps retain their own identities and game ownership
 
 ### Requirement: Browse games with complete metadata
 
-Unauthenticated GET /games SHALL include draft and published games using the same seven fields as creation: id, name, slug, image, createdAt, updatedAt, and string status. The response SHALL NOT include singular mapId or embed map collections. Existing offset/limit/search/sort behavior SHALL remain unchanged.
+Unauthenticated GET /games SHALL include draft and published games using the same expanded fields as creation: id, name, slug, cover, banner, releaseDate, developer, description, markersCount, categoriesCount, maps, createdAt, updatedAt, and string status. The response SHALL NOT include singular mapId or embed complete map representations; read-only map summaries SHALL be included. Existing offset/limit/search/sort behavior SHALL remain unchanged.
 
 #### Scenario: Browse games with zero or several maps
 
 - **WHEN** games with zero, one, or several maps are listed
-- **THEN** every game uses the same seven-field representation and maps are available through GET /games/{gameId}/maps
+- **THEN** every game uses the same expanded representation and maps are available through GET /games/{gameId}/maps
 - **AND** catalog paging, filtering, and sorting do not depend on a selected map
 
 #### Scenario: Return drafts and published games
 
 - **WHEN** draft and published games owning zero or several maps are listed
-- **THEN** each item uses the same seven-field representation as creation
+- **THEN** each item uses the same expanded representation as creation
 - **AND** the existing paginated envelope, filters, and sorting remain unchanged
 
 ### Requirement: Offset and limit pagination
@@ -211,7 +211,7 @@ The list SHALL accept optional search, trim its surrounding whitespace, and trea
 
 ### Requirement: Optional game list sorting
 
-The list SHALL accept sortBy names name, createdAt, or updatedAt and sortDirection names asc or desc, case-insensitively. Other standard enum forms SHALL be accepted when their resulting values are defined. With sortBy and no direction, direction SHALL default to asc. Explicit sorting SHALL precede pagination. With sortBy omitted, no explicit ordering SHALL be applied and order SHALL be unspecified.
+The list SHALL accept sortBy names name, createdAt, or updatedAt and sortDirection names asc or desc, case-insensitively. Other standard enum forms SHALL be accepted when their resulting values are defined. With sortBy and no direction, direction SHALL default to asc. Explicit sorting SHALL precede pagination. With sortBy omitted, games SHALL be ordered by createdAt ascending. All sorting SHALL use id ascending to break ties before pagination.
 
 #### Scenario: Sort names ascending by default
 
@@ -238,8 +238,8 @@ The list SHALL accept sortBy names name, createdAt, or updatedAt and sortDirecti
 #### Scenario: No explicit sorting
 
 - **WHEN** both sorting parameters are omitted
-- **THEN** pagination is applied without an explicit default sort
-- **AND** the API does not promise insertion order or stable ordering across requests
+- **THEN** pagination is applied after ordering by createdAt ascending then id ascending
+- **AND** repeated reads of unchanged data return the same page boundaries
 
 ### Requirement: Validate list query parameters
 
@@ -277,7 +277,7 @@ Negative offset, limit outside 1 through 100, undefined sorting enum values, and
 
 ### Requirement: Partially update an existing game
 
-Unauthenticated PATCH /games/{id} SHALL allow only name, slug, imageAssetId, and status to change and return HTTP 200 with the complete seven-field game representation with image resolved to the canonical ImageAsset object. A valid request for a missing game SHALL return HTTP 404 without creating a game. Game updates SHALL NOT create, select, reassign, or remove maps.
+Unauthenticated PATCH /games/{id} SHALL allow only name, slug, coverId, bannerId, releaseDate, developer, description, and status to change and return HTTP 200 with the complete expanded game representation with cover resolved to the canonical ImageAsset object. A valid request for a missing game SHALL return HTTP 404 without creating a game. Game updates SHALL NOT create, select, reassign, or remove maps.
 
 #### Scenario: Update metadata independently of maps
 
@@ -286,8 +286,8 @@ Unauthenticated PATCH /games/{id} SHALL allow only name, slug, imageAssetId, and
 
 #### Scenario: Update every mutable field
 
-- **WHEN** valid name, unique slug, imageAssetId, and status are patched together
-- **THEN** HTTP 200 returns the complete seven-field updated game with unchanged identity/createdAt
+- **WHEN** valid name, unique slug, coverId, and status are patched together
+- **THEN** HTTP 200 returns the complete expanded updated game with unchanged identity/createdAt
 - **AND** all maps and content remain unchanged after storage is reopened
 
 #### Scenario: Update a missing game
@@ -297,7 +297,7 @@ Unauthenticated PATCH /games/{id} SHALL allow only name, slug, imageAssetId, and
 
 ### Requirement: Preserve omission and explicit null during game updates
 
-Every mutable game field SHALL be optional. Omitted values SHALL remain unchanged; omitting imageAssetId SHALL preserve the selected image. Null name, slug, imageAssetId, or status SHALL return HTTP 422. mapId SHALL NOT be a mutable or response property; any supplied mapId during PATCH SHALL return HTTP 400 without changes.
+Every mutable game field SHALL be optional. Omitted values SHALL remain unchanged; omitting coverId SHALL preserve the selected image. Null name, slug, coverId, or status SHALL return HTTP 422. mapId SHALL NOT be a mutable or response property; any supplied mapId during PATCH SHALL return HTTP 400 without changes.
 
 #### Scenario: Preserve omitted fields and reject map assignment
 
@@ -308,7 +308,7 @@ Every mutable game field SHALL be optional. Omitted values SHALL remain unchange
 #### Scenario: Omitted fields remain unchanged
 
 - **WHEN** a published game with several maps is patched only with a name
-- **THEN** slug, image, status, and every map/content association remain unchanged
+- **THEN** slug, cover, status, and every map/content association remain unchanged
 
 #### Scenario: Clear or replace a map identifier
 
@@ -318,12 +318,12 @@ Every mutable game field SHALL be optional. Omitted values SHALL remain unchange
 
 #### Scenario: Reject null required values
 
-- **WHEN** game PATCH explicitly supplies null name, slug, imageAssetId, or status
+- **WHEN** game PATCH explicitly supplies null name, slug, coverId, or status
 - **THEN** HTTP 422 identifies invalid fields and preserves every stored value and timestamp
 
 ### Requirement: Validate supplied game update metadata
 
-Supplied name and slug SHALL follow creation string and slug rules. Supplied imageAssetId SHALL be a nonempty UUID selecting an existing library image; null/empty UUID SHALL return 422, malformed UUID input 400, missing assets 404, and video/folder references 422. The legacy image input SHALL return 400 as an unknown field. Failures SHALL apply no changes.
+Supplied name and slug SHALL follow creation string and slug rules. Supplied coverId SHALL be a nonempty UUID selecting an existing library image; null/empty UUID SHALL return 422, malformed UUID input 400, missing assets 404, and video/folder references 422. The legacy image input SHALL return 400 as an unknown field. Failures SHALL apply no changes.
 
 #### Scenario: Trim update values and accept length boundaries
 
@@ -332,7 +332,7 @@ Supplied name and slug SHALL follow creation string and slug rules. Supplied ima
 
 #### Scenario: Reject invalid metadata atomically
 
-- **WHEN** a patch combines a valid name change with a null or empty-UUID imageAssetId, an overlength string, or an invalid slug
+- **WHEN** a patch combines a valid name change with a null or empty-UUID coverId, an overlength string, or an invalid slug
 - **THEN** the response is HTTP 422 validation ProblemDetails identifying the invalid fields
 - **AND** neither the valid change nor any other game field is persisted
 
@@ -408,7 +408,7 @@ PATCH SHALL accept application/merge-patch+json and application/json with identi
 #### Scenario: Equivalent supported media types
 
 - **WHEN** equivalent valid patches use either supported JSON Merge Patch media type
-- **THEN** both apply the same omission/null/validation rules and return the seven-field game response
+- **THEN** both apply the same omission/null/validation rules and return the expanded game response
 
 #### Scenario: Reject unsupported media types
 
@@ -437,7 +437,7 @@ PATCH SHALL accept application/merge-patch+json and application/json with identi
 
 ### Requirement: Safe failures and existing endpoint compatibility during updates
 
-Update failures SHALL use safe ProblemDetails and atomic persistence. Unexpected failures SHALL return 500 without being mislabeled as slug conflicts. POST SHALL continue to ignore server-owned creation input and create drafts. GET and mutation responses SHALL consistently use seven fields, excluding mapId, while preserving unrelated catalog behavior.
+Update failures SHALL use safe ProblemDetails and atomic persistence. Unexpected failures SHALL return 500 without being mislabeled as slug conflicts. POST SHALL continue to ignore server-owned creation input and create drafts. GET and mutation responses SHALL consistently use expanded fields, excluding mapId, while preserving unrelated catalog behavior.
 
 #### Scenario: Failure and creation compatibility
 
@@ -457,24 +457,24 @@ Update failures SHALL use safe ProblemDetails and atomic persistence. Unexpected
 
 ### Requirement: Document the game update contract
 
-OpenAPI SHALL document UpdateGame with four optional mutable fields (name, slug, imageAssetId, status), both supported PATCH media types, the seven-field response with required canonical ImageAsset at image, and ProblemDetails for 400/404/409/415/422/500. It SHALL omit mapId from response and request schemas and distinguish optional presence from required-field null rejection.
+OpenAPI SHALL document UpdateGame with eight optional mutable fields (name, slug, coverId, bannerId, releaseDate, developer, description, status), both supported PATCH media types, the expanded response with required canonical ImageAsset at cover, and ProblemDetails for 400/404/409/415/422/500. It SHALL omit mapId from response and request schemas and distinguish optional presence from required-field null rejection.
 
 #### Scenario: Discover game metadata separately from maps
 
 - **WHEN** a client reads OpenAPI
-- **THEN** game creation, listing, and update share seven response fields and no mapId
+- **THEN** game creation, listing, and update share the expanded response fields and no mapId
 - **AND** maps are managed through explicit map operations, not game PATCH
 
 #### Scenario: Discover the PATCH operation
 
 - **WHEN** a client reads OpenAPI
-- **THEN** UpdateGame exposes four optional mutable fields, required-value null rejection, both PATCH media types, and the seven-field response
-- **AND** mapId and maps are absent from mutable and response properties and PUT is absent
+- **THEN** UpdateGame exposes eight optional mutable fields, required-value null rejection, both PATCH media types, and the expanded response
+- **AND** mapId is absent from requests and responses, maps is read-only in responses and PUT is absent
 
 #### Scenario: Discover the image input and output contracts
 
 - **WHEN** a client inspects game creation, listing, and PATCH schemas
-- **THEN** creation requires UUID imageAssetId, PATCH permits optional UUID imageAssetId and documents null rejection, and every Game.image references canonical ImageAsset
+- **THEN** creation requires UUID coverId, PATCH permits optional UUID coverId and documents null rejection, and every Game.cover references canonical ImageAsset
 - **AND** no request exposes the old image string property and no duplicate image component is introduced
 
 ### Requirement: Permanently delete an existing game
@@ -507,7 +507,7 @@ Unauthenticated DELETE /games/{id} SHALL physically delete an existing draft or 
 
 - **WHEN** a game using a shared library image is deleted
 - **THEN** the image remains in the library with the same bytes and metadata
-- **AND** other games using that image remain unchanged
+- **AND** other games using that cover remain unchanged
 
 ### Requirement: Report missing games during deletion
 
@@ -565,7 +565,7 @@ A DELETE path identifier that cannot bind to a GUID SHALL return HTTP 400 Proble
 
 ### Requirement: Document the game deletion contract
 
-OpenAPI SHALL expose DeleteGame at DELETE /games/{id} with a GUID path parameter, no request body, empty HTTP 204, and ProblemDetails 400/404/500. Documentation SHALL describe cleanup of all owned maps and content and the seven-field game DTO used by other operations.
+OpenAPI SHALL expose DeleteGame at DELETE /games/{id} with a GUID path parameter, no request body, empty HTTP 204, and ProblemDetails 400/404/500. Documentation SHALL describe cleanup of all owned maps and content and the expanded game DTO used by other operations.
 
 #### Scenario: Discover deletion and ownership
 
@@ -577,17 +577,17 @@ OpenAPI SHALL expose DeleteGame at DELETE /games/{id} with a GUID path parameter
 
 - **WHEN** a client reads OpenAPI for DeleteGame
 - **THEN** the GUID path, no required body, empty 204, and ProblemDetails 400/404/500 are documented
-- **AND** other game operations use the seven-field DTO and maps remain a separate collection
+- **AND** other game operations use the expanded DTO and maps remain a separate collection
 
 ### Requirement: Resolve shared game images consistently
 
-All game success responses SHALL return the complete canonical ImageAsset at image, including type, URL, dimensions, alt, placeholder, and shared metadata. They SHALL resolve current library metadata without changing game timestamps for asset-only edits. Paginated listing SHALL avoid one asset read per game and SHALL preserve existing pagination, totals, filtering, and sorting.
+All game success responses SHALL return the complete canonical ImageAsset at cover, including type, URL, dimensions, alt, placeholder, and shared metadata. They SHALL resolve current library metadata without changing game timestamps for asset-only edits. Paginated listing SHALL avoid one asset read per game and SHALL preserve existing pagination, totals, filtering, and sorting.
 
 #### Scenario: Resolve creation listing and update images
 
 - **WHEN** a game is created, listed, or updated with a library image
-- **THEN** image contains the same complete representation as that asset in the library, including nullable placeholder and type=image
-- **AND** the game keeps seven root fields and does not expose imageAssetId as an extra response property
+- **THEN** cover contains the same complete representation as that asset in the library, including nullable placeholder and type=image
+- **AND** the game keeps expanded root fields and does not expose coverId as an extra response property
 
 #### Scenario: Share metadata across games
 
@@ -610,13 +610,13 @@ Selecting another image SHALL update the game reference atomically with other su
 
 #### Scenario: Replace a cover
 
-- **WHEN** PATCH supplies another valid imageAssetId and valid metadata
+- **WHEN** PATCH supplies another valid coverId and valid metadata
 - **THEN** the reference and metadata change together and the response resolves the new image
 - **AND** the former image remains in the library
 
 #### Scenario: Keep the same cover
 
-- **WHEN** PATCH supplies the current imageAssetId without any other effective change
+- **WHEN** PATCH supplies the current coverId without any other effective change
 - **THEN** it returns 200 with the current image and unchanged updatedAt
 
 #### Scenario: Refuse an invalid reference atomically
@@ -640,13 +640,13 @@ The migration chain SHALL support a fresh empty database. Conversion of existing
 
 ### Requirement: Retrieve a game by identity
 
-Unauthenticated GET /games/{id} SHALL return HTTP 200 with the same seven-field Game representation as listing, including canonical ImageAsset, for draft and published games. It SHALL NOT embed maps or change persisted data.
+Unauthenticated GET /games/{id} SHALL return HTTP 200 with the same expanded Game representation as listing, including canonical ImageAsset, for draft and published games. It SHALL include read-only map summaries and SHALL NOT change persisted data.
 
 #### Scenario: Read either status
 
 - **WHEN** a client requests an existing draft or published game by its UUID
-- **THEN** the response contains id, name, slug, image, createdAt, updatedAt and string status matching persisted data
-- **AND** no maps are created or returned and timestamps remain unchanged
+- **THEN** the response contains id, name, slug, cover, banner, releaseDate, developer, description, markersCount, categoriesCount, maps, createdAt, updatedAt and string status matching persisted data
+- **AND** no maps are created and existing maps are returned only as summaries and timestamps remain unchanged
 
 #### Scenario: Missing game
 
@@ -666,3 +666,58 @@ OpenAPI SHALL expose game retrieval under the Games tag with a UUID path paramet
 
 - **WHEN** the Games client is regenerated from the running backend document
 - **THEN** it includes retrieval by ID using the existing Game and ImageAsset schemas
+
+### Requirement: Store optional descriptive metadata
+
+Creation and PATCH SHALL accept nullable releaseDate, developer and description. releaseDate SHALL be a calendar date in YYYY-MM-DD format without time or timezone. Developer SHALL be trimmed, with blanks normalized to null. Description SHALL be plain text preserving line breaks, with empty text normalized to null. Omitted creation values SHALL default to null. All game responses SHALL return these persisted values.
+
+#### Scenario: Save clear and reload metadata
+
+- **WHEN** a game is created with metadata and reloaded after restart
+- **THEN** the saved date, developer and multiline description are returned
+- **AND** PATCH null clears each value, omission preserves it, and invalid calendar dates return 400 atomically
+
+### Requirement: Select an optional library banner
+
+Creation and PATCH SHALL accept nullable bannerId selecting an existing library ImageAsset. Creation omission SHALL mean no banner; PATCH null SHALL clear it. Missing assets SHALL return 404, and video/folder references 422. Responses SHALL return canonical ImageAsset or null at banner. Replacement and game deletion SHALL preserve library assets. Cover SHALL remain required.
+
+#### Scenario: Attach replace and clear
+
+- **WHEN** a banner is attached, replaced and cleared
+- **THEN** responses resolve each selected asset and finally banner=null without deleting assets
+- **AND** invalid references reject the whole mutation and coverId=null returns 422
+
+### Requirement: Return game-wide content counts
+
+Every game response SHALL include markersCount and categoriesCount as nonnegative counts across all maps owned by that game. Categories without markers SHALL count. Category groups and other games SHALL not contribute. Empty games SHALL return zeros. Subsequent reads SHALL reflect content changes without modifying game timestamps.
+
+#### Scenario: Count isolated content without duplication
+
+- **WHEN** several maps contain categories and markers and another game owns additional content
+- **THEN** counts include only owned content once per entity
+- **AND** deletion reduces subsequent counts
+
+### Requirement: Return lightweight map summaries
+
+Every game response SHALL include read-only maps ordered by map createdAt then id ascending. Entries SHALL contain only id, name and preview. preview SHALL be canonical ImageAsset from the current default style source, or null when no ready style exists. Empty games SHALL return maps=[]. Complete map endpoints and default-style rules SHALL remain unchanged. PATCH maps or counts SHALL return 400.
+
+#### Scenario: Resolve the current default source
+
+- **WHEN** a map has unfinished and ready styles
+- **THEN** preview uses the earliest-created surviving ready style source
+- **AND** subsequent reads reflect default changes and return null when no ready style remains
+
+#### Scenario: Preserve blank maps and isolation
+
+- **WHEN** a game has blank maps and another game has styled maps
+- **THEN** only owned maps are returned, including null previews, without geometry or styles
+
+### Requirement: Upgrade the expanded game contract safely
+
+The contract SHALL replace response image with cover and request imageAssetId with coverId. Existing persisted cover references, identity, timestamps and status SHALL survive migration. New nullable values SHALL initialize to null. OpenAPI SHALL expose all added fields and reuse canonical ImageAsset for cover, banner and map preview. Legacy imageAssetId SHALL be rejected in PATCH with 400.
+
+#### Scenario: Upgrade an existing game
+
+- **WHEN** an existing game with content is migrated
+- **THEN** cover resolves the original asset, optional metadata and banner are null, and counts and map summaries reflect existing content
+- **AND** timestamps and shared assets remain unchanged

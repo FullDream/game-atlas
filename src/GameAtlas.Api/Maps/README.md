@@ -1,6 +1,6 @@
 # Maps
 
-A game owns zero or more independently named maps, including draft games. Each map owns its coordinate space, groups, categories, markers, and optional styles. Metadata routes start at `/games/{gameId}/maps`; static tiles use `/map-tiles`. Game responses have seven fields and no mapId or embedded maps.
+A game owns zero or more independently named maps, including draft games. Each map owns its coordinate space, groups, categories, markers, and optional styles. Metadata routes start at `/games/{gameId}/maps`; static tiles use `/map-tiles`. Game responses include read-only map summaries (id, name, nullable preview) and content counts, without a selected mapId or full map geometry/styles.
 
 | Method | Suffix                          | Operation      | Success            |
 | ------ | ------------------------------- | -------------- | ------------------ |

@@ -1,3 +1,4 @@
+import { formatDate } from '@angular/common'
 import { Component, computed, effect, inject, signal } from '@angular/core'
 import { apply, disabled, form, FormRoot } from '@angular/forms/signals'
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'
@@ -25,6 +26,8 @@ export class FeatureCreate {
 	readonly #create = injectMutation(() => this.#options.create())
 	readonly #model = signal(createGameFormModel())
 
+	protected readonly banner = signal<ImageAsset | undefined>(undefined)
+
 	protected readonly cover = signal<ImageAsset | undefined>(undefined)
 
 	protected readonly fields = form(
@@ -40,7 +43,17 @@ export class FeatureCreate {
 
 					await this.#create
 						.mutateAsync(
-							{ name: model.name.trim(), slug: model.slug.trim(), imageAssetId: model.imageAssetId },
+							{
+								name: model.name.trim(),
+								slug: model.slug.trim(),
+								coverId: model.coverId,
+								bannerId: model.bannerId || null,
+								releaseDate: model.releaseDate
+									? formatDate(model.releaseDate, 'yyyy-MM-dd', 'en-US')
+									: null,
+								developer: model.developer || null,
+								description: model.description || null,
+							},
 							{ onSuccess: () => fields().reset() },
 						)
 						.catch(() => undefined)
@@ -103,7 +116,7 @@ export class FeatureCreate {
 
 	protected chooseCover(): void {
 		this.#dialogs
-			.open<PickerContext, Game['image']>(
+			.open<PickerContext, Game['cover']>(
 				MediaPickerDialog,
 				undefined,
 				{ mode: 'image' },
@@ -114,14 +127,37 @@ export class FeatureCreate {
 				if (!image) return
 
 				this.cover.set(image)
-				this.#model.update(model => ({ ...model, imageAssetId: image.id }))
-				this.fields.imageAssetId().markAsDirty()
+				this.#model.update(model => ({ ...model, coverId: image.id }))
+				this.fields.coverId().markAsDirty()
 			})
 	}
 
+	protected chooseBanner(): void {
+		this.#dialogs
+			.open<PickerContext, Game['cover']>(
+				MediaPickerDialog,
+				undefined,
+				{ mode: 'image' },
+				{ ariaLabel: 'Choose a game banner' },
+			)
+			.closed$.pipe(take(1))
+			.subscribe(image => {
+				if (!image) return
+
+				this.banner.set(image)
+				this.#model.update(model => ({ ...model, bannerId: image.id }))
+				this.fields.bannerId().markAsDirty()
+			})
+	}
+	protected removeBanner(): void {
+		this.banner.set(undefined)
+		this.#model.update(model => ({ ...model, bannerId: '' }))
+		this.fields.bannerId().markAsDirty()
+	}
 	protected discard(): void {
 		this.#model.set(createGameFormModel())
 		this.cover.set(undefined)
+		this.banner.set(undefined)
 		this.fields().reset()
 		this.#create.reset()
 	}

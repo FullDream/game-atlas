@@ -30,7 +30,7 @@ public sealed class GamePersistenceTests : IDisposable
 		Assert.Equal(game.Id, stored.Id);
 		Assert.Equal(game.Name, stored.Name);
 		Assert.Equal(game.Slug, stored.Slug);
-		Assert.Equal(game.ImageAssetId, stored.ImageAssetId);
+		Assert.Equal(game.CoverId, stored.CoverId);
 		Assert.Equal(game.CreatedAt, stored.CreatedAt);
 		Assert.Equal(game.UpdatedAt, stored.UpdatedAt);
 		Assert.Equal(GameStatus.Draft, stored.Status);

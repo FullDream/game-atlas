@@ -115,7 +115,19 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 						.IsRequired()
 						.HasColumnType("TEXT");
 
-					b.Property<Guid>("ImageAssetId")
+					b.Property<Guid?>("BannerId")
+						.HasColumnType("TEXT");
+
+					b.Property<string>("Description")
+						.HasColumnType("TEXT");
+
+					b.Property<string>("Developer")
+						.HasColumnType("TEXT");
+
+					b.Property<DateOnly?>("ReleaseDate")
+						.HasColumnType("TEXT");
+
+					b.Property<Guid>("CoverId")
 						.HasColumnType("TEXT");
 
 					b.Property<string>("Name")
@@ -138,7 +150,9 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 
 					b.HasKey("Id");
 
-					b.HasIndex("ImageAssetId");
+					b.HasIndex("BannerId");
+
+					b.HasIndex("CoverId");
 
 					b.HasIndex("Slug")
 						.IsUnique();
@@ -496,13 +510,20 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 
 			modelBuilder.Entity("GameAtlas.Domain.Games.Game", b =>
 				{
-					b.HasOne("GameAtlas.Domain.Media.ImageAsset", "Image")
+					b.HasOne("GameAtlas.Domain.Media.ImageAsset", "Banner")
 						.WithMany()
-						.HasForeignKey("ImageAssetId")
+						.HasForeignKey("BannerId")
+						.OnDelete(DeleteBehavior.Restrict);
+
+					b.HasOne("GameAtlas.Domain.Media.ImageAsset", "Cover")
+						.WithMany()
+						.HasForeignKey("CoverId")
 						.OnDelete(DeleteBehavior.Restrict)
 						.IsRequired();
 
-					b.Navigation("Image");
+					b.Navigation("Banner");
+
+					b.Navigation("Cover");
 				});
 
 			modelBuilder.Entity("GameAtlas.Domain.Maps.Map", b =>

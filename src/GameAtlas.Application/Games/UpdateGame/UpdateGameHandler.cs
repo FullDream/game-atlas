@@ -6,12 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameAtlas.Application.Games.UpdateGame;
 
-public sealed class UpdateGameHandler(IApplicationDbContext context) : ICommandHandler<UpdateGame, Result<GameDto>>
+public sealed class UpdateGameHandler(IApplicationDbContext context, IMediator mediator) : ICommandHandler<UpdateGame, Result<GameDto>>
 {
 	public async ValueTask<Result<GameDto>> Handle(UpdateGame command, CancellationToken cancellationToken)
 	{
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
-		var game = await context.Games.AsTracking().Include(game => game.Image)
+		var game = await context.Games.AsTracking()
 			.SingleOrDefaultAsync(game => game.Id == command.Id, cancellationToken);
 
 		if (game is null)
@@ -28,19 +28,24 @@ public sealed class UpdateGameHandler(IApplicationDbContext context) : ICommandH
 				return UpdateGameErrors.SlugConflict;
 		}
 
-		var image = game.Image;
-
-		if (command.ImageAssetId.IsSpecified && command.ImageAssetId.Value is { } imageId)
+		if (command.CoverId.IsSpecified && command.CoverId.Value is { } imageId)
 		{
 			var selected = await context.FindImageAsync(imageId, cancellationToken);
 
 			if (selected.IsFailure)
 				return selected.Errors;
 
-			image = selected.Value;
 		}
 
-		var result = game.Update(command.Name, command.Slug, command.ImageAssetId, command.Status);
+		if (command.BannerId.IsSpecified && command.BannerId.Value is { } bannerId)
+		{
+			var selected = await context.FindImageAsync(bannerId, cancellationToken);
+
+			if (selected.IsFailure)
+				return selected.Errors;
+		}
+
+		var result = game.Update(command.Name, command.Slug, command.CoverId, command.Status, command.BannerId, command.ReleaseDate, command.Developer, command.Description);
 
 		if (result.IsFailure)
 			return result.Errors;
@@ -50,6 +55,6 @@ public sealed class UpdateGameHandler(IApplicationDbContext context) : ICommandH
 
 		await transaction.CommitAsync(cancellationToken);
 
-		return game.ToDto(image.ToDto());
+		return await mediator.Send(new GetGame.GetGame(game.Id), cancellationToken);
 	}
 }

@@ -19,27 +19,27 @@ public static class Endpoints
 			.WithName("ListGames")
 			.WithSummary("List games")
 			.WithDescription("Lists all game statuses with offset/limit pagination and optional name search. " +
-							 "Search ignores ASCII case. Without sortBy, ordering is unspecified.");
+							 "Search ignores ASCII case. Without sortBy, games are ordered by createdAt ascending. Id breaks sorting ties.");
 
 		games.MapGet("/{id}", GetGameAsync)
 			.ProducesProblem(StatusCodes.Status404NotFound)
 			.WithName("GetGame")
 			.WithSummary("Get game")
-			.WithDescription("Returns a draft or published game with its complete library image. Missing games return 404.");
+			.WithDescription("Returns a draft or published game with canonical cover/banner images, metadata, content counts and map summaries. Missing games return 404.");
 
 		games.MapPost("", CreateGameAsync)
 			.ProducesProblem(StatusCodes.Status404NotFound)
 			.WithName("CreateGame")
 			.WithSummary("Create game")
 			.WithDescription("Creates a draft with a client-supplied unique slug. " +
-							 "Trims name and slug; imageAssetId must select an existing library image. Returns the complete stored game with its ImageAsset.");
+							 "Trims name and slug; coverId must select an existing library image. Returns the complete stored game with its ImageAsset.");
 
 		games.MapPatch("/{id}", UpdateGameAsync)
 			.WithName("UpdateGame")
 			.WithSummary("Update game")
 			.WithDescription("Updates supplied fields using JSON Merge Patch semantics " +
 				"with either supported media type. " +
-				"Supply at least one mutable field. Omitted fields are preserved; null is invalid. " +
+				"Supply at least one mutable field. Omitted fields are preserved; null clears banner, releaseDate, developer and description, but is invalid for required fields. " +
 				"Identity and timestamps are read-only. Status supports draft and published. " +
 				"Unchanged values preserve updatedAt. Returns the complete stored game.")
 			.WithMergePatch<UpdateGameRequest>();

@@ -15,7 +15,7 @@ namespace GameAtlas.IntegrationTests;
 public class ListGamesApiTests
 {
 	[Fact]
-	public async Task DefaultsReturnCompleteMetadataAndAllStatusesWithoutOrderingOrWrites()
+	public async Task DefaultsReturnCompleteMetadataAndAllStatusesWithStableOrderingWithoutWrites()
 	{
 		var capture = new CommandCapture();
 		await using var factory = new GameApiFactory(interceptor: capture);
@@ -32,6 +32,8 @@ public class ListGamesApiTests
 		Assert.Equal(0, page.GetProperty("offset").GetInt32());
 		Assert.Equal(20, page.GetProperty("limit").GetInt32());
 		Assert.Equal(25, page.GetProperty("total").GetInt32());
+		Assert.Equal(games.OrderBy(game => game.CreatedAt).ThenBy(game => game.Id).Take(20).Select(game => game.Id),
+			page.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()));
 		Assert.Equal(4, page.EnumerateObject().Count());
 		var items = page.GetProperty("items").EnumerateArray().ToArray();
 
@@ -43,10 +45,10 @@ public class ListGamesApiTests
 		{
 			var game = games.Single(game => game.Id == item.GetProperty("id").GetGuid());
 
-			Assert.Equal(7, item.EnumerateObject().Count());
+			Assert.Equal(14, item.EnumerateObject().Count());
 			Assert.Equal(game.Name, item.GetProperty("name").GetString());
 			Assert.Equal(game.Slug, item.GetProperty("slug").GetString());
-			Assert.Equal(game.ImageAssetId, item.GetProperty("image").GetProperty("id").GetGuid());
+			Assert.Equal(game.CoverId, item.GetProperty("cover").GetProperty("id").GetGuid());
 			Assert.False(item.TryGetProperty("mapId", out _));
 			Assert.Equal(game.CreatedAt, item.GetProperty("createdAt").GetDateTimeOffset());
 			Assert.Equal(game.UpdatedAt, item.GetProperty("updatedAt").GetDateTimeOffset());
@@ -54,12 +56,37 @@ public class ListGamesApiTests
 
 		var commands = capture.Commands.ToArray();
 
-		Assert.Equal(2, commands.Length);
+		Assert.Equal(6, commands.Length);
 		Assert.Contains("COUNT(*)", commands[0]);
 		Assert.Contains("LIMIT", commands[1]);
 		Assert.Contains("OFFSET", commands[1]);
-		Assert.All(commands, command => Assert.DoesNotContain("ORDER BY", command));
+		Assert.Contains("ORDER BY", commands[1]);
+		Assert.Equal(2, commands.Count(command => command.Contains("GROUP BY")));
 		Assert.All(commands, command => Assert.StartsWith("SELECT", command));
+	}
+
+	[Fact]
+	public async Task DefaultSortingBreaksCreationTimeTiesByIdBeforePagination()
+	{
+		await using var factory = new GameApiFactory();
+		var games = await SeedAsync(factory, ["Zulu", "Alpha", "Beta", "Other"]);
+		await using (var scope = factory.Services.CreateAsyncScope())
+		{
+			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+			var instant = DateTimeOffset.Parse("2026-01-01T00:00:00Z");
+			await context.Games.ExecuteUpdateAsync(setters => setters.SetProperty(game => game.CreatedAt, instant));
+		}
+
+		using var client = factory.CreateHttpsClient();
+		var expected = games.OrderBy(game => game.Id).Select(game => game.Id).ToArray();
+
+		foreach (var offset in new[] { 0, 2, 0 })
+		{
+			using var response = await client.GetAsync($"/games?offset={offset}&limit=2");
+			var page = await ReadPageAsync(response);
+			Assert.Equal(expected.Skip(offset).Take(2), page.GetProperty("items").EnumerateArray()
+				.Select(item => item.GetProperty("id").GetGuid()));
+		}
 	}
 
 	[Theory]
@@ -107,7 +134,7 @@ public class ListGamesApiTests
 		Assert.Equal(expected.ThenBy(game => game.Id).Skip(1).Take(2).Select(game => game.Id),
 			page.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()));
 		Assert.Equal(5, page.GetProperty("total").GetInt32());
-		var sql = capture.Commands.Last();
+		var sql = capture.Commands.Single(command => command.Contains("LIMIT") && command.Contains("Games"));
 
 		Assert.True(sql.IndexOf("ORDER BY", StringComparison.Ordinal) <
 			sql.LastIndexOf("LIMIT", StringComparison.Ordinal));

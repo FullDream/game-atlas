@@ -22,5 +22,13 @@
 	@if (error()) {
 		<p role="alert" class="mb-5 text-sm text-destructive">{{ error() }}</p>
 	}
-	<games-fields [fields]="fields" [cover]="cover()" [busy]="fields().submitting()" (chooseCover)="chooseCover()" />
+	<games-fields
+		[fields]="fields"
+		[cover]="cover()"
+		[banner]="banner()"
+		(chooseBanner)="chooseBanner()"
+		(removeBanner)="removeBanner()"
+		[busy]="fields().submitting()"
+		(chooseCover)="chooseCover()"
+	/>
 </form>

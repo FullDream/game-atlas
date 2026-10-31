@@ -20,7 +20,7 @@ public class GameUpdateTests
 		Assert.True(result.Value);
 		Assert.Equal("Updated", game.Name);
 		Assert.Equal("updated", game.Slug);
-		Assert.Equal(otherId, game.ImageAssetId);
+		Assert.Equal(otherId, game.CoverId);
 		Assert.Equal(GameStatus.Published, game.Status);
 		Assert.Equal(id, game.Id);
 		Assert.Equal(createdAt, game.CreatedAt);
@@ -36,7 +36,7 @@ public class GameUpdateTests
 		Assert.True(game.Update(status: GameStatus.Published).Value);
 		Assert.True(game.Update(name: "Updated").Value);
 		Assert.Equal("game", game.Slug);
-		Assert.Equal(coverId, game.ImageAssetId);
+		Assert.Equal(coverId, game.CoverId);
 		Assert.Equal(GameStatus.Published, game.Status);
 		Assert.True(game.Update(status: GameStatus.Draft).Value);
 		Assert.Equal(GameStatus.Draft, game.Status);
@@ -74,7 +74,7 @@ public class GameUpdateTests
 		Assert.Contains(result.Errors, error => error.Property == nameof(Game.Slug));
 		Assert.Equal("Game", game.Name);
 		Assert.Equal("game", game.Slug);
-		Assert.Equal(coverId, game.ImageAssetId);
+		Assert.Equal(coverId, game.CoverId);
 		Assert.Equal(GameStatus.Draft, game.Status);
 		Assert.Equal(updatedAt, game.UpdatedAt);
 	}
@@ -98,11 +98,11 @@ public class GameUpdateTests
 	public void RejectsEmptyImageWithoutApplyingOtherChanges()
 	{
 		var game = Game.Create("Game", "game", coverId).Value!;
-		var result = game.Update(name: "Changed", imageAssetId: Guid.Empty);
+		var result = game.Update(name: "Changed", coverId: Guid.Empty);
 
-		Assert.Equal(GameErrors.ImageRequired, Assert.Single(result.Errors!));
+		Assert.Equal(GameErrors.CoverRequired, Assert.Single(result.Errors!));
 		Assert.Equal("Game", game.Name);
-		Assert.Equal(coverId, game.ImageAssetId);
+		Assert.Equal(coverId, game.CoverId);
 		Assert.Equal(game.CreatedAt, game.UpdatedAt);
 	}
 

@@ -18,6 +18,7 @@ export type PickerImage = { id: string; name: string; url: string; alt: string; 
 })
 export class MediaThumbnail {
 	readonly image = input.required<PickerImage>()
+	readonly fit = input<'contain' | 'cover'>('contain')
 
 	protected readonly failedUrl = signal<string | null>(null)
 	protected readonly unavailable = computed(() => this.failedUrl() === this.image().url)

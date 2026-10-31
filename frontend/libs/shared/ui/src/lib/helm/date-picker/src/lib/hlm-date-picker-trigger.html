@@ -1,0 +1,29 @@
+<button
+	[id]="buttonId()"
+	type="button"
+	[class]="computedClass()"
+	[disabled]="disabled()"
+	[attr.aria-invalid]="ariaInvalid()"
+	[attr.data-invalid]="ariaInvalid()"
+	[attr.data-touched]="touched?.() ? 'true' : null"
+	[attr.data-dirty]="dirty?.() ? 'true' : null"
+	[attr.data-matches-spartan-invalid]="spartanInvalid() ? 'true' : null"
+	hlmBtn
+	[variant]="variant()"
+	hlmPopoverTrigger
+	[hlmPopoverTriggerFor]="popover()"
+	brnFieldControlDescribedBy
+	[attr.data-placeholder]="isPlaceholder() ? '' : null"
+>
+	<span class="truncate">
+		@if (formattedDate(); as formattedDate) {
+			{{ formattedDate }}
+		} @else {
+			<ng-content />
+		}
+	</span>
+
+	@if (showTrigger()) {
+		<ng-icon name="matKeyboardArrowDownRound" />
+	}
+</button>

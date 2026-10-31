@@ -1,4 +1,4 @@
-import { booleanAttribute, Component, input } from '@angular/core'
+import { booleanAttribute, Component, computed, input } from '@angular/core'
 import { RouterLink } from '@angular/router'
 import { type Game } from '@game-atlas/games/data-access'
 import { Button, MediaThumbnail } from '@game-atlas/shared/ui'
@@ -13,11 +13,12 @@ import {
 	matSportsEsportsRound,
 } from '@ng-icons/material-symbols/round'
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu'
+import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 
 @Component({
 	selector: 'games-card',
-	imports: [RouterLink, Button, MediaThumbnail, NgIcon, HlmDropdownMenuImports, HlmSkeleton],
+	imports: [RouterLink, Button, MediaThumbnail, NgIcon, HlmDropdownMenuImports, HlmSkeleton, HlmEmptyImports],
 	templateUrl: './game-card.html',
 	styleUrl: './game-card.css',
 	providers: [
@@ -46,9 +47,9 @@ export class GameCard {
 
 	protected readonly mapPreviews = [0, 1, 2]
 
-	protected readonly metrics = [
-		{ icon: 'matMapRound', label: 'maps' },
-		{ icon: 'matLocationOnRound', label: 'points' },
-		{ icon: 'matFolderRound', label: 'categories' },
-	]
+	protected readonly metrics = computed(() => [
+		{ icon: 'matMapRound', label: 'maps', value: this.game()?.maps.length ?? 0 },
+		{ icon: 'matLocationOnRound', label: 'points', value: this.game()?.markersCount ?? 0 },
+		{ icon: 'matFolderRound', label: 'categories', value: this.game()?.categoriesCount ?? 0 },
+	])
 }

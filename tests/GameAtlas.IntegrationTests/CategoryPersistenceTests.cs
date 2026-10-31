@@ -47,6 +47,7 @@ public class CategoryPersistenceTests
 			reloaded.GetService<IMigrator>().MigrateAsync("20261023100000_CategoryGroups"));
 
 		Assert.Contains("GameImages_RestoreBackupForNonemptyGames", rollback.Message);
+		await reloaded.Database.MigrateAsync();
 
 		DeleteGameHandlerTests.AssertSameGame(game, await reloaded.Games.SingleAsync());
 		Assert.Equal(group.Id, (await reloaded.CategoryGroups.SingleAsync()).Id);

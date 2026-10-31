@@ -13,6 +13,7 @@ Read the section for the language being changed. Formatting and naming configura
 - Use partial classes only when the type must be split across files, including required generated declarations. Do not introduce partial solely to generate a regex in a domain entity; use a cached regex instead.
 - Insert a blank line before `return` statements, except when `return` is the first statement in a block.
 - Insert a blank line after a group of local variable declarations before the next statement.
+- Surround multiline local variable declarations with blank lines above and below, including LINQ queries, fluent chains, object initializers and block lambdas. Keep compact single-line declarations grouped; do not add blank lines immediately after an opening brace or before a closing brace.
 - Separate adjacent fields or properties with a blank line when either declaration spans multiple lines, including attributes, accessors, or an initializer. Compact single-line declarations may remain grouped.
 - Insert a blank line after a completed multiline invocation (including fluent chains and calls with block lambdas) before the next statement. Do not insert blank lines inside a continuous invocation chain or before a closing delimiter when no statement follows.
 - Separate control-flow statements and blocks (`if`, `for`, `foreach`, `while`, `do`, `switch`, `try`, etc.) from surrounding statements with blank lines. Do not insert blank lines between related clauses such as `if`/`else`, `try`/`catch`/`finally`, or `do`/`while`.

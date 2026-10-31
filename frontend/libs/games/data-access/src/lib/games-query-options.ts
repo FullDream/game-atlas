@@ -77,7 +77,7 @@ export class GamesQueryOptions {
 			onMutate: async ({ id: gameId, ...patch }) => {
 				await this.#client.cancelQueries({ queryKey: getGameQueryKey(gameId) })
 				const previous = this.#client.getQueryData<Game>(getGameQueryKey(gameId))
-				const optimistic = previous ? { ...previous, ...omit(patch, ['imageAssetId']) } : undefined
+				const optimistic = previous ? { ...previous, ...omit(patch, ['coverId', 'bannerId']) } : undefined
 
 				if (optimistic) this.#client.setQueryData(getGameQueryKey(gameId), optimistic)
 

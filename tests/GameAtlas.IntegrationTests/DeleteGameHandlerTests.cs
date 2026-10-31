@@ -89,7 +89,7 @@ public class DeleteGameHandlerTests
 		Assert.Equal(expected.Id, actual.Id);
 		Assert.Equal(expected.Name, actual.Name);
 		Assert.Equal(expected.Slug, actual.Slug);
-		Assert.Equal(expected.ImageAssetId, actual.ImageAssetId);
+		Assert.Equal(expected.CoverId, actual.CoverId);
 		Assert.Equal(expected.Status, actual.Status);
 		Assert.Equal(expected.CreatedAt, actual.CreatedAt);
 		Assert.Equal(expected.UpdatedAt, actual.UpdatedAt);

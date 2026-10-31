@@ -16,7 +16,7 @@ public sealed class ListGamesRequest
 	[FromQuery, Description("Trimmed literal name substring; ignores ASCII case. Empty means no filter.")]
 	public string? Search { get; init; }
 
-	[FromQuery, Description("name, createdAt, or updatedAt (case-insensitive). Omit for unspecified order.")]
+	[FromQuery, Description("name, createdAt, or updatedAt (case-insensitive). Omit for createdAt ascending. Id ascending breaks ties.")]
 	public GameSortBy? SortBy { get; init; }
 
 	[FromQuery, Description("asc or desc (case-insensitive). Requires sortBy; defaults to asc with sortBy.")]

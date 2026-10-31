@@ -29,7 +29,7 @@ public class UpdateGameValidationTests
 		var result = await validator.ValidateAsync(new UpdateGame(Guid.NewGuid(), input, input, Optional<Guid?>.From(null)));
 
 		Assert.False(result.IsValid);
-		Assert.Equal(new[] { "ImageAssetId", "Name", "Slug" },
+		Assert.Equal(new[] { "CoverId", "Name", "Slug" },
 			result.Errors.Select(error => error.PropertyName).Distinct().Order());
 	}
 

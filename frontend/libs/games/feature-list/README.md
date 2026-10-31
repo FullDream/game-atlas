@@ -14,9 +14,9 @@ Browser checks against the backend covered draft creation, direct detail reload,
 
 Media move-mode folder browsing and cancellation were checked through the existing Media feature. Nx lint and the admin production build cover compilation and module boundaries. Frontend unit/E2E suites remain deferred, and these browser observations do not establish exhaustive concurrency or accessibility coverage. Existing initial-bundle and Media CSS budget warnings remain.
 
-## Reference layout and placeholders
+## Game card layout
 
-Games now offers Grid/List cards with a cover, banner placeholder, unavailable statistics (shown as dashes), map preview placeholders and actions. Manage maps opens the editor's Maps section. Existing game metadata and the cover picker continue using the API.
+Games offers Grid/List cards with persisted cover/banner images, plain-text descriptions, marker/category counts and read-only map previews. Missing optional images have neutral fallbacks and empty games show zero counts and an empty map state. Manage maps opens the editor's Maps section. Existing game metadata and the cover picker continue using the API.
 
 The Games list uses named container queries for its toolbar, search, view switch and card layout. The view switch appears only when the container can display horizontal list rows; below that width both modes use the same grid. Grid column counts are 1, 2, 3, 4 or 6, which divide all supported page sizes (24/48/72/96). Three columns start at a container width of 68rem, including a 1920×1080 display at 125% scaling with the sidebar open. The default page size is 24; Games API limits requests to 100, so the largest offered size is 96. Skeleton count follows the selected page size.
 

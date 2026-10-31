@@ -73,7 +73,7 @@ public class PersistenceTests
 		var gameType = context.Model.FindEntityType(typeof(Game));
 
 		Assert.NotNull(gameType);
-		Assert.Equal("ImageAssetId", Assert.Single(gameType.GetForeignKeys()).Properties.Single().Name);
+		Assert.Equal(new[] { "BannerId", "CoverId" }, gameType.GetForeignKeys().Select(key => key.Properties.Single().Name).Order());
 		Assert.Contains(gameType.GetIndexes(), index => index.IsUnique && index.Properties.Single().Name == "Slug");
 
 		await context.Database.OpenConnectionAsync();

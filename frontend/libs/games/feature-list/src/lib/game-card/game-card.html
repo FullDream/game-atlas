@@ -8,17 +8,14 @@
 >
 	@if (skeleton()) {
 		<hlm-skeleton class="inset-0 absolute rounded-none" />
+	} @else if (current?.banner; as banner) {
+		<ui-media-thumbnail class="size-full" [image]="banner" fit="cover" />
 	} @else {
 		<ng-icon
 			name="matSportsEsportsRound"
 			class="text-muted-foreground -rotate-12 text-[3.75rem] opacity-13"
 			aria-hidden="true"
 		/>
-		<span
-			class="banner-caption top-3 right-3 text-muted-foreground absolute text-[.625rem] tracking-[.04em] uppercase opacity-60"
-		>
-			Banner preview
-		</span>
 	}
 </a>
 <div class="game-summary px-4 pb-4 @[60rem]/games:group-data-[layout=list]/game-card:p-4">
@@ -34,7 +31,7 @@
 			@if (skeleton()) {
 				<hlm-skeleton class="size-full rounded-none" />
 			} @else if (current) {
-				<ui-media-thumbnail class="size-full" [image]="current.image" />
+				<ui-media-thumbnail class="size-full" [image]="current.cover" fit="cover" />
 			}
 		</a>
 		<div class="min-w-0 pb-1 flex-1">
@@ -95,11 +92,11 @@
 				<hlm-skeleton class="h-3 w-3/4" />
 			</div>
 		} @else {
-			<p>A description of this game will appear here.</p>
+			<p>{{ current?.description }}</p>
 		}
 	</div>
-	<div class="game-metrics gap-3 grid grid-cols-3" aria-label="Game statistics are not available yet">
-		@for (metric of metrics; track metric.label) {
+	<div class="game-metrics gap-3 grid grid-cols-3" aria-label="Game statistics">
+		@for (metric of metrics(); track metric.label) {
 			<div class="gap-2 flex items-center">
 				@if (skeleton()) {
 					<hlm-skeleton class="size-[1.15rem] shrink-0" />
@@ -111,7 +108,7 @@
 						@if (skeleton()) {
 							<span hlmSkeleton class="w-5 h-lh"></span>
 						} @else {
-							—
+							{{ metric.value }}
 						}
 					</b>
 					<small class="text-muted-foreground mt-[.15rem] block text-[.6rem]">
@@ -148,26 +145,39 @@
 			</a>
 		}
 	</div>
-	<div class="gap-3 grid grid-cols-3" aria-label="Map previews are not available yet">
-		@for (preview of mapPreviews; track preview) {
-			<div class="min-w-0">
-				<div
-					class="map-preview border-border bg-muted text-muted-foreground relative flex aspect-33/20 items-center justify-center overflow-hidden rounded-[.4rem] border border-dashed opacity-70"
-				>
-					@if (skeleton()) {
-						<hlm-skeleton class="inset-0 absolute size-full rounded-none" />
-					} @else {
-						<ng-icon name="matMapRound" class="text-2xl opacity-40" aria-hidden="true" />
-					}
+	<div class="gap-3 grid grid-cols-3" aria-label="Maps">
+		@if (skeleton()) {
+			@for (preview of mapPreviews; track preview) {
+				<div>
+					<hlm-skeleton class="aspect-33/20 w-full" />
+					<hlm-skeleton class="mt-2 h-3 w-16" />
 				</div>
-				<p class="mt-1.5 text-muted-foreground truncate text-[11px]">
-					@if (skeleton()) {
-						<span hlmSkeleton class="w-16 h-lh max-w-full"></span>
+			}
+		} @else {
+			@for (map of current?.maps ?? []; track map.id) {
+				<div class="min-w-0">
+					@if (map.preview; as image) {
+						<ui-media-thumbnail class="rounded-lg aspect-33/20 w-full overflow-hidden" [image]="image" />
 					} @else {
-						Map preview
+						<div
+							class="rounded-lg bg-muted text-muted-foreground flex aspect-33/20 items-center justify-center border border-dashed"
+						>
+							<ng-icon name="matMapRound" aria-hidden="true" />
+						</div>
 					}
-				</p>
-			</div>
+					<p class="mt-1.5 text-muted-foreground truncate text-[11px]">{{ map.name }}</p>
+				</div>
+			} @empty {
+				<div hlmEmpty class="game-maps-empty">
+					<div hlmEmptyMedia variant="icon">
+						<ng-icon name="matMapRound" aria-hidden="true" />
+					</div>
+					<div hlmEmptyHeader>
+						<h4 hlmEmptyTitle>No maps yet</h4>
+						<p hlmEmptyDescription>Map previews will appear here once added.</p>
+					</div>
+				</div>
+			}
 		}
 	</div>
 </div>

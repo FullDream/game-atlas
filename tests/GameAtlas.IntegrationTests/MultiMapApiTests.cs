@@ -122,7 +122,7 @@ public class MultiMapApiTests
 
 		Assert.All(catalogJson.RootElement.GetProperty("items").EnumerateArray(), item =>
 		{
-			Assert.Equal(7, item.EnumerateObject().Count());
+			Assert.Equal(14, item.EnumerateObject().Count());
 			Assert.False(item.TryGetProperty("mapId", out _));
 		});
 	}

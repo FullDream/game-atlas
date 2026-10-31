@@ -1,3 +1,4 @@
+import { formatDate } from '@angular/common'
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http'
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core'
 import { apply, disabled, form, FormRoot } from '@angular/forms/signals'
@@ -88,8 +89,16 @@ export class FeatureEditor {
 			previous && previous.source.id === id && previous.source.game ? previous.value : createGameFormModel(game),
 	})
 
-	readonly #selectedCover = linkedSignal<string, Game['image'] | null>({ source: this.id, computation: () => null })
-	protected readonly cover = computed(() => this.#selectedCover() ?? this.game.data()?.image)
+	readonly #selectedCover = linkedSignal<string, Game['cover'] | null>({ source: this.id, computation: () => null })
+	readonly #selectedBanner = linkedSignal<string, Game['banner'] | undefined>({
+		source: this.id,
+		computation: () => undefined,
+	})
+	protected readonly banner = computed(() =>
+		this.#selectedBanner() === undefined ? this.game.data()?.banner : this.#selectedBanner(),
+	)
+
+	protected readonly cover = computed(() => this.#selectedCover() ?? this.game.data()?.cover)
 
 	protected readonly fields = form(
 		this.#model,
@@ -102,7 +111,18 @@ export class FeatureEditor {
 		{
 			submission: {
 				action: async fields => {
-					const patch = getDirtyValues(fields)
+					const { releaseDate, ...dirty } = getDirtyValues(fields)
+					const patch = {
+						...dirty,
+						...(dirty.bannerId !== undefined ? { bannerId: dirty.bannerId || null } : {}),
+						...(releaseDate !== undefined
+							? {
+									releaseDate: releaseDate ? formatDate(releaseDate, 'yyyy-MM-dd', 'en-US') : null,
+								}
+							: {}),
+						...(dirty.developer !== undefined ? { developer: dirty.developer || null } : {}),
+						...(dirty.description !== undefined ? { description: dirty.description || null } : {}),
+					}
 
 					if (!Object.keys(patch).length) return
 
@@ -113,6 +133,7 @@ export class FeatureEditor {
 								onSuccess: game => {
 									this.#model.set(createGameFormModel(game))
 									this.#selectedCover.set(null)
+									this.#selectedBanner.set(undefined)
 									fields().reset()
 								},
 							},
@@ -155,6 +176,10 @@ export class FeatureEditor {
 	protected readonly outletData = computed<FeatureEditorContext>(() => ({
 		fields: this.fields,
 		cover: this.cover(),
+		banner: this.banner(),
+		maps: this.game.data()?.maps ?? [],
+		chooseBanner: () => this.chooseBanner(),
+		removeBanner: () => this.removeBanner(),
 		editing: true,
 		busy: this.fields().submitting() || this.deleting(),
 		deleting: this.deleting(),
@@ -209,7 +234,7 @@ export class FeatureEditor {
 	}
 
 	protected chooseCover(): void {
-		const dialog = this.#dialogs.open<PickerContext, Game['image']>(
+		const dialog = this.#dialogs.open<PickerContext, Game['cover']>(
 			MediaPickerDialog,
 			undefined,
 			{ mode: 'image' },
@@ -220,14 +245,37 @@ export class FeatureEditor {
 			if (!image) return
 
 			this.#selectedCover.set(image)
-			this.#model.update(model => ({ ...model, imageAssetId: image.id }))
-			this.fields.imageAssetId().markAsDirty()
+			this.#model.update(model => ({ ...model, coverId: image.id }))
+			this.fields.coverId().markAsDirty()
 		})
 	}
 
+	protected chooseBanner(): void {
+		this.#dialogs
+			.open<PickerContext, Game['cover']>(
+				MediaPickerDialog,
+				undefined,
+				{ mode: 'image' },
+				{ ariaLabel: 'Choose a game banner' },
+			)
+			.closed$.pipe(take(1))
+			.subscribe(image => {
+				if (!image) return
+
+				this.#selectedBanner.set(image)
+				this.#model.update(model => ({ ...model, bannerId: image.id }))
+				this.fields.bannerId().markAsDirty()
+			})
+	}
+	protected removeBanner(): void {
+		this.#selectedBanner.set(null)
+		this.#model.update(model => ({ ...model, bannerId: '' }))
+		this.fields.bannerId().markAsDirty()
+	}
 	protected discard(): void {
 		this.#model.set(createGameFormModel(this.game.data()))
 		this.#selectedCover.set(null)
+		this.#selectedBanner.set(undefined)
 		this.fields().reset()
 		this.#update.reset()
 	}

@@ -4,6 +4,8 @@ Owned Spartan Helm components and UI-specific helpers in one non-buildable Nx pr
 
 Import the required entrypoint, for example `@spartan-ng/helm/button` or `@spartan-ng/helm/sidebar`. The root entrypoint deliberately does not re-export every component. Production builds can tree-shake unused exports.
 
+Use `@spartan-ng/helm/date-picker` for ready-made date pickers, composed with the owned Calendar and Popover entrypoints. Prefer importing the specific components needed by a view. These generated entrypoints use Material Symbols Rounded and the workspace Angular conventions.
+
 Use `@spartan-ng/helm/empty` for empty states: compose HlmEmpty, HlmEmptyHeader, optional HlmEmptyMedia, HlmEmptyTitle and HlmEmptyDescription. Media uses it for empty folders and searches with no matches.
 
 `components.json` uses `componentsPath: libs/shared/ui/src/lib/helm`, `generateAs: entrypoint` and `buildable: false`. Future CLI additions belong to this project; do not create a project for each primitive. Keep the standard `ui-helm` project name because Spartan CLI uses it to detect the entrypoint container.

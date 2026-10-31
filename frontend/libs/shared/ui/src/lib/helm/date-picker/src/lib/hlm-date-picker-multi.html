@@ -1,0 +1,19 @@
+<hlm-popover [align]="align()" sideOffset="5" [state]="popoverState()" (stateChanged)="onStateChange($event)">
+	<ng-content />
+
+	<hlm-popover-content class="p-0 w-fit" *hlmPopoverPortal="let ctx">
+		<ng-content select="[hlmDatePickerHeader]" />
+		<hlm-calendar-multi
+			class="rounded-none border-0"
+			[date]="mutableDate()"
+			[captionLayout]="captionLayout()"
+			[min]="minDate()"
+			[max]="maxDate()"
+			[minSelection]="minSelection()"
+			[maxSelection]="maxSelection()"
+			[disabled]="internalDisabled()"
+			(dateChange)="handleChange($event)"
+		/>
+		<ng-content select="[hlmDatePickerFooter]" />
+	</hlm-popover-content>
+</hlm-popover>

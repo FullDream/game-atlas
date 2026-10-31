@@ -1,0 +1,53 @@
+<div class="gap-4 flex flex-col">
+	<!-- Header -->
+	<div class="gap-1.5 flex w-full items-center justify-between">
+		<button
+			brnMonthYearCalendarPreviousButton
+			hlmBtn
+			variant="ghost"
+			class="p-0 order-first size-(--cell-size) select-none aria-disabled:opacity-50"
+		>
+			<ng-icon name="matChevronLeftRound" class="rtl:rotate-180" />
+		</button>
+
+		<button
+			hlmBtn
+			variant="ghost"
+			class="py-0 h-(--cell-size) select-none aria-disabled:opacity-50"
+			brnMonthYearCalendarHeader
+		>
+			{{ heading() }}
+		</button>
+
+		<button
+			brnMonthYearCalendarNextButton
+			hlmBtn
+			variant="ghost"
+			class="p-0 order-last size-(--cell-size) select-none aria-disabled:opacity-50"
+		>
+			<ng-icon name="matChevronRightRound" class="rtl:rotate-180" />
+		</button>
+	</div>
+
+	<!-- Grid -->
+	@switch (picker.view()) {
+		@case ('year') {
+			<div brnMonthYearCalendarGrid class="gap-2 grid grid-cols-4">
+				@for (year of picker.years(); track dateAdapter.getYear(year)) {
+					<button brnMonthYearCalendarYearButton [date]="year" [class]="btnClass">
+						{{ i18n.config().formatYear(dateAdapter.getYear(year)) }}
+					</button>
+				}
+			</div>
+		}
+		@case ('month') {
+			<div brnMonthYearCalendarGrid class="gap-2 grid grid-cols-4">
+				@for (month of picker.months(); track dateAdapter.getMonth(month)) {
+					<button brnMonthYearCalendarMonthButton [date]="month" [class]="btnClass">
+						{{ i18n.config().months()[dateAdapter.getMonth(month)] }}
+					</button>
+				}
+			</div>
+		}
+	}
+</div>

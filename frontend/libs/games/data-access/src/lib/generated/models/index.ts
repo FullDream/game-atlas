@@ -6,6 +6,7 @@
  */
 
 export * from './create-game-request'
+export * from './game-map'
 export * from './game-sort-by'
 export * from './game-status'
 export * from './game'

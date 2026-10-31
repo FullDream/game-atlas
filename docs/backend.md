@@ -8,6 +8,7 @@ Applies to backend implementation and backend tests. Read the [system architectu
 - Keep endpoints thin and group a resource's operations in its `Endpoints.cs` file. Place mapping extension methods in separate files in the consuming layer. Return HTTP results through the existing `OutcomeResult` integration.
 - Implement mappings as extension methods in the layer that uses them, near the relevant feature. Preserve inward dependency direction; Domain must not depend on API DTOs or infrastructure.
 - Keep DTO declarations and mapping extension classes in separate files.
+- Keep mapping extensions synchronous and pure: accept materialized values and construct DTOs without database access, injected services, or other I/O. Execute reads explicitly in the consuming operation handlers.
 - Persist domain entities directly with EF Core when the domain and persistence models match. Introduce separate persistence models only when needed.
 - Use `IApplicationDbContext` directly for persistence access from Application for now. Do not add a repository layer or generic repositories.
 

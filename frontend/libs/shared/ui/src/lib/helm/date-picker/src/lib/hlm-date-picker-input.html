@@ -1,0 +1,43 @@
+<input
+	#input
+	hlmInputGroupInput
+	[value]="_inputValue()"
+	[id]="inputId()"
+	[placeholder]="placeholder()"
+	[disabled]="_disabled()"
+	[forceInvalid]="forceInvalid()"
+	[attr.aria-invalid]="ariaInvalid()"
+	[attr.data-invalid]="ariaInvalid()"
+	[attr.data-touched]="touched?.() ? 'true' : null"
+	[attr.data-dirty]="dirty?.() ? 'true' : null"
+	[attr.data-matches-spartan-invalid]="spartanInvalid() ? 'true' : null"
+	(click)="_handleClick()"
+	(keydown.arrowDown)="_open()"
+	(keydown.enter)="_handleEnter($event)"
+	(input)="_handleInputChange($event)"
+	(focus)="_handleFocus()"
+	(blur)="_handleBlur()"
+/>
+<hlm-input-group-addon align="inline-end">
+	@if (_showClearButton()) {
+		<button
+			hlmInputGroupButton
+			size="icon-xs"
+			variant="ghost"
+			[attr.aria-label]="clearAriaLabel()"
+			(click)="_clear()"
+			[disabled]="_disabled()"
+		>
+			<ng-icon name="matCloseRound" />
+		</button>
+	}
+	<button
+		hlmInputGroupButton
+		size="icon-xs"
+		[attr.aria-label]="calendarAriaLabel()"
+		(click)="_popover().open()"
+		[disabled]="_disabled()"
+	>
+		<ng-icon name="matCalendarMonthRound" />
+	</button>
+</hlm-input-group-addon>

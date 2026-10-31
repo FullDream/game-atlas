@@ -3,6 +3,3 @@
 .game-cover-preview {
 	@apply size-30 rounded-lg bg-muted flex shrink-0 items-center justify-center overflow-hidden;
 }
-.banner-placeholder {
-	@apply bg-[linear-gradient(125deg,var(--muted),color-mix(in_srgb,var(--muted)_75%,var(--primary)_6%),var(--muted))];
-}

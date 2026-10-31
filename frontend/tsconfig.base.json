@@ -51,7 +51,10 @@
 			"@spartan-ng/helm/alert": ["./libs/shared/ui/src/lib/helm/alert/src/index.ts"],
 			"@game-atlas/games/feature-editor": ["./libs/games/feature-editor/src/index.ts"],
 			"@game-atlas/games/feature-create": ["./libs/games/feature-create/src/index.ts"],
-			"@game-atlas/games/ui": ["./libs/games/ui/src/index.ts"]
+			"@game-atlas/games/ui": ["./libs/games/ui/src/index.ts"],
+			"@spartan-ng/helm/date-picker": ["./libs/shared/ui/src/lib/helm/date-picker/src/index.ts"],
+			"@spartan-ng/helm/calendar": ["./libs/shared/ui/src/lib/helm/calendar/src/index.ts"],
+			"@spartan-ng/helm/popover": ["./libs/shared/ui/src/lib/helm/popover/src/index.ts"]
 		}
 	},
 	"exclude": ["node_modules", "tmp"]

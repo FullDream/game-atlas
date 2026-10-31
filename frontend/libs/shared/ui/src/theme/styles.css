@@ -5,6 +5,9 @@
 
 @import '@spartan-ng/brain/hlm-tailwind-preset.css';
 
+/* Agent documentation is not an application style source. */
+@source not '../../../../../.agents';
+
 @custom-variant dark {
 	&:where(:root:has(meta[name='color-scheme'][content='dark']) *) {
 		@slot;

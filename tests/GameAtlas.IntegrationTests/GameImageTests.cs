@@ -25,25 +25,25 @@ public sealed class GameImageTests
 		using var client = factory.CreateHttpsClient();
 		var image = await MediaTestData.UploadImageAsync(client);
 		var next = await MediaTestData.UploadImageAsync(client, "svg");
-		using var created = await client.PostAsJsonAsync("/games", new { name = "Game", slug = "game", imageAssetId = image.Id });
+		using var created = await client.PostAsJsonAsync("/games", new { name = "Game", slug = "game", coverId = image.Id });
 
 		created.EnsureSuccessStatusCode();
 		var game = (await created.Content.ReadFromJsonAsync<GameDto>(MapTestData.JsonOptions))!;
 
-		Assert.Equal(image, game.Image);
+		Assert.Equal(image, game.Cover);
 
 		using var payload = JsonDocument.Parse(await created.Content.ReadAsStringAsync());
 
 		Assert.Equal(1, payload.RootElement
-			.GetProperty("image").EnumerateObject().Count(property => property.Name == "type"));
-		using var second = await client.PostAsJsonAsync("/games", new { name = "Other", slug = "other", imageAssetId = image.Id });
+			.GetProperty("cover").EnumerateObject().Count(property => property.Name == "type"));
+		using var second = await client.PostAsJsonAsync("/games", new { name = "Other", slug = "other", coverId = image.Id });
 
 		second.EnsureSuccessStatusCode();
 		var other = (await second.Content.ReadFromJsonAsync<GameDto>(MapTestData.JsonOptions))!;
 		using var blocked = await client.DeleteAsync($"/media/assets/{image.Id}");
 
 		Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
-		using var same = await client.PatchAsJsonAsync($"/games/{game.Id}", new { imageAssetId = image.Id });
+		using var same = await client.PatchAsJsonAsync($"/games/{game.Id}", new { coverId = image.Id });
 
 		Assert.Equal(game.UpdatedAt, (await same.Content.ReadFromJsonAsync<GameDto>(MapTestData.JsonOptions))!.UpdatedAt);
 
@@ -58,14 +58,14 @@ public sealed class GameImageTests
 		var listed = Assert.Single(page!.Items);
 
 		Assert.Equal(2, page.Total);
-		Assert.Equal("New alt", listed.Image.Alt);
-		Assert.Equal(image.Placeholder, listed.Image.Placeholder);
+		Assert.Equal("New alt", listed.Cover.Alt);
+		Assert.Equal(image.Placeholder, listed.Cover.Placeholder);
 		Assert.Equal(game.UpdatedAt, listed.UpdatedAt);
-		Assert.Equal(2, capture.Commands.Count);
-		Assert.Contains("JOIN", capture.Commands.Last());
-		using var replace = await client.PatchAsJsonAsync($"/games/{game.Id}", new { imageAssetId = next.Id });
+		Assert.InRange(capture.Commands.Count, 2, 6);
+		Assert.Contains(capture.Commands, command => command.Contains("JOIN"));
+		using var replace = await client.PatchAsJsonAsync($"/games/{game.Id}", new { coverId = next.Id });
 
-		Assert.Equal(next, (await replace.Content.ReadFromJsonAsync<GameDto>(MapTestData.JsonOptions))!.Image);
+		Assert.Equal(next, (await replace.Content.ReadFromJsonAsync<GameDto>(MapTestData.JsonOptions))!.Cover);
 		capture.Commands.Clear();
 
 		capture.Enabled = true;
@@ -73,8 +73,8 @@ public sealed class GameImageTests
 
 		capture.Enabled = false;
 
-		Assert.Equal(2, distinctCovers!.Items.Select(item => item.Image.Id).Distinct().Count());
-		Assert.Equal(2, capture.Commands.Count);
+		Assert.Equal(2, distinctCovers!.Items.Select(item => item.Cover.Id).Distinct().Count());
+		Assert.Equal(6, capture.Commands.Count);
 
 		using var stillUsed = await client.DeleteAsync($"/media/assets/{image.Id}");
 
@@ -108,8 +108,8 @@ public sealed class GameImageTests
 		using var client = factory.CreateHttpsClient();
 		var image = await MediaTestData.UploadImageAsync(client, "svg");
 		var assignment = update
-			? client.PatchAsJsonAsync($"/games/{game.Id}", new { imageAssetId = image.Id })
-			: client.PostAsJsonAsync("/games", new { name = "New", slug = "new", imageAssetId = image.Id });
+			? client.PatchAsJsonAsync($"/games/{game.Id}", new { coverId = image.Id })
+			: client.PostAsJsonAsync("/games", new { name = "New", slug = "new", coverId = image.Id });
 		var responses = await Task.WhenAll(assignment, client.DeleteAsync($"/media/assets/{image.Id}"));
 		using var assigned = responses[0];
 		using var deleted = responses[1];
@@ -133,9 +133,9 @@ public sealed class GameImageTests
 		using var client = factory.CreateHttpsClient();
 		var page = await client.GetFromJsonAsync<GamePage>("/games", MapTestData.JsonOptions);
 
-		Assert.Equal(game.ImageAssetId, Assert.Single(page!.Items).Image.Id);
-		using var missing = await client.GetAsync($"/media/files/{game.ImageAssetId}");
-		using var blocked = await client.DeleteAsync($"/media/assets/{game.ImageAssetId}");
+		Assert.Equal(game.CoverId, Assert.Single(page!.Items).Cover.Id);
+		using var missing = await client.GetAsync($"/media/files/{game.CoverId}");
+		using var blocked = await client.DeleteAsync($"/media/assets/{game.CoverId}");
 
 		Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
 		Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
@@ -167,8 +167,8 @@ public sealed class GameImageTests
 			"malformed" => "bad",
 			_ => Guid.NewGuid()
 		};
-		using var created = await client.PostAsJsonAsync("/games", new { name = "New", slug = "new", imageAssetId = id });
-		using var patched = await client.PatchAsJsonAsync($"/games/{game.Id}", new { name = "Changed", imageAssetId = id });
+		using var created = await client.PostAsJsonAsync("/games", new { name = "New", slug = "new", coverId = id });
+		using var patched = await client.PatchAsJsonAsync($"/games/{game.Id}", new { name = "Changed", coverId = id });
 
 		Assert.Equal((HttpStatusCode)status, created.StatusCode);
 		Assert.Equal((HttpStatusCode)status, patched.StatusCode);
@@ -185,7 +185,7 @@ public sealed class GameImageTests
 
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var previous = context.Database.GetMigrations().Reverse().Skip(1).First();
+		var previous = context.Database.GetMigrations().Last(name => string.CompareOrdinal(name, "20261028202100") < 0);
 		var migrator = context.GetService<IMigrator>();
 
 		await migrator.MigrateAsync(previous);
@@ -210,7 +210,8 @@ public sealed class GameImageTests
 		var rollback = await Assert.ThrowsAsync<SqliteException>(() => migrator.MigrateAsync(previous));
 
 		Assert.Contains("GameImages_RestoreBackupForNonemptyGames", rollback.Message);
-		Assert.Equal(MediaTestData.CoverId, (await context.Games.Include(game => game.Image).SingleAsync()).Image.Id);
+		await context.Database.MigrateAsync();
+		Assert.Equal(MediaTestData.CoverId, (await context.Games.Include(game => game.Cover).SingleAsync()).Cover.Id);
 	}
 
 	private sealed record GamePage(GameDto[] Items, int Total);

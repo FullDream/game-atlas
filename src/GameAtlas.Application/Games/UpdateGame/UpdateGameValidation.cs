@@ -10,7 +10,7 @@ public sealed class UpdateGameValidation : AbstractValidator<UpdateGame>
 	{
 		RuleFor(command => command)
 			.Must(command => Optional.AnySpecified(
-				command.Name, command.Slug, command.ImageAssetId, command.Status))
+				command.Name, command.Slug, command.CoverId, command.Status, command.BannerId, command.ReleaseDate, command.Developer, command.Description))
 			.WithErrorCode(UpdateGameErrors.EmptyPatch.Code)
 			.WithMessage(UpdateGameErrors.EmptyPatch.Message)
 			.OverridePropertyName(string.Empty);
@@ -24,7 +24,7 @@ public sealed class UpdateGameValidation : AbstractValidator<UpdateGame>
 				.Matches(@"\A[a-z0-9]+(-[a-z0-9]+)*\z"),
 			value => value == null ? null : value.Trim());
 
-		this.OptionalRuleFor(command => command.ImageAssetId, rule => rule.NotNull().NotEqual(Guid.Empty));
+		this.OptionalRuleFor(command => command.CoverId, rule => rule.NotNull().NotEqual(Guid.Empty));
 
 		this.OptionalRuleFor(command => command.Status, rule => rule.NotNull().IsInEnum());
 	}

@@ -54,7 +54,11 @@
 		<header class="mb-6">
 			@if (game.data(); as current) {
 				<div class="gap-5 flex items-center">
-					<ui-media-thumbnail class="size-20 rounded-lg bg-muted shrink-0 border" [image]="current.image" />
+					<ui-media-thumbnail
+						class="size-20 rounded-lg bg-muted shrink-0 border"
+						[image]="current.cover"
+						fit="cover"
+					/>
 					<div class="min-w-0">
 						<div class="gap-3 flex flex-wrap items-center">
 							<h1 class="text-2xl font-semibold tracking-tight truncate">{{ current.name }}</h1>
@@ -113,7 +117,7 @@
 				<button hlmTabsTrigger="maps" routerLink="maps" queryParamsHandling="preserve">
 					<ng-icon name="matMapRound" aria-hidden="true" />
 					Maps
-					<span class="text-xs text-muted-foreground">(—)</span>
+					<span class="text-xs text-muted-foreground">({{ game.data()?.maps?.length ?? 0 }})</span>
 				</button>
 				<button hlmTabsTrigger="seo" routerLink="seo" queryParamsHandling="preserve">
 					<ng-icon name="matSellRound" aria-hidden="true" />

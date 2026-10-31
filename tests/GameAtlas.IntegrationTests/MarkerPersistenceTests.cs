@@ -73,6 +73,7 @@ public class MarkerPersistenceTests
 			reloaded.GetService<IMigrator>().MigrateAsync("20261023114301_Categories"));
 
 		Assert.Contains("GameImages_RestoreBackupForNonemptyGames", rollback.Message);
+		await reloaded.Database.MigrateAsync();
 
 		Assert.Equal(game.Id, (await reloaded.Games.SingleAsync()).Id);
 		Assert.Equal(group.Id, (await reloaded.CategoryGroups.SingleAsync()).Id);

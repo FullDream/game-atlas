@@ -68,7 +68,7 @@ public class MapProgressTests
 		var migrator = context.GetService<IMigrator>();
 		var migrations = (await context.Database.GetAppliedMigrationsAsync()).ToArray();
 
-		await migrator.MigrateAsync(migrations[^2]);
+		await migrator.MigrateAsync(migrations.Last(name => string.CompareOrdinal(name, "20261028213805") < 0));
 		await context.Database.ExecuteSqlRawAsync("UPDATE MapStyles SET Progress = 100");
 		await migrator.MigrateAsync();
 		context.ChangeTracker.Clear();
