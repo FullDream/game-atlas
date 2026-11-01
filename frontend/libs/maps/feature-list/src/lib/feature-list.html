@@ -1,0 +1,116 @@
+<ng-template uiPageHeaderPortal [inheritContext]="true" [loading]="maps.isFetching()">
+	<button id="maps-add" ui-button icon="matAddRound" [disabled]="!maps.data()" (click)="edit()">Add map</button>
+</ng-template>
+
+<div class="mb-5 gap-2 flex flex-wrap items-center justify-between">
+	<h2 class="text-base font-semibold">
+		Maps
+	</h2>
+	<p class="text-xs text-muted-foreground">Processing status is shown as last loaded.</p>
+</div>
+
+@if (maps.isPending()) {
+	<div role="status" aria-label="Loading maps" aria-busy="true" class="gap-5 flex flex-col">
+		@for (row of [0, 1, 2]; track row) {
+			<div class="gap-4 flex items-center" aria-hidden="true">
+				<hlm-skeleton class="h-20 w-36 shrink-0" />
+				<div class="gap-3 flex flex-1 flex-col">
+					<hlm-skeleton class="h-5 w-36" />
+					<hlm-skeleton class="h-4 w-44 max-w-full" />
+				</div>
+			</div>
+		}
+	</div>
+} @else if (maps.isError() && !maps.data()) {
+	<ui-error-state icon="matCloudOffRound">
+		<ng-container uiErrorStateHeading>Could not load maps</ng-container>
+		<ng-container uiErrorStateDescription>Check your connection and try again.</ng-container>
+		<button ui-button variant="outline" icon="matRefreshRound" (click)="maps.refetch()">Retry</button>
+	</ui-error-state>
+} @else {
+	<div class="map-rows">
+		@for (map of maps.data(); track map.id) {
+			<article class="py-5 gap-5 min-w-0 first:pt-0 last:pb-0 lg:flex-row lg:items-center flex flex-col">
+				<div class="gap-4 min-w-0 flex flex-1 items-center">
+					@if (preview(map); as image) {
+						<ui-media-thumbnail class="h-20 w-36 rounded-lg shrink-0 border" [image]="image" />
+					} @else {
+						<div
+							class="h-20 w-36 rounded-lg bg-muted text-muted-foreground flex shrink-0 items-center justify-center border border-dashed"
+						>
+							<ng-icon name="matMapRound" size="32" aria-hidden="true" />
+						</div>
+					}
+					<div class="min-w-0">
+						<h3 class="font-semibold truncate" [hlmTooltip]="map.name" uiTooltipOnOverflow>
+							{{ map.name }}
+						</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{{ map.width }} × {{ map.height }} px</p>
+						<dl class="mt-2 text-xs text-muted-foreground">
+							<div class="gap-1 flex flex-wrap">
+								<dt>Created</dt>
+								<dd>
+									<time [attr.datetime]="map.createdAt">{{ map.createdAt | date: 'medium' }}</time>
+								</dd>
+							</div>
+							<div class="gap-1 flex flex-wrap">
+								<dt>Updated</dt>
+								<dd>
+									<time [attr.datetime]="map.updatedAt">{{ map.updatedAt | date: 'medium' }}</time>
+								</dd>
+							</div>
+						</dl>
+					</div>
+				</div>
+				<div class="map-styles min-w-0">
+					<p class="mb-2 text-sm font-medium">Styles ({{ map.styles.length }})</p>
+					<div class="gap-2 flex flex-wrap">
+						@for (style of map.styles; track style.id) {
+							<div class="w-14" [hlmTooltip]="style.name + ': ' + style.status">
+								<ui-media-thumbnail class="size-14 rounded-lg border" [image]="style.source" />
+								<p class="mt-1 text-xs text-muted-foreground truncate">{{ style.status }}</p>
+							</div>
+						} @empty {
+							<p class="text-sm text-muted-foreground">No styles yet</p>
+						}
+					</div>
+				</div>
+				<div class="gap-2 flex shrink-0 items-center justify-end">
+					<button ui-button variant="outline" disabled>Open editor</button>
+					<button
+						ui-button
+						variant="outline"
+						size="icon"
+						icon="matMoreHorizRound"
+						[hlmDropdownMenuTrigger]="actions"
+						[attr.aria-label]="'Actions for ' + map.name"
+						[id]="'map-actions-' + map.id"
+						[disabled]="deleting.isPending()"
+						[loading]="deleting.isPending() && deleting.variables() === map.id"
+					></button>
+					<ng-template #actions>
+						<div hlmDropdownMenu>
+							<button hlmDropdownMenuItem (triggered)="edit(map)">
+								<ng-icon name="matEditRound" aria-hidden="true" />
+								Edit
+							</button>
+							<button hlmDropdownMenuItem variant="destructive" (triggered)="remove(map)">
+								<ng-icon name="matDeleteRound" aria-hidden="true" />
+								Delete
+							</button>
+						</div>
+					</ng-template>
+				</div>
+			</article>
+		} @empty {
+			<div hlmEmpty>
+				<div hlmEmptyMedia variant="icon"><ng-icon name="matMapRound" aria-hidden="true" /></div>
+				<div hlmEmptyHeader>
+					<h3 hlmEmptyTitle>No maps yet</h3>
+					<p hlmEmptyDescription>Create your first map to define its coordinate space.</p>
+				</div>
+				<button ui-button icon="matAddRound" (click)="edit()">Add map</button>
+			</div>
+		}
+	</div>
+}

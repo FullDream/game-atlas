@@ -7,6 +7,7 @@ import { PageHeader } from './page-header'
 export class PageHeaderPortal {
 	readonly breadcrumbs = input<WorkspaceBreadcrumb[]>([])
 	readonly loading = input(false)
+	readonly inheritContext = input(false)
 
 	readonly #header = inject(PageHeader, { optional: true })
 	readonly #portal = inject(CdkPortal, { self: true })
@@ -15,8 +16,9 @@ export class PageHeaderPortal {
 		effect(() => {
 			const breadcrumbs = this.breadcrumbs()
 			const loading = this.loading()
+			const inherit = this.inheritContext()
 
-			untracked(() => this.#header?.attach(this.#portal, breadcrumbs, loading))
+			untracked(() => this.#header?.attach(this.#portal, inherit ? undefined : breadcrumbs, loading))
 		})
 
 		inject(DestroyRef).onDestroy(() => this.#header?.detach(this.#portal))

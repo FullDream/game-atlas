@@ -1,7 +1,7 @@
 import { formatDate } from '@angular/common'
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http'
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core'
-import { apply, disabled, form, FormRoot } from '@angular/forms/signals'
+import { apply, disabled, form } from '@angular/forms/signals'
 import { ActivatedRoute, Router, RouterLink, RouterOutlet, NavigationEnd } from '@angular/router'
 import { GamesQueryOptions, getGameErrorMessage, type Game } from '@game-atlas/games/data-access'
 import { GameFields, type GameForm, createGameFormModel, gameFormSchema } from '@game-atlas/games/ui'
@@ -49,7 +49,6 @@ type FeatureEditorSource = { id: string; game: Game | undefined }
 		PageHeaderPortal,
 		RouterLink,
 		RouterOutlet,
-		FormRoot,
 		MediaThumbnail,
 	],
 	templateUrl: './feature-editor.html',

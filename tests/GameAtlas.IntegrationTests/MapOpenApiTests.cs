@@ -5,7 +5,7 @@ namespace GameAtlas.IntegrationTests;
 public class MapOpenApiTests
 {
 	[Fact]
-	public async Task DocumentsEightOperationsAndStaticTileContractWithoutChangingMarkerUnions()
+	public async Task DocumentsNineOperationsAndStaticTileContractWithoutChangingMarkerUnions()
 	{
 		await using var factory = new GameApiFactory("Development");
 		using var client = factory.CreateHttpsClient();
@@ -17,12 +17,12 @@ public class MapOpenApiTests
 		var operations = mapPaths.SelectMany(path => path.Value.EnumerateObject())
 			.Where(property => new[] { "get", "post", "patch", "delete", "put" }.Contains(property.Name)).ToArray();
 
-		Assert.Equal(8, operations.Length);
+		Assert.Equal(9, operations.Length);
 		Assert.DoesNotContain(operations, operation => operation.Name == "put");
 		Assert.Equal(new[]
 		{
 			"AddMapStyle", "CreateMap", "DeleteMap", "DeleteMapStyle", "GetMap", "ListMaps",
-			"RetryMapStyle", "UpdateMapStyle"
+			"RetryMapStyle", "UpdateMap", "UpdateMapStyle"
 		}, operations.Select(operation => operation.Value.GetProperty("operationId").GetString()).Order());
 		var create = paths.GetProperty("/games/{gameId}/maps").GetProperty("post");
 		var form = Resolve(root, create.GetProperty("requestBody").GetProperty("content")

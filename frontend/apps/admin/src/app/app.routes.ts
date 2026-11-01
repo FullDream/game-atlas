@@ -13,26 +13,7 @@ export const APP_ROUTES: Routes = [
 				path: 'games',
 				title: 'Games',
 				data: { section: 'Games' },
-				children: [
-					{
-						path: '',
-						pathMatch: 'full',
-						loadChildren: () =>
-							import('@game-atlas/games/feature-list').then(module => module.GAMES_ROUTES),
-					},
-					{
-						path: 'new',
-						title: 'New game',
-						loadChildren: () =>
-							import('@game-atlas/games/feature-create').then(module => module.GAME_CREATE_ROUTES),
-					},
-					{
-						path: ':id',
-						title: 'Edit game',
-						loadChildren: () =>
-							import('@game-atlas/games/feature-editor').then(module => module.GAME_EDITOR_ROUTES),
-					},
-				],
+				loadChildren: () => import('./games.routes').then(module => module.GAMES_ROUTES),
 			},
 
 			{

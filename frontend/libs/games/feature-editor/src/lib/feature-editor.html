@@ -8,16 +8,18 @@
 	>
 		Cancel
 	</a>
-	<button
-		ui-button
-		type="submit"
-		form="game-editor-form"
-		icon="matSaveRound"
-		[loading]="fields().submitting()"
-		[disabled]="deleting() || !fields().dirty() || !game.data()"
-	>
-		Save changes
-	</button>
+	@if (activeTab() === 'general') {
+		<button
+			ui-button
+			type="submit"
+			form="game-editor-form"
+			icon="matSaveRound"
+			[loading]="fields().submitting()"
+			[disabled]="deleting() || !fields().dirty() || !game.data()"
+		>
+			Save changes
+		</button>
+	}
 </ng-template>
 @if (game.isPending()) {
 	<div class="p-4 md:p-6 max-w-304 mx-auto w-full" role="status" aria-label="Loading game" aria-busy="true">
@@ -50,7 +52,7 @@
 		<a ui-button variant="outline" routerLink="/games" queryParamsHandling="preserve">Back to games</a>
 	</ui-error-state>
 } @else {
-	<form [formRoot]="fields" id="game-editor-form" class="p-4 md:p-6 max-w-304 mx-auto w-full">
+	<div class="p-4 md:p-6 max-w-304 mx-auto w-full">
 		<header class="mb-6">
 			@if (game.data(); as current) {
 				<div class="gap-5 flex items-center">
@@ -132,5 +134,5 @@
 				<router-outlet [routerOutletData]="outletData()" />
 			</div>
 		</div>
-	</form>
+	</div>
 }

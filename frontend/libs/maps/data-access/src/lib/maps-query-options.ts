@@ -13,6 +13,8 @@ import { mapQueryKeys } from './map-query-keys'
 
 type AddStyleVariables = { mapId: string; data: AddMapStyleRequest }
 type RetryStyleVariables = { mapId: string; styleId: string }
+type UpdateMapVariables = { id: string; patch: { name?: string | null } }
+type RenameSnapshot = { previous: GameMap | undefined; optimistic: GameMap | undefined }
 
 @Service()
 export class MapsQueryOptions {
@@ -22,6 +24,7 @@ export class MapsQueryOptions {
 	list(gameId: string): CreateQueryOptions<GameMap[], HttpErrorResponse> {
 		return queryOptions<GameMap[], HttpErrorResponse>({
 			queryKey: mapQueryKeys.list(gameId),
+			staleTime: 30_000,
 			queryFn: ({ signal }) => toPromise(this.#api.listMaps(gameId), signal),
 		})
 	}
@@ -38,6 +41,53 @@ export class MapsQueryOptions {
 			mutationKey: ['maps', gameId, 'create'],
 			mutationFn: data => toPromise(this.#api.createMap(gameId, data)),
 			onSuccess: map => this.#acceptMap(gameId, map),
+		}
+	}
+
+	update(
+		gameId: string,
+		mapId: string,
+	): CreateMutationOptions<GameMap, HttpErrorResponse, UpdateMapVariables, RenameSnapshot> {
+		return {
+			mutationKey: ['maps', gameId, 'update'],
+			scope: { id: `map:${mapId}` },
+			mutationFn: ({ id, patch }) => toPromise(this.#api.updateMap(gameId, id, patch)),
+			onMutate: async ({ id, patch }) => {
+				await this.#queries.cancelQueries({ queryKey: ['maps', gameId] })
+				const key = mapQueryKeys.detail(gameId, id)
+				const previous =
+					this.#queries.getQueryData<GameMap>(key) ??
+					this.#queries.getQueryData<GameMap[]>(mapQueryKeys.list(gameId))?.find(map => map.id === id)
+				const optimistic = previous && patch.name ? { ...previous, name: patch.name.trim() } : undefined
+
+				if (optimistic) this.#writeMap(gameId, optimistic)
+
+				return { previous, optimistic: this.#queries.getQueryData<GameMap>(key) }
+			},
+			onError: (error, { id }, snapshot) => {
+				if (
+					snapshot?.previous &&
+					this.#queries.getQueryData(mapQueryKeys.detail(gameId, id)) === snapshot.optimistic
+				) {
+					this.#writeMap(gameId, snapshot.previous)
+				}
+			},
+			onSuccess: map => this.#acceptMap(gameId, map),
+		}
+	}
+
+	delete(gameId: string, mapId: string): CreateMutationOptions<void, HttpErrorResponse, string> {
+		return {
+			mutationKey: ['maps', gameId, 'delete'],
+			scope: { id: `map:${mapId}` },
+			mutationFn: id => toPromise(this.#api.deleteMap(gameId, id)),
+			onSuccess: async (data, id) => {
+				await this.#queries.cancelQueries({ queryKey: ['maps', gameId] })
+				this.#queries.removeQueries({ queryKey: mapQueryKeys.detail(gameId, id), exact: true })
+				this.#queries.setQueryData<GameMap[]>(mapQueryKeys.list(gameId), maps =>
+					maps?.filter(map => map.id !== id),
+				)
+			},
 		}
 	}
 
@@ -68,10 +118,12 @@ export class MapsQueryOptions {
 	}
 
 	async #acceptMap(gameId: string, map: GameMap): Promise<void> {
-		const key = mapQueryKeys.detail(gameId, map.id)
+		await this.#queries.cancelQueries({ queryKey: ['maps', gameId] })
+		this.#writeMap(gameId, map)
+	}
 
-		await this.#queries.cancelQueries({ queryKey: key, exact: true })
-		this.#queries.setQueryData(key, map)
+	#writeMap(gameId: string, map: GameMap): void {
+		this.#queries.setQueryData(mapQueryKeys.detail(gameId, map.id), map)
 		this.#queries.setQueryData<GameMap[]>(mapQueryKeys.list(gameId), previous => {
 			if (!previous) return previous
 

@@ -28,3 +28,7 @@ Matching `theme-color` hints suggest white or dark zinc for supporting browser t
 ## Games routes
 
 /games hosts the searchable, sortable, paginated catalog. /games/new creates a draft; /games/:id loads its metadata directly through GET /games/{id}, including after reload. Cover selection uses the existing Media library. Status changes are saved with metadata. Deletion confirms removal of all game-owned maps and content while keeping library media. Public web and map editing are separate work.
+
+## Maps management
+
+Admin composes /games/:id/maps from maps-feature-list inside the Games editor; neither domain imports the other. Add map replaces Save changes on Maps, and Save changes appears only on General. Modal creation takes name and dimensions, editing renames with read-only dimensions, and deletion confirms cascading map-content removal while retaining library assets. Rows show created/updated dates and style snapshots. There is no socket connection or background status refresh; Open editor remains disabled. Admin binds Maps API addressing in the lazy Maps route. Its mutation-cache callback invalidates only the exact game-detail query after successful map create/update/delete. The Maps list and Games list are not refetched by this callback.

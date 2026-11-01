@@ -1,3 +1,4 @@
+using GameAtlas.Application.Maps.UpdateMap;
 using GameAtlas.Application.Maps.CreateMap;
 using GameAtlas.Application.Maps.UpdateMapStyle;
 
@@ -7,6 +8,9 @@ internal static class MapMappingExtensions
 {
 	internal static Application.Maps.AddMapStyle.AddMapStyle ToCommand(this AddMapStyleRequest request,
 		Guid gameId, Guid mapId) => new(gameId, mapId, request.Name, request.BackgroundColor, request.SourceAssetId);
+
+	internal static UpdateMap ToCommand(this UpdateMapRequest request, Guid gameId, Guid mapId) =>
+		new(gameId, mapId, request.Name);
 
 	internal static CreateMap ToCommand(this CreateMapRequest request, Guid gameId) =>
 		new(gameId, request.Name, request.Width, request.Height);

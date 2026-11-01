@@ -60,6 +60,23 @@ public sealed class Map
 		return map;
 	}
 
+	public Result<bool> Rename(string? name)
+	{
+		name = name?.Trim();
+
+		if (string.IsNullOrEmpty(name) || name.Length > NameMaxLength)
+			return MapErrors.InvalidMapName;
+
+		if (name == Name)
+			return false;
+
+		Name = name;
+		NormalizedName = NormalizeName(name);
+		UpdatedAt = DateTimeOffset.UtcNow;
+
+		return true;
+	}
+
 	public Result<MapStyle> AddStyle(MapStyleInput input)
 	{
 		if (input.Source is null || !input.Source.IsRaster)

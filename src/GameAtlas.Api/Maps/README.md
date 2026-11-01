@@ -5,6 +5,7 @@ A game owns zero or more independently named maps, including draft games. Each m
 | Method | Suffix                          | Operation      | Success            |
 | ------ | ------------------------------- | -------------- | ------------------ |
 | GET    | empty                           | ListMaps       | 200 complete array |
+| PATCH  | /{mapId}                        | UpdateMap      | 200 complete map   |
 | GET    | /{mapId}                        | GetMap         | 200 complete map   |
 | POST   | empty                           | CreateMap      | 200 complete map   |
 | POST   | /{mapId}/styles                 | AddMapStyle    | 200 complete map   |
@@ -95,3 +96,7 @@ Delete any style, including the last in any state, with empty 204. Deleting the 
 Deleting the whole map returns 204 and physically cascades to its styles, groups, categories, markers, and attachment rows. Sibling maps and the owning game's fields/timestamps remain unchanged. Repeated deletion returns 404. A new map starts with empty content; it does not relocate or recover deleted markers.
 
 Deletion commits durable cleanup scheduling before 204; disk deletion may follow later and is retried after IO failure/restart. Game deletion schedules cleanup for every owned map while keeping existing relational cascades. Cleanup only removes derived tiles/work. Shared media originals and records survive style, map, and game deletion. See Infrastructure Maps README for storage, migration, recovery and operational constraints.
+
+## Rename a map
+
+PATCH /games/{gameId}/maps/{mapId} accepts an optional name using the shared JSON Merge Patch contract. Nonempty valid patches return the complete map; dimensions and geometry are immutable. Names are trimmed, 1..200 characters and unique per game excluding the current map. Null/blank/overlength names and empty patches return 422; conflicts return 409; unknown or read-only fields return 400; unsupported media return 415. A trimmed identical name preserves updatedAt; a real rename updates only the map timestamp, without changing game timestamps or processing styles.

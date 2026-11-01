@@ -41,6 +41,9 @@ public static class Endpoints
 		maps.MapDelete("/{mapId}/styles/{styleId}", DeleteMapStyleAsync)
 			.WithName("DeleteMapStyle").WithSummary("Delete map style");
 
+		maps.MapPatch("/{mapId}", UpdateMapAsync).WithName("UpdateMap").WithSummary("Update map")
+			.WithMergePatch<UpdateMapRequest>();
+
 		maps.MapDelete("/{mapId}", DeleteMapAsync).WithName("DeleteMap").WithSummary("Delete map");
 
 		return maps;
@@ -73,6 +76,10 @@ public static class Endpoints
 		IMediator mediator,
 		CancellationToken cancellationToken) =>
 		await mediator.Send(new DeleteMapStyle(gameId, mapId, styleId), cancellationToken);
+
+	private static async Task<OutcomeResult<MapDto>> UpdateMapAsync(Guid gameId, Guid mapId, UpdateMapRequest request,
+		IMediator mediator, CancellationToken cancellationToken) =>
+		await mediator.Send(request.ToCommand(gameId, mapId), cancellationToken);
 
 	private static async Task<OutcomeResult> DeleteMapAsync(Guid gameId, Guid mapId, IMediator mediator,
 		CancellationToken cancellationToken) => await mediator.Send(new DeleteMap(gameId, mapId), cancellationToken);

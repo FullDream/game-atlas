@@ -1,13 +1,15 @@
 @let editor = context();
 
-<games-fields
-	[fields]="editor.fields"
-	[cover]="editor.cover"
-	[banner]="editor.banner"
-	(chooseBanner)="editor.chooseBanner()"
-	(removeBanner)="editor.removeBanner()"
-	editing
-	[busy]="editor.busy"
-	(chooseCover)="editor.chooseCover()"
-	(statusChange)="editor.changeStatus($event)"
-/>
+<form [formRoot]="editor.fields" id="game-editor-form">
+	<games-fields
+		[fields]="editor.fields"
+		[cover]="editor.cover"
+		[banner]="editor.banner"
+		(chooseBanner)="editor.chooseBanner()"
+		(removeBanner)="editor.removeBanner()"
+		editing
+		[busy]="editor.busy"
+		(chooseCover)="editor.chooseCover()"
+		(statusChange)="editor.changeStatus($event)"
+	/>
+</form>

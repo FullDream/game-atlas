@@ -1,0 +1,49 @@
+<h2 class="text-lg font-semibold">{{ context.map ? 'Edit map' : 'Add map' }}</h2>
+
+<form class="mt-5 gap-4 flex flex-col" [formRoot]="fields">
+	<hlm-field>
+		<label hlmFieldLabel for="map-editor-name">
+			Map name
+			<span aria-hidden="true">*</span>
+		</label>
+		<input id="map-editor-name" hlmInput [formField]="fields.name" autocomplete="off" />
+	</hlm-field>
+
+	<div class="gap-4 grid grid-cols-2">
+		<hlm-field>
+			<label hlmFieldLabel for="map-editor-width">Width (px)</label>
+			<input id="map-editor-width" hlmInput type="number" [formField]="fields.width" />
+		</hlm-field>
+		<hlm-field>
+			<label hlmFieldLabel for="map-editor-height">Height (px)</label>
+			<input
+				id="map-editor-height"
+				hlmInput
+				type="number"
+				[formField]="fields.height"
+				[readOnly]="!!context.map"
+			/>
+		</hlm-field>
+	</div>
+
+	<p class="text-sm text-muted-foreground">
+		{{
+			context.map
+				? 'Dimensions are fixed after creation.'
+				: 'Map dimensions must be whole numbers between 1 and 16,384 pixels.'
+		}}
+	</p>
+
+	@if (error()) {
+		<hlm-field-error forceShow>{{ error() }}</hlm-field-error>
+	}
+
+	<div class="gap-2 flex justify-end">
+		<button ui-button type="button" variant="outline" [disabled]="fields().submitting()" (click)="dialog.close()">
+			Cancel
+		</button>
+		<button ui-button [loading]="fields().submitting()" [disabled]="!!context.map && !fields().dirty()">
+			{{ context.map ? 'Save changes' : 'Add map' }}
+		</button>
+	</div>
+</form>

@@ -29,3 +29,7 @@ Applies to HTTP endpoints, request and response contracts, API clients and contr
 ## Game retrieval
 
 GET /games/{id} returns a draft or published game with the same expanded representation as listing: id, name, slug, cover, banner, releaseDate, developer, description, markersCount, categoriesCount, maps, createdAt, updatedAt and status. Cover is a required canonical ImageAsset and banner is nullable ImageAsset. Maps are read-only summaries with id, name and nullable ImageAsset preview from the default style source; complete maps use their separate endpoints. Release dates use YYYY-MM-DD without time. Retrieval does not change timestamps. Valid missing or deleted identifiers return 404 ProblemDetails; malformed UUID identifiers return 400. OpenAPI exposes the operation as GetGame under the Games tag.
+
+## Map metadata updates
+
+PATCH /games/{gameId}/maps/{mapId} changes only name and returns the complete map. Width, height and geometry remain immutable. Names follow creation validation and game-scoped uniqueness; an identical trimmed name is a no-op preserving updatedAt. Actual renames update the map timestamp without changing the owning game timestamp or queuing processing. Missing or foreign maps return 404. The shared merge-patch media, field-presence and error conventions apply.

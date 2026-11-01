@@ -11,7 +11,14 @@ import { Injectable, inject } from '@angular/core'
 
 import type { Observable } from 'rxjs'
 
-import type { AddMapStyleRequest, CreateMapRequest, Map, MapStyle, UpdateMapStyleRequest } from '../models'
+import type {
+	AddMapStyleRequest,
+	CreateMapRequest,
+	Map,
+	MapStyle,
+	UpdateMapRequest,
+	UpdateMapStyleRequest,
+} from '../models'
 
 import type { HttpHeaders, HttpResponse as AngularHttpResponse } from '@angular/common/http'
 
@@ -157,6 +164,52 @@ export class MapsService {
 		}
 
 		return this.http.get<TData>(`${this.baseUrl}/games/${gameId}/maps/${mapId}`, {
+			...(options as Omit<NonNullable<typeof options>, 'observe'>),
+			observe: 'body',
+		})
+	}
+	/**
+	 * @summary Update map
+	 */
+	updateMap<TData = Map>(
+		gameId: string,
+		mapId: string,
+		updateMapRequest: UpdateMapRequest,
+		options?: HttpClientBodyOptions,
+	): Observable<TData>
+	updateMap<TData = Map>(
+		gameId: string,
+		mapId: string,
+		updateMapRequest: UpdateMapRequest,
+		options?: HttpClientEventOptions,
+	): Observable<HttpEvent<TData>>
+	updateMap<TData = Map>(
+		gameId: string,
+		mapId: string,
+		updateMapRequest: UpdateMapRequest,
+		options?: HttpClientResponseOptions,
+	): Observable<AngularHttpResponse<TData>>
+	updateMap<TData = Map>(
+		gameId: string,
+		mapId: string,
+		updateMapRequest: UpdateMapRequest,
+		options?: HttpClientObserveOptions,
+	): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+		if (options?.observe === 'events') {
+			return this.http.patch<TData>(`${this.baseUrl}/games/${gameId}/maps/${mapId}`, updateMapRequest, {
+				...(options as Omit<NonNullable<typeof options>, 'observe'>),
+				observe: 'events',
+			})
+		}
+
+		if (options?.observe === 'response') {
+			return this.http.patch<TData>(`${this.baseUrl}/games/${gameId}/maps/${mapId}`, updateMapRequest, {
+				...(options as Omit<NonNullable<typeof options>, 'observe'>),
+				observe: 'response',
+			})
+		}
+
+		return this.http.patch<TData>(`${this.baseUrl}/games/${gameId}/maps/${mapId}`, updateMapRequest, {
 			...(options as Omit<NonNullable<typeof options>, 'observe'>),
 			observe: 'body',
 		})
@@ -416,6 +469,7 @@ export class MapsService {
 export type ListMapsClientResult = NonNullable<Map[]>
 export type CreateMapClientResult = NonNullable<Map>
 export type GetMapClientResult = NonNullable<Map>
+export type UpdateMapClientResult = NonNullable<Map>
 export type DeleteMapClientResult = NonNullable<void>
 export type AddMapStyleClientResult = NonNullable<Map>
 export type RetryMapStyleClientResult = NonNullable<MapStyle>
