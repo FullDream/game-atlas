@@ -6,20 +6,23 @@ namespace GameAtlas.Application.Maps;
 
 public static class MapMappingExtensions
 {
+	private static MapTileGeometryDto ToDto(this MapGeometry geometry) => new(geometry.Extent,
+		geometry.TileOrigin, MapGeometry.TileSize, geometry.MinZoom, geometry.MaxZoom, geometry.Resolutions);
+
 	public static MapDto ToDto(this Map map, IMapProgress? progress = null) => new(
 		map.Id,
 		map.GameId,
 		map.Name,
 		map.Width,
 		map.Height,
-		map.Geometry.Extent,
-		map.Geometry.TileOrigin,
-		MapGeometry.TileSize,
-		map.Geometry.MinZoom,
-		map.Geometry.MaxZoom,
-		map.Geometry.Resolutions,
+		map.Geometry?.Extent,
+		map.Geometry?.TileOrigin,
+		map.Geometry is null ? null : MapGeometry.TileSize,
+		map.Geometry?.MinZoom,
+		map.Geometry?.MaxZoom,
+		map.Geometry?.Resolutions,
 		map.DefaultStyleId,
-		map.Styles.OrderBy(style => style.CreationSequence)
+		map.Styles.OrderBy(style => style.DisplayOrder).ThenBy(style => style.CreationSequence)
 			.Select(style => style.ToDto(progress)).ToArray(),
 		map.CreatedAt,
 		map.UpdatedAt);
@@ -38,6 +41,7 @@ public static class MapMappingExtensions
 			style.Name,
 			style.BackgroundColor,
 			style.Source.ToDto(),
+			MapGeometry.Create(style.Width, style.Height).Value!.ToDto(),
 			style.Status,
 			progress?.Read(style) ?? (style.Status == MapProcessingStatus.Ready ? 100 : 0),
 			error,

@@ -129,7 +129,7 @@ public class AddMapStyleApiTests
 	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
-	public async Task InvalidImageOrMismatchedDimensionsReturn422WithoutAddingAStyle(bool invalidImage)
+	public async Task InvalidImagesFailWhileDifferentDimensionsAreAccepted(bool invalidImage)
 	{
 		await using var factory = new GameApiFactory();
 
@@ -138,12 +138,12 @@ public class AddMapStyleApiTests
 		await MapTestData.SeedAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 		var bytes = invalidImage ? Encoding.UTF8.GetBytes("<svg></svg>") : MapTestData.ImageBytes(23, 17);
-		using var upload = MapTestData.Style(bytes);
+		using var upload = MapTestData.Style(bytes, name: "Other");
 		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));
 
-		Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
-		Assert.Single((await MapTestData.ReadAsync(read)).Styles);
+		Assert.Equal(invalidImage ? HttpStatusCode.UnprocessableEntity : HttpStatusCode.OK, response.StatusCode);
+		Assert.Equal(invalidImage ? 1 : 2, (await MapTestData.ReadAsync(read)).Styles.Count);
 	}
 
 	[Fact]

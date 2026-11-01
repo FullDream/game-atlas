@@ -73,12 +73,6 @@ export class StyleEditorDialog {
 				if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(source.contentType))
 					return { kind: 'format', message: 'Use a JPEG, PNG, WebP or AVIF image.' }
 
-				if (source.width !== this.context.map.width || source.height !== this.context.map.height)
-					return {
-						kind: 'dimensions',
-						message: `Choose an image exactly ${this.context.map.width} × ${this.context.map.height} px.`,
-					}
-
 				return undefined
 			})
 		},
@@ -120,6 +114,13 @@ export class StyleEditorDialog {
 			},
 		},
 	)
+
+	protected readonly aspectRatioMismatch = computed(() => {
+		const source = this.source()
+		const { width, height } = this.context.map
+
+		return !!(source?.width && source.height && width && height && source.width * height !== source.height * width)
+	})
 
 	protected readonly error = computed(() => {
 		const error = this.context.style ? this.#update.error() : this.#create.error()

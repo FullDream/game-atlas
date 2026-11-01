@@ -14,12 +14,13 @@ import type {
 	Map as GameMap,
 	MapStyle,
 	UpdateMapStyleRequest,
+	UpdateMapRequest,
 } from './generated/models'
 import { mapQueryKeys } from './map-query-keys'
 
 type AddStyleVariables = { mapId: string; data: AddMapStyleRequest }
 type RetryStyleVariables = { mapId: string; styleId: string }
-type UpdateMapVariables = { id: string; patch: { name?: string | null } }
+type UpdateMapVariables = { id: string; patch: UpdateMapRequest }
 type RenameSnapshot = { previous: GameMap | undefined; optimistic: GameMap | undefined }
 type UpdateStyleVariables = { styleId: string; patch: UpdateMapStyleRequest }
 type StyleSnapshot = {
@@ -76,7 +77,16 @@ export class MapsQueryOptions {
 					client.getQueryData<GameMap>(key) ??
 					client.getQueryData<GameMap[]>(mapQueryKeys.list(gameId))?.find(map => map.id === id)
 
-				const optimistic = previous && patch.name ? { ...previous, name: patch.name.trim() } : undefined
+				const optimistic = previous
+					? {
+							...previous,
+							name: patch.name?.trim() ?? previous.name,
+							defaultStyleId: patch.defaultStyleId ?? previous.defaultStyleId,
+							styles: patch.styleOrder
+								? patch.styleOrder.flatMap(id => previous.styles.filter(style => style.id === id))
+								: previous.styles,
+						}
+					: undefined
 
 				if (optimistic) this.#writeMap(client, gameId, optimistic)
 
@@ -200,7 +210,10 @@ export class MapsQueryOptions {
 			return {
 				...map,
 				styles,
-				defaultStyleId: styles.find(style => style.status === 'ready' && style.tilesUrlTemplate)?.id ?? null,
+				defaultStyleId:
+					styles.find(style => style.id === map.defaultStyleId && style.status === 'ready')?.id ??
+					styles.find(style => style.status === 'ready' && style.tilesUrlTemplate)?.id ??
+					null,
 			}
 		}
 

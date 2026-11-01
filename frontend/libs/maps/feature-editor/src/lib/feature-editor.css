@@ -1,0 +1,25 @@
+@reference '#theme.css';
+
+.style-card.cdk-drag-preview {
+	@apply shadow-lg;
+}
+
+.style-card.cdk-drag-placeholder {
+	@apply border-muted-foreground/40 bg-muted/40 border-dashed;
+}
+
+.style-card.cdk-drag-placeholder > * {
+	visibility: hidden;
+}
+
+.style-card.cdk-drag-animating,
+.style-list.cdk-drop-list-dragging .style-card:not(.cdk-drag-placeholder, .cdk-drag-preview) {
+	transition: transform 160ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.style-card.cdk-drag-animating,
+	.style-list.cdk-drop-list-dragging .style-card:not(.cdk-drag-placeholder, .cdk-drag-preview) {
+		transition: none;
+	}
+}

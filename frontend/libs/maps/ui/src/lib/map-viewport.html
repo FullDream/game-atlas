@@ -98,7 +98,13 @@
 	<div class="inset-x-4 pointer-events-none absolute top-1/2 -translate-y-1/2">
 		<div hlmEmpty>
 			<div hlmEmptyHeader>
-				<h2 hlmEmptyTitle>{{ engineError() ? 'Could not initialize map' : 'No displayable style' }}</h2>
+				<h2 hlmEmptyTitle>
+					@if (!geometry().extent) {
+						Awaiting first style
+					} @else {
+						{{ engineError() ? 'Could not initialize map' : 'No displayable style' }}
+					}
+				</h2>
 				<p hlmEmptyDescription>
 					{{
 						engineError()

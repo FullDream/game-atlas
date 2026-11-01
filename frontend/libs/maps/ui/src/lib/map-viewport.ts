@@ -80,6 +80,8 @@ export class MapViewport {
 			const geometry = this.geometry()
 			const style = this.activeStyle()
 
+			if (!geometry.extent) return
+
 			if (this.#loadedId === geometry.id) {
 				this.#engine?.setStyle(style)
 			} else if (this.#initializing !== geometry.id) {

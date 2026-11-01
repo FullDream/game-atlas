@@ -16,7 +16,7 @@ public class MapProgressTests
 	public void PercentagesAreTransientMonotonicAndCannotLeakBetweenAttempts()
 	{
 		var image = ImageAsset.Create(Guid.CreateVersion7(), "Source", null, "image/png", 100, 1, 1).Value;
-		var map = Map.Create(Guid.CreateVersion7(), "Map", 1, 1).Value!;
+		var map = Map.Create(Guid.CreateVersion7(), "Map").Value!;
 		map.AddStyle(new MapStyleInput("Style", "#fff", image));
 		var style = map.Styles.Single();
 		var store = new MapProgressStore();
@@ -53,29 +53,32 @@ public class MapProgressTests
 	public async Task UpgradeDropsOnlyStoredPercentagesAndPreservesReadyStyles()
 	{
 		await using var factory = new GameApiFactory();
-		await factory.MigrateAsync();
-		var game = await UpdateGameHandlerTests.SeedAsync(factory, "migration");
-		var map = await MapTestData.SeedAsync(factory, game.Id);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var style = await context.MapStyles.AsTracking().SingleAsync();
-
-		style.Claim(style.AttemptId);
-		style.Publish(style.AttemptId);
-		await context.SaveChangesAsync();
-		var sourceId = style.SourceAssetId;
-		var timestamp = style.UpdatedAt;
 		var migrator = context.GetService<IMigrator>();
-		var migrations = (await context.Database.GetAppliedMigrationsAsync()).ToArray();
-
-		await migrator.MigrateAsync(migrations.Last(name => string.CompareOrdinal(name, "20261028213805") < 0));
-		await context.Database.ExecuteSqlRawAsync("UPDATE MapStyles SET Progress = 100");
+		await migrator.MigrateAsync("20261028202100_GameImageAssets");
+		await MediaTestData.EnsureCoverAsync(context);
+		var gameId = Guid.CreateVersion7();
+		var mapId = Guid.CreateVersion7();
+		var styleId = Guid.CreateVersion7();
+		var sourceId = MediaTestData.CoverId;
+		var timestamp = DateTimeOffset.UtcNow;
+		var storedTimestamp = timestamp.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFFzzz", System.Globalization.CultureInfo.InvariantCulture);
+		await context.Database.ExecuteSqlInterpolatedAsync($"""
+ INSERT INTO Games (Id, Name, Slug, ImageAssetId, CreatedAt, UpdatedAt, Status)
+ VALUES ({gameId}, 'Game', 'migration', {sourceId}, {storedTimestamp}, {storedTimestamp}, 'Draft');
+ INSERT INTO Maps (Id, GameId, Name, NormalizedName, Width, Height, LastCreationSequence, CreatedAt, UpdatedAt)
+ VALUES ({mapId}, {gameId}, 'World', 'WORLD', 64, 48, 1, {storedTimestamp}, {storedTimestamp});
+ INSERT INTO MapStyles (Id, MapId, Name, NormalizedName, BackgroundColor, CreationSequence,
+ SourceAssetId, Status, Progress, AttemptId, CreatedAt, UpdatedAt)
+ VALUES ({styleId}, {mapId}, 'Atlas', 'ATLAS', '#FFFFFF', 1, {sourceId}, 'Ready', 100, {Guid.CreateVersion7()}, {storedTimestamp}, {storedTimestamp});
+ """);
 		await migrator.MigrateAsync();
 		context.ChangeTracker.Clear();
 		var restored = await context.MapStyles.SingleAsync();
 
-		Assert.Equal(style.Id, restored.Id);
-		Assert.Equal(map.Id, restored.MapId);
+		Assert.Equal(styleId, restored.Id);
+		Assert.Equal(mapId, restored.MapId);
 		Assert.Equal(sourceId, restored.SourceAssetId);
 		Assert.Equal(timestamp, restored.UpdatedAt);
 		Assert.Equal(MapProcessingStatus.Ready, restored.Status);

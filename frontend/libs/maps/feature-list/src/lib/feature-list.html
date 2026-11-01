@@ -44,7 +44,13 @@
 						<h3 class="font-semibold truncate" [hlmTooltip]="map.name" uiTooltipOnOverflow>
 							{{ map.name }}
 						</h3>
-						<p class="mt-1 text-sm text-muted-foreground">{{ map.width }} × {{ map.height }} px</p>
+						<p class="mt-1 text-sm text-muted-foreground">
+							@if (map.width) {
+								{{ map.width }} × {{ map.height }} logical units
+							} @else {
+								Awaiting first style
+							}
+						</p>
 						<dl class="mt-2 text-xs text-muted-foreground">
 							<div class="gap-1 flex flex-wrap">
 								<dt>Created</dt>

@@ -10,7 +10,7 @@ export function getMapStyleErrorMessage(error: unknown): string {
 	if (error.status === HttpStatusCode.NotFound) return 'This map, style or source image no longer exists.'
 
 	if (error.status === HttpStatusCode.UnprocessableEntity)
-		return 'Check the style name, background color and source image. The image must match the map dimensions.'
+		return 'Check the style name, background color and source image. Choose a supported raster image.'
 
 	return 'Could not complete the style operation. Please try again.'
 }
@@ -24,7 +24,8 @@ export function getMapErrorMessage(error: unknown): string {
 
 	if (error.status === HttpStatusCode.NotFound) return 'This game or map no longer exists.'
 
-	if (error.status === HttpStatusCode.UnprocessableEntity) return 'Check the map name and dimensions and try again.'
+	if (error.status === HttpStatusCode.UnprocessableEntity)
+		return 'Check the map name, default style and style order and try again.'
 
 	return 'Could not complete the map operation. Please try again.'
 }

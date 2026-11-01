@@ -1,9 +1,15 @@
+import { CdkDrag, CdkDragHandle, CdkDropList, moveItemInArray, type CdkDragDrop } from '@angular/cdk/drag-drop'
 import { DOCUMENT } from '@angular/common'
 import { HttpStatusCode } from '@angular/common/http'
-import { Component, computed, DestroyRef, inject, input, linkedSignal, signal } from '@angular/core'
+import { ChangeDetectorRef, Component, computed, DestroyRef, inject, input, linkedSignal, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { RouterLink } from '@angular/router'
-import { MapsQueryOptions, getMapStyleErrorMessage, type MapStyle } from '@game-atlas/maps/data-access'
+import {
+	MapsQueryOptions,
+	getMapStyleErrorMessage,
+	type MapStyle,
+	getMapErrorMessage,
+} from '@game-atlas/maps/data-access'
 import { MapViewport } from '@game-atlas/maps/ui'
 import {
 	Button,
@@ -26,6 +32,10 @@ import {
 	matCloudOffRound,
 	matArrowBackRound,
 	matLayersRound,
+	matDragIndicatorRound,
+	matStarRound,
+	matArrowUpwardRound,
+	matArrowDownwardRound,
 } from '@ng-icons/material-symbols/round'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
@@ -43,6 +53,9 @@ type SelectionSource = { mapId: string; styles: MapStyle[]; defaultStyleId: stri
 @Component({
 	selector: 'maps-editor',
 	imports: [
+		CdkDrag,
+		CdkDragHandle,
+		CdkDropList,
 		Button,
 		ErrorState,
 		MapViewport,
@@ -58,6 +71,7 @@ type SelectionSource = { mapId: string; styles: MapStyle[]; defaultStyleId: stri
 		TooltipOnOverflow,
 	],
 	templateUrl: './feature-editor.html',
+	styleUrl: './feature-editor.css',
 	providers: [
 		provideIcons({
 			matAddRound,
@@ -71,6 +85,10 @@ type SelectionSource = { mapId: string; styles: MapStyle[]; defaultStyleId: stri
 			matCloudOffRound,
 			matArrowBackRound,
 			matLayersRound,
+			matDragIndicatorRound,
+			matStarRound,
+			matArrowUpwardRound,
+			matArrowDownwardRound,
 		}),
 	],
 	host: { class: 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden' },
@@ -84,6 +102,7 @@ export class FeatureEditor {
 	readonly #dialogs = inject(BrnDialogService)
 	readonly #destroy = inject(DestroyRef)
 	readonly #document = inject(DOCUMENT)
+	readonly #changeDetector = inject(ChangeDetectorRef)
 
 	protected readonly map = injectQuery(() => ({
 		...this.#options.getDetail(this.gameId(), this.mapId()),
@@ -93,7 +112,13 @@ export class FeatureEditor {
 
 	protected readonly deleting = injectMutation(() => this.#options.deleteStyle(this.gameId(), this.mapId()))
 
+	protected readonly presentation = injectMutation(() => this.#options.update(this.gameId(), this.mapId()))
+
+	protected readonly busy = computed(() => this.presentation.isPending() || this.deleting.isPending())
+
 	protected readonly panelOpen = signal(false)
+	protected readonly dragging = signal(false)
+	protected readonly styles = linkedSignal(() => this.map.data()?.styles ?? [])
 	protected readonly missing = computed(() => this.map.error()?.status === HttpStatusCode.NotFound)
 
 	protected readonly breadcrumbs = computed(() => [
@@ -120,6 +145,39 @@ export class FeatureEditor {
 			)
 		},
 	})
+
+	protected makeDefault(style: MapStyle): void {
+		this.presentation.mutate(
+			{ id: this.mapId(), patch: { defaultStyleId: style.id } },
+			{
+				onError: error => toast.error(getMapErrorMessage(error)),
+			},
+		)
+	}
+
+	protected drop(event: CdkDragDrop<MapStyle[]>): void {
+		this.move(event.previousIndex, event.currentIndex)
+	}
+
+	protected move(from: number, to: number): void {
+		const styles = [...this.styles()]
+
+		if (from === to || to < 0 || to >= styles.length || this.busy()) return
+
+		moveItemInArray(styles, from, to)
+		this.styles.set(styles)
+		this.#changeDetector.detectChanges()
+
+		this.presentation.mutate(
+			{ id: this.mapId(), patch: { styleOrder: styles.map(style => style.id) } },
+			{
+				onError: error => {
+					this.styles.set(this.map.data()?.styles ?? [])
+					toast.error(getMapErrorMessage(error))
+				},
+			},
+		)
+	}
 
 	protected edit(style: MapStyle | null = null): void {
 		const map = this.map.data()

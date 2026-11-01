@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+
 namespace GameAtlas.Api.Maps;
 
-public sealed record CreateMapRequest(string? Name, int? Width, int? Height);
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record CreateMapRequest(string? Name);

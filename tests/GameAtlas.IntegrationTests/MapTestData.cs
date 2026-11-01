@@ -26,8 +26,7 @@ internal static class MapTestData
 
 	internal static string PathFor(Guid gameId, Guid? mapId = null) => $"{CollectionFor(gameId)}/{mapId ?? MapIdFor(gameId)}";
 
-	internal static async Task<Map> EnsureMapAsync(GameApiFactory factory, Guid gameId,
-		int width = 23, int height = 17)
+	internal static async Task<Map> EnsureMapAsync(GameApiFactory factory, Guid gameId)
 	{
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -36,7 +35,7 @@ internal static class MapTestData
 
 		if (map is null)
 		{
-			map = Map.Create(gameId, "World", width, height).Value!;
+			map = Map.Create(gameId, "World").Value!;
 			context.Maps.Add(map);
 			await context.SaveChangesAsync();
 		}
@@ -61,26 +60,7 @@ internal static class MapTestData
 
 			if (map is null)
 			{
-				var width = 23;
-				var height = 17;
-				var file = upload.FirstOrDefault(part => part.Headers.ContentDisposition?.Name?.Trim('"') == "file");
-
-				if (file is not null)
-				{
-					try
-					{
-						using var image = Image.NewFromBuffer(await file.ReadAsByteArrayAsync());
-
-						width = image.Width;
-						height = image.Height;
-					}
-					catch (VipsException)
-					{
-						// Invalid originals still reach the style admission boundary.
-					}
-				}
-
-				var created = await client.PostAsJsonAsync(CollectionFor(gameId), new { name = "World", width, height });
+				var created = await client.PostAsJsonAsync(CollectionFor(gameId), new { name = "World" });
 
 				if (!created.IsSuccessStatusCode)
 					return created;
@@ -152,16 +132,16 @@ internal static class MapTestData
 
 	internal static async Task<Map> SeedAsync(GameApiFactory factory, Guid gameId)
 	{
-		var seeded = await EnsureMapAsync(factory, gameId, 1025, 513);
+		var seeded = await EnsureMapAsync(factory, gameId);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var map = await context.Maps.AsTracking().WithStyles().SingleAsync(item => item.Id == seeded.Id);
 
 		if (map.Styles.Count == 0)
 		{
-			var bytes = ImageBytes(map.Width, map.Height);
+			var bytes = ImageBytes(1025, 513);
 			var image = ImageAsset.Create(Guid.CreateVersion7(), "Source", null, "image/png", bytes.Length,
-				map.Width, map.Height).Value!;
+				1025, 513).Value!;
 			var storage = scope.ServiceProvider.GetRequiredService<IMediaStorage>();
 			var path = storage.AssetPath(image.Id);
 

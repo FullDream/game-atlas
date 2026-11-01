@@ -11,14 +11,4 @@ export type CreateMapRequest = {
 	 * @maxLength 200
 	 */
 	name: string
-	/**
-	 * @maximum 16384
-	 * @exclusiveMinimum 0
-	 */
-	width: number
-	/**
-	 * @maximum 16384
-	 * @exclusiveMinimum 0
-	 */
-	height: number
 }

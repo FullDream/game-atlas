@@ -19,9 +19,12 @@ public sealed class CategoryIconMigrationTests
 
 		await migrator.MigrateAsync("20261024135813_MediaLibrary");
 		var gameId = await MediaTestData.SeedLegacyGameAsync(context);
-		var map = GameAtlas.Domain.Maps.Map.Create(gameId, "World", 1, 1).Value!;
-		context.Maps.Add(map);
-		await context.SaveChangesAsync();
+		var map = GameAtlas.Domain.Maps.Map.Create(gameId, "World").Value!;
+		var now = DateTimeOffset.UtcNow;
+		await context.Database.ExecuteSqlInterpolatedAsync($"""
+ INSERT INTO Maps (Id, GameId, Name, NormalizedName, Width, Height, LastCreationSequence, CreatedAt, UpdatedAt)
+ VALUES ({map.Id}, {gameId}, 'World', 'WORLD', 1, 1, 0, {now}, {now});
+ """);
 		var group = GameAtlas.Domain.CategoryGroups.CategoryGroup.Create(map.Id, "Group", 1).Value!;
 		context.CategoryGroups.Add(group);
 		await context.SaveChangesAsync();

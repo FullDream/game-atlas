@@ -7,8 +7,11 @@ public static class MapErrors
 	public static readonly Error InvalidDimensions = new(
 		"Map.Dimensions.Invalid", "Width and height must be between 1 and 16384.", "Dimensions", ErrorType.Validation);
 
-	public static readonly Error DimensionsMismatch = new(
-		"Map.Dimensions.Mismatch", "Every style must match the map dimensions.", "Dimensions", ErrorType.Validation);
+	public static readonly Error InvalidDefaultStyle = new(
+		"Map.DefaultStyle.Invalid", "Choose a ready style as default.", "DefaultStyleId", ErrorType.Validation);
+
+	public static readonly Error InvalidStyleOrder = new(
+		"Map.StyleOrder.Invalid", "Supply every current style exactly once.", "StyleOrder", ErrorType.Validation);
 
 	public static readonly Error NameConflict = new(
 		"Map.Style.Name.Conflict", "A style with this name already exists.", "Name", ErrorType.Conflict);

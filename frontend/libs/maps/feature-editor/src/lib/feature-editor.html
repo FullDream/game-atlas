@@ -50,68 +50,127 @@
 						Map styles
 						<span class="text-muted-foreground">({{ current.styles.length }})</span>
 					</h2>
-					<button id="style-add" ui-button variant="outline" size="sm" icon="matAddRound" (click)="edit()">
+					<button
+						id="style-add"
+						ui-button
+						variant="outline"
+						size="sm"
+						icon="matAddRound"
+						[disabled]="busy()"
+						(click)="edit()"
+					>
 						Add style
 					</button>
 				</div>
 				<p class="mt-2 text-xs text-muted-foreground">Processing status is shown as last loaded.</p>
 			</div>
-			<div class="gap-3 p-4 flex flex-col">
-				@for (style of current.styles; track style.id) {
+			<div
+				#stylesContainer
+				class="style-list gap-3 p-4 flex flex-col"
+				cdkDropList
+				[cdkDropListData]="styles()"
+				[cdkDropListDisabled]="busy()"
+				(cdkDropListDropped)="drop($event)"
+			>
+				@for (style of styles(); track style.id; let index = $index) {
 					<article
-						class="rounded-lg bg-card text-card-foreground border"
+						cdkDrag
+						cdkDragLockAxis="y"
+						[cdkDragBoundary]="stylesContainer"
+						cdkDragPreviewContainer="parent"
+						(cdkDragStarted)="dragging.set(true)"
+						(cdkDragEnded)="dragging.set(false)"
+						class="style-card rounded-lg bg-card text-card-foreground border"
 						[class.border-primary]="selectedStyleId() === style.id"
 					>
-						<div class="gap-2 p-2 flex">
+						<div class="gap-2 p-3 flex items-center">
 							<button
-								class="min-w-0 gap-3 rounded-md focus-visible:ring-ring flex flex-1 items-center text-left outline-none focus-visible:ring-2 disabled:cursor-default"
+								class="min-h-16 min-w-0 gap-3 rounded-md focus-visible:ring-ring flex flex-1 items-center text-left outline-none focus-visible:ring-2 disabled:cursor-default"
 								[disabled]="style.status !== 'ready' || !style.tilesUrlTemplate"
 								[attr.aria-pressed]="selectedStyleId() === style.id"
 								[attr.aria-label]="'Display ' + style.name"
 								(click)="select(style)"
 							>
 								<ui-media-thumbnail class="size-16 rounded-md shrink-0 border" [image]="style.source" />
-								<div class="min-w-0">
-									<h3
-										class="text-sm font-semibold truncate"
-										[hlmTooltip]="style.name"
-										uiTooltipOnOverflow
-									>
-										{{ style.name }}
-									</h3>
-									<p class="mt-1 text-xs text-muted-foreground">
+								<div class="min-w-0 gap-1 flex flex-col items-start">
+									@if (dragging()) {
+										<h3 class="text-sm font-semibold max-w-full truncate">{{ style.name }}</h3>
+									} @else {
+										<h3
+											class="text-sm font-semibold max-w-full truncate"
+											[hlmTooltip]="style.name"
+											uiTooltipOnOverflow
+										>
+											{{ style.name }}
+										</h3>
+									}
+									<p class="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
 										{{ style.source.width }} × {{ style.source.height }} px
 									</p>
 
 									@if (style.status !== 'ready') {
-										<span hlmBadge variant="secondary" class="mt-2">{{ style.status }}</span>
+										<span hlmBadge variant="secondary">{{ style.status }}</span>
 									} @else if (current.defaultStyleId === style.id) {
-										<span hlmBadge variant="outline" class="mt-2">Default</span>
+										<span hlmBadge variant="outline">Default</span>
 									}
 								</div>
 							</button>
-							<button
-								ui-button
-								variant="ghost"
-								size="icon-sm"
-								icon="matMoreHorizRound"
-								[id]="'style-actions-' + style.id"
-								[attr.aria-label]="'Actions for ' + style.name"
-								[hlmDropdownMenuTrigger]="actions"
-								[disabled]="deleting.isPending()"
-							></button>
-							<ng-template #actions>
-								<div hlmDropdownMenu>
-									<button hlmDropdownMenuItem (triggered)="edit(style)">
-										<ng-icon name="matEditRound" aria-hidden="true" />
-										Edit style
-									</button>
-									<button hlmDropdownMenuItem variant="destructive" (triggered)="remove(style)">
-										<ng-icon name="matDeleteRound" aria-hidden="true" />
-										Delete style
-									</button>
-								</div>
-							</ng-template>
+							<div class="gap-1 text-muted-foreground flex shrink-0 flex-col items-center">
+								<button
+									ui-button
+									variant="ghost"
+									size="icon-sm"
+									icon="matMoreHorizRound"
+									[id]="'style-actions-' + style.id"
+									[attr.aria-label]="'Actions for ' + style.name"
+									[hlmDropdownMenuTrigger]="actions"
+									[disabled]="busy()"
+								></button>
+								<button
+									ui-button
+									cdkDragHandle
+									variant="ghost"
+									size="icon-sm"
+									icon="matDragIndicatorRound"
+									class="hover:text-foreground cursor-grab touch-none active:cursor-grabbing"
+									[disabled]="busy()"
+									[attr.aria-label]="'Drag to reorder ' + style.name"
+								></button>
+								<ng-template #actions>
+									<div hlmDropdownMenu>
+										@if (style.status === 'ready' && current.defaultStyleId !== style.id) {
+											<button hlmDropdownMenuItem (triggered)="makeDefault(style)">
+												<ng-icon name="matStarRound" aria-hidden="true" />
+												Make default
+											</button>
+										}
+										<button
+											hlmDropdownMenuItem
+											[disabled]="index === 0"
+											(triggered)="move(index, index - 1)"
+										>
+											<ng-icon name="matArrowUpwardRound" aria-hidden="true" />
+											Move up
+										</button>
+										<button
+											hlmDropdownMenuItem
+											[disabled]="index === current.styles.length - 1"
+											(triggered)="move(index, index + 1)"
+										>
+											<ng-icon name="matArrowDownwardRound" aria-hidden="true" />
+											Move down
+										</button>
+										<button hlmDropdownMenuItem (triggered)="edit(style)">
+											<ng-icon name="matEditRound" aria-hidden="true" />
+											Edit style
+										</button>
+										<button hlmDropdownMenuItem variant="destructive" (triggered)="remove(style)">
+											<ng-icon name="matDeleteRound" aria-hidden="true" />
+											Delete style
+										</button>
+									</div>
+								</ng-template>
+							</div>
 						</div>
 					</article>
 				} @empty {

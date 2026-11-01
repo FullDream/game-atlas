@@ -1,6 +1,10 @@
 <h2 class="text-lg font-semibold">{{ context.style ? 'Edit style' : 'Add style' }}</h2>
 <p class="mt-1 text-sm text-muted-foreground">
-	{{ context.map.width }} × {{ context.map.height }} px. Each style uses the same map coordinates.
+	@if (context.map.width) {
+		{{ context.map.width }} × {{ context.map.height }} logical units. Each style covers the full map.
+	} @else {
+		The first style will set the logical map dimensions.
+	}
 </p>
 
 <form class="mt-5 gap-4 flex flex-col" [formRoot]="fields">
@@ -34,8 +38,15 @@
 			>
 				Choose library image
 			</button>
-			<p hlmFieldDescription>JPEG, PNG, WebP or AVIF matching the map dimensions.</p>
+			<p hlmFieldDescription>JPEG, PNG, WebP or AVIF at any supported resolution.</p>
 		</hlm-field>
+	}
+
+	@if (aspectRatioMismatch() && !context.style) {
+		<p role="status" class="rounded-md p-3 text-sm border">
+			The image has a different aspect ratio. It will stretch to fill the entire map and may look distorted. You
+			can still add it.
+		</p>
 	}
 
 	@if (error()) {

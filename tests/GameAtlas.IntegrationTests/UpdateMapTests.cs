@@ -84,7 +84,7 @@ public class UpdateMapTests
 
 		Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
 		Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
-		using var siblingCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "Sibling", width = 1, height = 1 });
+		using var siblingCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "Sibling" });
 		var sibling = await MapTestData.ReadAsync(siblingCreation);
 		var responses = await Task.WhenAll(
 			client.PatchAsJsonAsync(MapTestData.PathFor(game.Id, map.Id), new { name = "Shared" }),

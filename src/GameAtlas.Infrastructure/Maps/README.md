@@ -35,7 +35,7 @@ Populated rollback requires matching database/filesystem backups and the precedi
 
 ## Admission and recovery
 
-Blank maps create no upload work and may own content before any style exists. JSON style creation atomically attaches an existing library raster image. Sources must match the immutable map dimensions. Media admission owns inspection, staging cleanup and promotion; a style does not own an original directory or upload session. A lost style response leaves discoverable queued work; GET before retrying creation.
+Name-only blank maps have null geometry and create no upload work and may own content before any style exists. JSON style creation atomically attaches an existing library raster image. The first attachment initializes absent logical geometry. Sources of other resolutions or aspect ratios are accepted without changing logical dimensions or marker coordinates; native pyramids use source dimensions. Media admission owns inspection, staging cleanup and promotion; a style does not own an original directory or upload session. A lost style response leaves discoverable queued work; GET before retrying creation.
 
 The worker reads the shared source directly from media storage without file leases or an active-reader registry. Removing a style detaches its source; explicit asset deletion can then affect an ongoing attempt. Missing sources fail safely, and stale attempts cannot restore deleted style metadata. Shared metadata changes never requeue jobs or change source bytes. Media has no startup/periodic recovery or cleanup service.
 

@@ -36,7 +36,7 @@ public class MapFaultTests
 		var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 			media: JsonDocument.Parse(MarkerTestData.MixedMedia).RootElement.Clone());
 		using var siblingCreated = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "Dungeon", width = 512, height = 512 });
+			new { name = "Dungeon" });
 		var sibling = await MapTestData.ReadAsync(siblingCreated);
 
 		using var upload = MapTestData.Style();
@@ -193,7 +193,7 @@ public class MapFaultTests
 
 		await images.GenerateAsync(factory.Services.GetRequiredService<IMediaStorage>().AssetPath(dto.Source.Id),
 			storage.WorkPath(map.Id, dto.Id, attempt),
-			MapGeometry.Create(map.Width, map.Height).Value!,
+			MapGeometry.Create(map.Width!.Value, map.Height!.Value).Value!,
 			new Progress<int>(), CancellationToken.None);
 		storage.Publish(map.Id, dto.Id, attempt);
 		using var unpublished = await client.GetAsync(

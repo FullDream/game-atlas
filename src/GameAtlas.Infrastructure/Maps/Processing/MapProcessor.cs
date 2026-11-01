@@ -293,6 +293,14 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 			context.Set<MapCleanupIntent>().Add(cleanup);
 		}
 
+		if (cleanup is null)
+		{
+			var map = await context.Maps.AsTracking().WithStyles()
+				.SingleAsync(map => map.Id == claim.MapId, cancellationToken);
+
+			map.ReconcileDefaultStyle();
+		}
+
 		await context.SaveChangesAsync(cancellationToken);
 		await transaction.CommitAsync(cancellationToken);
 

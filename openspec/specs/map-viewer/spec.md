@@ -8,17 +8,26 @@ Provide a reusable game-map viewport that renders aligned imagery in the map's o
 
 ### Requirement: Render authoritative pixel geometry
 
-The viewer SHALL render ready style tiles using the supplied extent, origin, tile size, resolutions and zoom bounds in centered pixel coordinates, without geographic conversion, wrapping or geometry rounding. The selected style background SHALL show through transparent tiles.
+The viewer SHALL use the initialized logical extent for its camera and content coordinates and each ready style's own tile geometry for imagery. The entire source extent SHALL map onto the entire logical extent with independent X/Y scaling, without cropping, letterboxing, geographic conversion, wrapping or geometry rounding. Background SHALL show through transparency.
 
 #### Scenario: Render a rectangular map with odd dimensions
 
-- **WHEN** a map has fractional extent boundaries and transparent edge tiles
-- **THEN** imagery retains its correct alignment and orientation without repeated worlds or stretched edges
-- **AND** the style background fills transparent and uncovered areas
+- **WHEN** logical or source dimensions are odd with transparent edge tiles
+- **THEN** fractional boundaries remain aligned and padding does not enlarge or shift the image footprint
+
+#### Scenario: Stretch both ways
+
+- **WHEN** 8000x8000 and 1000x1000 styles share a map initialized from either one
+- **THEN** both fill the same logical extent and a fixed logical point remains fixed
+
+#### Scenario: Stretch unequal aspect ratios
+
+- **WHEN** a 1000x1000 style is selected on an 8000x4000 logical map
+- **THEN** the full square image stretches to the full rectangle with center and all four corners aligned
 
 ### Requirement: Select aligned styles without moving the viewport
 
-The viewer SHALL initially select the supplied displayable default style. Only ready styles with a tile URL SHALL be selectable. Switching styles SHALL retain the viewport center and resolution. If the selected style disappears, selection SHALL fall back to the current displayable default or no style.
+The viewer SHALL initially select the supplied displayable default style. Only ready styles with a tile URL SHALL be selectable. Switching styles SHALL retain the viewport center and resolution. Changing the server default or display order SHALL NOT replace a surviving local selection. Source resolution differences SHALL NOT reset or clamp the camera on selection. If the selected style disappears, selection SHALL fall back to the current displayable default or no style.
 
 #### Scenario: Switch and remove a selected style
 
@@ -40,12 +49,22 @@ The viewer SHALL support pan, zoom in/out, fit-to-map and fullscreen controls wi
 
 ### Requirement: Render without a displayable style
 
-The viewer SHALL retain a usable map coordinate space when styles are absent or none are ready. It SHALL communicate the absence of displayable imagery without requesting unavailable tiles or presenting source previews as completed tiles.
+Before logical geometry exists, the viewer SHALL show an awaiting-first-style state without creating fabricated geometry or requesting tiles. After initialization, absent or non-ready styles SHALL retain the usable logical coordinate space with a no-ready-style state. Source previews SHALL NOT substitute for completed tiles.
 
 #### Scenario: Open a processing-only map
 
-- **WHEN** every style is queued, processing or failed
-- **THEN** the viewer presents a neutral no-ready-style state without tile requests for those styles
+- **WHEN** geometry exists but every style is queued, processing or failed
+- **THEN** the viewer retains logical geometry and requests no unavailable tiles
+
+#### Scenario: Initialize an empty map
+
+- **WHEN** a newly created map receives its first style attachment
+- **THEN** the viewer can initialize from returned geometry while showing no-ready-style until a ready snapshot is loaded
+
+#### Scenario: Remove every style
+
+- **WHEN** an initialized map loses its final style
+- **THEN** its coordinate space persists and the camera does not reset
 
 ### Requirement: Support independent browser consumers
 

@@ -41,7 +41,7 @@ public class MapValidationTests
 	[Fact]
 	public async Task CreationFailuresUseFlatMetadataPaths()
 	{
-		var command = new CreateMap(Guid.NewGuid(), " ", 0, null);
+		var command = new CreateMap(Guid.NewGuid(), " ");
 		var result = await new CreateMapValidation().ValidateAsync(command);
 
 		Assert.False(result.IsValid);

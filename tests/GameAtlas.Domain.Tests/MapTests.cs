@@ -4,19 +4,71 @@ namespace GameAtlas.Domain.Tests;
 
 public class MapTests
 {
+	[Theory]
+	[InlineData(1000, 8000)]
+	[InlineData(8000, 1000)]
+	[InlineData(1025, 513)]
+	public void FirstSourceFixesGeometryRegardlessOfLaterResolution(int first, int second)
+	{
+		var map = Map.Create(Guid.NewGuid(), "World").Value!;
+
+		Assert.Null(map.Geometry);
+		Assert.True(map.AddStyle(Input("Invalid", "red", first, first)).IsFailure);
+		Assert.Null(map.Geometry);
+		Assert.True(map.AddStyle(Input("First", width: first, height: first)).IsSuccess);
+		var geometry = map.Geometry;
+
+		Assert.True(map.AddStyle(Input("Second", width: second, height: second / 2)).IsSuccess);
+		Assert.Equal(first, map.Width);
+		Assert.Equal(first, map.Height);
+		Assert.Same(geometry, map.Geometry);
+
+		foreach (var style in map.Styles.ToArray())
+			Assert.True(map.DeleteStyle(style.Id).IsSuccess);
+
+		Assert.Same(geometry, map.Geometry);
+		Assert.True(map.AddStyle(Input("Later", width: second)).IsSuccess);
+		Assert.Equal(first, map.Width);
+	}
+
+	[Fact]
+	public void PresentationUpdatesValidateBeforeMutatingAndPreserveNoOps()
+	{
+		var map = Create(Input("First"), Input("Second"));
+		var styles = map.Styles.ToArray();
+		Publish(styles[0], map);
+		Publish(styles[1], map);
+		var timestamp = map.UpdatedAt;
+
+		Assert.True(map.Update(name: "Changed", styleOrder: new[] { styles[0].Id }).IsFailure);
+		Assert.Equal("World", map.Name);
+		Assert.Equal(timestamp, map.UpdatedAt);
+		Assert.True(map.Update(styleOrder: new[] { styles[0].Id, styles[0].Id }).IsFailure);
+		Assert.True(map.Update(defaultStyleId: Guid.NewGuid()).IsFailure);
+		Assert.True(map.Update(defaultStyleId: GameAtlas.Domain.Optional<Guid?>.From(null)).IsFailure);
+		Assert.False(map.Update(styleOrder: styles.Select(style => style.Id).ToArray()).Value);
+		Assert.Equal(timestamp, map.UpdatedAt);
+		Assert.True(map.Update(styleOrder: styles.Reverse().Select(style => style.Id).ToArray()).Value);
+		Assert.Equal(styles[0].Id, map.DefaultStyleId);
+		Assert.Equal(new[] { 1L, 2L }, styles.Select(style => style.CreationSequence));
+		Assert.True(map.Update(defaultStyleId: styles[1].Id).Value);
+		Assert.True(map.DeleteStyle(styles[1].Id).IsSuccess);
+		Assert.Equal(styles[0].Id, map.DefaultStyleId);
+	}
+
 	[Fact]
 	public void MapNameLengthIsCheckedAfterTrimming()
 	{
-		Assert.True(Map.Create(Guid.CreateVersion7(), $" {new string('a', 200)} ", 1, 1).IsSuccess);
-		Assert.True(Map.Create(Guid.CreateVersion7(), new string('a', 201), 1, 1).IsFailure);
+		Assert.True(Map.Create(Guid.CreateVersion7(), $" {new string('a', 200)} ").IsSuccess);
+		Assert.True(Map.Create(Guid.CreateVersion7(), new string('a', 201)).IsFailure);
 	}
 
 	[Theory]
-	[InlineData(" World ", 1, 1)]
-	[InlineData("Карта", 16384, 16384)]
-	public void CreateWithoutStylesEstablishesImmutableGeometry(string name, int width, int height)
+	[InlineData(" World ")]
+	[InlineData("Карта")]
+	public void CreateWithoutStylesDefersGeometry(string name)
 	{
-		var created = Map.Create(Guid.CreateVersion7(), name, width, height);
+		var created = Map.Create(Guid.CreateVersion7(), name);
 
 		Assert.True(created.IsSuccess);
 		Assert.Equal(name.Trim(), created.Value.Name);
@@ -24,18 +76,17 @@ public class MapTests
 		Assert.Empty(created.Value.Styles);
 		Assert.Null(created.Value.DefaultStyleId);
 		Assert.Equal(0, created.Value.LastCreationSequence);
-		Assert.Equal(width, created.Value.Geometry.Width);
-		Assert.Equal(height, created.Value.Geometry.Height);
+		Assert.Null(created.Value.Geometry);
+		Assert.Null(created.Value.Width);
+		Assert.Null(created.Value.Height);
 		Assert.Equal(created.Value.CreatedAt, created.Value.UpdatedAt);
 	}
 
 	[Theory]
-	[InlineData(null, 1, 1)]
-	[InlineData(" ", 1, 1)]
-	[InlineData("World", 0, 1)]
-	[InlineData("World", 1, 16385)]
-	public void RejectInvalidMapMetadata(string? name, int width, int height) =>
-		Assert.True(Map.Create(Guid.NewGuid(), name, width, height).IsFailure);
+	[InlineData(null)]
+	[InlineData(" ")]
+	public void RejectInvalidMapMetadata(string? name) =>
+		Assert.True(Map.Create(Guid.NewGuid(), name).IsFailure);
 
 	[Theory]
 	[InlineData(MapProcessingStatus.Queued)]
@@ -56,6 +107,8 @@ public class MapTests
 		else if (status == MapProcessingStatus.Failed)
 			Assert.True(style.Fail(style.AttemptId).IsSuccess);
 
+		map.ReconcileDefaultStyle();
+
 		Assert.True(map.DeleteStyle(style.Id).IsSuccess);
 		Assert.Empty(map.Styles);
 		Assert.Null(map.DefaultStyleId);
@@ -70,8 +123,7 @@ public class MapTests
 
 	private static Map Create(params MapStyleInput[] inputs)
 	{
-		var map = Map.Create(Guid.CreateVersion7(), "World", (int)(inputs[0].Source?.Width ?? 0),
-			(int)(inputs[0].Source?.Height ?? 0)).Value!;
+		var map = Map.Create(Guid.CreateVersion7(), "World").Value!;
 
 		foreach (var input in inputs)
 			Assert.True(map.AddStyle(input).IsSuccess);
@@ -79,14 +131,15 @@ public class MapTests
 		return map;
 	}
 
-	private static void Publish(MapStyle style)
+	private static void Publish(MapStyle style, Map map)
 	{
 		Assert.True(style.Claim(style.AttemptId).IsSuccess);
 		Assert.True(style.Publish(style.AttemptId).IsSuccess);
+		map.ReconcileDefaultStyle();
 	}
 
 	[Fact]
-	public void CreationSequenceDeterminesDefaultIndependentlyOfReadiness()
+	public void FirstReadyDefaultSurvivesEarlierStylesBecomingReady()
 	{
 		var map = Create(Input("  Atlas  "), Input("Roads"));
 		var styles = map.Styles.ToArray();
@@ -97,10 +150,10 @@ public class MapTests
 		Assert.Equal("#AABBCC", styles[0].BackgroundColor);
 		Assert.Equal([1L, 2L], styles.Select(style => style.CreationSequence));
 		Assert.Null(map.DefaultStyleId);
-		Publish(styles[1]);
+		Publish(styles[1], map);
 		Assert.Equal(styles[1].Id, map.DefaultStyleId);
-		Publish(styles[0]);
-		Assert.Equal(styles[0].Id, map.DefaultStyleId);
+		Publish(styles[0], map);
+		Assert.Equal(styles[1].Id, map.DefaultStyleId);
 		var sharedTime = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
 		foreach (var style in styles)
@@ -111,7 +164,7 @@ public class MapTests
 			System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(map)!;
 
 		storedOrder.Reverse();
-		Assert.Equal(styles[0].Id, map.DefaultStyleId);
+		Assert.Equal(styles[1].Id, map.DefaultStyleId);
 		storedOrder.Reverse();
 		Assert.True(map.AddStyle(Input("Third")).IsSuccess);
 		Assert.Equal([1L, 2L, 3L], map.Styles.Select(style => style.CreationSequence));
@@ -131,7 +184,6 @@ public class MapTests
 		var timestamp = map.UpdatedAt;
 
 		Assert.True(map.AddStyle(Input(" atlas ")).IsFailure);
-		Assert.True(map.AddStyle(Input("Bad", width: 512)).IsFailure);
 		Assert.True(map.AddStyle(Input("Bad", "red")).IsFailure);
 		Assert.Single(map.Styles);
 		Assert.Equal(1, map.LastCreationSequence);
@@ -166,7 +218,7 @@ public class MapTests
 
 		Assert.True(map.AddStyle(Input("Roads")).IsSuccess);
 		Assert.Same(geometry, map.Geometry);
-		Assert.Equal(map.Width, geometry.Width);
+		Assert.Equal(map.Width, geometry!.Width);
 		Assert.Equal(map.Height, geometry.Height);
 	}
 
@@ -182,7 +234,7 @@ public class MapTests
 	{
 		var input = Input() with { Name = name, BackgroundColor = color };
 
-		var map = Map.Create(Guid.NewGuid(), "World", (int)(input.Source?.Width ?? 0), (int)(input.Source?.Height ?? 0)).Value!;
+		var map = Map.Create(Guid.NewGuid(), "World").Value!;
 
 		Assert.True(map.AddStyle(input).IsFailure);
 	}
@@ -227,7 +279,7 @@ public class MapTests
 		Assert.Null(style.ErrorCode);
 		Assert.True(style.Fail(attempt).IsFailure);
 		Assert.True(style.Retry().IsFailure);
-		Publish(style);
+		Publish(style, map);
 		Assert.Equal(style.Id, map.DefaultStyleId);
 		Assert.True(style.Retry().IsFailure);
 	}
@@ -254,7 +306,7 @@ public class MapTests
 		Assert.False(style.Recover());
 		Assert.Null(map.DefaultStyleId);
 		Assert.True(style.Retry().IsSuccess);
-		Publish(style);
+		Publish(style, map);
 		Assert.Equal(style.Id, map.DefaultStyleId);
 		Assert.False(style.Recover());
 	}

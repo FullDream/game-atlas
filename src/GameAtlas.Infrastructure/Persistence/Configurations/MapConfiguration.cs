@@ -21,7 +21,7 @@ public sealed class MapConfiguration : IEntityTypeConfiguration<Map>
 		builder.Property(map => map.CreatedAt).HasConversion<UtcTimestampConverter>();
 		builder.Property(map => map.UpdatedAt).HasConversion<UtcTimestampConverter>();
 		builder.Ignore(map => map.Geometry);
-		builder.Ignore(map => map.DefaultStyleId);
+
 		builder.HasMany(map => map.Styles).WithOne().HasForeignKey(style => style.MapId)
 			.OnDelete(DeleteBehavior.Cascade);
 

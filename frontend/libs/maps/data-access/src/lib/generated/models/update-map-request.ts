@@ -6,9 +6,13 @@
  */
 
 /**
- * Supply name to rename the map. Null is invalid; dimensions and geometry are immutable.
+ * Supply name, defaultStyleId or the complete styleOrder. Null is invalid; geometry is immutable.
  */
 export type UpdateMapRequest = {
 	/** @nullable */
 	name?: string | null
+	/** @nullable */
+	defaultStyleId?: string | null
+	/** @nullable */
+	styleOrder?: (string | null)[] | null
 }

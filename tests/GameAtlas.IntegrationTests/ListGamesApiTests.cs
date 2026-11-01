@@ -247,7 +247,7 @@ public class ListGamesApiTests
 			var entry = context.Games.Add(games[index]);
 
 			context.Maps.Add(Domain.Maps.Map.Create(games[index].Id,
-				"World", 1, 1).Value!);
+				"World").Value!);
 
 			entry.Property(game => game.CreatedAt).CurrentValue = start.AddTicks(index);
 			entry.Property(game => game.UpdatedAt).CurrentValue = start.AddTicks(games.Length - index);

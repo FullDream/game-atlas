@@ -98,7 +98,7 @@ public sealed class MapStyleLibraryTests
 		using var client = factory.CreateHttpsClient();
 		var image = await MediaTestData.UploadImageAsync(client, format);
 		using var created = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "World", width = 64, height = 48 });
+			new { name = "World" });
 		var map = await MapTestData.ReadAsync(created);
 		var path = MapTestData.PathFor(game.Id, map.Id);
 		using var added = await client.PostAsJsonAsync(path + "/styles",
@@ -148,14 +148,14 @@ public sealed class MapStyleLibraryTests
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "invalid-source");
 		var map = await MapTestData.EnsureMapAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
-		var mismatched = await MediaTestData.UploadImageAsync(client);
+
 		var svg = await MediaTestData.UploadImageAsync(client, "svg");
 		var folder = await MediaFolderTests.CreateAsync(client, "Not a source");
 		var path = MapTestData.PathFor(game.Id, map.Id);
 
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 
-		foreach (var source in new[] { mismatched.Id, svg.Id, folder.Id, MediaTestData.VideoId })
+		foreach (var source in new[] { svg.Id, folder.Id, MediaTestData.VideoId })
 		{
 			using var rejected = await client.PostAsJsonAsync(path + "/styles",
 				new { name = "Atlas", backgroundColor = "#fff", sourceAssetId = source });

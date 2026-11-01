@@ -76,7 +76,7 @@ public class MapPersistenceTests
 			Assert.Equal(map.Styles.Single().Id, stored.Styles.Single().Id);
 			Assert.Equal(MapProcessingStatus.Queued, stored.Styles.Single().Status);
 			Assert.False(context.Database.HasPendingModelChanges());
-			var duplicate = Map.Create(game.Id, map.Name, 1, 1).Value!;
+			var duplicate = Map.Create(game.Id, map.Name).Value!;
 
 			context.Maps.Add(duplicate);
 			var conflict = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
@@ -91,7 +91,7 @@ public class MapPersistenceTests
 			var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 				context.GetService<IMigrator>().MigrateAsync("20261023145510_Markers"));
 
-			Assert.Contains("GameImages_RestoreBackupForNonemptyGames", rollback.Message);
+			Assert.Contains("MapStylePresentation_RestoreBackupForNonemptyMaps", rollback.Message);
 			DeleteGameHandlerTests.AssertSameGame(game, await context.Games.SingleAsync());
 			Assert.Equal(group.Id, (await context.CategoryGroups.SingleAsync()).Id);
 			Assert.Equal(category.Id, (await context.Categories.SingleAsync()).Id);

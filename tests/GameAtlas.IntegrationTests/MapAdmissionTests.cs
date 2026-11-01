@@ -45,8 +45,8 @@ public class MapAdmissionTests
 
 	[Theory]
 	[InlineData(" atlas ", false, 409)]
-	[InlineData("Roads", true, 422)]
-	public async Task DuplicateNamesAndDifferentDimensionsRejectAddition(string secondName,
+	[InlineData("Roads", true, 200)]
+	public async Task DuplicateNamesFailWhileDifferentDimensionsAreAccepted(string secondName,
 		bool differentDimensions, int status)
 	{
 		await using var factory = new GameApiFactory();
@@ -63,7 +63,10 @@ public class MapAdmissionTests
 		Assert.Equal(status, (int)response.StatusCode);
 		using var missing = await client.GetAsync(MapTestData.PathFor(game.Id));
 
-		Assert.Equal(map.Styles.Single(), (await MapTestData.ReadAsync(missing)).Styles.Single());
+		var stored = await MapTestData.ReadAsync(missing);
+		Assert.Equal(map.Width, stored.Width);
+		Assert.Equal(map.Styles.Single(), stored.Styles.First());
+		Assert.Equal(differentDimensions ? 2 : 1, stored.Styles.Count);
 	}
 
 	[Fact]

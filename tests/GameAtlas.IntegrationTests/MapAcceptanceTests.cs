@@ -23,7 +23,7 @@ public class MapAcceptanceTests
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
 		using var siblingCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "Dungeon", width = 512, height = 512 });
+			new { name = "Dungeon" });
 		var sibling = await MapTestData.ReadAsync(siblingCreation);
 
 		var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
@@ -57,7 +57,7 @@ public class MapAcceptanceTests
 			data.GetProperty("status").GetString() == "ready", timeout.Token);
 		using var readyRead = await client.GetAsync(MapTestData.PathFor(game.Id));
 
-		Assert.Equal(atlas.Id, (await MapTestData.ReadAsync(readyRead)).DefaultStyleId);
+		Assert.Equal(roads.Id, (await MapTestData.ReadAsync(readyRead)).DefaultStyleId);
 		using var patch = await client.PatchAsJsonAsync($"{MapTestData.PathFor(game.Id)}/styles/{atlas.Id}",
 			new { name = "Atlas new", backgroundColor = "#abc" });
 		var updated = (await patch.Content.ReadFromJsonAsync<MapStyleDto>(MapTestData.JsonOptions))!;
@@ -82,7 +82,7 @@ public class MapAcceptanceTests
 		Assert.Equal(marker.GetRawText(), Assert.Single(retainedMarkers.EnumerateArray()).GetRawText());
 		using var deleted = await client.DeleteAsync(MapTestData.PathFor(game.Id));
 		using var recreated = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "World", width = 11, height = 9 });
+			new { name = "World" });
 		var next = await MapTestData.ReadAsync(recreated);
 		using var markerRead = await client.GetAsync(MapTestData.PathFor(game.Id, next.Id) + "/markers");
 		var markers = await markerRead.Content.ReadFromJsonAsync<JsonElement>();

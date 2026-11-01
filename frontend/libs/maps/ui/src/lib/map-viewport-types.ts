@@ -1,11 +1,11 @@
 export type MapGeometry = {
 	id: string
-	extent: number[]
-	tileOrigin: number[]
-	tileSize: number
-	resolutions: number[]
-	minZoom: number
-	maxZoom: number
+	extent: number[] | null
+	tileOrigin: number[] | null
+	tileSize: number | null
+	resolutions: number[] | null
+	minZoom: number | null
+	maxZoom: number | null
 }
 
 export type MapViewStyle = {
@@ -14,6 +14,7 @@ export type MapViewStyle = {
 	backgroundColor: string
 	status: string
 	tilesUrlTemplate: string | null
+	tileGeometry: TileGeometry
 	source: MapStyleSource
 }
 
@@ -23,4 +24,13 @@ export type MapStyleSource = {
 	url: string
 	alt: string
 	placeholder: string | null
+}
+
+export type TileGeometry = {
+	extent: number[]
+	tileOrigin: number[]
+	tileSize: number
+	resolutions: number[]
+	minZoom: number
+	maxZoom: number
 }

@@ -24,7 +24,7 @@ public sealed class GetGameHandler(IApplicationDbContext context) : IQueryHandle
 			{
 				map.Id,
 				map.Name,
-				PreviewId = context.MapStyles.Where(style => style.MapId == map.Id && style.Status == MapProcessingStatus.Ready)
+				PreviewId = context.MapStyles.Where(style => style.MapId == map.Id && style.Id == map.DefaultStyleId && style.Status == MapProcessingStatus.Ready)
 				 .OrderBy(style => style.CreationSequence).Select(style => (Guid?)style.SourceAssetId).FirstOrDefault()
 			})
 			.ToArrayAsync(cancellationToken);

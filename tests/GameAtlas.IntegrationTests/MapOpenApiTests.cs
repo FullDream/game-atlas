@@ -29,9 +29,9 @@ public class MapOpenApiTests
 			.GetProperty("application/json").GetProperty("schema"));
 
 		Assert.True(create.GetProperty("requestBody").GetProperty("required").GetBoolean());
-		Assert.Equal(new[] { "height", "name", "width" },
+		Assert.Equal(new[] { "name" },
 			form.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
-		Assert.Equal(new[] { "height", "name", "width" },
+		Assert.Equal(new[] { "name" },
 			form.GetProperty("required").EnumerateArray().Select(item => item.GetString()).Order());
 		var add = paths.GetProperty("/games/{gameId}/maps/{mapId}/styles").GetProperty("post");
 		var addSchema = Resolve(root, add.GetProperty("requestBody").GetProperty("content")
@@ -58,7 +58,7 @@ public class MapOpenApiTests
 		Assert.Equal(new[]
 		{
 			"backgroundColor", "createdAt", "error", "id", "name", "progress",
-			"source", "status", "tilesUrlTemplate", "updatedAt"
+			"source", "status", "tileGeometry", "tilesUrlTemplate", "updatedAt"
 		}, style.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
 		Assert.Equal(new[] { "queued", "processing", "ready", "failed" },
 			Resolve(root, style.GetProperty("properties").GetProperty("status")).GetProperty("enum")

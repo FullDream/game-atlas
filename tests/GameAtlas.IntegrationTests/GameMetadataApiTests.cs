@@ -71,9 +71,9 @@ public class GameMetadataApiTests
 		var game = Game.Create("Game", "game", MediaTestData.CoverId).Value!;
 		var other = Game.Create("Other", "other", MediaTestData.CoverId).Value!;
 		context.Games.AddRange(game, other);
-		var map = Map.Create(game.Id, "World", 64, 48).Value!;
-		var blank = Map.Create(game.Id, "Blank", 64, 48).Value!;
-		var foreign = Map.Create(other.Id, "Foreign", 64, 48).Value!;
+		var map = Map.Create(game.Id, "World").Value!;
+		var blank = Map.Create(game.Id, "Blank").Value!;
+		var foreign = Map.Create(other.Id, "Foreign").Value!;
 		context.Maps.AddRange(map, blank, foreign);
 		var group = CategoryGroup.Create(map.Id, "Group", 1).Value!;
 		var otherGroup = CategoryGroup.Create(foreign.Id, "Group", 1).Value!;
@@ -101,6 +101,7 @@ public class GameMetadataApiTests
 		var second = map.AddStyle(new MapStyleInput("Second", "#fff", otherImage)).Value!;
 		second.Claim(second.AttemptId);
 		second.Publish(second.AttemptId);
+		map.ReconcileDefaultStyle();
 		await context.SaveChangesAsync();
 		var ready = (await client.GetFromJsonAsync<GameDto>($"/games/{game.Id}", MapTestData.JsonOptions))!;
 		Assert.Equal(otherImage.Id, ready.Maps[0].Preview!.Id);
@@ -129,9 +130,12 @@ public class GameMetadataApiTests
 		var timestamp = DateTimeOffset.UtcNow;
 		var storedTimestamp = timestamp.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFFzzz", System.Globalization.CultureInfo.InvariantCulture);
 		await context.Database.ExecuteSqlAsync($"INSERT INTO Games (Id, Name, Slug, ImageAssetId, CreatedAt, UpdatedAt, Status) VALUES ({id}, 'Game', 'game', {MediaTestData.CoverId}, {storedTimestamp}, {storedTimestamp}, 'Draft')");
-		var map = Map.Create(id, "World", 64, 48).Value!;
-		context.Maps.Add(map);
-		await context.SaveChangesAsync();
+		var map = Map.Create(id, "World").Value!;
+		await context.Database.ExecuteSqlInterpolatedAsync($"""
+			INSERT INTO Maps (Id, GameId, Name, NormalizedName, Width, Height, LastCreationSequence, CreatedAt, UpdatedAt)
+			VALUES ({map.Id}, {id}, 'World', 'WORLD', 64, 48, 0, {storedTimestamp}, {storedTimestamp});
+			""");
+
 		await context.Database.MigrateAsync();
 		context.ChangeTracker.Clear();
 		var game = await context.Games.SingleAsync();

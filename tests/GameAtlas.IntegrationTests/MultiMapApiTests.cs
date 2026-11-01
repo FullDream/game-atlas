@@ -21,9 +21,9 @@ public class MultiMapApiTests
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "other-styles");
 		using var client = factory.CreateHttpsClient();
 		using var firstCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "World", width = 23, height = 17 });
+			new { name = "World" });
 		using var secondCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "Dungeon", width = 23, height = 17 });
+			new { name = "Dungeon" });
 		var first = await MapTestData.ReadAsync(firstCreation);
 		var second = await MapTestData.ReadAsync(secondCreation);
 		using var upload = MapTestData.Style();
@@ -62,7 +62,7 @@ public class MultiMapApiTests
 		using var client = factory.CreateHttpsClient();
 		using var missingList = await client.GetAsync(MapTestData.CollectionFor(Guid.NewGuid()));
 		using var missingCreate = await client.PostAsJsonAsync(MapTestData.CollectionFor(Guid.NewGuid()),
-			new { name = "World", width = 1, height = 1 });
+			new { name = "World" });
 		using var unsupported = await client.PostAsync(MapTestData.CollectionFor(game.Id),
 			new StringContent("{}", Encoding.UTF8, "text/plain"));
 
@@ -91,15 +91,15 @@ public class MultiMapApiTests
 
 		Assert.Equal("[]", await empty.Content.ReadAsStringAsync());
 		using var first = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = " World ", width = 1025, height = 513 });
+			new { name = " World " });
 		var world = await MapTestData.ReadAsync(first);
 		using var second = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "Dungeon", width = 512, height = 512 });
+			new { name = "Dungeon" });
 		var dungeon = await MapTestData.ReadAsync(second);
 		using var sameNameElsewhere = await client.PostAsJsonAsync(MapTestData.CollectionFor(other.Id),
-			new { name = "World", width = 1, height = 1 });
+			new { name = "World" });
 		using var duplicate = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = " world ", width = 1, height = 1 });
+			new { name = " world " });
 		using var foreign = await client.GetAsync(MapTestData.PathFor(other.Id, world.Id));
 		using var listing = await client.GetAsync(MapTestData.CollectionFor(game.Id));
 		var maps = (await listing.Content.ReadFromJsonAsync<MapDto[]>(MapTestData.JsonOptions))!;
@@ -109,7 +109,9 @@ public class MultiMapApiTests
 		Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
 		Assert.Equal(new[] { world.Id, dungeon.Id }, maps.Select(map => map.Id));
 		Assert.Equal("World", world.Name);
-		Assert.Equal([-512.5, -256.5, 512.5, 256.5], world.Extent);
+		Assert.Null(world.Extent);
+		Assert.Null(world.Width);
+		Assert.Null(world.Height);
 		Assert.All(maps, map => Assert.Empty(map.Styles));
 		Assert.All(maps, map => Assert.Null(map.DefaultStyleId));
 		await using var scope = factory.Services.CreateAsyncScope();
@@ -129,9 +131,9 @@ public class MultiMapApiTests
 
 	[Theory]
 	[InlineData("{}", 422)]
-	[InlineData("""{"name":"World","width":null,"height":1}""", 422)]
-	[InlineData("""{"name":"World","width":0,"height":1}""", 422)]
-	[InlineData("""{"name":"World","width":16385,"height":1}""", 422)]
+	[InlineData("""{"name":"World","width":null,"height":1}""", 400)]
+	[InlineData("""{"name":"World","width":0,"height":1}""", 400)]
+	[InlineData("""{"name":"World","width":16385,"height":1}""", 400)]
 	[InlineData("""{"name":"World","width":1.5,"height":1}""", 400)]
 	[InlineData("[]", 400)]
 	public async Task CreationValidatesJsonWithoutPersistingPartialMaps(string json, int expected)
@@ -151,7 +153,7 @@ public class MultiMapApiTests
 	}
 
 	[Fact]
-	public async Task FirstStyleMustMatchGeometryAndLastStyleCanBeRemovedWithoutRemovingContent()
+	public async Task FirstStyleInitializesGeometryAndLastStyleCanBeRemovedWithoutRemovingContent()
 	{
 		await using var factory = new GameApiFactory();
 
@@ -160,16 +162,18 @@ public class MultiMapApiTests
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
 		var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id);
-		using var invalidFile = MapTestData.Style(MapTestData.ImageBytes(24, 17));
-		using var mismatch = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), invalidFile);
+		using var invalidFile = MapTestData.Style(MapTestData.ImageBytes(24, 17), name: "First");
+		using var first = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), invalidFile);
 		using var validFile = MapTestData.Style();
 		using var admitted = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), validFile);
 		var map = await MapTestData.ReadAsync(admitted);
-		using var deleted = await client.DeleteAsync($"{MapTestData.PathFor(game.Id)}/styles/{map.Styles.Single().Id}");
+		using var deleted = await client.DeleteAsync($"{MapTestData.PathFor(game.Id)}/styles/{map.Styles.Last().Id}");
+		using var removedFirst = await client.DeleteAsync($"{MapTestData.PathFor(game.Id)}/styles/{map.Styles.First().Id}");
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));
 		var blank = await MapTestData.ReadAsync(read);
 
-		Assert.Equal(HttpStatusCode.UnprocessableEntity, mismatch.StatusCode);
+		Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+		Assert.Equal(24, map.Width);
 		Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
 		Assert.Equal(map.Id, blank.Id);
 		Assert.Equal(map.Extent, blank.Extent);

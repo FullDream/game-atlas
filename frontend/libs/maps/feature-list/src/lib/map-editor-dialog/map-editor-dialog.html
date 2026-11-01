@@ -9,29 +9,12 @@
 		<input id="map-editor-name" hlmInput [formField]="fields.name" autocomplete="off" />
 	</hlm-field>
 
-	<div class="gap-4 grid grid-cols-2">
-		<hlm-field>
-			<label hlmFieldLabel for="map-editor-width">Width (px)</label>
-			<input id="map-editor-width" hlmInput type="number" [formField]="fields.width" />
-		</hlm-field>
-		<hlm-field>
-			<label hlmFieldLabel for="map-editor-height">Height (px)</label>
-			<input
-				id="map-editor-height"
-				hlmInput
-				type="number"
-				[formField]="fields.height"
-				[readOnly]="!!context.map"
-			/>
-		</hlm-field>
-	</div>
-
 	<p class="text-sm text-muted-foreground">
-		{{
-			context.map
-				? 'Dimensions are fixed after creation.'
-				: 'Map dimensions must be whole numbers between 1 and 16,384 pixels.'
-		}}
+		@if (context.map?.width) {
+			Logical size: {{ context.map.width }} × {{ context.map.height }}.
+		} @else {
+			Logical dimensions will be set by the first style.
+		}
 	</p>
 
 	@if (error()) {

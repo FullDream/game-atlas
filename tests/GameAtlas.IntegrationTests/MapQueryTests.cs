@@ -24,7 +24,7 @@ public class MapQueryTests
 		for (var index = 0; index < 10; index++)
 		{
 			using var created = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-				new { name = $"Map {index}", width = 23, height = 17 });
+				new { name = $"Map {index}" });
 			var map = await MapTestData.ReadAsync(created);
 			using var upload = MapTestData.Style();
 			using var styled = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id, map.Id), upload);

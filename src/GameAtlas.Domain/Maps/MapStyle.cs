@@ -19,6 +19,7 @@ public sealed class MapStyle
 	public string NormalizedName { get; private set; } = string.Empty;
 	public string BackgroundColor { get; private set; } = string.Empty;
 	public long CreationSequence { get; private set; }
+	public long DisplayOrder { get; private set; }
 	public Guid SourceAssetId { get; private set; }
 	public ImageAsset Source => source ?? throw new InvalidOperationException("The style source must be loaded.");
 	public string Format => Source.ContentType[6..];
@@ -34,6 +35,8 @@ public sealed class MapStyle
 	public static string NormalizeName(string name) => name.Trim().ToUpperInvariant();
 
 	internal void AssignCreationSequence(long sequence) => CreationSequence = sequence;
+
+	internal void AssignDisplayOrder(long order) => DisplayOrder = order;
 
 	internal static Result<MapStyle> Create(Guid mapId, long sequence, string? name, string? color,
 		ImageAsset? source)

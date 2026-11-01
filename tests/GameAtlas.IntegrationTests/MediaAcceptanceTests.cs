@@ -38,7 +38,7 @@ public sealed class MediaAcceptanceTests
 		for (var index = 0; index < 2; index++)
 		{
 			var game = await UpdateGameHandlerTests.SeedAsync(factory, $"shared-{index}");
-			var map = await MapTestData.EnsureMapAsync(factory, game.Id, 64, 48);
+			var map = await MapTestData.EnsureMapAsync(factory, game.Id);
 			var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Resources", 1);
 			var categoryPath = CategoryTestData.Path(game.Id, group.Id);
 			using var createdCategory = await client.PostAsJsonAsync(categoryPath,

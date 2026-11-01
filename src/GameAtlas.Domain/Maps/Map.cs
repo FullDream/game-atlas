@@ -7,48 +7,36 @@ public sealed class Map
 	public const int NameMaxLength = 200;
 	private readonly List<MapStyle> styles = [];
 
-	private Map(Guid id, int width, int height)
-	{
-		Id = id;
-		Width = width;
-		Height = height;
-		Geometry = new MapGeometry(width, height);
-	}
+	private MapGeometry? geometry;
+
+	private Map(Guid id) => Id = id;
 
 	public Guid Id { get; }
 	public Guid GameId { get; private set; }
 	public string Name { get; private set; } = string.Empty;
 	public string NormalizedName { get; private set; } = string.Empty;
-	public int Width { get; private set; }
-	public int Height { get; private set; }
+	public int? Width { get; private set; }
+	public int? Height { get; private set; }
 	public long LastCreationSequence { get; private set; }
 	public DateTimeOffset CreatedAt { get; private set; }
 	public DateTimeOffset UpdatedAt { get; private set; }
 	public IReadOnlyCollection<MapStyle> Styles => styles.AsReadOnly();
-	public MapGeometry Geometry { get; }
+	public MapGeometry? Geometry => geometry ??= Width is { } width && Height is { } height
+		? new MapGeometry(width, height) : null;
 
-	public Guid? DefaultStyleId => styles
-		.Where(style => style.Status == MapProcessingStatus.Ready)
-		.OrderBy(style => style.CreationSequence)
-		.Select(style => (Guid?)style.Id)
-		.FirstOrDefault();
+	public Guid? DefaultStyleId { get; private set; }
 
 	public static string NormalizeName(string name) => name.Trim().ToUpperInvariant();
 
-	public static Result<Map> Create(Guid gameId, string? name, int width, int height)
+	public static Result<Map> Create(Guid gameId, string? name)
 	{
 		name = name?.Trim();
 
 		if (string.IsNullOrEmpty(name) || name.Length > NameMaxLength)
 			return MapErrors.InvalidMapName;
 
-		var geometry = MapGeometry.Create(width, height);
-
-		if (geometry.IsFailure)
-			return geometry.Errors;
-
 		var now = DateTimeOffset.UtcNow;
-		var map = new Map(Guid.CreateVersion7(), width, height)
+		var map = new Map(Guid.CreateVersion7())
 		{
 			GameId = gameId,
 			Name = name,
@@ -82,9 +70,6 @@ public sealed class Map
 		if (input.Source is null || !input.Source.IsRaster)
 			return MapProcessingErrors.InvalidSource;
 
-		if (input.Source.Width != Width || input.Source.Height != Height)
-			return MapErrors.DimensionsMismatch;
-
 		var created = MapStyle.Create(Id, LastCreationSequence + 1, input.Name, input.BackgroundColor,
 			input.Source);
 
@@ -104,13 +89,18 @@ public sealed class Map
 		if (styles.Any(existing => existing.Id == style.Id))
 			return MapErrors.DuplicateStyle;
 
-		if (style.Width != Width || style.Height != Height)
-			return MapErrors.DimensionsMismatch;
+		var sourceGeometry = MapGeometry.Create(style.Width, style.Height);
+
+		if (sourceGeometry.IsFailure)
+			return sourceGeometry.Errors;
 
 		if (styles.Any(existing => existing.NormalizedName == style.NormalizedName))
 			return MapErrors.NameConflict;
 
 		style.AssignCreationSequence(++LastCreationSequence);
+		style.AssignDisplayOrder(styles.Count == 0 ? 0 : styles.Max(item => item.DisplayOrder) + 1);
+		Width ??= style.Width;
+		Height ??= style.Height;
 		styles.Add(style);
 		UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -148,8 +138,80 @@ public sealed class Map
 			return MapErrors.MissingStyle;
 
 		styles.Remove(style);
+		ReconcileDefaultStyle();
 		UpdatedAt = DateTimeOffset.UtcNow;
 
 		return Result.Result.Success();
+	}
+
+	public void ReconcileDefaultStyle()
+	{
+		if (styles.Any(style => style.Id == DefaultStyleId && style.Status == MapProcessingStatus.Ready))
+			return;
+
+		DefaultStyleId = styles.Where(style => style.Status == MapProcessingStatus.Ready)
+			.OrderBy(style => style.DisplayOrder).ThenBy(style => style.CreationSequence)
+			.Select(style => (Guid?)style.Id).FirstOrDefault();
+	}
+
+	public Result<bool> Update(Optional<string?> name = default, Optional<Guid?> defaultStyleId = default,
+		Optional<IReadOnlyList<Guid>?> styleOrder = default)
+	{
+		var nextName = name.GetValueOrDefault(Name)?.Trim();
+
+		if (string.IsNullOrEmpty(nextName) || nextName.Length > NameMaxLength)
+			return MapErrors.InvalidMapName;
+
+		if (defaultStyleId.IsSpecified)
+		{
+			if (defaultStyleId.Value is not { } selectedId)
+				return MapErrors.InvalidDefaultStyle;
+
+			var selected = styles.SingleOrDefault(style => style.Id == selectedId);
+
+			if (selected is null)
+				return MapErrors.MissingStyle;
+
+			if (selected.Status != MapProcessingStatus.Ready)
+				return MapErrors.InvalidDefaultStyle;
+		}
+
+		if (styleOrder.IsSpecified)
+		{
+			var order = styleOrder.Value;
+
+			if (order is null || order.Distinct().Count() != order.Count)
+				return MapErrors.InvalidStyleOrder;
+
+			if (order.Any(id => styles.All(style => style.Id != id)))
+				return MapErrors.MissingStyle;
+
+			if (order.Count != styles.Count)
+				return MapErrors.InvalidStyleOrder;
+		}
+
+		var changed = nextName != Name || defaultStyleId.GetValueOrDefault(DefaultStyleId) != DefaultStyleId;
+
+		if (styleOrder.IsSpecified)
+		{
+			var order = styleOrder.Value!;
+			changed |= !styles.OrderBy(style => style.DisplayOrder).Select(style => style.Id).SequenceEqual(order);
+
+			if (changed)
+			{
+				for (var index = 0; index < order.Count; index++)
+					styles.Single(style => style.Id == order[index]).AssignDisplayOrder(index);
+			}
+		}
+
+		if (!changed)
+			return false;
+
+		Name = nextName;
+		NormalizedName = NormalizeName(nextName);
+		DefaultStyleId = defaultStyleId.GetValueOrDefault(DefaultStyleId);
+		UpdatedAt = DateTimeOffset.UtcNow;
+
+		return true;
 	}
 }

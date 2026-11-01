@@ -17,8 +17,7 @@ public sealed class CreateMapHandler(IApplicationDbContext context, IMapMutation
 		if (!await context.Games.AnyAsync(game => game.Id == command.GameId, cancellationToken))
 			return MapOperationErrors.NotFound;
 
-		var created = Map.Create(command.GameId, command.Name, command.Width.GetValueOrDefault(),
-			command.Height.GetValueOrDefault());
+		var created = Map.Create(command.GameId, command.Name);
 
 		if (created.IsFailure)
 			return created.Errors;

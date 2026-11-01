@@ -1,6 +1,8 @@
 import Map from 'ol/Map.js'
 import View from 'ol/View.js'
 import Projection from 'ol/proj/Projection.js'
+import { addCoordinateTransforms } from 'ol/proj.js'
+import { remove as removeTransform } from 'ol/proj/transforms.js'
 import TileGrid from 'ol/tilegrid/TileGrid.js'
 import TileLayer from 'ol/layer/Tile.js'
 import XYZ from 'ol/source/XYZ.js'
@@ -10,22 +12,31 @@ export class MapEngine {
 	readonly #layer = new TileLayer<XYZ>()
 	readonly #map: Map
 	readonly #observer: ResizeObserver
-	readonly #geometry: MapGeometry
+	readonly #extent: number[]
 	#url: string | null = null
 	#fitted = false
+	#sourceProjection: Projection | undefined
 
 	constructor(target: HTMLElement, geometry: MapGeometry) {
-		this.#geometry = geometry
+		if (!geometry.extent) throw new Error('Logical map geometry is required.')
 
-		const projection = new Projection({ code: `game-map:${geometry.id}`, units: 'pixels', extent: geometry.extent })
+		this.#extent = geometry.extent
+
+		const projection = new Projection({
+			code: `game-map:${geometry.id}:${crypto.randomUUID()}`,
+			units: 'pixels',
+			extent: geometry.extent,
+			metersPerUnit: 1,
+			getPointResolution: resolution => resolution,
+		})
 
 		const view = new View({
 			projection,
 			center: [0, 0],
-			resolutions: geometry.resolutions,
-			minZoom: geometry.minZoom,
-			maxZoom: geometry.maxZoom,
-			zoom: geometry.minZoom,
+			maxResolution: geometry.resolutions?.[0] ?? 1,
+			minResolution:
+				Math.min(geometry.extent[2] - geometry.extent[0], geometry.extent[3] - geometry.extent[1]) / 16384 / 4,
+			zoom: 0,
 			enableRotation: false,
 			constrainResolution: false,
 		})
@@ -51,14 +62,42 @@ export class MapEngine {
 
 		this.#url = url
 
-		const geometry = this.#geometry
+		const logical = this.#extent
+		const geometry = style?.tileGeometry
 		const previousSource = this.#layer.getSource()
+		const targetProjection = this.#map.getView().getProjection()
+
+		this.#layer.setSource(null)
+		previousSource?.dispose()
+		this.#releaseTransforms()
+		this.#layer.setExtent(logical)
+
+		if (!url || !geometry || !style) return
+
+		const scaleX = (logical[2] - logical[0]) / (geometry.extent[2] - geometry.extent[0])
+		const scaleY = (logical[3] - logical[1]) / (geometry.extent[3] - geometry.extent[1])
+
+		const sourceProjection = new Projection({
+			code: `${targetProjection.getCode()}:style:${style.id}`,
+			units: 'pixels',
+			extent: geometry.extent,
+			metersPerUnit: Math.min(scaleX, scaleY),
+			getPointResolution: resolution => resolution,
+		})
+
+		addCoordinateTransforms(
+			sourceProjection,
+			targetProjection,
+			coordinate => [coordinate[0] * scaleX, coordinate[1] * scaleY],
+			coordinate => [coordinate[0] / scaleX, coordinate[1] / scaleY],
+		)
+		this.#sourceProjection = sourceProjection
 
 		this.#layer.setSource(
 			url
 				? new XYZ({
 						url,
-						projection: this.#map.getView().getProjection(),
+						projection: sourceProjection,
 						wrapX: false,
 						maxZoom: geometry.maxZoom,
 						tileGrid: new TileGrid({
@@ -71,8 +110,6 @@ export class MapEngine {
 					})
 				: null,
 		)
-
-		previousSource?.dispose()
 	}
 
 	zoom(delta: number): void {
@@ -80,14 +117,25 @@ export class MapEngine {
 	}
 
 	fit(): void {
-		this.#map.getView().fit(this.#geometry.extent, { size: this.#map.getSize(), padding: [24, 24, 24, 24] })
+		this.#map.getView().fit(this.#extent, { size: this.#map.getSize(), padding: [24, 24, 24, 24] })
 	}
 
 	dispose(): void {
 		this.#observer.disconnect()
 		this.#map.setTarget(undefined)
 		this.#layer.getSource()?.dispose()
+		this.#releaseTransforms()
 		this.#layer.dispose()
 		this.#map.dispose()
+	}
+
+	#releaseTransforms(): void {
+		if (!this.#sourceProjection) return
+
+		const target = this.#map.getView().getProjection()
+
+		removeTransform(this.#sourceProjection, target)
+		removeTransform(target, this.#sourceProjection)
+		this.#sourceProjection = undefined
 	}
 }

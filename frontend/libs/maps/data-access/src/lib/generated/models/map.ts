@@ -10,14 +10,22 @@ export type Map = {
 	id: string
 	gameId: string
 	name: string
-	width: number
-	height: number
-	extent: number[]
-	tileOrigin: number[]
-	tileSize: number
-	minZoom: number
-	maxZoom: number
-	resolutions: number[]
+	/** @nullable */
+	width: number | null
+	/** @nullable */
+	height: number | null
+	/** @nullable */
+	extent: number[] | null
+	/** @nullable */
+	tileOrigin: number[] | null
+	/** @nullable */
+	tileSize: number | null
+	/** @nullable */
+	minZoom: number | null
+	/** @nullable */
+	maxZoom: number | null
+	/** @nullable */
+	resolutions: number[] | null
 	/** @nullable */
 	defaultStyleId: string | null
 	styles: MapStyle[]

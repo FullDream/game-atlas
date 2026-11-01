@@ -9,6 +9,7 @@ public sealed record MapStyleDto(
 	string Name,
 	string BackgroundColor,
 	ImageAssetDto Source,
+	MapTileGeometryDto TileGeometry,
 	MapProcessingStatus Status,
 	int Progress,
 	MapProcessingErrorDto? Error,

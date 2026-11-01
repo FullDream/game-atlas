@@ -1,6 +1,7 @@
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Domain.Maps;
+using GameAtlas.Domain;
 using GameAtlas.Domain.Result;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,15 @@ public sealed class UpdateMapHandler(IApplicationDbContext context, IMapProgress
 			.AnyAsync(other => other.Id != command.MapId && other.NormalizedName == Map.NormalizeName(name), cancellationToken))
 			return MapOperationErrors.NameConflict;
 
-		var result = map.Rename(name);
+		if (command.StyleOrder.IsSpecified &&
+			(command.StyleOrder.Value is null || command.StyleOrder.Value.Any(id => id is null)))
+			return MapErrors.InvalidStyleOrder;
+
+		var order = command.StyleOrder.IsSpecified
+			? Optional<IReadOnlyList<Guid>?>.From(command.StyleOrder.Value!.Select(id => id.GetValueOrDefault()).ToArray())
+			: default;
+
+		var result = map.Update(command.Name, command.DefaultStyleId, order);
 
 		if (result.IsFailure)
 			return result.Errors;

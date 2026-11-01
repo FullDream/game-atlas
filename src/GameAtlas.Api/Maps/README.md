@@ -14,17 +14,23 @@ A game owns zero or more independently named maps, including draft games. Each m
 | DELETE | /{mapId}/styles/{styleId}       | DeleteMapStyle | empty 204          |
 | DELETE | /{mapId}                        | DeleteMap      | empty 204          |
 
-There is no pagination, separate style GET, public source history, manual order/default selection, or PUT operation.
+There is no pagination, separate style GET, public source history, or PUT operation.
 
 ## Creation and listing
 
-POST accepts application/json with required name, width, and height, for example `{"name":"World","width":1025,"height":513}`. Names are trimmed, 1..200 characters and unique per game after invariant case normalization. Dimensions are immutable integers from 1 to 16384. Success returns 200 with geometry, styles=[], and defaultStyleId=null. No files, leases, or processing work are created. Groups/categories/markers can be added immediately.
+POST accepts application/json with required name only, for example `{"name":"World"}`. Names are trimmed, 1..200 characters and unique per game after invariant case normalization. Success returns 200 with null dimensions/geometry, styles=[], and defaultStyleId=null. The first successful style attachment atomically fixes logical dimensions from its source (1..16384); failed attachment leaves geometry absent. Processing failure does not undo geometry, and removing all styles does not reset it. No files, leases, or processing work are created. Groups/categories/markers can be added immediately.
 
 GET returns every complete map ordered by createdAt then id ascending, including [] for an existing game without maps. There are no pagination/filter/order parameters. Missing games return 404. Every item route requires both the owning game ID and map ID; a sibling or foreign map/style returns 404. Legacy singular-map and game-wide content routes are absent.
 
+## Default and display order
+
+Map PATCH accepts optional name, defaultStyleId and styleOrder (the complete ordered style ID array). Omitted fields stay unchanged and arrays replace the full order atomically. Nulls, duplicate/incomplete orders and non-ready defaults return 422; missing/foreign IDs return 404. Normalized no-ops preserve timestamps; effective presentation changes update only the map timestamp without retiling. New styles append. A surviving ready default remains selected after reorder or later readiness; deleting it selects the first ready style in display order, or null if none remains. Game summaries use the same default.
+
+The MapStylePresentation migration preserves existing dimensions, order, ready defaults, marker coordinates and tile URLs. Apply it explicitly after backing up database and storage. It is never applied on startup. Downgrading a populated store is refused; restore the coordinated backup to roll back.
+
 ## Shared style sources
 
-Upload the original once through `POST /media/assets`, then add a style with JSON: `{"name":"Atlas","backgroundColor":"#fff","sourceAssetId":"<image UUID>"}`. Multipart style requests return 415. Sources must be existing raster JPEG, PNG, WebP, or AVIF images; SVG, videos, and folders return 422, unknown IDs return 404. The first and every subsequent source must exactly match the map's declared dimensions.
+Upload the original once through `POST /media/assets`, then add a style with JSON: `{"name":"Atlas","backgroundColor":"#fff","sourceAssetId":"<image UUID>"}`. Multipart style requests return 415. Sources must be existing raster JPEG, PNG, WebP, or AVIF images; SVG, videos, and folders return 422, unknown IDs return 404. Sources can have any dimensions admitted by the library. Every source stretches over the full logical extent, using independent X/Y scales when aspect ratios differ. Originals remain unchanged; native source-resolution pyramids retain the detail of larger later styles.
 
 Names are trimmed, 1..200 characters, and unique within the map ignoring case. Colors use #RGB/#RRGGBB and return uppercase six-digit notation; they only affect the viewer background. Success returns the complete map with the new style queued. The relationship is committed atomically without copying the original. Multiple styles and maps can share one asset.
 
@@ -34,9 +40,9 @@ Shared name/alt/folder changes appear in subsequent HTTP style responses without
 
 ## Responses and updates
 
-Map fields: `id`, `gameId`, `name`, `width`, `height`, `extent`, `tileOrigin`, `tileSize`, `minZoom`, `maxZoom`, `resolutions`, `defaultStyleId`, `styles`, `createdAt`, `updatedAt`. Styles are returned in creation order. The default is the earliest surviving ready style; it is null until any style is ready. Queued, processing, and failed styles are skipped.
+Map fields: `id`, `gameId`, `name`, `width`, `height`, `extent`, `tileOrigin`, `tileSize`, `minZoom`, `maxZoom`, `resolutions`, `defaultStyleId`, `styles`, `createdAt`, `updatedAt`. Styles are returned in persisted display order. The persisted ready default is independent of order; it is null until any style is ready. Queued, processing, and failed styles are skipped when choosing the default, but remain in the style array.
 
-Style fields: `id`, `name`, `backgroundColor`, `source`, `status`, `progress`, `error`, `tilesUrlTemplate`, `createdAt`, `updatedAt`. Status is `queued`, `processing`, `ready`, or `failed`. Progress is approximate, nondecreasing within an attempt, 0..99 until full publication, and 100 only when ready. Percentages live only in server memory and do not change persisted timestamps; absent transient progress is 0, ready is always 100. Failed percentages are not retained across restart. Error is null or a safe `{code,message}`; no paths or native diagnostics are exposed. The tile template is null until ready. IDs use UUID v7; dates use UTC.
+Style fields: `id`, `name`, `backgroundColor`, `source`, `tileGeometry`, `status`, `progress`, `error`, `tilesUrlTemplate`, `createdAt`, `updatedAt`. Status is `queued`, `processing`, `ready`, or `failed`. Progress is approximate, nondecreasing within an attempt, 0..99 until full publication, and 100 only when ready. Percentages live only in server memory and do not change persisted timestamps; absent transient progress is 0, ready is always 100. Failed percentages are not retained across restart. Error is null or a safe `{code,message}`; no paths or native diagnostics are exposed. The tile template is null until ready. IDs use UUID v7; dates use UTC.
 
 PATCH accepts `application/json` and `application/merge-patch+json`, including charset, with identical RFC 7396 semantics. Only `name` and `backgroundColor` are optional mutable members. Omission preserves a field; null is invalid. Empty objects return 422. Changes are atomic; normalized no-ops preserve timestamps, and metadata may change while processing without retiling. Unknown/read-only fields and incompatible JSON return 400, other update media 415.
 
@@ -44,9 +50,9 @@ Errors use ProblemDetails: malformed JSON 400; missing/foreign owners 404; dupli
 
 ## OpenLayers geometry and tiles
 
-The image center is (0,0), X right, Y up, one map unit per original pixel. Extent is `[-width/2,-height/2,width/2,height/2]` and tileOrigin is its top-left `[-width/2,height/2]`. Odd dimensions preserve fractional halves. Existing markers are unchanged; finite coordinates outside the image remain valid.
+The first attached image establishes logical units. Its center is (0,0), X right, Y up. Extent is `[-width/2,-height/2,width/2,height/2]` and tileOrigin is its top-left `[-width/2,height/2]`. Odd dimensions preserve fractional halves. Existing markers are unchanged; finite coordinates outside the image remain valid.
 
-Configure an OpenLayers pixel projection and TileGrid with the returned extent, origin, tileSize=512, resolutions, minZoom=0 and maxZoom. Configure the XYZ source with `tilesUrlTemplate` and `wrapX:false`. Rows increase downward from the origin and columns rightward. Adjacent zooms differ by two; the final resolution is 1. Small images are not upscaled. Partial/blank tiles are transparent 512x512 lossless WebP with no overlap.
+Each style exposes tileGeometry with its native source extent, origin, tileSize=512, resolutions and min/max zoom. Use a source-pixel projection and native TileGrid, then transform source coordinates to logical coordinates by xLogical=xSource*mapWidth/sourceWidth and yLogical=ySource*mapHeight/sourceHeight. Keep the camera in logical units; switching styles must not reset center/resolution. Configure the XYZ source with `tilesUrlTemplate` and `wrapX:false`. Rows increase downward from the origin and columns rightward. Adjacent zooms differ by two; the final resolution is 1. Small images are not upscaled. Partial/blank tiles are transparent 512x512 lossless WebP with no overlap.
 
 Use the returned `tilesUrlTemplate`: `/map-tiles/{mapId:N}/{styleId:N}/{z}/{x}/{y}.webp`. Static-file middleware serves GET/HEAD directly from the dedicated public tile root without Mediator or database queries. Each style's files are immutable, use `Cache-Control: public,max-age=31536000,immutable`, and carry native ETag/Last-Modified validators; conditional requests can return 304. Missing files, malformed paths, and nonexistent coordinates return 404.
 
@@ -99,4 +105,4 @@ Deletion commits durable cleanup scheduling before 204; disk deletion may follow
 
 ## Rename a map
 
-PATCH /games/{gameId}/maps/{mapId} accepts an optional name using the shared JSON Merge Patch contract. Nonempty valid patches return the complete map; dimensions and geometry are immutable. Names are trimmed, 1..200 characters and unique per game excluding the current map. Null/blank/overlength names and empty patches return 422; conflicts return 409; unknown or read-only fields return 400; unsupported media return 415. A trimmed identical name preserves updatedAt; a real rename updates only the map timestamp, without changing game timestamps or processing styles.
+PATCH /games/{gameId}/maps/{mapId} accepts optional name, defaultStyleId and styleOrder using the shared JSON Merge Patch contract. Nonempty valid patches return the complete map; dimensions and geometry are immutable. Names are trimmed, 1..200 characters and unique per game excluding the current map. Null/blank/overlength names and empty patches return 422; conflicts return 409; unknown or read-only fields return 400; unsupported media return 415. A trimmed identical name preserves updatedAt; a real rename updates only the map timestamp, without changing game timestamps or processing styles.

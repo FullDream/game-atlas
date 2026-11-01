@@ -1,14 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core'
-import {
-	disabled,
-	form,
-	FormField,
-	FormRoot,
-	min,
-	max,
-	readonly as readOnlyField,
-	validate,
-} from '@angular/forms/signals'
+import { disabled, form, FormField, FormRoot, validate } from '@angular/forms/signals'
 import { MapsQueryOptions, getMapErrorMessage, type Map as GameMap } from '@game-atlas/maps/data-access'
 import { Button } from '@game-atlas/shared/ui'
 import { getDirtyValues } from '@game-atlas/shared/util'
@@ -18,7 +9,7 @@ import { HlmInput } from '@spartan-ng/helm/input'
 import { injectMutation } from '@tanstack/angular-query-experimental'
 
 type MapEditorContext = { gameId: string; map: GameMap | null }
-type MapForm = { name: string; width: number; height: number }
+type MapForm = { name: string }
 
 @Component({
 	selector: 'maps-editor-dialog',
@@ -40,8 +31,6 @@ export class MapEditorDialog {
 
 	readonly #model = signal<MapForm>({
 		name: this.context.map?.name ?? '',
-		width: this.context.map?.width ?? 4096,
-		height: this.context.map?.height ?? 4096,
 	})
 
 	protected readonly fields = form(
@@ -57,16 +46,6 @@ export class MapEditorDialog {
 
 				return undefined
 			})
-			for (const dimension of [path.width, path.height]) {
-				readOnlyField(dimension, { when: () => !!this.context.map })
-				min(dimension, 1, { message: 'Use at least 1 pixel.' })
-				max(dimension, 16384, { message: 'Use at most 16,384 pixels.' })
-				validate(dimension, ({ value }) =>
-					Number.isInteger(value())
-						? undefined
-						: { kind: 'integer', message: 'Enter a whole number of pixels.' },
-				)
-			}
 		},
 		{
 			submission: {

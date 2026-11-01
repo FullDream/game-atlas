@@ -127,7 +127,7 @@ public class MapContentOwnershipTests
 	private static async Task<MapDto> CreateMapAsync(HttpClient client, Guid gameId, string name)
 	{
 		using var response = await client.PostAsJsonAsync(MapTestData.CollectionFor(gameId),
-			new { name, width = 23, height = 17 });
+			new { name });
 
 		return await MapTestData.ReadAsync(response);
 	}

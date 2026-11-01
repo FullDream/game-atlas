@@ -7,12 +7,14 @@
 import type { ImageAsset } from './image-asset'
 import type { MapProcessingError } from './map-processing-error'
 import type { MapProcessingStatus } from './map-processing-status'
+import type { MapTileGeometry } from './map-tile-geometry'
 
 export type MapStyle = {
 	id: string
 	name: string
 	backgroundColor: string
 	source: ImageAsset
+	tileGeometry: MapTileGeometry
 	status: MapProcessingStatus
 	progress: number
 	error: null | MapProcessingError

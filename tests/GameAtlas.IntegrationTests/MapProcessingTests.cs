@@ -96,7 +96,7 @@ public class MapProcessingTests
 		using var readyRead = await client.GetAsync(MapTestData.PathFor(game.Id));
 		var ready = await MapTestData.ReadAsync(readyRead);
 
-		Assert.Equal(atlas.Id, ready.DefaultStyleId);
+		Assert.Equal(roads.Id, ready.DefaultStyleId);
 		Assert.All(ready.Styles, style => Assert.Equal(MapProcessingStatus.Ready, style.Status));
 		Assert.False(await processor.RunNextAsync(CancellationToken.None));
 	}
