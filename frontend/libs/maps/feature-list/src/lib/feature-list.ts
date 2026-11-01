@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core'
 import { DatePipe, DOCUMENT } from '@angular/common'
+import { RouterLink } from '@angular/router'
 import { MapsQueryOptions, getMapErrorMessage, type Map as GameMap } from '@game-atlas/maps/data-access'
 import {
 	Button,
@@ -32,6 +33,7 @@ import { MapEditorDialog } from './map-editor-dialog/map-editor-dialog'
 @Component({
 	selector: 'maps-list',
 	imports: [
+		RouterLink,
 		Button,
 		ErrorState,
 		MediaThumbnail,
@@ -67,7 +69,7 @@ export class FeatureList {
 	readonly #document = inject(DOCUMENT)
 
 	protected readonly maps = injectQuery(() => ({
-		...this.#options.list(this.id()),
+		...this.#options.getList(this.id()),
 		enabled: !!this.id(),
 		staleTime: Infinity,
 		refetchOnMount: false,

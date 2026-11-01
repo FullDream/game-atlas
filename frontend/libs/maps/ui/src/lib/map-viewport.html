@@ -1,0 +1,112 @@
+<div
+	#canvas
+	class="inset-0 absolute"
+	tabindex="0"
+	role="region"
+	aria-label="Interactive map. Use arrow keys to pan and plus or minus to zoom."
+></div>
+
+<div class="inset-x-3 top-3 gap-2 absolute flex flex-wrap items-start justify-between">
+	@if (styles().length > 1) {
+		<hlm-select
+			class="rounded-md bg-background shadow-sm"
+			[itemToString]="styleName"
+			[(ngModel)]="selectedStyleId"
+			[disabled]="!readyStyles().length"
+		>
+			<hlm-select-trigger aria-label="Map style" class="w-56">
+				@if (activeStyle(); as style) {
+					<span *hlmSelectValueTemplate class="min-w-0 gap-2 flex items-center">
+						<ui-media-thumbnail
+							class="size-6 rounded-sm shrink-0 border"
+							[image]="style.source"
+							fit="cover"
+							aria-hidden="true"
+						/>
+						<span class="truncate">{{ styleName(style.id) }}</span>
+					</span>
+				} @else {
+					<hlm-select-value placeholder="No ready styles" />
+				}
+			</hlm-select-trigger>
+			<hlm-select-content *hlmSelectPortal>
+				@for (style of readyStyles(); track style.id) {
+					<hlm-select-item [value]="style.id">
+						<ui-media-thumbnail
+							class="size-6 rounded-sm shrink-0 border"
+							[image]="style.source"
+							fit="cover"
+							aria-hidden="true"
+						/>
+						<span class="truncate">{{ styleName(style.id) }}</span>
+					</hlm-select-item>
+				}
+			</hlm-select-content>
+		</hlm-select>
+	}
+
+	<div class="gap-2 ml-auto flex items-center">
+		<ng-content select="[mapToolbar]" />
+		<div class="gap-1 rounded-md bg-background p-0.5 shadow-sm flex">
+			<button
+				ui-button
+				variant="ghost"
+				size="icon-sm"
+				icon="matRemoveRound"
+				aria-label="Zoom out"
+				hlmTooltip="Zoom out"
+				(click)="zoom(-1)"
+			></button>
+			<button
+				ui-button
+				variant="ghost"
+				size="icon-sm"
+				icon="matAddRound"
+				aria-label="Zoom in"
+				hlmTooltip="Zoom in"
+				(click)="zoom(1)"
+			></button>
+		</div>
+		<span class="rounded-md bg-background flex">
+			<button
+				ui-button
+				variant="outline"
+				size="icon"
+				icon="matFitScreenRound"
+				aria-label="Fit map"
+				hlmTooltip="Fit map"
+				(click)="fit()"
+			></button>
+		</span>
+		<span class="rounded-md bg-background flex">
+			<button
+				ui-button
+				variant="outline"
+				size="icon"
+				[icon]="fullscreen() ? 'matFullscreenExitRound' : 'matFullscreenRound'"
+				aria-label="Toggle fullscreen"
+				[attr.aria-pressed]="fullscreen()"
+				hlmTooltip="Fullscreen"
+				[disabled]="!fullscreenAvailable()"
+				(click)="toggleFullscreen()"
+			></button>
+		</span>
+	</div>
+</div>
+
+@if (engineError() || !activeStyle()) {
+	<div class="inset-x-4 pointer-events-none absolute top-1/2 -translate-y-1/2">
+		<div hlmEmpty>
+			<div hlmEmptyHeader>
+				<h2 hlmEmptyTitle>{{ engineError() ? 'Could not initialize map' : 'No displayable style' }}</h2>
+				<p hlmEmptyDescription>
+					{{
+						engineError()
+							? 'Reload the page to try again.'
+							: 'The map is ready for a style with completed tiles.'
+					}}
+				</p>
+			</div>
+		</div>
+	</div>
+}

@@ -3,13 +3,11 @@
 </ng-template>
 
 <div class="mb-5 gap-2 flex flex-wrap items-center justify-between">
-	<h2 class="text-base font-semibold">
-		Maps
-	</h2>
+	<h2 class="text-base font-semibold">Maps</h2>
 	<p class="text-xs text-muted-foreground">Processing status is shown as last loaded.</p>
 </div>
 
-@if (maps.isPending()) {
+@if (maps.isLoading()) {
 	<div role="status" aria-label="Loading maps" aria-busy="true" class="gap-5 flex flex-col">
 		@for (row of [0, 1, 2]; track row) {
 			<div class="gap-4 flex items-center" aria-hidden="true">
@@ -41,6 +39,7 @@
 							<ng-icon name="matMapRound" size="32" aria-hidden="true" />
 						</div>
 					}
+
 					<div class="min-w-0">
 						<h3 class="font-semibold truncate" [hlmTooltip]="map.name" uiTooltipOnOverflow>
 							{{ map.name }}
@@ -76,7 +75,9 @@
 					</div>
 				</div>
 				<div class="gap-2 flex shrink-0 items-center justify-end">
-					<button ui-button variant="outline" disabled>Open editor</button>
+					<a ui-button variant="outline" [routerLink]="['/games', id(), 'maps', map.id, 'edit']">
+						Open editor
+					</a>
 					<button
 						ui-button
 						variant="outline"

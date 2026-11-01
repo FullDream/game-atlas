@@ -1,4 +1,8 @@
 module.exports = {
+	'/map-tiles/**': {
+		target: 'http://localhost:5041',
+		changeOrigin: true,
+	},
 	'/media/files/**': {
 		target: 'http://localhost:5041',
 		changeOrigin: true,

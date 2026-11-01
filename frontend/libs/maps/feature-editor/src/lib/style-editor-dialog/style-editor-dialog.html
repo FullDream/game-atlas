@@ -1,0 +1,58 @@
+<h2 class="text-lg font-semibold">{{ context.style ? 'Edit style' : 'Add style' }}</h2>
+<p class="mt-1 text-sm text-muted-foreground">
+	{{ context.map.width }} × {{ context.map.height }} px. Each style uses the same map coordinates.
+</p>
+
+<form class="mt-5 gap-4 flex flex-col" [formRoot]="fields">
+	<hlm-field>
+		<label hlmFieldLabel for="style-name">Style name</label>
+		<input id="style-name" hlmInput [formField]="fields.name" autocomplete="off" />
+	</hlm-field>
+	<hlm-field>
+		<label hlmFieldLabel for="style-color">Background color</label>
+		<input id="style-color" hlmInput [formField]="fields.backgroundColor" autocomplete="off" />
+		<p hlmFieldDescription>Shown behind transparent tiles. Does not change the image.</p>
+	</hlm-field>
+
+	@if (!context.style) {
+		<hlm-field>
+			<label hlmFieldLabel for="style-source">Source image</label>
+			<input type="hidden" [formField]="fields.sourceAssetId" />
+
+			@if (source(); as image) {
+				<ui-media-thumbnail class="h-32 rounded-md w-full border" [image]="image" />
+				<p class="text-sm truncate">{{ image.name }}</p>
+			}
+
+			<button
+				id="style-source"
+				ui-button
+				type="button"
+				variant="outline"
+				[disabled]="fields().submitting()"
+				(click)="chooseImage()"
+			>
+				Choose library image
+			</button>
+			<p hlmFieldDescription>JPEG, PNG, WebP or AVIF matching the map dimensions.</p>
+		</hlm-field>
+	}
+
+	@if (error()) {
+		<hlm-field-error forceShow>{{ error() }}</hlm-field-error>
+	}
+
+	<div class="gap-2 flex justify-end">
+		<button ui-button type="button" variant="outline" [disabled]="fields().submitting()" (click)="dialog.close()">
+			Cancel
+		</button>
+		<button
+			ui-button
+			[attr.aria-label]="context.style ? 'Save changes' : 'Add style'"
+			[loading]="fields().submitting()"
+			[disabled]="!!context.style && !fields().dirty()"
+		>
+			{{ context.style ? 'Save changes' : 'Add style' }}
+		</button>
+	</div>
+</form>

@@ -1,0 +1,161 @@
+<ng-template uiPageHeaderPortal [breadcrumbs]="breadcrumbs()" [loading]="map.isFetching()">
+	<a ui-button variant="outline" icon="matArrowBackRound" [routerLink]="['/games', gameId(), 'maps']">Back to maps</a>
+</ng-template>
+
+@if (map.isLoading()) {
+	<div class="min-h-0 gap-4 p-4 flex flex-1" role="status" aria-label="Loading map" aria-busy="true">
+		<hlm-skeleton class="w-76 md:block hidden shrink-0" />
+		<hlm-skeleton class="flex-1" />
+	</div>
+} @else if (!map.data()) {
+	<ui-error-state class="m-6" icon="matCloudOffRound">
+		<ng-container uiErrorStateHeading>{{ missing() ? 'Map not found' : 'Could not load map' }}</ng-container>
+		<ng-container uiErrorStateDescription>
+			{{
+				missing()
+					? 'This map may have been deleted or belongs to another game.'
+					: 'Check your connection and try again.'
+			}}
+		</ng-container>
+
+		@if (!missing()) {
+			<button ui-button icon="matRefreshRound" (click)="map.refetch()">Retry</button>
+		}
+	</ui-error-state>
+} @else if (map.data(); as current) {
+	<div class="px-3 py-2 md:hidden flex shrink-0 items-center justify-between border-b">
+		<span class="text-sm font-medium truncate">{{ current.name }}</span>
+		<button
+			ui-button
+			variant="outline"
+			size="sm"
+			icon="matLayersRound"
+			aria-controls="map-styles-panel"
+			[attr.aria-expanded]="panelOpen()"
+			(click)="panelOpen.set(!panelOpen())"
+		>
+			Styles
+		</button>
+	</div>
+	<div class="min-h-0 relative flex flex-1 overflow-hidden">
+		<aside
+			id="map-styles-panel"
+			aria-label="Map styles"
+			class="bg-background md:block md:w-80 max-h-full w-full shrink-0 overflow-auto border-r"
+			[class.hidden]="!panelOpen()"
+		>
+			<div class="top-0 bg-background p-4 sticky z-10 border-b">
+				<div class="gap-3 flex items-center justify-between">
+					<h2 class="text-sm font-semibold">
+						Map styles
+						<span class="text-muted-foreground">({{ current.styles.length }})</span>
+					</h2>
+					<button id="style-add" ui-button variant="outline" size="sm" icon="matAddRound" (click)="edit()">
+						Add style
+					</button>
+				</div>
+				<p class="mt-2 text-xs text-muted-foreground">Processing status is shown as last loaded.</p>
+			</div>
+			<div class="gap-3 p-4 flex flex-col">
+				@for (style of current.styles; track style.id) {
+					<article
+						class="rounded-lg bg-card text-card-foreground border"
+						[class.border-primary]="selectedStyleId() === style.id"
+					>
+						<div class="gap-2 p-2 flex">
+							<button
+								class="min-w-0 gap-3 rounded-md focus-visible:ring-ring flex flex-1 items-center text-left outline-none focus-visible:ring-2 disabled:cursor-default"
+								[disabled]="style.status !== 'ready' || !style.tilesUrlTemplate"
+								[attr.aria-pressed]="selectedStyleId() === style.id"
+								[attr.aria-label]="'Display ' + style.name"
+								(click)="select(style)"
+							>
+								<ui-media-thumbnail class="size-16 rounded-md shrink-0 border" [image]="style.source" />
+								<div class="min-w-0">
+									<h3
+										class="text-sm font-semibold truncate"
+										[hlmTooltip]="style.name"
+										uiTooltipOnOverflow
+									>
+										{{ style.name }}
+									</h3>
+									<p class="mt-1 text-xs text-muted-foreground">
+										{{ style.source.width }} × {{ style.source.height }} px
+									</p>
+
+									@if (style.status !== 'ready') {
+										<span hlmBadge variant="secondary" class="mt-2">{{ style.status }}</span>
+									} @else if (current.defaultStyleId === style.id) {
+										<span hlmBadge variant="outline" class="mt-2">Default</span>
+									}
+								</div>
+							</button>
+							<button
+								ui-button
+								variant="ghost"
+								size="icon-sm"
+								icon="matMoreHorizRound"
+								[id]="'style-actions-' + style.id"
+								[attr.aria-label]="'Actions for ' + style.name"
+								[hlmDropdownMenuTrigger]="actions"
+								[disabled]="deleting.isPending()"
+							></button>
+							<ng-template #actions>
+								<div hlmDropdownMenu>
+									<button hlmDropdownMenuItem (triggered)="edit(style)">
+										<ng-icon name="matEditRound" aria-hidden="true" />
+										Edit style
+									</button>
+									<button hlmDropdownMenuItem variant="destructive" (triggered)="remove(style)">
+										<ng-icon name="matDeleteRound" aria-hidden="true" />
+										Delete style
+									</button>
+								</div>
+							</ng-template>
+						</div>
+					</article>
+				} @empty {
+					<div hlmEmpty>
+						<div hlmEmptyMedia variant="icon"><ng-icon name="matLayersRound" aria-hidden="true" /></div>
+						<div hlmEmptyHeader>
+							<h3 hlmEmptyTitle>No styles yet</h3>
+							<p hlmEmptyDescription>Add a library image to bring this map to life.</p>
+						</div>
+					</div>
+				}
+			</div>
+		</aside>
+		<maps-viewport
+			class="min-h-72 flex-1"
+			[class.hidden]="panelOpen()"
+			[class.md:block]="true"
+			[geometry]="current"
+			[styles]="current.styles"
+			[defaultStyleId]="current.defaultStyleId"
+			[(selectedStyleId)]="selectedStyleId"
+		>
+			<div mapToolbar class="gap-2 flex">
+				<span class="rounded-md bg-background flex" hlmTooltip="Search is coming later" tabindex="0">
+					<button
+						ui-button
+						variant="outline"
+						size="icon"
+						icon="matSearchRound"
+						aria-label="Search (coming later)"
+						disabled
+					></button>
+				</span>
+				<span class="rounded-md bg-background flex" hlmTooltip="Filters are coming later" tabindex="0">
+					<button
+						ui-button
+						variant="outline"
+						size="icon"
+						icon="matFilterAltRound"
+						aria-label="Filters (coming later)"
+						disabled
+					></button>
+				</span>
+			</div>
+		</maps-viewport>
+	</div>
+}

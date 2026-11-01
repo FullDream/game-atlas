@@ -1,0 +1,13 @@
+{
+	"name": "maps-feature-editor",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/maps/feature-editor/src",
+	"prefix": "maps",
+	"projectType": "library",
+	"tags": ["type:feature", "scope:maps", "platform:admin"],
+	"targets": {
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

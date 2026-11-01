@@ -1,5 +1,20 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http'
 
+export function getMapStyleErrorMessage(error: unknown): string {
+	if (!(error instanceof HttpErrorResponse)) return 'Could not complete the style operation. Please try again.'
+
+	if (error.status === 0) return 'Could not connect to the server. Please try again.'
+
+	if (error.status === HttpStatusCode.Conflict) return 'A style with this name already exists in this map.'
+
+	if (error.status === HttpStatusCode.NotFound) return 'This map, style or source image no longer exists.'
+
+	if (error.status === HttpStatusCode.UnprocessableEntity)
+		return 'Check the style name, background color and source image. The image must match the map dimensions.'
+
+	return 'Could not complete the style operation. Please try again.'
+}
+
 export function getMapErrorMessage(error: unknown): string {
 	if (!(error instanceof HttpErrorResponse)) return 'Could not complete the map operation. Please try again.'
 

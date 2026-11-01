@@ -12,6 +12,11 @@ export const GAMES_ROUTES: Routes = [
 		loadChildren: () => import('@game-atlas/games/feature-create').then(module => module.GAME_CREATE_ROUTES),
 	},
 	{
+		path: ':gameId/maps/:mapId/edit',
+		title: 'Map editor',
+		loadChildren: () => import('./map-editor.routes').then(module => module.MAP_EDITOR_ROUTES),
+	},
+	{
 		path: ':id',
 		title: 'Edit game',
 		loadChildren: () => import('./game-editor.routes').then(module => module.GAME_EDITOR_ROUTES),

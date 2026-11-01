@@ -1,0 +1,13 @@
+{
+	"name": "maps-ui",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/maps/ui/src",
+	"prefix": "maps",
+	"projectType": "library",
+	"tags": ["type:ui", "scope:maps", "platform:shared"],
+	"targets": {
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

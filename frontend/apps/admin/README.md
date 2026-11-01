@@ -19,6 +19,8 @@ Production output is `dist/apps/admin/browser`. Configure the host to serve `ind
 
 `npm exec nx -- run admin:serve-static` previews production files on port 4301 with an SPA fallback. Use it for a local production preview.
 
+Production size budgets warn at 1.2 MB and fail at 1.5 MB for the initial bundle, and warn at 6 KB and fail at 8 KB for each component stylesheet. These thresholds accommodate the current roughly 1 MB administration bundle and 5.5 KB component styles while retaining growth checks. The map engine remains lazy loaded.
+
 The sidebar collapses to icons on desktop and opens as a dismissible overlay on narrow screens. Menu selection closes the mobile overlay; Escape dismisses it and returns focus. Keyboard users can reach a skip-to-content link. Query caching is supplied once at the application root; no domain library owns a global QueryClient.
 
 The sidebar theme control offers Light, Default (system) and Dark. `ThemeSettings` uses ngxtension `injectLocalStorage` to persist the raw `game-atlas.theme` value and synchronize changes between tabs. The color-scheme meta tag is `light`, `light dark` or `dark`; CSS `light-dark()` tokens follow the active scheme, including live system changes. A synchronous script at the beginning of `<body>`, before `<app-root>`, reads the stored preference before Angular bootstraps. Unknown saved values fall back to system mode.
@@ -27,8 +29,14 @@ Matching `theme-color` hints suggest white or dark zinc for supporting browser t
 
 ## Games routes
 
-/games hosts the searchable, sortable, paginated catalog. /games/new creates a draft; /games/:id loads its metadata directly through GET /games/{id}, including after reload. Cover selection uses the existing Media library. Status changes are saved with metadata. Deletion confirms removal of all game-owned maps and content while keeping library media. Public web and map editing are separate work.
+/games hosts the searchable, sortable, paginated catalog. /games/new creates a draft; /games/:id loads its metadata directly through GET /games/{id}, including after reload. Cover selection uses the existing Media library. Status changes are saved with metadata. Deletion confirms removal of all game-owned maps and content while keeping library media. Public web remains separate work.
 
 ## Maps management
 
-Admin composes /games/:id/maps from maps-feature-list inside the Games editor; neither domain imports the other. Add map replaces Save changes on Maps, and Save changes appears only on General. Modal creation takes name and dimensions, editing renames with read-only dimensions, and deletion confirms cascading map-content removal while retaining library assets. Rows show created/updated dates and style snapshots. There is no socket connection or background status refresh; Open editor remains disabled. Admin binds Maps API addressing in the lazy Maps route. Its mutation-cache callback invalidates only the exact game-detail query after successful map create/update/delete. The Maps list and Games list are not refetched by this callback.
+Admin composes /games/:id/maps from maps-feature-list inside the Games editor; neither domain imports the other. Add map replaces Save changes on Maps, and Save changes appears only on General. Modal creation takes name and dimensions, editing renames with read-only dimensions, and deletion confirms cascading map-content removal while retaining library assets. Rows show created/updated dates and style snapshots. There is no socket connection or background status refresh; Open editor leads to /games/:gameId/maps/:mapId/edit outside the Games settings tabs, with a shared OpenLayers viewport, style list and modal creation/editing plus confirmed style deletion. Search and filtering remain placeholders. Admin binds Maps API addressing in the lazy Maps route. Its mutation-cache callback invalidates only the exact game-detail query after successful map create/update/delete. The Maps list and Games list are not refetched by this callback.
+
+## Map tile hosting
+
+Development forwards /map-tiles/** unchanged to http://localhost:5041, just like canonical media paths. Production must forward /map-tiles/ and /media/files/ unchanged to the backend, separately from /api/ prefix removal. Do not send tile requests to the SPA fallback. Returned tile templates are authoritative and immutable.
+
+The map editor displays processing snapshots without progress percentages, sockets, polling or automatic focus/reconnect refresh. Reload or return to the editor to load a later snapshot.

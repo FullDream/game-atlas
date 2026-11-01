@@ -31,7 +31,9 @@ Follow the existing Prettier and ESLint configuration.
 - Use single quotes in TypeScript.
 - Keep Prettier `htmlWhitespaceSensitivity: 'ignore'` enabled for readable Angular/HTML templates. Keep tag delimiters attached to their tags; never produce hanging `</span` / `><button` fragments or wrap interpolation braces across a tag boundary. Put multiline component content between its opening and closing tag on separate lines. Use CSS gaps for icon/text spacing instead of relying on inter-tag whitespace.
 - Separate logical sections with blank lines.
+- Separate independent completed multiline calls with a blank line, including adjacent effect(), afterRenderEffect(), afterNextRender() and lifecycle cleanup registrations. Keep chained calls together. Separate a local variable declaration from preceding non-declaration statements, even when that declaration fits on one line.
 - Add a blank line after a group of variable declarations.
+- Surround each multiline local variable declaration with blank lines before and after it, including chained calls, nullish-coalescing expressions, object/array initializers and multiline callbacks. This applies inside functions, methods and mutation callbacks. Keep adjacent compact single-line declarations grouped. Do not insert a blank line immediately after an opening brace or before a closing brace; preserve these declaration boundaries after Prettier formatting.
 - Add a blank line before `return` when it follows another statement.
 - Separate independent control-flow blocks with blank lines.
 - Place component metadata `templateUrl` immediately after `imports`. Separate the input/output/model declaration block from other fields with a blank line.

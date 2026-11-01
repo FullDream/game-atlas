@@ -6,7 +6,9 @@ Shared Maps HTTP transport and handwritten query/mutation options. Frontend proc
 
 Provide `provideMapsBaseUrl('/api')` alongside HttpClient and TanStack Query in the consuming application. For a separate API host, provide its absolute URL. Generation normalizes the embedded fallback to `/api`; the OpenAPI input server's local port does not configure deployment.
 
-`MapsQueryOptions` exposes `list`, `detail`, `create`, `update(gameId, mapId)`, `delete(gameId, mapId)`, `addStyle`, and `retryStyle`. Use `injectQuery` for reads and `injectMutation` for writes. Preserve the options' cache callbacks when adding feature-owned notifications. Generated `MapsService` exposes the remaining map REST operations. Query keys are exported as `mapQueryKeys`.
+`MapsQueryOptions` exposes `getList`, `getDetail`, `create`, `update(gameId, mapId)`, `delete(gameId, mapId)`, `addStyle(gameId, mapId)`, `updateStyle(gameId, mapId)`, `deleteStyle(gameId, mapId)` and `retryStyle`. Use `injectQuery` for reads and `injectMutation` for writes. Preserve cache callbacks when adding feature-owned notifications. Query keys are exported as `mapQueryKeys`.
+
+Style metadata updates are optimistic when a baseline exists, with rollback on failure. Success replaces the style without reordering. Deletion waits for server success, removes the style from known detail/list snapshots and derives the earliest remaining ready default. Per-map scopes serialize style add/update/delete. Detail queries disable automatic focus/reconnect refresh and retries; editor entry deliberately reads metadata. Style actions do not request processing progress.
 
 Creation and style-attachment responses update known map caches directly. Retry replaces the style in cached map details and invalidates affected lists. HTTP reads expose the status/progress available at request time; no live progress subscription or separate processing cache is installed.
 
