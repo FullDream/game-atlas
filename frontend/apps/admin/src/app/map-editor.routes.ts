@@ -1,13 +1,13 @@
 import { inject } from '@angular/core'
 import type { ActivatedRouteSnapshot, Routes } from '@angular/router'
 import { GamesService } from '@game-atlas/games/data-access'
-import { MapsQueryOptions, MapsService, provideMapsBaseUrl } from '@game-atlas/maps/data-access'
+import { MapsService, provideMapHubUrl, provideMapsBaseUrl } from '@game-atlas/maps/data-access'
 import { catchError, map, of } from 'rxjs'
 
 export const MAP_EDITOR_ROUTES: Routes = [
 	{
 		path: '',
-		providers: [MapsQueryOptions, MapsService, provideMapsBaseUrl('/api')],
+		providers: [MapsService, provideMapsBaseUrl('/api'), provideMapHubUrl('/api/hubs/map')],
 		resolve: {
 			gameId: (route: ActivatedRouteSnapshot) => route.parent?.paramMap.get('gameId'),
 			mapId: (route: ActivatedRouteSnapshot) => route.parent?.paramMap.get('mapId'),

@@ -1,5 +1,12 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http'
 
+export function getMapRetryErrorMessage(error: unknown): string {
+	if (error instanceof HttpErrorResponse && error.status === HttpStatusCode.Conflict)
+		return 'This style is no longer failed. Its current status is being refreshed.'
+
+	return getMapStyleErrorMessage(error)
+}
+
 export function getMapStyleErrorMessage(error: unknown): string {
 	if (!(error instanceof HttpErrorResponse)) return 'Could not complete the style operation. Please try again.'
 

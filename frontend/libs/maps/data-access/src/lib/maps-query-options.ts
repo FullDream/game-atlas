@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http'
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http'
 import { inject, Service } from '@angular/core'
 import {
 	type QueryClient,
@@ -17,6 +17,7 @@ import type {
 	UpdateMapRequest,
 } from './generated/models'
 import { mapQueryKeys } from './map-query-keys'
+import { acceptMap, acceptStyle, withStyle } from './map-cache'
 
 type AddStyleVariables = { mapId: string; data: AddMapStyleRequest }
 type RetryStyleVariables = { mapId: string; styleId: string }
@@ -93,14 +94,35 @@ export class MapsQueryOptions {
 				return { previous, optimistic: client.getQueryData<GameMap>(key) }
 			},
 			onError: (error, { id }, snapshot, { client }) => {
-				if (
-					snapshot?.previous &&
-					client.getQueryData(mapQueryKeys.detail(gameId, id)) === snapshot.optimistic
-				) {
-					this.#writeMap(client, gameId, snapshot.previous)
-				}
+				const current = client.getQueryData<GameMap>(mapQueryKeys.detail(gameId, id))
+
+				if (!current || !snapshot?.previous || !snapshot.optimistic) return
+
+				const previous = snapshot.previous
+				const optimistic = snapshot.optimistic
+				const sameOrder =
+					current.styles.map(style => style.id).join() === optimistic.styles.map(style => style.id).join()
+				const styles = sameOrder
+					? [...current.styles].sort(
+							(a, b) =>
+								previous.styles.findIndex(style => style.id === a.id) -
+								previous.styles.findIndex(style => style.id === b.id),
+						)
+					: current.styles
+
+				return this.#writeMap(client, gameId, {
+					...current,
+					styles,
+					name: current.name === optimistic.name ? previous.name : current.name,
+					defaultStyleId:
+						current.defaultStyleId === optimistic.defaultStyleId
+							? previous.defaultStyleId
+							: current.defaultStyleId,
+				})
 			},
-			onSuccess: (map, variables, snapshot, { client }) => this.#acceptMap(client, gameId, map),
+			onSuccess: (map, variables, snapshot, { client }) => {
+				return this.#acceptMap(client, gameId, map)
+			},
 		}
 	}
 
@@ -164,19 +186,27 @@ export class MapsQueryOptions {
 				}
 			},
 			onError: (error, { styleId }, snapshot, { client }) => {
-				if (!snapshot?.previous) return
+				const previous = snapshot?.previous
+
+				if (!previous) return
 
 				this.#changeStyle(client, gameId, mapId, styleId, current => {
-					if (current === snapshot.optimistic) return snapshot.previous
+					const optimistic = snapshot?.optimistic
 
-					if (current === snapshot.listOptimistic) return snapshot.listPrevious
-
-					return current
+					return {
+						...current,
+						name: current.name === optimistic?.name ? previous.name : current.name,
+						backgroundColor:
+							current.backgroundColor === optimistic?.backgroundColor
+								? previous.backgroundColor
+								: current.backgroundColor,
+					}
 				})
 			},
 			onSuccess: async (style, { styleId }, snapshot, { client }) => {
 				await client.cancelQueries({ queryKey: ['maps', gameId] })
-				this.#changeStyle(client, gameId, mapId, styleId, () => style)
+
+				return this.#changeStyle(client, gameId, mapId, styleId, current => acceptStyle(current, style))
 			},
 		}
 	}
@@ -188,8 +218,30 @@ export class MapsQueryOptions {
 			mutationFn: styleId => toPromise(this.#api.deleteMapStyle(gameId, mapId, styleId)),
 			onSuccess: async (data, styleId, snapshot, { client }) => {
 				await client.cancelQueries({ queryKey: ['maps', gameId] })
-				this.#changeStyle(client, gameId, mapId, styleId, () => undefined)
+
+				return this.#changeStyle(client, gameId, mapId, styleId, () => undefined)
 			},
+		}
+	}
+
+	retryStyle(gameId: string, mapId: string): CreateMutationOptions<MapStyle, HttpErrorResponse, RetryStyleVariables> {
+		return {
+			mutationKey: ['maps', gameId, 'retry-style'],
+			scope: { id: `map:${mapId}` },
+			mutationFn: variables => toPromise(this.#api.retryMapStyle(gameId, variables.mapId, variables.styleId)),
+			onSuccess: async (style, variables, snapshot, { client }) => {
+				const key = mapQueryKeys.detail(gameId, variables.mapId)
+
+				await client.cancelQueries({ queryKey: key, exact: true })
+
+				return this.#changeStyle(client, gameId, variables.mapId, variables.styleId, current =>
+					acceptStyle(current, style),
+				)
+			},
+			onError: (error, variables, snapshot, { client }) =>
+				error.status === HttpStatusCode.Conflict
+					? client.invalidateQueries({ queryKey: mapQueryKeys.detail(gameId, variables.mapId), exact: true })
+					: undefined,
 		}
 	}
 
@@ -199,57 +251,30 @@ export class MapsQueryOptions {
 		mapId: string,
 		styleId: string,
 		change: (style: MapStyle) => MapStyle | undefined,
-	): void {
-		const update = (map: GameMap): GameMap => {
-			const styles = map.styles.flatMap(style => {
-				const next = style.id === styleId ? change(style) : style
-
-				return next ? [next] : []
-			})
-
-			return {
-				...map,
-				styles,
-				defaultStyleId:
-					styles.find(style => style.id === map.defaultStyleId && style.status === 'ready')?.id ??
-					styles.find(style => style.status === 'ready' && style.tilesUrlTemplate)?.id ??
-					null,
-			}
-		}
-
-		client.setQueryData<GameMap>(mapQueryKeys.detail(gameId, mapId), map => (map ? update(map) : map))
+	): GameMap | undefined {
+		const update = (map: GameMap): GameMap => withStyle(map, styleId, change)
+		const result = client.setQueryData<GameMap>(mapQueryKeys.detail(gameId, mapId), map =>
+			map ? update(map) : map,
+		)
 
 		client.setQueryData<GameMap[]>(mapQueryKeys.list(gameId), maps =>
 			maps?.map(map => (map.id === mapId ? update(map) : map)),
 		)
+
+		return result
 	}
 
-	retryStyle(gameId: string): CreateMutationOptions<MapStyle, HttpErrorResponse, RetryStyleVariables> {
-		return {
-			mutationKey: ['maps', gameId, 'retry-style'],
-			mutationFn: variables => toPromise(this.#api.retryMapStyle(gameId, variables.mapId, variables.styleId)),
-			onSuccess: async (style, variables, snapshot, { client }) => {
-				const key = mapQueryKeys.detail(gameId, variables.mapId)
-
-				await client.cancelQueries({ queryKey: key, exact: true })
-
-				client.setQueryData<GameMap>(key, previous => {
-					if (!previous) return previous
-
-					return { ...previous, styles: previous.styles.map(item => (item.id === style.id ? style : item)) }
-				})
-
-				await client.invalidateQueries({ queryKey: mapQueryKeys.list(gameId) })
-			},
-		}
-	}
-
-	async #acceptMap(client: QueryClient, gameId: string, map: GameMap): Promise<void> {
+	async #acceptMap(client: QueryClient, gameId: string, map: GameMap): Promise<GameMap> {
 		await client.cancelQueries({ queryKey: ['maps', gameId] })
-		this.#writeMap(client, gameId, map)
+
+		return this.#writeMap(
+			client,
+			gameId,
+			acceptMap(client.getQueryData<GameMap>(mapQueryKeys.detail(gameId, map.id)), map),
+		)
 	}
 
-	#writeMap(client: QueryClient, gameId: string, map: GameMap): void {
+	#writeMap(client: QueryClient, gameId: string, map: GameMap): GameMap {
 		client.setQueryData(mapQueryKeys.detail(gameId, map.id), map)
 
 		client.setQueryData<GameMap[]>(mapQueryKeys.list(gameId), previous => {
@@ -261,5 +286,7 @@ export class MapsQueryOptions {
 				(left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id),
 			)
 		})
+
+		return map
 	}
 }
