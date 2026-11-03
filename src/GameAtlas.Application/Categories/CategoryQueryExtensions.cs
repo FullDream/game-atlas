@@ -1,5 +1,5 @@
 using GameAtlas.Application.Abstractions.Persistence;
-using GameAtlas.Application.CategoryGroups;
+using GameAtlas.Application.Categories.Groups;
 using GameAtlas.Domain.Categories;
 
 namespace GameAtlas.Application.Categories;

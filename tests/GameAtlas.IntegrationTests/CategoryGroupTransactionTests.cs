@@ -1,7 +1,7 @@
 using System.Data.Common;
 using System.Net;
 using System.Net.Http.Json;
-using GameAtlas.Domain.CategoryGroups;
+using GameAtlas.Domain.Categories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -15,10 +15,13 @@ public class CategoryGroupTransactionTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
+
 		var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
 		var tasks = Enumerable.Range(0, 3).Select(index => Task.Run(async () =>
 		{
 			await gate.Task;
@@ -27,18 +30,20 @@ public class CategoryGroupTransactionTests
 		})).ToArray();
 
 		gate.SetResult();
+
 		var responses = await Task.WhenAll(tasks);
 
 		foreach (var response in responses)
 		{
 			using (response)
-				Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+				CategoryGroupTestData.AssertSame(HttpStatusCode.OK, response.StatusCode);
 		}
 
-		Assert.Equal(new[] { 1, 2, 3 },
-			(await CategoryGroupTestData.LoadAsync(factory, game.Id)).Select(group => group.Order));
+		CategoryGroupTestData.AssertSame(new[] { 1, 2, 3 },
+			await Task.WhenAll((await CategoryGroupTestData.LoadAsync(factory, game.Id)).Select(item => CategoryGroupTestData.OrderAsync(factory, item.Id))));
 
 		var nameGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
 		var duplicates = new[] { "Ресурсы", " ресурсы " }.Select(name => Task.Run(async () =>
 		{
 			await nameGate.Task;
@@ -47,10 +52,11 @@ public class CategoryGroupTransactionTests
 		})).ToArray();
 
 		nameGate.SetResult();
+
 		var duplicateResponses = await Task.WhenAll(duplicates);
 
-		Assert.Equal(1, duplicateResponses.Count(response => response.StatusCode == HttpStatusCode.OK));
-		Assert.Equal(1, duplicateResponses.Count(response => response.StatusCode == HttpStatusCode.Conflict));
+		CategoryGroupTestData.AssertSame(1, duplicateResponses.Count(response => response.StatusCode == HttpStatusCode.OK));
+		CategoryGroupTestData.AssertSame(1, duplicateResponses.Count(response => response.StatusCode == HttpStatusCode.Conflict));
 
 		foreach (var response in duplicateResponses)
 			response.Dispose();
@@ -66,8 +72,11 @@ public class CategoryGroupTransactionTests
 		await using var factory = new GameApiFactory(interceptor: interceptor);
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
+
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 
@@ -76,12 +85,12 @@ public class CategoryGroupTransactionTests
 		{
 			"create" => await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id), new { name = "New" }),
 			"update" => await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, group.Id),
-				new { name = "New", order = 20 }),
+				new { name = "New", beforeId = (Guid?)null }),
 			_ => await client.DeleteAsync(CategoryGroupApiTests.Path(game.Id, group.Id))
 		};
 
 		await AssertSafe500Async(response);
-		Assert.Equal(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
+		CategoryGroupTestData.AssertSame(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
 	}
 
 	[Theory]
@@ -93,26 +102,30 @@ public class CategoryGroupTransactionTests
 		await using var factory = new GameApiFactory(interceptor: interceptor);
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 
 		await CategoryGroupTestData.SeedAsync(factory, game.Id, "Taken", 1);
+
 		var target = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Target", 2);
+
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 
 		interceptor.Enabled = true;
 		using var response = rename
 			? await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, target.Id),
-				new { name = "Available", order = 20 })
+				new { name = "Available", beforeId = (Guid?)null })
 			: await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id), new { name = "Available" });
 
 		await CategoryGroupApiTests.AssertProblemAsync(response, HttpStatusCode.Conflict, "name");
-		Assert.Equal(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
+		CategoryGroupTestData.AssertSame(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
 	}
 
 	private static async Task AssertSafe500Async(HttpResponseMessage response)
 	{
 		await CategoryGroupApiTests.AssertProblemAsync(response, HttpStatusCode.InternalServerError);
+
 		var body = await response.Content.ReadAsStringAsync();
 
 		Assert.DoesNotContain("private write failure", body);

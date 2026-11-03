@@ -34,19 +34,18 @@
 			[attr.aria-expanded]="panelOpen()"
 			(click)="panelOpen.set(!panelOpen())"
 		>
-			Styles
+			Map content
 		</button>
 	</div>
 	<div class="min-h-0 relative flex flex-1 overflow-hidden">
 		<aside
-			cdkScrollable
 			id="map-styles-panel"
-			aria-label="Map styles"
-			class="bg-background md:block md:w-80 max-h-full w-full shrink-0 overflow-auto border-r"
+			aria-label="Map content"
+			class="bg-background md:flex md:w-80 min-h-0 flex h-full w-full shrink-0 flex-col overflow-hidden border-r"
 			[class.hidden]="!panelOpen()"
 		>
 			@if (live().status === 'stale' || live().status === 'reconnecting') {
-				<div class="p-3 gap-2 flex items-center justify-between border-b">
+				<div class="p-3 gap-2 flex shrink-0 items-center justify-between border-b">
 					<p class="text-xs text-muted-foreground" role="status">
 						{{
 							live().status === 'reconnecting'
@@ -61,12 +60,21 @@
 					}
 				</div>
 			}
-			<maps-styles
-				[gameId]="gameId()"
-				[map]="current"
-				[(selectedStyleId)]="selectedStyleId"
-				(styleSelected)="panelOpen.set(false)"
-			/>
+			<div hlmAccordion type="multiple" class="min-h-0 flex-1 overflow-hidden">
+				<maps-styles
+					#stylesPanel
+					[gameId]="gameId()"
+					[map]="current"
+					[(selectedStyleId)]="selectedStyleId"
+					(styleSelected)="panelOpen.set(false)"
+				/>
+				<maps-categories #categoriesPanel [gameId]="gameId()" [mapId]="current.id" />
+				<div
+					aria-hidden="true"
+					class="min-h-0 basis-0 ease-out transition-[flex-grow] duration-200 motion-reduce:transition-none"
+					[style.flex-grow]="stylesPanel.sectionOpen() || categoriesPanel.sectionOpen() ? 0 : 1"
+				></div>
+			</div>
 		</aside>
 		<maps-viewport
 			class="min-h-72 flex-1"

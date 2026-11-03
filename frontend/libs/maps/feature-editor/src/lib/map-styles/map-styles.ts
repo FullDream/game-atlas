@@ -1,3 +1,5 @@
+import { CdkScrollable } from '@angular/cdk/scrolling'
+import { HlmAccordionImports } from '@spartan-ng/helm/accordion'
 import { CdkDrag, CdkDragHandle, CdkDropList, moveItemInArray, type CdkDragDrop } from '@angular/cdk/drag-drop'
 import { DOCUMENT } from '@angular/common'
 import {
@@ -49,6 +51,8 @@ import { StyleEditorDialog } from './style-editor-dialog/style-editor-dialog'
 @Component({
 	selector: 'maps-styles',
 	imports: [
+		CdkScrollable,
+		HlmAccordionImports,
 		CdkDrag,
 		CdkDragHandle,
 		CdkDropList,
@@ -78,7 +82,10 @@ import { StyleEditorDialog } from './style-editor-dialog/style-editor-dialog'
 			matArrowDownwardRound,
 		}),
 	],
-	host: { class: 'block' },
+	host: {
+		class: 'flex min-h-14 basis-14 shrink-0 flex-col transition-[flex-grow] duration-200 ease-out motion-reduce:transition-none',
+		'[style.flex-grow]': 'sectionOpen() ? 1 : 0',
+	},
 })
 export class MapStyles {
 	readonly gameId = input.required<string>()
@@ -101,6 +108,7 @@ export class MapStyles {
 	protected readonly busy = computed(
 		() => this.presentation.isPending() || this.deleting.isPending() || this.retrying.isPending(),
 	)
+	readonly sectionOpen = signal(true)
 	protected readonly dragging = signal(false)
 	protected readonly styles = linkedSignal(() => this.map().styles)
 
@@ -123,16 +131,15 @@ export class MapStyles {
 		if (from === to || to < 0 || to >= styles.length || this.busy()) return
 
 		moveItemInArray(styles, from, to)
+
 		this.styles.set(styles)
+		// TODO: Replace synchronous rendering with a CDK drop/render handoff that prevents the old-order flash.
 		this.#changeDetector.detectChanges()
 
 		this.presentation.mutate(
 			{ id: this.mapId(), patch: { styleOrder: styles.map(style => style.id) } },
 			{
-				onError: error => {
-					this.styles.set(this.map()?.styles ?? [])
-					toast.error(getMapErrorMessage(error))
-				},
+				onError: error => toast.error(getMapErrorMessage(error)),
 			},
 		)
 	}

@@ -10,7 +10,9 @@ public class CategoryTests
 	public void CreationNormalizesMetadata(string input, string name, string normalized)
 	{
 		var groupId = Guid.NewGuid();
+
 		var iconId = Guid.NewGuid();
+
 		var category = Assert.IsType<Category>(
 			Category.Create(groupId, input, iconId, "#ff8800", 2).Value);
 
@@ -28,8 +30,6 @@ public class CategoryTests
 	[Theory]
 	[InlineData(null, "icon", "#123456", 1)]
 	[InlineData(" ", "icon", "#123456", 1)]
-	[InlineData("Name", null, "#123456", 1)]
-	[InlineData("Name", " ", "#123456", 1)]
 	[InlineData("Name", "icon", null, 1)]
 	[InlineData("Name", "icon", "red", 1)]
 	[InlineData("Name", "icon", "#12", 1)]
@@ -45,6 +45,7 @@ public class CategoryTests
 	{
 		var category = Assert.IsType<Category>(
 			Category.Create(Guid.NewGuid(), "Original", Guid.NewGuid(), "#ABCDEF", 5).Value);
+
 		var before = Snapshot(category);
 		Guid? iconId = icon is null ? null : string.IsNullOrWhiteSpace(icon) ? Guid.Empty : Guid.NewGuid();
 
@@ -57,8 +58,11 @@ public class CategoryTests
 	public void UpdatesEachFieldAndMembershipAndPreservesNormalizedNoOps()
 	{
 		var category = Assert.IsType<Category>(Category.Create(Guid.NewGuid(), "Name", Guid.NewGuid(), "#ABCDEF", 1).Value);
+
 		var id = category.Id;
+
 		var created = category.CreatedAt;
+
 		var before = Snapshot(category);
 
 		Assert.False(category.Update().Value);
@@ -68,6 +72,7 @@ public class CategoryTests
 		Assert.True(category.Update(iconAssetId: Guid.NewGuid()).Value);
 		Assert.True(category.Update(color: "#112233").Value);
 		Assert.True(category.Update(order: 10).Value);
+
 		var destination = Guid.NewGuid();
 
 		Assert.True(category.Update(categoryGroupId: destination).Value);
@@ -87,6 +92,7 @@ public class CategoryTests
 	public void ShortColorsExpandAndEquivalentUpdatesPreserveTimestamp(string input, string expected)
 	{
 		var category = Assert.IsType<Category>(Category.Create(Guid.NewGuid(), "Name", Guid.NewGuid(), input, 1).Value);
+
 		var before = Snapshot(category);
 
 		Assert.Equal(expected, category.Color);

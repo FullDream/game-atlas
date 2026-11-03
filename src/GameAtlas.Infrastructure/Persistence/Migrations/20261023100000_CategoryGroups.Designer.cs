@@ -20,7 +20,7 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.13");
 
-            modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
+            modelBuilder.Entity("GameAtlas.Domain.Categories.CategoryGroup", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
@@ -102,7 +102,7 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
                     b.ToTable("Games", (string)null);
                 });
 
-            modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
+            modelBuilder.Entity("GameAtlas.Domain.Categories.CategoryGroup", b =>
                 {
                     b.HasOne("GameAtlas.Domain.Games.Game", null)
                         .WithMany()

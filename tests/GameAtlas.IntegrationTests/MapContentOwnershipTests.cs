@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Categories;
-using GameAtlas.Application.CategoryGroups;
+using GameAtlas.Application.Categories.Groups;
 using GameAtlas.Application.Maps;
 using GameAtlas.Infrastructure.Maps.Persistence;
 using GameAtlas.Infrastructure.Maps.Processing;
@@ -21,59 +21,73 @@ public class MapContentOwnershipTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		using var client = factory.CreateHttpsClient();
+
 		var first = await CreateMapAsync(client, game.Id, "World");
+
 		var second = await CreateMapAsync(client, game.Id, "Dungeon");
+
 		var firstPath = MapTestData.PathFor(game.Id, first.Id);
+
 		var secondPath = MapTestData.PathFor(game.Id, second.Id);
 		using var groupCreation = await client.PostAsJsonAsync(firstPath + "/category-groups", new { name = "Resources" });
 		using var otherCreation = await client.PostAsJsonAsync(secondPath + "/category-groups", new { name = "Resources" });
+
 		var group = (await groupCreation.Content.ReadFromJsonAsync<CategoryGroupDto>())!;
+
 		var otherGroup = (await otherCreation.Content.ReadFromJsonAsync<CategoryGroupDto>())!;
 
 		Assert.Equal(HttpStatusCode.OK, groupCreation.StatusCode);
 		Assert.Equal(HttpStatusCode.OK, otherCreation.StatusCode);
 		Assert.Equal(first.Id, group.MapId);
 		Assert.Equal(second.Id, otherGroup.MapId);
-		Assert.Equal(1, group.Order);
-		Assert.Equal(1, otherGroup.Order);
+		Assert.Equal(1, await CategoryGroupTestData.OrderAsync(factory, group.Id));
+		Assert.Equal(1, await CategoryGroupTestData.OrderAsync(factory, otherGroup.Id));
+
 		var categoryPath = firstPath + $"/category-groups/{group.Id}/categories";
+
 		var otherCategoryPath = secondPath + $"/category-groups/{otherGroup.Id}/categories";
 		using var categoryCreation = await client.PostAsJsonAsync(categoryPath,
 			new { name = "Chest", iconAssetId = MediaTestData.IconId, color = "#fff" });
 		using var otherCategoryCreation = await client.PostAsJsonAsync(otherCategoryPath,
 			new { name = "Chest", iconAssetId = MediaTestData.IconId, color = "#fff" });
+
 		var category = (await categoryCreation.Content.ReadFromJsonAsync<CategoryDto>())!;
+
 		var otherCategory = (await otherCategoryCreation.Content.ReadFromJsonAsync<CategoryDto>())!;
 		using var markerCreation = await client.PostAsJsonAsync(firstPath + "/markers",
 			new { categoryId = category.Id, name = "Point", position = new { x = -2.5, y = 100000 } });
+
 		var marker = await markerCreation.Content.ReadFromJsonAsync<JsonElement>();
+
 		var markerId = marker.GetProperty("id").GetGuid();
 		using var categoryTransfer = await client.PatchAsJsonAsync(categoryPath + $"/{category.Id}",
 			new { categoryGroupId = otherGroup.Id, name = "Changed" });
 		using var markerTransfer = await client.PatchAsJsonAsync(firstPath + $"/markers/{markerId}",
 			new { categoryId = otherCategory.Id, name = "Changed" });
 		using var wrongMarker = await client.DeleteAsync(secondPath + $"/markers/{markerId}");
-		using var wrongGroup = await client.GetAsync(firstPath + $"/category-groups/{otherGroup.Id}/categories");
+		using var wrongGroup = await client.PatchAsJsonAsync(firstPath + $"/category-groups/{otherGroup.Id}/categories/{otherCategory.Id}", new { name = "Rejected" });
 
 		Assert.Equal(HttpStatusCode.NotFound, categoryTransfer.StatusCode);
 		Assert.Equal(HttpStatusCode.NotFound, markerTransfer.StatusCode);
 		Assert.Equal(HttpStatusCode.NotFound, wrongMarker.StatusCode);
 		Assert.Equal(HttpStatusCode.NotFound, wrongGroup.StatusCode);
-		using var counts = await client.GetAsync(categoryPath);
-		var beforeDelete = (await counts.Content.ReadFromJsonAsync<CategoryDto[]>())!;
+
+		var beforeDelete = await CategoryTestData.ReadTreeCategoriesAsync(client, categoryPath);
 
 		Assert.Equal(1, Assert.Single(beforeDelete).MarkersCount);
 		Assert.Equal("Chest", beforeDelete[0].Name);
 		using var removed = await client.DeleteAsync(firstPath);
-		using var surviving = await client.GetAsync(otherCategoryPath);
-		var remaining = (await surviving.Content.ReadFromJsonAsync<CategoryDto[]>())!;
+
+		var remaining = await CategoryTestData.ReadTreeCategoriesAsync(client, otherCategoryPath);
 
 		Assert.Equal(HttpStatusCode.NoContent, removed.StatusCode);
 		Assert.Equal(otherCategory.Id, Assert.Single(remaining).Id);
 		Assert.Equal(0, remaining[0].MarkersCount);
 		await using var scope = factory.Services.CreateAsyncScope();
+
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		Assert.False(await context.Markers.AnyAsync(item => item.Id == markerId));
@@ -89,11 +103,16 @@ public class MapContentOwnershipTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "other");
 		using var client = factory.CreateHttpsClient();
+
 		var first = await CreateMapAsync(client, game.Id, "World");
+
 		var second = await CreateMapAsync(client, game.Id, "Dungeon");
+
 		var unrelated = await CreateMapAsync(client, other.Id, "World");
 
 		foreach (var map in new[] { first, second, unrelated })
@@ -110,6 +129,7 @@ public class MapContentOwnershipTests
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
 			var intents = await context.Set<MapCleanupIntent>().Where(intent => intent.MapId != null &&
 				intent.StyleId == null).Select(intent => intent.MapId).ToArrayAsync();
 

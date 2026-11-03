@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using GameAtlas.Application.CategoryGroups;
+using GameAtlas.Application.Categories.Groups;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -39,8 +39,10 @@ public class CategoryGroupApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game", status);
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
 		await MapTestData.EnsureMapAsync(factory, other.Id);
 
@@ -48,41 +50,40 @@ public class CategoryGroupApiTests
 		using var client = factory.CreateHttpsClient();
 		using var empty = await client.GetAsync(Path(game.Id));
 
-		Assert.Equal(HttpStatusCode.OK, empty.StatusCode);
-		Assert.Equal("[]", await empty.Content.ReadAsStringAsync());
+		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, empty.StatusCode);
+		CategoryGroupTestData.AssertSame("[]", await empty.Content.ReadAsStringAsync());
 		using var response = await client.PostAsJsonAsync(Path(game.Id), new
 		{
-			name = " Ресурсы ",
-			id = Guid.NewGuid(),
-			gameId = other.Id,
-			order = 99,
-			createdAt = DateTimeOffset.MinValue,
-			updatedAt = DateTimeOffset.MinValue
+			name = " Ресурсы "
 		});
 
-		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, response.StatusCode);
 		using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
 		var group = await response.Content.ReadFromJsonAsync<CategoryGroupDto>();
 
 		Assert.NotNull(group);
-		Assert.Equal(6, json.RootElement.EnumerateObject().Count());
-		Assert.Equal(7, group.Id.Version);
-		Assert.Equal(MapTestData.MapIdFor(game.Id), group.MapId);
-		Assert.Equal("Ресурсы", group.Name);
-		Assert.Equal(99, group.Order);
-		Assert.Equal(group.CreatedAt, group.UpdatedAt);
-		Assert.Equal(TimeSpan.Zero, group.CreatedAt.Offset);
+		CategoryGroupTestData.AssertSame(9, json.RootElement.EnumerateObject().Count());
+		Assert.False(json.RootElement.TryGetProperty("order", out _));
+		CategoryGroupTestData.AssertSame(7, group.Id.Version);
+		CategoryGroupTestData.AssertSame(MapTestData.MapIdFor(game.Id), group.MapId);
+		CategoryGroupTestData.AssertSame("Ресурсы", group.Name);
+		CategoryGroupTestData.AssertSame(1, await CategoryGroupTestData.OrderAsync(factory, group.Id));
+		CategoryGroupTestData.AssertSame(group.CreatedAt, group.UpdatedAt);
+		CategoryGroupTestData.AssertSame(TimeSpan.Zero, group.CreatedAt.Offset);
 		using var next = await client.PostAsJsonAsync(Path(game.Id), new { name = "Locations" });
 
-		Assert.Equal(HttpStatusCode.OK, next.StatusCode);
+		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, next.StatusCode);
 		using var listing = await client.GetAsync(Path(game.Id));
+
 		var items = await listing.Content.ReadFromJsonAsync<CategoryGroupDto[]>();
 
-		Assert.Equal(new[] { "Ресурсы", "Locations" }, items!.Select(item => item.Name));
-		Assert.Equal(new[] { 99, 100 }, items.Select(item => item.Order));
-		Assert.Equal(group, items[0]);
-		Assert.Equal(items, await CategoryGroupTestData.LoadAsync(factory, game.Id));
+		CategoryGroupTestData.AssertSame(new[] { "Ресурсы", "Locations" }, items!.Select(item => item.Name));
+		CategoryGroupTestData.AssertSame(new[] { 1, 2 }, await Task.WhenAll(items.Select(item => CategoryGroupTestData.OrderAsync(factory, item.Id))));
+		CategoryGroupTestData.AssertSame(group, items[0]);
+		CategoryGroupTestData.AssertSame(items, await CategoryGroupTestData.LoadAsync(factory, game.Id));
 		await using var scope = factory.Services.CreateAsyncScope();
+
 		var storedGame = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
 			.Games.SingleAsync(item => item.Id == game.Id);
 
@@ -98,9 +99,12 @@ public class CategoryGroupApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
+
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 		using var creation = await client.PostAsync(Path(game.Id),
@@ -110,7 +114,7 @@ public class CategoryGroupApiTests
 
 		await AssertProblemAsync(creation, HttpStatusCode.UnprocessableEntity);
 		await AssertProblemAsync(update, HttpStatusCode.UnprocessableEntity);
-		Assert.Equal(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
+		CategoryGroupTestData.AssertSame(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
 	}
 
 	[Theory]
@@ -122,12 +126,13 @@ public class CategoryGroupApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsJsonAsync(Path(game.Id), new { name = " " + new string('x', length) + " " });
 
-		Assert.Equal(expected, response.StatusCode);
+		CategoryGroupTestData.AssertSame(expected, response.StatusCode);
 	}
 
 	[Theory]
@@ -138,12 +143,17 @@ public class CategoryGroupApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
 		await MapTestData.EnsureMapAsync(factory, other.Id);
+
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, name, 1);
+
 		var second = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
+
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 		using var creation = await client.PostAsJsonAsync(Path(game.Id), new { name = duplicate });
@@ -151,16 +161,17 @@ public class CategoryGroupApiTests
 
 		await AssertProblemAsync(creation, HttpStatusCode.Conflict, "name");
 		await AssertProblemAsync(conflict, HttpStatusCode.Conflict, "name");
-		Assert.Equal(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
+		CategoryGroupTestData.AssertSame(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
 		using var differentGame = await client.PostAsJsonAsync(Path(other.Id), new { name = duplicate });
 		using var self = await client.PatchAsJsonAsync(Path(game.Id, group.Id), new { name = duplicate });
+
 		var changed = await self.Content.ReadFromJsonAsync<CategoryGroupDto>();
 
-		Assert.Equal(HttpStatusCode.OK, differentGame.StatusCode);
-		Assert.Equal(HttpStatusCode.OK, self.StatusCode);
-		Assert.Equal(duplicate.Trim(), changed!.Name);
+		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, differentGame.StatusCode);
+		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, self.StatusCode);
+		CategoryGroupTestData.AssertSame(duplicate.Trim(), changed!.Name);
 		Assert.True(changed.UpdatedAt > group.UpdatedAt);
-		Assert.Equal(group.CreatedAt, changed.CreatedAt);
+		CategoryGroupTestData.AssertSame(group.CreatedAt, changed.CreatedAt);
 	}
 
 	[Theory]
@@ -173,26 +184,29 @@ public class CategoryGroupApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Original", 5);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, Path(game.Id, group.Id), "{\"name\":\" New \"}", mediaType);
 
-		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, response.StatusCode);
+
 		var dto = await response.Content.ReadFromJsonAsync<CategoryGroupDto>();
 
-		Assert.Equal("New", dto!.Name);
-		Assert.Equal(group.Id, dto.Id);
-		Assert.Equal(MapTestData.MapIdFor(game.Id), dto.MapId);
-		Assert.Equal(5, dto.Order);
-		Assert.Equal(group.CreatedAt, dto.CreatedAt);
+		CategoryGroupTestData.AssertSame("New", dto!.Name);
+		CategoryGroupTestData.AssertSame(group.Id, dto.Id);
+		CategoryGroupTestData.AssertSame(MapTestData.MapIdFor(game.Id), dto.MapId);
+		CategoryGroupTestData.AssertSame(5, await CategoryGroupTestData.OrderAsync(factory, dto.Id));
+		CategoryGroupTestData.AssertSame(group.CreatedAt, dto.CreatedAt);
 		Assert.True(dto.UpdatedAt > group.UpdatedAt);
 		using var unchanged = await PatchAsync(client, Path(game.Id, group.Id), "{\"name\":\" New \"}", mediaType);
 
-		Assert.Equal(HttpStatusCode.OK, unchanged.StatusCode);
-		Assert.Equal(dto, await unchanged.Content.ReadFromJsonAsync<CategoryGroupDto>());
-		Assert.Equal(dto, Assert.Single(await CategoryGroupTestData.LoadAsync(factory, game.Id)));
+		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, unchanged.StatusCode);
+		CategoryGroupTestData.AssertSame(dto, await unchanged.Content.ReadFromJsonAsync<CategoryGroupDto>());
+		CategoryGroupTestData.AssertSame(dto, Assert.Single(await CategoryGroupTestData.LoadAsync(factory, game.Id)));
 	}
 
 	[Theory]
@@ -211,15 +225,18 @@ public class CategoryGroupApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
+
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, Path(game.Id, group.Id), body);
 
 		await AssertProblemAsync(response, (HttpStatusCode)status);
-		Assert.Equal(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
+		CategoryGroupTestData.AssertSame(before, await CategoryGroupTestData.LoadAsync(factory, game.Id));
 	}
 
 	[Theory]
@@ -230,14 +247,16 @@ public class CategoryGroupApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, Path(game.Id, group.Id), "{\"name\":\"New\"}", mediaType);
 
 		await AssertProblemAsync(response, HttpStatusCode.UnsupportedMediaType);
-		Assert.Equal("Group", Assert.Single(await CategoryGroupTestData.LoadAsync(factory, game.Id)).Name);
+		CategoryGroupTestData.AssertSame("Group", Assert.Single(await CategoryGroupTestData.LoadAsync(factory, game.Id)).Name);
 	}
 
 	[Fact]
@@ -246,11 +265,15 @@ public class CategoryGroupApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
 		await MapTestData.EnsureMapAsync(factory, other.Id);
+
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
+
 		var missing = Guid.NewGuid();
 		using var client = factory.CreateHttpsClient();
 		using var creation = await client.PostAsJsonAsync(Path(missing), new { name = "New" });
@@ -263,7 +286,7 @@ public class CategoryGroupApiTests
 		foreach (var response in new[] { creation, listing, rename, deletion, missingGroup, missingParent })
 			await AssertProblemAsync(response, HttpStatusCode.NotFound);
 
-		Assert.Equal("Group", Assert.Single(await CategoryGroupTestData.LoadAsync(factory, game.Id)).Name);
+		CategoryGroupTestData.AssertSame("Group", Assert.Single(await CategoryGroupTestData.LoadAsync(factory, game.Id)).Name);
 	}
 
 	[Fact]
@@ -272,36 +295,41 @@ public class CategoryGroupApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
 		await MapTestData.EnsureMapAsync(factory, other.Id);
 
 		await CategoryGroupTestData.SeedAsync(factory, game.Id, "First", 1);
+
 		var middle = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Middle", 2);
 
 		await CategoryGroupTestData.SeedAsync(factory, game.Id, "Last", 3);
 		await CategoryGroupTestData.SeedAsync(factory, other.Id, "Other", 1);
+
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
+
 		var otherBefore = await CategoryGroupTestData.LoadAsync(factory, other.Id);
 		using var client = factory.CreateHttpsClient();
 		using var deletion = await client.DeleteAsync(Path(game.Id, middle.Id));
 
-		Assert.Equal(HttpStatusCode.NoContent, deletion.StatusCode);
+		CategoryGroupTestData.AssertSame(HttpStatusCode.NoContent, deletion.StatusCode);
 		Assert.Empty(await deletion.Content.ReadAsByteArrayAsync());
-		Assert.Equal(before.Where(item => item.Id != middle.Id), await CategoryGroupTestData.LoadAsync(factory, game.Id));
+		CategoryGroupTestData.AssertSame(before.Where(item => item.Id != middle.Id), await CategoryGroupTestData.LoadAsync(factory, game.Id));
 		using var repeated = await client.DeleteAsync(Path(game.Id, middle.Id));
 
 		await AssertProblemAsync(repeated, HttpStatusCode.NotFound);
 		using var reuse = await client.PostAsJsonAsync(Path(game.Id), new { name = "Middle" });
 
-		Assert.Equal(HttpStatusCode.OK, reuse.StatusCode);
-		Assert.Equal(4, (await reuse.Content.ReadFromJsonAsync<CategoryGroupDto>())!.Order);
+		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, reuse.StatusCode);
+		CategoryGroupTestData.AssertSame(3, (await CategoryGroupTestData.OrderAsync(factory, (await reuse.Content.ReadFromJsonAsync<CategoryGroupDto>())!.Id)));
 		using var gameDeletion = await client.DeleteAsync($"/games/{game.Id}");
 
-		Assert.Equal(HttpStatusCode.NoContent, gameDeletion.StatusCode);
+		CategoryGroupTestData.AssertSame(HttpStatusCode.NoContent, gameDeletion.StatusCode);
 		Assert.Empty(await CategoryGroupTestData.LoadAsync(factory, game.Id));
-		Assert.Equal(otherBefore, await CategoryGroupTestData.LoadAsync(factory, other.Id));
+		CategoryGroupTestData.AssertSame(otherBefore, await CategoryGroupTestData.LoadAsync(factory, other.Id));
 	}
 
 	internal static string Path(Guid gameId, Guid? id = null) =>
@@ -320,11 +348,11 @@ public class CategoryGroupApiTests
 	internal static async Task AssertProblemAsync(
 		HttpResponseMessage response, HttpStatusCode expected, string? field = null)
 	{
-		Assert.Equal(expected, response.StatusCode);
-		Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+		CategoryGroupTestData.AssertSame(expected, response.StatusCode);
+		CategoryGroupTestData.AssertSame("application/problem+json", response.Content.Headers.ContentType?.MediaType);
 		using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-		Assert.Equal((int)expected, body.RootElement.GetProperty("status").GetInt32());
+		CategoryGroupTestData.AssertSame((int)expected, body.RootElement.GetProperty("status").GetInt32());
 
 		if (field is not null)
 			Assert.True(body.RootElement.GetProperty("errors").TryGetProperty(field, out _));

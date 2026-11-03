@@ -7,9 +7,6 @@ public static class CategoryErrors
 	public static readonly Error NameRequired = new(
 		"Category.Name.Required", "Name must not be empty.", nameof(Category.Name), ErrorType.Validation);
 
-	public static readonly Error IconRequired = new(
-		"Category.IconAssetId.Required", "IconAssetId must not be empty.",
-		nameof(Category.IconAssetId), ErrorType.Validation);
 
 	public static readonly Error InvalidColor = new(
 		"Category.Color.Invalid", "Color must use the #RGB or #RRGGBB hexadecimal format.",

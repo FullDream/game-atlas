@@ -1,6 +1,5 @@
 using GameAtlas.Api;
 using GameAtlas.Api.Categories;
-using GameAtlas.Api.CategoryGroups;
 using GameAtlas.Api.Games;
 using GameAtlas.Api.Http;
 using GameAtlas.Api.Maps;
@@ -42,7 +41,6 @@ app.UseMediaFiles();
 var api = app.MapGroup("").WithOutcomeResults().WithCaseInsensitiveEnumQueryParameters();
 
 api.MapGames();
-api.MapCategoryGroups();
 api.MapCategories();
 api.MapMarkers();
 api.MapMaps();

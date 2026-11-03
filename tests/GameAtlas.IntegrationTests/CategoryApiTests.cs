@@ -22,10 +22,13 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
+
 		var path = CategoryTestData.Path(game.Id, group.Id);
 		using var created = await client.PostAsJsonAsync(path, new { name = "Name", iconAssetId = MediaTestData.IconId, color });
+
 		var dto = await ReadAsync(created);
 
 		Assert.Equal(expected, dto.Color);
@@ -34,6 +37,7 @@ public class CategoryApiTests
 
 		Assert.Equal(dto, await ReadAsync(unchanged));
 		using var changed = await client.PatchAsJsonAsync(path + $"/{dto.Id}", new { color = "#000" });
+
 		var updated = await ReadAsync(changed);
 
 		Assert.Equal("#000000", updated.Color);
@@ -44,12 +48,11 @@ public class CategoryApiTests
 	[Theory]
 	[InlineData("{}", 422)]
 	[InlineData("{\"name\":null,\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\"}", 422)]
-	[InlineData("{\"name\":\"Name\",\"color\":\"#123456\"}", 422)]
 	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\"}", 422)]
 	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"red\"}", 422)]
-	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":null}", 422)]
-	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":0}", 422)]
-	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":-1}", 422)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":null}", 400)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":0}", 400)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":-1}", 400)]
 	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":1.5}", 400)]
 	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":\"1\"}", 400)]
 	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":2147483648}", 400)]
@@ -59,6 +62,7 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsync(CategoryTestData.Path(game.Id, group.Id),
@@ -79,11 +83,16 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
+
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
+
 		var path = CategoryTestData.Path(game.Id, group.Id);
+
 		var body = new
 		{
 			name = " " + new string('n', nameLength) + " ",
@@ -113,12 +122,13 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id),
 			new { name = "Name", icon, color = "#123456" });
 
-		Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+		Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 	}
 
 	[Fact]
@@ -128,8 +138,11 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var otherGroup = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
+
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
 
@@ -143,7 +156,7 @@ public class CategoryApiTests
 			using var patch = await client.PatchAsJsonAsync(path + $"/{category.Id}", new { name = "New" });
 			using var delete = await client.DeleteAsync(path + $"/{category.Id}");
 
-			Assert.All(new[] { create, list, patch, delete }, response =>
+			Assert.All(new[] { create, patch, delete }, response =>
 				Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode));
 		}
 
@@ -171,22 +184,18 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game", status);
+
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id), new
 		{
 			name = " Ресурсы ",
 			iconAssetId = MediaTestData.IconId,
-			color = "#ff8800",
-			order = 99,
-			id = Guid.Empty,
-			categoryGroupId = Guid.Empty,
-			gameId = Guid.Empty,
-			markersCount = 100,
-			createdAt = DateTimeOffset.MinValue,
-			updatedAt = DateTimeOffset.MinValue
+			color = "#ff8800"
 		});
+
 		var dto = await ReadAsync(response);
 
 		Assert.Equal(7, dto.Id.Version);
@@ -194,14 +203,14 @@ public class CategoryApiTests
 		Assert.Equal("Ресурсы", dto.Name);
 		Assert.Equal(MediaTestData.IconId, dto.Icon.Id);
 		Assert.Equal("#FF8800", dto.Color);
-		Assert.Equal(99, dto.Order);
+		Assert.Equal(1, await CategoryTestData.OrderAsync(factory, dto.Id));
 		Assert.Equal(0, dto.MarkersCount);
 		Assert.Equal(dto.CreatedAt, dto.UpdatedAt);
 		Assert.NotEqual(DateTimeOffset.MinValue, dto.CreatedAt);
 		Assert.Equal(dto, Assert.Single(await CategoryTestData.LoadAsync(factory, group.Id)));
 		using var appended = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id), Body("Second"));
 
-		Assert.Equal(100, (await ReadAsync(appended)).Order);
+		Assert.Equal(2, (await CategoryTestData.OrderAsync(factory, (await ReadAsync(appended)).Id)));
 		await AssertParentsAsync(factory, game, group);
 	}
 
@@ -214,19 +223,24 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, source) = await CategoryTestData.ParentAsync(factory);
+
 		var destination = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Destination", 2);
+
 		var category = await CategoryTestData.SeedAsync(factory, source.Id, name, 4);
 
 		await CategoryTestData.SeedAsync(factory, destination.Id, name, 4);
 		using var client = factory.CreateHttpsClient();
+
 		var path = CategoryTestData.Path(game.Id, source.Id, category.Id);
+
 		var before = await CategoryTestData.LoadAsync(factory, source.Id);
 		using var createConflict = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, source.Id),
 			Body(duplicate));
 
 		Assert.Equal(HttpStatusCode.Conflict, createConflict.StatusCode);
-		using var conflict = await client.PatchAsJsonAsync(path, new { categoryGroupId = destination.Id, order = 50 });
+		using var conflict = await client.PatchAsJsonAsync(path, new { categoryGroupId = destination.Id, beforeId = (Guid?)null });
 
 		Assert.Equal(HttpStatusCode.Conflict, conflict.StatusCode);
 		Assert.Contains("name", await conflict.Content.ReadAsStringAsync());
@@ -241,12 +255,13 @@ public class CategoryApiTests
 			iconAssetId = MediaTestData.IconId,
 			color = "#abcdef"
 		});
+
 		var dto = await ReadAsync(moved);
 
 		Assert.Equal(destination.Id, dto.CategoryGroupId);
 		Assert.Equal(category.Id, dto.Id);
 		Assert.Equal(category.CreatedAt, dto.CreatedAt);
-		Assert.Equal(4, dto.Order);
+		Assert.Equal(2, await CategoryTestData.OrderAsync(factory, dto.Id));
 		Assert.Equal(MediaTestData.IconId, dto.Icon.Id);
 		Assert.Equal("#ABCDEF", dto.Color);
 		Assert.Empty(await CategoryTestData.LoadAsync(factory, source.Id));
@@ -257,9 +272,9 @@ public class CategoryApiTests
 		Assert.Equal(HttpStatusCode.NotFound, oldPatch.StatusCode);
 		Assert.Equal(HttpStatusCode.NotFound, oldDelete.StatusCode);
 		using var newPatch = await client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, destination.Id, category.Id),
-			new { order = 20 });
+			new { beforeId = (Guid?)null });
 
-		Assert.Equal(20, (await ReadAsync(newPatch)).Order);
+		Assert.Equal(2, (await CategoryTestData.OrderAsync(factory, (await ReadAsync(newPatch)).Id)));
 	}
 
 	[Theory]
@@ -273,10 +288,14 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
+
 		var path = CategoryTestData.Path(game.Id, group.Id, category.Id);
+
 		var before = Assert.Single(await CategoryTestData.LoadAsync(factory, group.Id));
 		using var noOp = await PatchAsync(client, path,
 			$"{{\"name\":\" Category \",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\"," +
@@ -284,11 +303,12 @@ public class CategoryApiTests
 
 		Assert.Equal(before, await ReadAsync(noOp));
 		using var changed = await PatchAsync(client, path, "{\"color\":\"#abcdef\"}", mediaType);
+
 		var dto = await ReadAsync(changed);
 
 		Assert.Equal(before.Name, dto.Name);
 		Assert.Equal(before.Icon, dto.Icon);
-		Assert.Equal(before.Order, dto.Order);
+		Assert.Equal(1, await CategoryTestData.OrderAsync(factory, dto.Id));
 		Assert.Equal("#ABCDEF", dto.Color);
 		Assert.True(dto.UpdatedAt > before.UpdatedAt);
 		await AssertParentsAsync(factory, game, group);
@@ -297,12 +317,11 @@ public class CategoryApiTests
 	[Theory]
 	[InlineData("{}", 422)]
 	[InlineData("{\"name\":null}", 422)]
-	[InlineData("{\"iconAssetId\":null}", 422)]
 	[InlineData("{\"color\":null}", 422)]
-	[InlineData("{\"order\":null}", 422)]
+	[InlineData("{\"order\":null}", 400)]
 	[InlineData("{\"categoryGroupId\":null}", 422)]
-	[InlineData("{\"name\":\"New\",\"order\":0}", 422)]
-	[InlineData("{\"name\":\"New\",\"order\":-1}", 422)]
+	[InlineData("{\"name\":\"New\",\"order\":0}", 400)]
+	[InlineData("{\"name\":\"New\",\"order\":-1}", 400)]
 	[InlineData("{\"name\":\" \"}", 422)]
 	[InlineData("{\"iconAssetId\":\" \"}", 400)]
 	[InlineData("{\"name\":\"New\",\"color\":\"red\"}", 422)]
@@ -330,8 +349,11 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
+
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, CategoryTestData.Path(game.Id, group.Id, category.Id), body);
@@ -350,8 +372,11 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
+
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
 		using var response = await PatchAsync(client, CategoryTestData.Path(game.Id, group.Id, category.Id),
@@ -368,9 +393,13 @@ public class CategoryApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var (otherGame, otherGroup) = await CategoryTestData.ParentAsync(factory);
+
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
+
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
 
@@ -385,14 +414,14 @@ public class CategoryApiTests
 			using var patch = await client.PatchAsJsonAsync(path + $"/{category.Id}", new { name = "New" });
 			using var delete = await client.DeleteAsync(path + $"/{category.Id}");
 
-			Assert.All(new[] { create, list, patch, delete }, response =>
+			Assert.All(new[] { create, patch, delete }, response =>
 				Assert.Equal(HttpStatusCode.NotFound, response.StatusCode));
 		}
 
 		foreach (var destination in new[] { Guid.Empty, Guid.NewGuid(), otherGroup.Id })
 		{
 			using var response = await client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, group.Id, category.Id),
-				new { categoryGroupId = destination, name = "New", order = 50 });
+				new { categoryGroupId = destination, name = "New", beforeId = (Guid?)null });
 
 			Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 		}
@@ -412,21 +441,28 @@ public class CategoryApiTests
 	}
 
 	[Fact]
-	public async Task ListsByOrderThenCreationThenIdAndDeletesWithoutRenumbering()
+	public async Task TreeChildrenUseDeterministicOrderAndDeletionPreservesSurvivors()
 	{
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var other = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
 		using var client = factory.CreateHttpsClient();
+
 		var path = CategoryTestData.Path(game.Id, group.Id);
 
-		Assert.Empty(Assert.IsType<CategoryDto[]>(await client.GetFromJsonAsync<CategoryDto[]>(path)));
+		Assert.Empty(Assert.IsType<CategoryDto[]>(await CategoryTestData.ReadTreeCategoriesAsync(client, path)));
+
 		var first = await CategoryTestData.SeedAsync(factory, group.Id, "First", 1);
+
 		var middle = await CategoryTestData.SeedAsync(factory, group.Id, "Middle", 2);
+
 		var tied = await CategoryTestData.SeedAsync(factory, group.Id, "Tied", 2);
+
 		var last = await CategoryTestData.SeedAsync(factory, group.Id, "Last", 3);
 
 		await CategoryTestData.SeedAsync(factory, other.Id, "Other", 1);
@@ -439,7 +475,8 @@ public class CategoryApiTests
 		}
 
 		var expected = new[] { first.Id }.Concat(new[] { middle.Id, tied.Id }.Order()).Append(last.Id).ToArray();
-		var listed = Assert.IsType<CategoryDto[]>(await client.GetFromJsonAsync<CategoryDto[]>(path));
+
+		var listed = Assert.IsType<CategoryDto[]>(await CategoryTestData.ReadTreeCategoriesAsync(client, path));
 
 		Assert.Equal(expected, listed.Select(item => item.Id));
 		Assert.All(listed, item => Assert.Equal(0, item.MarkersCount));
@@ -453,35 +490,38 @@ public class CategoryApiTests
 		Assert.Equal(listed.Where(item => item.Id != middle.Id), await CategoryTestData.LoadAsync(factory, group.Id));
 		using var recreated = await client.PostAsJsonAsync(path, Body("Middle"));
 
-		Assert.Equal(4, (await ReadAsync(recreated)).Order);
+		Assert.Equal(4, (await CategoryTestData.OrderAsync(factory, (await ReadAsync(recreated)).Id)));
 		await AssertParentsAsync(factory, game, group);
 	}
 
 	[Fact]
-	public async Task DefaultAndExplicitOrdersRespectGroupScopeAndOverflow()
+	public async Task ServerPlacementNormalizesLegacyGapsAndRejectsNumericOrder()
 	{
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureIconAsync(factory);
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
+
 		var path = CategoryTestData.Path(game.Id, group.Id);
 		using var first = await client.PostAsJsonAsync(path, Body());
 
-		Assert.Equal(1, (await ReadAsync(first)).Order);
+		Assert.Equal(1, (await CategoryTestData.OrderAsync(factory, (await ReadAsync(first)).Id)));
 		await CategoryTestData.SeedAsync(factory, group.Id, "Maximum", int.MaxValue);
 		using var overflow = await client.PostAsJsonAsync(path, Body("Overflow"));
 
-		Assert.Equal(HttpStatusCode.UnprocessableEntity, overflow.StatusCode);
+		Assert.Equal(HttpStatusCode.OK, overflow.StatusCode);
 		using var explicitOrder = await client.PostAsJsonAsync(path,
 			new { name = "Duplicate order", iconAssetId = MediaTestData.IconId, color = "#123456", order = 1 });
 
-		Assert.Equal(1, (await ReadAsync(explicitOrder)).Order);
+		Assert.Equal(HttpStatusCode.BadRequest, explicitOrder.StatusCode);
+
 		var other = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
 		using var isolated = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, other.Id), Body());
 
-		Assert.Equal(1, (await ReadAsync(isolated)).Order);
+		Assert.Equal(1, (await CategoryTestData.OrderAsync(factory, (await ReadAsync(isolated)).Id)));
 	}
 
 	internal static object Body(string name = "Category") => new { name, iconAssetId = MediaTestData.IconId, color = "#123456" };
@@ -491,7 +531,8 @@ public class CategoryApiTests
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 		using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-		Assert.Equal(9, json.RootElement.EnumerateObject().Count());
+		Assert.Equal(8, json.RootElement.EnumerateObject().Count());
+		Assert.False(json.RootElement.TryGetProperty("order", out _));
 
 		return Assert.IsType<CategoryDto>(await response.Content.ReadFromJsonAsync<CategoryDto>());
 	}
@@ -507,11 +548,14 @@ public class CategoryApiTests
 	}
 
 	private static async Task AssertParentsAsync(GameApiFactory factory, Game game,
-		GameAtlas.Domain.CategoryGroups.CategoryGroup group)
+		GameAtlas.Domain.Categories.CategoryGroup group)
 	{
 		await using var scope = factory.Services.CreateAsyncScope();
+
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
 		var storedGame = await context.Games.SingleAsync(item => item.Id == game.Id);
+
 		var storedGroup = await context.CategoryGroups.SingleAsync(item => item.Id == group.Id);
 
 		DeleteGameHandlerTests.AssertSameGame(game, storedGame);

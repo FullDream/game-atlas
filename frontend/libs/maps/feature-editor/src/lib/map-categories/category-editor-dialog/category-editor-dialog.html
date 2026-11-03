@@ -1,0 +1,109 @@
+<h2 class="text-lg font-semibold">{{ title }}</h2>
+<p class="mt-1 text-sm text-muted-foreground">
+	{{
+		context.kind === 'group'
+			? 'Organize related categories together.'
+			: 'Choose a group, color and optional library icon.'
+	}}
+</p>
+
+<form class="mt-5 gap-4 flex flex-col" [formRoot]="fields">
+	<hlm-field>
+		<label hlmFieldLabel for="category-name">Name</label>
+		<input id="category-name" hlmInput [formField]="fields.name" autocomplete="off" />
+	</hlm-field>
+
+	@if (context.kind === 'category') {
+		<hlm-field>
+			<label hlmFieldLabel for="category-group">Group</label>
+			<hlm-select [formField]="fields.categoryGroupId" [itemToString]="groupName">
+				<hlm-select-trigger id="category-group" class="w-full">
+					@if (selectedGroup(); as group) {
+						<span *hlmSelectValueTemplate class="min-w-0 gap-2 flex items-center">
+							@if (group.icon; as icon) {
+								<ui-media-thumbnail
+									class="size-5 rounded-sm shrink-0"
+									[image]="icon"
+									fit="cover"
+									aria-hidden="true"
+								/>
+							}
+							<span class="truncate">{{ group.name }}</span>
+						</span>
+					} @else {
+						<hlm-select-value placeholder="Choose a group" />
+					}
+				</hlm-select-trigger>
+				<hlm-select-content *hlmSelectPortal>
+					@for (group of context.groups; track group.id) {
+						<hlm-select-item [value]="group.id">
+							@if (group.icon; as icon) {
+								<ui-media-thumbnail
+									class="size-5 rounded-sm shrink-0"
+									[image]="icon"
+									fit="cover"
+									aria-hidden="true"
+								/>
+							}
+							<span class="truncate">{{ group.name }}</span>
+						</hlm-select-item>
+					}
+				</hlm-select-content>
+			</hlm-select>
+		</hlm-field>
+	}
+	<hlm-field>
+		<label hlmFieldLabel for="category-color">Color</label>
+		<input id="category-color" hlmInput [formField]="fields.color" autocomplete="off" />
+		<p hlmFieldDescription>Hex color, for example #F59E0B. Required even without an icon.</p>
+	</hlm-field>
+
+	<hlm-field>
+		<label hlmFieldLabel for="category-icon">
+			Icon
+			<span class="text-muted-foreground">(optional)</span>
+		</label>
+		@if (icon(); as image) {
+			<div class="gap-3 flex items-center">
+				<ui-media-thumbnail class="size-12 rounded-md shrink-0 border" [image]="image" />
+				<span class="min-w-0 text-sm truncate">{{ image.name }}</span>
+			</div>
+		}
+		<div class="gap-2 flex flex-wrap">
+			<button
+				id="category-icon"
+				ui-button
+				type="button"
+				variant="outline"
+				[disabled]="fields().submitting()"
+				(click)="chooseIcon()"
+			>
+				Choose library image
+			</button>
+			@if (icon()) {
+				<button
+					ui-button
+					type="button"
+					variant="ghost"
+					[disabled]="fields().submitting()"
+					(click)="clearIcon()"
+				>
+					Remove icon
+				</button>
+			}
+		</div>
+	</hlm-field>
+
+	@if (error()) {
+		<hlm-field-error forceShow>{{ error() }}</hlm-field-error>
+	}
+
+	<div class="gap-2 flex justify-end">
+		<button ui-button type="button" variant="outline" [disabled]="fields().submitting()" (click)="dialog.close()">
+			Cancel
+		</button>
+		<button ui-button [loading]="fields().submitting()" [disabled]="!!existing && !fields().dirty()">
+			{{ existing ? 'Save changes' : title }}
+		</button>
+	</div>
+</form>

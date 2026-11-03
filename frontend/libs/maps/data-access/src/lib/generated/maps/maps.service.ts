@@ -465,13 +465,3 @@ export class MapsService {
 		})
 	}
 }
-
-export type ListMapsClientResult = NonNullable<Map[]>
-export type CreateMapClientResult = NonNullable<Map>
-export type GetMapClientResult = NonNullable<Map>
-export type UpdateMapClientResult = NonNullable<Map>
-export type DeleteMapClientResult = NonNullable<void>
-export type AddMapStyleClientResult = NonNullable<Map>
-export type RetryMapStyleClientResult = NonNullable<MapStyle>
-export type UpdateMapStyleClientResult = NonNullable<MapStyle>
-export type DeleteMapStyleClientResult = NonNullable<void>

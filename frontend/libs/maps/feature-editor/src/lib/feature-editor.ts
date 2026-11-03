@@ -2,7 +2,7 @@ import { HttpStatusCode } from '@angular/common/http'
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core'
 import { toObservable, toSignal } from '@angular/core/rxjs-interop'
 import { RouterLink } from '@angular/router'
-import { CdkScrollable } from '@angular/cdk/scrolling'
+import { HlmAccordion } from '@spartan-ng/helm/accordion'
 import { MapsQueryOptions, MapsLive, provideMapHub, type MapStyle } from '@game-atlas/maps/data-access'
 import { MapViewport } from '@game-atlas/maps/ui'
 import { Button, ErrorState, PageHeaderPortal } from '@game-atlas/shared/ui'
@@ -20,6 +20,7 @@ import { HlmTooltip } from '@spartan-ng/helm/tooltip'
 import { injectQuery } from '@tanstack/angular-query-experimental'
 import { Subject, combineLatest, startWith, switchMap } from 'rxjs'
 import { MapStyles } from './map-styles/map-styles'
+import { MapCategories } from './map-categories/map-categories'
 
 type SelectionSource = { mapId: string; styles: MapStyle[]; defaultStyleId: string | null }
 
@@ -34,7 +35,8 @@ type SelectionSource = { mapId: string; styles: MapStyle[]; defaultStyleId: stri
 		HlmSkeleton,
 		HlmTooltip,
 		MapStyles,
-		CdkScrollable,
+		MapCategories,
+		HlmAccordion,
 	],
 	templateUrl: './feature-editor.html',
 	providers: [

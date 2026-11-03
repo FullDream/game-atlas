@@ -7,214 +7,316 @@ Maintain game-owned category groups with validated unique names, complete CRUD, 
 ## Requirements
 
 ### Requirement: Scope category groups to an existing map
+
 Group operations SHALL use /games/{gameId}/maps/{mapId}/category-groups without authentication for draft or published games. Each group SHALL belong to exactly one map through immutable mapId. Valid requests for a missing game/map/group, a map outside the game, or a group outside the map SHALL return HTTP 404. A map SHALL NOT need any style before group operations.
 
 #### Scenario: Empty map and isolated ownership
+
 - **WHEN** a client creates or lists groups on an existing map with no styles
 - **THEN** normal group behavior applies
 - **AND** a group from another map returns 404, including a sibling map of the same game
 
 #### Scenario: Manage either game status
+
 - **WHEN** an existing map belongs to a draft or published game
 - **THEN** the group operation is permitted without authentication or a style prerequisite
 
 #### Scenario: Missing parent
+
 - **WHEN** an otherwise valid create, list, update, or delete request targets a nonexistent map
 - **THEN** the response is HTTP 404 ProblemDetails rather than a successful empty list or an orphaned group
 
 #### Scenario: Missing or foreign group
+
 - **WHEN** an otherwise valid rename or delete request identifies a missing group or a group belonging to another map
 - **THEN** the response is HTTP 404 ProblemDetails and no group's metadata changes
 
 ### Requirement: Create a category group at the end
-POST SHALL accept name and optional positive 32-bit order and return HTTP 200 with id, mapId, name, order, createdAt, and updatedAt. The server SHALL generate UUID v7 and equal UTC timestamps and derive mapId from the route. Omitted order SHALL use that map's maximum plus one or 1; duplicate positive values SHALL be allowed. Null/nonpositive order SHALL return 422. Additional creation properties SHALL NOT override ownership or server metadata.
+
+POST SHALL accept name, optional nullable iconAssetId and optional nullable beforeId. Omitted/null beforeId SHALL append; a valid sibling anchor SHALL insert before it. HTTP 200 SHALL return the complete group with empty categories, markersCount 0 and nullable icon. UUID v7, mapId, positive order and equal UTC timestamps SHALL be server-owned. Numeric order input SHALL return 400.
 
 #### Scenario: Allocate order independently per map
-- **WHEN** one map has maximum order 4 and a sibling map has no groups
-- **THEN** their next default orders are 5 and 1 respectively without changing existing data
-- **AND** serialized successful concurrent default appends to one map receive distinct appended orders
+
+- **WHEN** groups are created on two sibling maps
+- **THEN** each receives a valid position only in its own map
+- **AND** competing structural writes serialize without duplicate placement or lost groups
 
 #### Scenario: First group
-- **WHEN** a client creates a valid group in a map with no groups
-- **THEN** the group has order 1 and all six server-generated or validated fields are returned
-- **AND** the stored group survives reopening the database
+
+- **WHEN** a group is created on an empty map without an icon
+- **THEN** order is 1, icon is null, markersCount is 0 and categories is []
+- **AND** it survives reopening storage
 
 #### Scenario: Append after existing groups
-- **WHEN** a client creates a group in a map whose greatest stored order is 4
-- **THEN** the new group has order 5 without changing other groups or their timestamps
+
+- **WHEN** beforeId is omitted or null
+- **THEN** the group appends while preserving existing relative order
 
 #### Scenario: Concurrent appends
-- **WHEN** concurrent valid requests create differently named groups in the same map
-- **THEN** successfully created groups receiving default orders have distinct positions at the end and neither replaces another group
+
+- **WHEN** differently named groups are created concurrently on the same map
+- **THEN** each successful group persists in a distinct appended position
 
 #### Scenario: Server-owned creation fields
-- **WHEN** a valid creation body also supplies id, mapId, createdAt, or updatedAt
-- **THEN** those additional fields do not control the stored identity, route ownership, order, or timestamps
+
+- **WHEN** valid input additionally supplies id, mapId, createdAt or updatedAt
+- **THEN** server identity, scope and timestamps remain authoritative
+- **AND** numeric order input returns 400
 
 ### Requirement: Validate and normalize group names
+
 Creation and renaming SHALL trim surrounding name whitespace, preserve the remaining spelling for display, and require 1 through 200 characters after trimming. Missing, null, empty, whitespace-only, or overlength names SHALL produce HTTP 422 validation ProblemDetails without persisting changes.
 
 #### Scenario: Trim and preserve spelling
+
 - **WHEN** a valid name is `  Resources  ` or `  Ресурсы  `
 - **THEN** the stored and returned name is respectively `Resources` or `Ресурсы`
 
 #### Scenario: Invalid names and exact boundary
+
 - **WHEN** creation or renaming supplies an absent required name, null, an empty or whitespace-only string, or more than 200 trimmed characters
 - **THEN** the response is HTTP 422 with name field errors and storage is unchanged
 - **AND** an otherwise valid name of exactly 200 trimmed characters is accepted
 
 ### Requirement: Enforce group name uniqueness within a map
+
 Group names SHALL be unique within their map after trimming and invariant case normalization, including Latin/Cyrillic case. Creation/renaming conflicts, including recognized save-time conflicts, SHALL return HTTP 409 with name errors and no partial changes. The same normalized name SHALL be allowed in different maps, including maps of the same game.
 
 #### Scenario: Same map conflict and sibling map independence
+
 - **WHEN** a map contains Resources or Ресурсы and receives ' resources ' or ' ресурсы '
 - **THEN** HTTP 409 preserves existing data
 - **AND** creating the same name in another map succeeds
 
 #### Scenario: Rename and self-equality
+
 - **WHEN** a group is renamed to its own normalized name
 - **THEN** no self-conflict occurs; effective display-case changes update its timestamp while whitespace-only no-ops do not
 
 #### Scenario: Latin and Cyrillic case conflicts
-- **WHEN** a map has `Resources` or `Ресурсы` and a request creates another group named ` resources ` or ` ресурсы ` respectively
+
+- **WHEN** a map has `Resources` or `Ресурсы` and a request creates another group named `resources` or `ресурсы` respectively
 - **THEN** the response is HTTP 409 ProblemDetails and only the original group remains
 
 #### Scenario: Rename to another group's name
+
 - **WHEN** a rename would give a group the normalized name of another group in the same map
 - **THEN** the response is HTTP 409 and both groups retain all prior fields
 
 #### Scenario: Keep own name or change its displayed case
+
 - **WHEN** a group is renamed to its own normalized name with different displayed letter case
 - **THEN** the request succeeds unless another group owns that name
 - **AND** a real displayed-name change updates updatedAt while mere surrounding whitespace does not
 
 #### Scenario: Other game and concurrent conflict
+
 - **WHEN** the same normalized name is created in different maps
 - **THEN** both creations are permitted
 - **AND** concurrent same-name creations within one map cannot both succeed; the uniqueness failure returns 409
 
 ### Requirement: Read groups in display order without pagination
-GET SHALL return all groups of the route map as a plain array of six-field DTOs ordered by order, createdAt, then id ascending. An existing map without groups SHALL return []; missing/foreign maps SHALL return 404. No pagination, search, alternate sorting, individual-group GET, batch update, or reorder endpoint SHALL be introduced.
+
+GET /games/{gameId}/maps/{mapId}/category-groups SHALL return a plain ordered array of all groups with id, mapId, name, order, createdAt, updatedAt, nullable shared-image icon, markersCount and categories. Children SHALL contain complete category representations in display order. Empty collections SHALL be []; missing/foreign maps SHALL return 404. No pagination, alternate sorting, individual-group GET or dedicated reorder endpoint SHALL be introduced.
 
 #### Scenario: Complete map-specific list
-- **WHEN** sibling maps contain groups with equal names and orders
-- **THEN** listing one map returns only its groups in deterministic order with mapId, never gameId as group ownership
+
+- **WHEN** sibling maps contain groups with equal names
+- **THEN** one map's tree includes only its groups and categories, with mapId ownership
 
 #### Scenario: Complete ordered list
-- **WHEN** the map has multiple groups and a client reads its collection
-- **THEN** every group is returned exactly once in persisted display order with all six fields
-- **AND** groups belonging to other maps are absent
+
+- **WHEN** the collection is read
+- **THEN** every group and child appears exactly once in server display order
+- **AND** each category carries id, categoryGroupId, name, nullable icon, color, order, markersCount, createdAt and updatedAt
+- **AND** current image metadata and computed counts are read without per-node database queries
 
 #### Scenario: Existing game without groups
-- **WHEN** a client lists an existing map's empty group collection
-- **THEN** the response is HTTP 200 with `[]`
+
+- **WHEN** an existing map has no groups
+- **THEN** HTTP 200 returns []
+- **AND** an existing empty group has categories [] and markersCount 0
 
 ### Requirement: Update category group metadata and order through merge patch
-PATCH SHALL allow only optional name and order and return HTTP 200 with the six-field group DTO. Omission SHALL preserve values; null/invalid name or null/nonpositive order and an empty object SHALL return 422. Unknown/read-only properties, including mapId/gameId, SHALL return 400. Updates SHALL be atomic, preserve identity/mapId/createdAt, and change only effective group state.
+
+PATCH SHALL accept optional name, nullable iconAssetId and nullable beforeId and return the complete group with children and computed count. Omitted fields SHALL preserve state; null icon detaches, null beforeId appends, and null name returns 422. Empty patches return 422; unknown/read-only fields, including numeric order and mapId, return 400. Changes SHALL be atomic and preserve id/mapId/createdAt.
 
 #### Scenario: Immutable map membership and atomic failure
-- **WHEN** a patch supplies mapId to move a group, even alongside a valid name change
-- **THEN** HTTP 400 preserves every field and ownership
-- **AND** a valid name/order-only patch affects neither other groups nor parent map/game timestamps
+
+- **WHEN** a patch supplies mapId alongside a valid rename
+- **THEN** HTTP 400 preserves all fields
+- **AND** valid metadata or placement changes do not alter map/game timestamps
 
 #### Scenario: Update one field or both
-- **WHEN** a client supplies a valid name, a positive integer order, or both for an existing group
-- **THEN** the supplied changes are persisted together and the complete DTO is returned with HTTP 200
-- **AND** other groups retain all their fields, including positions and timestamps
+
+- **WHEN** valid metadata and placement are supplied
+- **THEN** all changes commit together and HTTP 200 returns the complete group
+- **AND** other groups preserve metadata and timestamps even when their numeric order changes
 
 #### Scenario: Preserve omitted fields and no-ops
-- **WHEN** only order is supplied
-- **THEN** the name remains unchanged
-- **AND** when supplied values equal the stored values after name trimming, updatedAt is preserved without writing
+
+- **WHEN** only beforeId is supplied
+- **THEN** name and icon remain unchanged
+- **AND** unchanged normalized metadata and final sequence preserve updatedAt without writing
 
 #### Scenario: Invalid patches are atomic
-- **WHEN** the body is empty or explicitly supplies null, zero, or a negative order
-- **THEN** the response is HTTP 422 and all fields remain unchanged even alongside a valid name change
-- **AND** null or invalid name also returns 422 without persisting a supplied order change
+
+- **WHEN** the body is empty, name is null/invalid, or beforeId references self
+- **THEN** HTTP 422 preserves every field and position
 
 #### Scenario: Reject server-owned fields
-- **WHEN** the body supplies id, mapId, timestamps, or unknown properties
-- **THEN** the response is HTTP 400 and storage remains unchanged
+
+- **WHEN** the body supplies id, mapId, order, categories, markersCount, timestamps or unknown fields
+- **THEN** HTTP 400 preserves storage
 
 ### Requirement: Permanently delete groups and cascade parent deletion
+
 DELETE SHALL physically remove the scoped group and current categories, markers, and marker-media records and return empty HTTP 204. Repeated deletion SHALL return 404. Surviving groups SHALL retain order/timestamps and deleted names SHALL become reusable. Map deletion SHALL remove its groups, and game deletion SHALL remove groups through all its maps. Referenced media files SHALL NOT be deleted.
 
 #### Scenario: Delete one map hierarchy
+
 - **WHEN** a map or its game is deleted
 - **THEN** owned groups and descendants disappear through current ownership
 - **AND** unrelated maps/games and their groups remain unchanged
 
 #### Scenario: Delete a middle group
+
 - **WHEN** a group at order 2 is deleted between groups at positions 1 and 3
 - **THEN** the response is an empty HTTP 204 and that group is absent after reopening storage
 - **AND** positions 1 and 3 and their timestamps remain unchanged, and the deleted name can be reused
 
 #### Scenario: Repeat group deletion
+
 - **WHEN** a client repeats deletion of an already removed group
 - **THEN** the response is HTTP 404 ProblemDetails
 
 #### Scenario: Delete owning game
+
 - **WHEN** game deletion succeeds for a game owning several maps with groups
 - **THEN** empty HTTP 204 follows deletion of every owned group through its map
 - **AND** other games and their content remain unchanged
 
 ### Requirement: Apply the shared PATCH media and shape contract
+
 Updates SHALL accept application/merge-patch+json and application/json with identical JSON Merge Patch semantics, including charset parameters. Arrays SHALL be replaced whole. Other PATCH media types SHALL return 415. Invalid JSON, non-object bodies, invalid GUID representations, incompatible field types, and unknown fields SHALL return 400. PUT SHALL NOT be exposed.
 
 #### Scenario: Equivalent media types
+
 - **WHEN** equivalent valid update bodies use either supported media type, with or without charset=utf-8
 - **THEN** they apply the same operation and validation rules
 - **AND** omitted name or order fields retain their current values
 
 #### Scenario: Unsupported media type
+
 - **WHEN** the group PATCH operation uses text/plain or application/json-patch+json
 - **THEN** the response is HTTP 415 ProblemDetails without storage changes
 
 #### Scenario: Invalid shape or representation
+
 - **WHEN** a PATCH body is malformed JSON, null, a scalar, an array, or contains an invalid field type, invalid GUID, or unknown property
 - **THEN** the response is HTTP 400 ProblemDetails without storage changes
 
 ### Requirement: Persist group mutations safely
+
 Successful group mutations SHALL be durable. Default order allocation SHALL be serialized, and a group update SHALL NOT persist partial metadata changes. Expected validation and conflict failures SHALL use their specified ProblemDetails responses. Unexpected storage failures SHALL return safe HTTP 500 without SQL, connection, or exception details; unrelated failures SHALL NOT become name conflicts.
 
 #### Scenario: Failure during group update persistence
+
 - **WHEN** saving a group update fails before its transaction commits
 - **THEN** the response is safe HTTP 500 ProblemDetails and the group retains its prior name, position, and timestamps
 
 #### Scenario: Other persistence failure
+
 - **WHEN** a group operation encounters an unrelated library or storage failure
 - **THEN** the response is HTTP 500 without internal details rather than 409 for a duplicate name
 
 ### Requirement: Document the category group API
-OpenAPI SHALL describe the four existing group operation IDs on map-scoped routes, all GUID parents, six-field DTOs containing mapId instead of gameId, name/order constraints, unpaginated arrays, shared PATCH semantics, and applicable ProblemDetails. Legacy game-wide group routes SHALL NOT be exposed.
+
+OpenAPI SHALL expose ListCategoryGroups, CreateCategoryGroup, UpdateCategoryGroup and DeleteCategoryGroup under Categories on existing map-scoped routes. It SHALL describe nested categories, nullable shared-image icons, computed markersCount, relative beforeId placement, read-only order and shared PATCH semantics. Category groups SHALL NOT remain a separate tag.
 
 #### Scenario: Discover map-scoped CRUD
+
 - **WHEN** a client reads OpenAPI
-- **THEN** ListCategoryGroups/CreateCategoryGroup/UpdateCategoryGroup/DeleteCategoryGroup require gameId and mapId paths and expose the revised group representation
-- **AND** no group transfer, PUT, batch, pagination, or individual GET is advertised
+- **THEN** all four group operations require gameId/mapId and share the Categories tag with category mutations
+- **AND** no group transfer, PUT, batch, pagination, dedicated reorder or individual GET is advertised
 
 #### Scenario: Discover CRUD
+
 - **WHEN** a client reads OpenAPI
-- **THEN** it exposes the four operation IDs, 200 DTO or array responses, empty DELETE 204, and ProblemDetails for relevant 400, 404, 409, 415, 422, and 500 responses
-- **AND** name constraints and positive integer order bounds are discoverable without manual string descriptions replacing available validation metadata
-- **AND** list has no pagination parameters or pagination envelope and PUT is absent
+- **THEN** list exposes a complete tree array, POST/PATCH a complete group and DELETE empty 204
+- **AND** relevant 400, 404, 409, 415, 422 and 500 ProblemDetails and name/placement/icon contracts are discoverable
 
 ### Requirement: Support explicit duplicate orders and deterministic ties
-Groups of one map SHALL allow duplicate positive orders. Listing SHALL break ties by createdAt then id ascending. Changing one group SHALL NOT renumber others. Independent updates SHALL commit independently. Omitted creation order at Int32.MaxValue SHALL return 422; explicit valid order SHALL remain permitted. Allocation SHALL NOT read the groups of other maps.
+
+Group order SHALL be server-owned and positive. beforeId SHALL place a group before a sibling of the same map; null SHALL append. Missing/foreign anchors return 404, malformed GUIDs 400 and self anchors 422. Structural mutations SHALL serialize and atomically maintain sibling order. Existing duplicate/gapped orders SHALL migrate in order/createdAt/id ascending sequence. Metadata-only updates SHALL preserve position.
 
 #### Scenario: Ties overflow and map independence
-- **WHEN** one map's maximum order is Int32.MaxValue while a sibling map is empty
-- **THEN** omitted order fails only for the first map and the sibling map can create order 1
-- **AND** explicit duplicate orders within a map retain deterministic ordering
+
+- **WHEN** legacy orders contain duplicates, gaps or Int32.MaxValue
+- **THEN** migration normalizes each map independently without changing visible sequence or identities
+- **AND** later appends do not depend on the previous legacy maximum
 
 #### Scenario: Explicit order and duplicates
-- **WHEN** a group is created or updated with an order already used in its map
-- **THEN** the request succeeds subject to the other metadata rules and other groups remain unchanged
+
+- **WHEN** numeric order is supplied to creation or PATCH
+- **THEN** HTTP 400 preserves data
+- **AND** valid relative placement can shift sibling order but not sibling metadata timestamps
 
 #### Scenario: Stable tie breaking
-- **WHEN** groups have equal order and creation timestamps
-- **THEN** their ID ascending determines their list sequence
+
+- **WHEN** legacy groups have equal order and createdAt
+- **THEN** ID ascending determines their migration sequence
 
 #### Scenario: No room for automatic append
-- **WHEN** order is omitted at creation and the maximum stored order is the greatest positive 32-bit integer
-- **THEN** the response is HTTP 422 without creating a group; the client can supply an explicit positive order
+
+- **WHEN** a migrated map previously had an Int32.MaxValue order
+- **THEN** creating a group without beforeId appends normally using normalized server order
+
+#### Scenario: Concurrent moves and no-ops
+
+- **WHEN** competing moves target one map
+- **THEN** each successful operation applies atomically to the committed sequence without lost or duplicated groups
+- **AND** a move preserving the final sequence does not change timestamps
+
+### Requirement: Attach optional group library icons
+
+Groups SHALL support optional committed library images through iconAssetId. Creation omission/null SHALL yield icon null; PATCH omission SHALL preserve and null SHALL detach. Malformed GUIDs return 400, missing images 404 and incompatible assets 422. Image references SHALL participate in media deletion guards. Detachment or deletion of groups SHALL retain media bytes.
+
+#### Scenario: Resolve and protect a group icon
+
+- **WHEN** a group references a raster or accepted SVG image
+- **THEN** tree and mutation responses include its current canonical image metadata
+- **AND** deleting the asset returns 409 while the group or another consumer references it
+
+#### Scenario: Remove or reject an icon
+
+- **WHEN** the icon is cleared
+- **THEN** the response contains icon null and other consumers retain their image
+- **WHEN** a replacement is missing or incompatible alongside a rename
+- **THEN** the complete mutation fails without partial changes
+
+### Requirement: Return aggregate group marker counts
+
+Every group representation SHALL include read-only markersCount equal to the current persisted marker counts of all its categories. Empty groups SHALL return 0. Counts SHALL be derived from marker ownership rather than stored counters.
+
+#### Scenario: Transfer a populated category
+
+- **WHEN** a category with N markers moves between groups of one map
+- **THEN** the next tree read decreases the source count by N and increases the destination by N
+- **AND** the category marker count and marker ownership remain unchanged
+
+#### Scenario: Marker and category mutations
+
+- **WHEN** markers are created, transferred or deleted, or categories are deleted
+- **THEN** subsequent tree and group responses reflect current counts
+- **AND** failed operations do not alter counts and attempts to PATCH markersCount return 400
+
+### Requirement: Persist group colors
+
+Groups SHALL expose a non-null color in tree and mutation responses. Color SHALL accept #RGB or #RRGGBB and normalize to uppercase #RRGGBB. Omitted creation color SHALL default to #F59E0B for compatibility. PATCH omission SHALL preserve color; explicit null or invalid color SHALL return 422 atomically. Existing groups SHALL receive #F59E0B through an additive migration without changing identity, ownership or timestamps.
+
+#### Scenario: Set and edit group color
+
+- **WHEN** a group is created with #abc and later patched to #123456
+- **THEN** responses and reloaded tree return #AABBCC followed by #123456
+- **AND** rejected color changes preserve the entire previous group

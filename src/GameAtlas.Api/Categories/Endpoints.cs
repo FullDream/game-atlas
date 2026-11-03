@@ -1,61 +1,49 @@
+using GameAtlas.Api.Categories.Groups;
 using GameAtlas.Api.Http;
 using GameAtlas.Api.Results;
 using GameAtlas.Application.Categories;
 using GameAtlas.Application.Categories.DeleteCategory;
-using GameAtlas.Application.Categories.ListCategories;
+using GameAtlas.Application.Categories.Groups;
+using GameAtlas.Application.Categories.Groups.DeleteCategoryGroup;
+using GameAtlas.Application.Categories.Groups.ListCategoryGroups;
 using Mediator;
 
 namespace GameAtlas.Api.Categories;
 
 public static class Endpoints
 {
-	public static RouteGroupBuilder MapCategories(this RouteGroupBuilder group)
+	public static RouteGroupBuilder MapCategories(this RouteGroupBuilder api)
 	{
-		var categories = group.MapGroup("/games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories")
-			.WithTags("Categories");
+		var groups = api.MapGroup("/games/{gameId}/maps/{mapId}/category-groups").WithTags("Categories");
+		groups.MapGet("", async (Guid gameId, Guid mapId, IMediator mediator, CancellationToken cancellationToken) =>
+			(OutcomeResult<IReadOnlyCollection<CategoryGroupDto>>)await mediator.Send(new ListCategoryGroups(gameId, mapId), cancellationToken))
+			.WithName("ListCategoryGroups").WithSummary("List category tree");
 
-		categories.MapGet("", ListCategoriesAsync)
-			.WithName("ListCategories").WithSummary("List categories")
-			.WithDescription("Returns all categories ordered by order, createdAt, and id, without pagination. " +
-				"Each category includes its current read-only markersCount.");
+		groups.MapPost("", async (Guid gameId, Guid mapId, CreateCategoryGroupRequest request, IMediator mediator, CancellationToken cancellationToken) =>
+			(OutcomeResult<CategoryGroupDto>)await mediator.Send(request.ToCommand(gameId, mapId), cancellationToken))
+			.WithName("CreateCategoryGroup").WithSummary("Create category group");
 
-		categories.MapPost("", CreateCategoryAsync)
-			.WithName("CreateCategory").WithSummary("Create category")
-			.WithDescription("Creates a category with a group-unique name, icon reference, #RGB or #RRGGBB color, " +
-				"and optional positive order. Omitted order appends to the group. " +
-				"Image formats are not restricted; a new category has markersCount 0.");
+		groups.MapPatch("/{id}", async (Guid gameId, Guid mapId, Guid id, UpdateCategoryGroupRequest request, IMediator mediator, CancellationToken cancellationToken) =>
+			(OutcomeResult<CategoryGroupDto>)await mediator.Send(request.ToCommand(gameId, mapId, id), cancellationToken))
+			.WithName("UpdateCategoryGroup").WithSummary("Update category group").WithMergePatch<UpdateCategoryGroupRequest>();
 
-		categories.MapPatch("/{id}", UpdateCategoryAsync)
-			.WithName("UpdateCategory").WithSummary("Update category")
-			.WithDescription("Supply name, icon, color, order, or categoryGroupId. The route identifies the current " +
-				"group; categoryGroupId transfers to a group of the same map. Omitted fields remain unchanged, " +
-				"including order on transfer. Use the new group route after transfer. Nulls and empty patches are " +
-				"rejected. Both media types use JSON Merge Patch semantics; no-ops preserve updatedAt.")
-			.WithMergePatch<UpdateCategoryRequest>();
+		groups.MapDelete("/{id}", async (Guid gameId, Guid mapId, Guid id, IMediator mediator, CancellationToken cancellationToken) =>
+			(OutcomeResult)await mediator.Send(new DeleteCategoryGroup(gameId, mapId, id), cancellationToken))
+			.WithName("DeleteCategoryGroup").WithSummary("Delete category group");
 
-		categories.MapDelete("/{id}", DeleteCategoryAsync)
-			.WithName("DeleteCategory").WithSummary("Delete category")
-			.WithDescription("Permanently deletes the category, returning empty 204. Missing categories return 404. " +
-				"Survivor positions and timestamps are preserved, and the deleted name becomes reusable.");
+		var categories = groups.MapGroup("/{groupId}/categories");
+		categories.MapPost("", async (Guid gameId, Guid mapId, Guid groupId, CreateCategoryRequest request, IMediator mediator, CancellationToken cancellationToken) =>
+			(OutcomeResult<CategoryDto>)await mediator.Send(request.ToCommand(gameId, mapId, groupId), cancellationToken))
+			.WithName("CreateCategory").WithSummary("Create category");
 
-		return categories;
+		categories.MapPatch("/{id}", async (Guid gameId, Guid mapId, Guid groupId, Guid id, UpdateCategoryRequest request, IMediator mediator, CancellationToken cancellationToken) =>
+			(OutcomeResult<CategoryDto>)await mediator.Send(request.ToCommand(gameId, mapId, groupId, id), cancellationToken))
+			.WithName("UpdateCategory").WithSummary("Update category").WithMergePatch<UpdateCategoryRequest>();
+
+		categories.MapDelete("/{id}", async (Guid gameId, Guid mapId, Guid groupId, Guid id, IMediator mediator, CancellationToken cancellationToken) =>
+			(OutcomeResult)await mediator.Send(new DeleteCategory(gameId, mapId, groupId, id), cancellationToken))
+			.WithName("DeleteCategory").WithSummary("Delete category");
+
+		return groups;
 	}
-
-	private static async Task<OutcomeResult<IReadOnlyCollection<CategoryDto>>> ListCategoriesAsync(
-		Guid gameId, Guid mapId, Guid groupId, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(new ListCategories(gameId, mapId, groupId), cancellationToken);
-
-	private static async Task<OutcomeResult<CategoryDto>> CreateCategoryAsync(
-		Guid gameId, Guid mapId, Guid groupId, CreateCategoryRequest request, IMediator mediator,
-		CancellationToken cancellationToken) =>
-		await mediator.Send(request.ToCommand(gameId, mapId, groupId), cancellationToken);
-
-	private static async Task<OutcomeResult<CategoryDto>> UpdateCategoryAsync(
-		Guid gameId, Guid mapId, Guid groupId, Guid id, UpdateCategoryRequest request, IMediator mediator,
-		CancellationToken cancellationToken) =>
-		await mediator.Send(request.ToCommand(gameId, mapId, groupId, id), cancellationToken);
-
-	private static async Task<OutcomeResult> DeleteCategoryAsync(
-		Guid gameId, Guid mapId, Guid groupId, Guid id, IMediator mediator, CancellationToken cancellationToken) =>
-		await mediator.Send(new DeleteCategory(gameId, mapId, groupId, id), cancellationToken);
 }

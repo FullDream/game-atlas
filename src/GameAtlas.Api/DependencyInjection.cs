@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using FluentValidation;
 using GameAtlas.Api.Categories;
-using GameAtlas.Api.CategoryGroups;
+using GameAtlas.Api.Categories.Groups;
 using GameAtlas.Api.Errors;
 using GameAtlas.Api.Games;
 using GameAtlas.Api.Markers;
@@ -15,8 +15,8 @@ using GameAtlas.Api.Serialization;
 using GameAtlas.Api.Serialization.Optional;
 using GameAtlas.Application.Categories.CreateCategory;
 using GameAtlas.Application.Categories.UpdateCategory;
-using GameAtlas.Application.CategoryGroups.CreateCategoryGroup;
-using GameAtlas.Application.CategoryGroups.UpdateCategoryGroup;
+using GameAtlas.Application.Categories.Groups.CreateCategoryGroup;
+using GameAtlas.Application.Categories.Groups.UpdateCategoryGroup;
 using GameAtlas.Application.Games.CreateGame;
 using GameAtlas.Application.Games.ListGames;
 using GameAtlas.Application.Games.UpdateGame;
@@ -84,6 +84,7 @@ public static class DependencyInjection
 			options.AddOperationTransformer<CamelCaseQueryParametersTransformer>();
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
 			options.AddDocumentTransformer<MediaSchemaTransformer>();
+			options.AddDocumentTransformer<CategorySchemaTransformer>();
 		});
 
 		return services;

@@ -1,94 +1,47 @@
 # Categories API
 
-Categories belong to one category group. All operations are unauthenticated and work for draft and published games.
-The base route is `/games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories`.
+Groups and categories share the Categories OpenAPI tag and functional folders in each backend layer. They remain separate entities and tables. Groups belong to maps, categories to groups, and markers reference categories. Operations remain unauthenticated for draft/published games and work without styles.
 
-| Method | Route | Success |
-| --- | --- | --- |
-| GET | Base route | 200, complete ordered array |
-| POST | Base route | 200, complete category |
-| PATCH | Base route + `/{id}` | 200, complete category |
-| DELETE | Base route + `/{id}` | 204, no body |
+## Tree retrieval
 
-There is no individual-category GET, PUT, batch or reorder operation, pagination, search, or alternate sorting.
-Missing games, maps, groups, categories, and resources outside the route ownership return 404 ProblemDetails.
-An existing group without categories returns `[]`.
+GET `/games/{gameId}/maps/{mapId}/category-groups` (ListCategoryGroups) returns the complete ordered tree as a plain array. Each group contains id, mapId, name, color, createdAt, updatedAt, nullable icon, markersCount and categories. Array positions define display order for groups and their nested categories; numeric order is not exposed. Empty maps return []; empty groups contain categories [] and count 0.
 
-## Representation
+Each category contains id, categoryGroupId, name, nullable icon, color, order, markersCount, createdAt and updatedAt. Icons resolve canonical ImageAsset metadata. Counts derive from current persisted markers; group counts sum their categories. Retrieval uses a bounded number of reads rather than one per node.
 
-```json
-{
-  "id": "019a0d00-0000-7000-8000-000000000001",
-  "categoryGroupId": "019a0d00-0000-7000-8000-000000000002",
-  "name": "Chests",
-  "icon": { "type": "image", "id": "019a0d00-0000-7000-8000-000000000003",
-    "folderId": null, "name": "Chest", "url": "/media/files/019a0d00-0000-7000-8000-000000000003",
-    "contentType": "image/svg+xml", "byteLength": 240, "width": 24, "height": 24,
-    "alt": "Chest", "placeholder": null, "createdAt": "2026-10-23T12:00:00+00:00",
-    "updatedAt": "2026-10-23T12:00:00+00:00" },
-  "color": "#FF8800",
-  "order": 1,
-  "markersCount": 0,
-  "createdAt": "2026-10-23T12:00:00+00:00",
-  "updatedAt": "2026-10-23T12:00:00+00:00"
-}
-```
+The per-group category collection GET and ListCategories are removed. GET on the retained POST path returns 405. No individual GET, PUT, pagination, batch or dedicated reorder route is exposed.
 
-The server generates UUID v7 and equal UTC timestamps at creation. `markersCount` is the current number of owned
-markers, computed from committed rows in every response; no counter is stored. New categories have zero markers.
-Marker creation, deletion, and transfers update the next observed count without changing category timestamps.
-Internal normalized names and a redundant game ID
-are not exposed. The route determines membership at creation; extra creation properties do not override server values.
+## Category mutations
 
-## Creation and validation
+Base route: `/games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories`.
 
-POST accepts required `name`, `iconAssetId`, and `color`, plus optional `order`.
+| Method | Suffix | Result                |
+| ------ | ------ | --------------------- |
+| POST   | none   | 200 complete category |
+| PATCH  | /{id}  | 200 complete category |
+| DELETE | /{id}  | empty 204             |
 
-- Name: 1 through 200 characters after trimming. Display case is preserved. Names are unique within their group
-  after invariant case normalization, including Latin and Cyrillic. Equal names in different groups are allowed.
-- IconAssetId: a required nonempty UUID identifying a committed library image (JPEG/PNG/WebP/AVIF/SVG).
-  Null or missing values return 422, malformed IDs 400, missing assets 404, and video/folder IDs 422.
-  Arbitrary icon URLs are no longer mutation input. Upload an image to `/media/assets` first.
-- Color: `#RGB` or `#RRGGBB`, accepting either ASCII hexadecimal letter case. Short colors expand to uppercase
-  `#RRGGBB`, for example `#fff` becomes `#FFFFFF`. No surrounding whitespace, named colors, or alpha channel is accepted.
-- Order: a positive 32-bit integer. Omission appends after the group's maximum, starting at 1. Duplicate explicit
-  orders are allowed. If the maximum is 2147483647, automatic append returns 422; supply an explicit positive order.
+POST requires name and color, with optional nullable iconAssetId and beforeId. Names trim to 1..200 characters and are unique within the resulting group after invariant case normalization. Colors accept #RGB/#RRGGBB and normalize to uppercase #RRGGBB. UUID v7 and UTC timestamps are server-generated.
 
-Validation failures return 422 ProblemDetails; name conflicts return 409 with `name` errors, including recognized
-save-time uniqueness failures. Fractional, string, or out-of-range integer orders and incompatible JSON field types return 400.
+PATCH accepts optional name, iconAssetId, color, categoryGroupId and beforeId. Omission preserves metadata; iconAssetId null detaches the icon. Name/color/group cannot be null. Creation without an icon is valid.
 
-## Updates and transfers
+## Placement and transfer
 
-PATCH accepts `application/merge-patch+json` and `application/json`, including charset parameters, with identical
-JSON Merge Patch semantics. All five mutable fields (`name`, `iconAssetId`, `color`, `order`, `categoryGroupId`) are optional:
-omission preserves the existing value; explicit null returns 422. An empty object returns 422. Unknown/read-only fields,
-malformed JSON, non-object bodies, incompatible types, and malformed GUIDs return 400. Other PATCH media types,
-including `application/json-patch+json` and `text/plain`, return 415.
+Numeric order is server-owned and rejected in input with 400. beforeId inserts before a destination sibling; null appends. Creation and cross-group transfer without beforeId append; same-parent metadata updates without beforeId preserve position.
 
-For transfer, use the **current group** in the route and send the destination `categoryGroupId` in the body.
-The destination must belong to the same map; a missing, all-zero, sibling-map, or other-game group ID returns 404.
-The resulting name must be unique in that destination. A combined rename and transfer is permitted and validated
-using the new name. Omitted order is preserved on transfer, even if another destination category has the same order.
-Use the new group route after success; PATCH and DELETE under the old route return 404.
+The route identifies the current group; categoryGroupId selects another group of the same map. Identity, createdAt and marker references survive transfer. Later requests must use the new group route.
 
-Updates and transfers are atomic. Invalid values, conflicts, and save failures do not persist partial changes.
-Only an effective change updates the target category's `updatedAt`; normalized no-ops preserve it without an update write.
-Identity and creation time never change. Other categories and parent game/map/group metadata and timestamps remain unchanged.
+Placement, icon checks, resulting-name uniqueness and metadata commit atomically. Affected sibling sets receive normalized positive positions without changing sibling metadata timestamps. Deletion preserves surviving positions/timestamps. Effective changes update the target timestamp; no-ops perform no write.
 
-## Listing and deletion
+Missing/foreign anchors return 404, self anchors 422, malformed GUIDs 400 and name conflicts 409.
 
-GET returns every category of the route group ordered by `order`, then `createdAt`, then `id`, all ascending.
-Changing or deleting one category does not shift or renumber others; order gaps and duplicates are intentional.
+## Icons and deletion
 
-DELETE physically removes a category and releases its name. Repeated deletion returns 404. Deleting a group cascades
-to its current categories; deleting a map or game cascades through its groups. A transferred category survives deletion
-of its former group. Unrelated map/group categories are preserved.
+Icons reference committed raster or admitted SVG library images. Missing assets return 404 and incompatible assets 422. Attached group/category icons guard library deletion. Clearing references or deleting content retains library files.
 
-Unexpected library and storage exceptions return safe 500 ProblemDetails without internal details. Only precisely
-recognized category name uniqueness failures become 409. Apply the Infrastructure migration explicitly before use;
-see [SQLite migrations](../../GameAtlas.Infrastructure/Persistence/README.md). Runnable requests are in
-[GameAtlas.Api.http](../GameAtlas.Api.http).
+DELETE physically removes current markers and marker-media relationships. Group/map/game deletion cascades by current ownership. Transferred-out categories survive deletion of their former group.
 
-Icons use the shared image DTO, including shared alt and nullable placeholder. Library metadata changes appear
-without changing category timestamps. Category/group/map/game deletion detaches references and preserves files;
-explicit asset deletion returns 409 while any category or other resource still uses the asset.
+## PATCH contract and errors
+
+application/json and application/merge-patch+json are accepted, including charset parameters. Empty patches and null required fields return 422. Unknown/read-only fields, malformed JSON and incompatible types return 400. Unsupported PATCH types return 415. Errors use ProblemDetails; unexpected storage failures remain safe 500 responses.
+
+See [group operations](Groups/README.md), [API conventions](../../../docs/api-conventions.md) and [migration instructions](../../GameAtlas.Infrastructure/Persistence/README.md).

@@ -24,3 +24,7 @@ Applies to backend implementation and backend tests. Read the [system architectu
 - Use SQLite initially. PostgreSQL is a future addition; do not introduce a second provider preemptively.
 - Keep EF Core migrations in Infrastructure, without a separate migrations project. Apply them explicitly through EF CLI rather than automatically at API startup.
 - Store enums as strings in the database.
+
+## Category feature ownership
+
+Category and CategoryGroup share Domain/Categories. Group use cases live under Application/Categories/Groups, and Api/Categories/Endpoints.cs maps both route families. Markers remain separate. Pure DTO mapping stays separate from tree retrieval and placement orchestration.

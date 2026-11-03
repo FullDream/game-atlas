@@ -59,7 +59,9 @@
 			"@game-atlas/maps/ui": ["./libs/maps/ui/src/index.ts"],
 			"@game-atlas/maps/feature-editor": ["./libs/maps/feature-editor/src/index.ts"],
 			"@spartan-ng/helm/badge": ["./libs/shared/ui/src/lib/helm/badge/src/index.ts"],
-			"@game-atlas/shared/data-access": ["./libs/shared/data-access/src/index.ts"]
+			"@game-atlas/shared/data-access": ["./libs/shared/data-access/src/index.ts"],
+			"@spartan-ng/helm/button-group": ["./libs/shared/ui/src/lib/helm/button-group/src/index.ts"],
+			"@spartan-ng/helm/accordion": ["./libs/shared/ui/src/lib/helm/accordion/src/index.ts"]
 		}
 	},
 	"exclude": ["node_modules", "tmp"]

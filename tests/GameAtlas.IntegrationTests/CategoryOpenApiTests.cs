@@ -7,19 +7,23 @@ public class CategoryOpenApiTests
 	private const string CollectionPath = "/games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories";
 
 	[Fact]
-	public async Task DocumentsFourOperationsCompleteDtosAndErrors()
+	public async Task DocumentsCategoryMutationsAndTreeChildrenWithErrors()
 	{
 		await using var factory = new GameApiFactory("Development");
 		using var client = factory.CreateHttpsClient();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
+
 		var root = document.RootElement;
+
 		var paths = root.GetProperty("paths");
+
 		var collection = paths.GetProperty(CollectionPath);
+
 		var item = paths.GetProperty(CollectionPath + "/{id}");
+
 		var operations = new[]
 		{
 			(collection.GetProperty("post"), "CreateCategory", new[] { "400", "404", "409", "422", "500" }),
-			(collection.GetProperty("get"), "ListCategories", new[] { "400", "404", "500" }),
 			(item.GetProperty("patch"), "UpdateCategory", new[] { "400", "404", "409", "415", "422", "500" }),
 			(item.GetProperty("delete"), "DeleteCategory", new[] { "400", "404", "500" })
 		};
@@ -40,17 +44,20 @@ public class CategoryOpenApiTests
 					.TryGetProperty("application/problem+json", out _));
 		}
 
-		Assert.Equal(2, collection.EnumerateObject().Count());
+		Assert.Single(collection.EnumerateObject());
 		Assert.Equal(2, item.EnumerateObject().Count());
 		Assert.False(paths.TryGetProperty(CollectionPath + "/order", out _));
 		Assert.False(paths.TryGetProperty(CollectionPath + "/batch", out _));
-		Assert.Equal(3, collection.GetProperty("get").GetProperty("parameters").GetArrayLength());
+		Assert.False(collection.TryGetProperty("get", out _));
 		Assert.False(item.GetProperty("delete").GetProperty("responses").GetProperty("204")
 			.TryGetProperty("content", out _));
-		var list = ResponseSchema(root, collection.GetProperty("get"));
+
+		var list = ResponseSchema(root, paths.GetProperty("/games/{gameId}/maps/{mapId}/category-groups").GetProperty("get"));
 
 		Assert.Equal("array", list.GetProperty("type").GetString());
-		AssertDto(root, list.GetProperty("items"));
+
+		var groupSchema = Resolve(root, list.GetProperty("items"));
+		AssertDto(root, groupSchema.GetProperty("properties").GetProperty("categories").GetProperty("items"));
 		AssertDto(root, ResponseSchema(root, collection.GetProperty("post")));
 		AssertDto(root, ResponseSchema(root, item.GetProperty("patch")));
 	}
@@ -61,11 +68,17 @@ public class CategoryOpenApiTests
 		await using var factory = new GameApiFactory("Development");
 		using var client = factory.CreateHttpsClient();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
+
 		var root = document.RootElement;
+
 		var paths = root.GetProperty("paths");
+
 		var post = paths.GetProperty(CollectionPath).GetProperty("post");
+
 		var patch = paths.GetProperty(CollectionPath + "/{id}").GetProperty("patch");
+
 		var patchContent = patch.GetProperty("requestBody").GetProperty("content");
+
 		var patchSchema = Resolve(root, patchContent.GetProperty("application/json").GetProperty("schema"));
 
 		Assert.Equal(2, patchContent.EnumerateObject().Count());
@@ -79,6 +92,7 @@ public class CategoryOpenApiTests
 		{
 			var schema = Resolve(root, operation.GetProperty("requestBody").GetProperty("content")
 				.GetProperty("application/json").GetProperty("schema"));
+
 			var properties = schema.GetProperty("properties");
 
 			foreach (var (field, maximum) in new[] { ("name", 200) })
@@ -94,14 +108,15 @@ public class CategoryOpenApiTests
 			Assert.Equal("uuid", Resolve(root, properties.GetProperty("iconAssetId")).GetProperty("format").GetString());
 
 			var color = Resolve(root, properties.GetProperty("color"));
-			var order = Resolve(root, properties.GetProperty("order"));
+
+			var order = Resolve(root, properties.GetProperty("beforeId"));
+			Assert.False(properties.TryGetProperty("order", out _));
 
 			Assert.Equal(@"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})(?![\s\S])",
 				color.GetProperty("pattern").GetString());
 			Assert.Equal(4, color.GetProperty("minLength").GetInt32());
 			Assert.Equal(7, color.GetProperty("maxLength").GetInt32());
-			Assert.Equal("integer", order.GetProperty("type").GetString());
-			Assert.Equal(0, order.GetProperty("exclusiveMinimum").GetInt32());
+			Assert.Equal("uuid", order.GetProperty("format").GetString());
 			Assert.False(schema.TryGetProperty("required", out var requiredFields) &&
 				requiredFields.EnumerateArray().Any(value => value.GetString() == "order"));
 		}
@@ -120,10 +135,12 @@ public class CategoryOpenApiTests
 
 		Assert.Equal(new[]
 			{
-				"categoryGroupId", "color", "createdAt", "icon", "id", "markersCount", "name", "order", "updatedAt"
+				"categoryGroupId", "color", "createdAt", "icon", "id", "markersCount", "name", "updatedAt"
 			},
 			properties.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
 		Assert.Equal("integer", Resolve(root, properties.GetProperty("markersCount")).GetProperty("type").GetString());
+		Assert.False(properties.TryGetProperty("order", out _));
+		Assert.True(properties.GetProperty("markersCount").GetProperty("readOnly").GetBoolean());
 	}
 
 	private static JsonElement Resolve(JsonElement root, JsonElement schema)

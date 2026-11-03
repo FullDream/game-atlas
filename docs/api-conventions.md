@@ -33,3 +33,11 @@ GET /games/{id} returns a draft or published game with the same expanded represe
 ## Map metadata updates
 
 PATCH /games/{gameId}/maps/{mapId} accepts optional name, defaultStyleId and styleOrder and returns the complete map. styleOrder replaces the complete style ID permutation; defaultStyleId must reference a ready style of this map. Null presentation values and incomplete/duplicate orders return 422; missing/foreign style IDs return 404. Order and default are independent. Width, height and geometry are read-only, absent before the first successful style attachment and immutable afterward. Names follow creation validation and game-scoped uniqueness; an identical trimmed name is a no-op preserving updatedAt. Actual renames update the map timestamp without changing the owning game timestamp or queuing processing. Missing or foreign maps return 404. The shared merge-patch media, field-presence and error conventions apply.
+
+## Category trees and placement
+
+GET /games/{gameId}/maps/{mapId}/category-groups returns groups with nested categories, optional canonical image icons and computed marker counts. Group and nested category arrays are returned in display order; numeric order is internal and omitted from responses. Group/category operations share Categories. The former per-group category GET is removed; the retained POST path returns 405 for GET.
+
+Placement uses optional nullable beforeId rather than writable order. Creation and cross-group transfer append when omitted; same-parent metadata updates preserve position. Null appends; a sibling ID inserts before it. Self anchors return 422, missing/foreign anchors 404 and numeric order input 400. Transfers stay within one map and validate resulting-name uniqueness atomically. iconAssetId is optional on creation and nullable on PATCH; null detaches. See the [Categories API](../src/GameAtlas.Api/Categories/README.md).
+
+Group color accepts #RGB or #RRGGBB and returns uppercase #RRGGBB. Omitted creation color defaults to #F59E0B; PATCH omission preserves color, while null is invalid. Category color remains required on creation.

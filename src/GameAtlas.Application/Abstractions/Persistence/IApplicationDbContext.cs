@@ -1,5 +1,4 @@
 using GameAtlas.Domain.Categories;
-using GameAtlas.Domain.CategoryGroups;
 using GameAtlas.Domain.Games;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Domain.Markers;

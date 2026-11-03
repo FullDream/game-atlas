@@ -7,6 +7,16 @@ namespace GameAtlas.Application.Media;
 
 public static class MediaReferenceExtensions
 {
+	public static async Task<Result<ImageAsset?>> FindOptionalImageAsync(this IApplicationDbContext context, Guid? id, CancellationToken cancellationToken)
+	{
+		if (id is null)
+			return Result<ImageAsset?>.Success(null);
+
+		var result = await context.FindImageAsync(id.Value, cancellationToken);
+
+		return result.IsFailure ? Result<ImageAsset?>.Failure(result.Errors) : Result<ImageAsset?>.Success(result.Value);
+	}
+
 	public static async Task<Result<ImageAsset>> FindImageAsync(this IApplicationDbContext context, Guid id,
 		CancellationToken cancellationToken)
 	{

@@ -1,6 +1,6 @@
 using GameAtlas.Application;
 using GameAtlas.Application.Abstractions.Persistence;
-using GameAtlas.Domain.CategoryGroups;
+using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure;
 using GameAtlas.Infrastructure.Persistence;
@@ -21,13 +21,16 @@ public class PersistenceTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+
 		var map = await MapTestData.EnsureMapAsync(factory, game.Id);
 
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 			await using var transaction = await context.BeginTransactionAsync();
+
 			var group = CategoryGroup.Create(map.Id, "Resources", 1);
 
 			Assert.True(group.IsSuccess);
@@ -53,6 +56,7 @@ public class PersistenceTests
 				["ConnectionStrings:GameAtlas"] = "Data Source=:memory:"
 			})
 			.Build();
+
 		var services = new ServiceCollection();
 
 		services.AddLogging();
@@ -64,12 +68,15 @@ public class PersistenceTests
 		});
 
 		await using var scope = provider.CreateAsyncScope();
+
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
 		var applicationContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
 		Assert.Same(context, applicationContext);
 		Assert.NotNull(scope.ServiceProvider.GetRequiredService<IMediator>());
 		Assert.True(context.Database.IsSqlite());
+
 		var gameType = context.Model.FindEntityType(typeof(Game));
 
 		Assert.NotNull(gameType);

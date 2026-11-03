@@ -1,26 +1,16 @@
-using GameAtlas.Application.CategoryGroups.CreateCategoryGroup;
-using GameAtlas.Application.CategoryGroups.UpdateCategoryGroup;
+using GameAtlas.Application.Categories.Groups.CreateCategoryGroup;
+using GameAtlas.Application.Categories.Groups.UpdateCategoryGroup;
 using GameAtlas.Domain;
 
 namespace GameAtlas.Application.Tests;
 
 public class CategoryGroupValidationTests
 {
-	[Theory]
-	[InlineData(null, false)]
-	[InlineData(0, false)]
-	[InlineData(-1, false)]
-	[InlineData(1, true)]
-	[InlineData(int.MaxValue, true)]
-	public void ValidatesExplicitOrderForCreationAndOrderOnlyPatch(int? order, bool valid)
+	[Fact]
+	public void PlacementOnlyPatchAndOptionalIconAreValid()
 	{
-		var gameId = Guid.NewGuid();
-
-		Assert.Equal(valid, new CreateCategoryGroupValidation().Validate(
-			new CreateCategoryGroup(gameId, Guid.NewGuid(), "Group", order)).IsValid);
-		Assert.Equal(valid, new UpdateCategoryGroupValidation().Validate(
-			new UpdateCategoryGroup(gameId, Guid.NewGuid(), Guid.NewGuid(), Order: order)).IsValid);
-		Assert.True(new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(gameId, Guid.NewGuid(), "Group")).IsValid);
+		Assert.True(new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(Guid.NewGuid(), Guid.NewGuid(), "Group", (Guid?)null)).IsValid);
+		Assert.True(new UpdateCategoryGroupValidation().Validate(new UpdateCategoryGroup(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), BeforeId: (Guid?)null)).IsValid);
 	}
 
 	[Theory]
@@ -31,6 +21,7 @@ public class CategoryGroupValidationTests
 	public void ValidatesTrimmedNamesForCreateAndRename(int length, bool valid)
 	{
 		var gameId = Guid.NewGuid();
+
 		var name = " " + new string('x', length) + " ";
 
 		Assert.Equal(valid, new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(gameId, Guid.NewGuid(), name)).IsValid);
@@ -42,6 +33,7 @@ public class CategoryGroupValidationTests
 	public void RejectsMissingNullAndEmptyPatches()
 	{
 		var gameId = Guid.NewGuid();
+
 		var validator = new UpdateCategoryGroupValidation();
 
 		Assert.False(new CreateCategoryGroupValidation().Validate(new CreateCategoryGroup(gameId, Guid.NewGuid(), null)).IsValid);

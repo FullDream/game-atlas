@@ -1,4 +1,4 @@
-using GameAtlas.Domain.CategoryGroups;
+using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,18 +15,23 @@ public class CategoryGroupPersistenceTests
 	{
 		await using var factory = new GameApiFactory();
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, " Ресурсы ", 4);
+
 		var stored = Assert.Single(await CategoryGroupTestData.LoadAsync(factory, game.Id));
 
-		Assert.Equal(group.Id, stored.Id);
-		Assert.Equal(MapTestData.MapIdFor(game.Id), stored.MapId);
-		Assert.Equal("Ресурсы", stored.Name);
-		Assert.Equal(4, stored.Order);
-		Assert.Equal(group.CreatedAt, stored.CreatedAt);
-		Assert.Equal(group.UpdatedAt, stored.UpdatedAt);
+		CategoryGroupTestData.AssertSame(group.Id, stored.Id);
+		CategoryGroupTestData.AssertSame(MapTestData.MapIdFor(game.Id), stored.MapId);
+		CategoryGroupTestData.AssertSame("Ресурсы", stored.Name);
+		CategoryGroupTestData.AssertSame(4, await CategoryGroupTestData.OrderAsync(factory, stored.Id));
+		CategoryGroupTestData.AssertSame(group.CreatedAt, stored.CreatedAt);
+		CategoryGroupTestData.AssertSame(group.UpdatedAt, stored.UpdatedAt);
 		await using var reload = factory.Services.CreateAsyncScope();
+
 		var contextAfter = reload.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
 		var storedGame = await contextAfter.Games.SingleAsync();
 
 		DeleteGameHandlerTests.AssertSameGame(game, storedGame);
@@ -41,17 +46,22 @@ public class CategoryGroupPersistenceTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
 		await MapTestData.EnsureMapAsync(factory, game.Id);
+
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
 
 		await CategoryGroupTestData.SeedAsync(factory, game.Id, name, 1);
 		await CategoryGroupTestData.SeedAsync(factory, other.Id, duplicate, 1);
 		await using var scope = factory.Services.CreateAsyncScope();
+
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		context.CategoryGroups.Add(CategoryGroup.Create(MapTestData.MapIdFor(game.Id), duplicate, 1).Value!);
+
 		var failure = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+
 		var classifier = new SqlitePersistenceFailureClassifier();
 
 		Assert.True(classifier.IsCategoryGroupNameConflict(failure));
@@ -67,26 +77,30 @@ public class CategoryGroupPersistenceTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
 
 		await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		await CategoryGroupTestData.SeedAsync(factory, other.Id, "Group", 1);
+
 		var before = await CategoryGroupTestData.LoadAsync(factory, other.Id);
 
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-			Assert.Equal(1, await context.Games.Where(item => item.Id == game.Id).ExecuteDeleteAsync());
+			CategoryGroupTestData.AssertSame(1, await context.Games.Where(item => item.Id == game.Id).ExecuteDeleteAsync());
 			Assert.Empty(context.ChangeTracker.Entries());
 			context.CategoryGroups.Add(CategoryGroup.Create(Guid.NewGuid(), "Orphan", 1).Value!);
+
 			var failure = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 
 			Assert.False(new SqlitePersistenceFailureClassifier().IsCategoryGroupNameConflict(failure));
 		}
 
 		Assert.Empty(await CategoryGroupTestData.LoadAsync(factory, game.Id));
-		Assert.Equal(before, await CategoryGroupTestData.LoadAsync(factory, other.Id));
+		CategoryGroupTestData.AssertSame(before, await CategoryGroupTestData.LoadAsync(factory, other.Id));
 	}
 }

@@ -22,7 +22,9 @@ public sealed class MediaAcceptanceTests
 
 		await factory.MigrateAsync();
 		using var client = factory.CreateHttpsClient();
+
 		var image = await MediaTestData.UploadImageAsync(client);
+
 		var unrelated = await MediaTestData.UploadImageAsync(client, "svg");
 		using var upload = new MultipartFormDataContent();
 
@@ -31,24 +33,34 @@ public sealed class MediaAcceptanceTests
 
 		upload.Add(new StringContent(image.Id.ToString()), "previewAssetId");
 		using var uploaded = await client.PostAsync("/media/assets", upload);
+
 		var video = Assert.IsType<VideoAssetDto>(await uploaded.Content.ReadFromJsonAsync<MediaAssetDto>());
+
 		var games = new List<Guid>();
+
 		var paths = new List<(string Map, string Category, Guid Marker, Guid Style)>();
 
 		for (var index = 0; index < 2; index++)
 		{
 			var game = await UpdateGameHandlerTests.SeedAsync(factory, $"shared-{index}");
+
 			var map = await MapTestData.EnsureMapAsync(factory, game.Id);
+
 			var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Resources", 1);
+
 			var categoryPath = CategoryTestData.Path(game.Id, group.Id);
 			using var createdCategory = await client.PostAsJsonAsync(categoryPath,
-				new { name = "Category", iconAssetId = image.Id, color = "#fff", order = 1 });
+				new { name = "Category", iconAssetId = image.Id, color = "#fff" });
+
 			var category = (await createdCategory.Content.ReadFromJsonAsync<CategoryDto>())!;
+
 			var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 				media: JsonSerializer.SerializeToElement(new[] { image.Id, video.Id }));
+
 			var mapPath = MapTestData.PathFor(game.Id, map.Id);
 			using var createdStyle = await client.PostAsJsonAsync(mapPath + "/styles",
 				new { name = "Atlas", backgroundColor = "#fff", sourceAssetId = image.Id });
+
 			var style = Assert.Single((await MapTestData.ReadAsync(createdStyle)).Styles);
 
 			games.Add(game.Id);
@@ -64,6 +76,7 @@ public sealed class MediaAcceptanceTests
 		retry.EnsureSuccessStatusCode();
 		await processor.CleanupAsync(CancellationToken.None);
 		Assert.True(await processor.RunNextAsync(CancellationToken.None));
+
 		var folder = await MediaFolderTests.CreateAsync(client, "Shared originals");
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
 		using var edited = await client.PatchAsJsonAsync($"/media/assets/{image.Id}",
@@ -72,10 +85,14 @@ public sealed class MediaAcceptanceTests
 		edited.EnsureSuccessStatusCode();
 		for (var index = 0; index < paths.Count; index++)
 		{
-			var categories = (await client.GetFromJsonAsync<CategoryDto[]>(paths[index].Category))!;
+			var categories = (await CategoryTestData.ReadTreeCategoriesAsync(client, paths[index].Category))!;
+
 			var markers = (await client.GetFromJsonAsync<MarkerDto[]>(paths[index].Map + "/markers", MapTestData.JsonOptions))!;
+
 			var map = (await client.GetFromJsonAsync<MapDto>(paths[index].Map, MapTestData.JsonOptions))!;
-			var icon = Assert.Single(categories).Icon;
+
+			var icon = Assert.IsType<ImageAssetDto>(Assert.Single(categories).Icon);
+
 			var media = Assert.Single(markers).Media.ToArray();
 
 			Assert.Equal("Shared alt", icon.Alt);

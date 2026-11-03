@@ -12,6 +12,12 @@ Style metadata updates are optimistic when a baseline exists, with rollback on f
 
 Creation and style-attachment responses update known map caches directly. `retryStyle(gameId, mapId)` uses the same per-map mutation scope, accepts the reset style into detail/list caches, quarantines prior attempt progress, and reconciles conflicts. HTTP reads and notifications share cache acceptance rules; there is no separate processing resource store.
 
+## Category query options
+
+`CategoriesQueryOptions` exposes `getList(gameId, mapId)` for the complete group/category tree, category `create()`, `update()` and `delete()`, and group `createGroup()`, `updateGroup()` and `deleteGroup()`. Mutation variables include route IDs and generated request fields; update/delete also require `id`. Category mutations retain `groupId` for the current route. Import options, variable types, `getCategoryErrorMessage` and `getGroupsQueryKey` from `@game-atlas/maps/data-access`.
+
+Successful mutations await exact invalidation of that map's tree, refreshing membership, order, icons and marker counts without affecting other maps or style caches. Failed mutations do not change cached data. This stage intentionally uses invalidation only; optimistic updates remain deferred. Features own notifications and prevent conflicting submissions while pending. Placement uses generated `beforeId` inputs rather than numeric order.
+
 ## Editor live updates
 
 Admin configures `provideMapHubUrl('/api/hubs/map')` and shared `provideSignalR()` defaults. The editor provides `MapsQueryOptions`, `MapsLive` and `provideMapHub()` at component scope. `MapsLive.watch(gameId, mapId)` returns synchronization state; subscribing registers handlers, connects, joins the map, then fetches its detail through query options. The editor observes that query with automatic fetching disabled, avoiding an independent startup read. Switching inputs or disposing the stream leaves and disconnects; the hub provider independently stops on destruction.
@@ -29,7 +35,7 @@ npm exec nx -- run maps-data-access:lint
 npm exec nx -- build admin --configuration=production
 ```
 
-Generation is explicit and uncached; `GAME_ATLAS_OPENAPI_URL` overrides its input. Builds do not fetch OpenAPI. Only the Maps tag is generated. The server's SignalR Hub contract remains documented in the [API Maps README](../../../../src/GameAtlas.Api/Maps/README.md), separately from REST generation. No frontend unit/E2E suite is added or run under the current verification policy.
+Generation is explicit and uncached; `GAME_ATLAS_OPENAPI_URL` overrides its input. Builds do not fetch OpenAPI. Maps, Categories and Markers tags are generated; group and category operations share CategoriesService. The server's SignalR Hub contract remains documented in the [API Maps README](../../../../src/GameAtlas.Api/Maps/README.md), separately from REST generation. No frontend unit/E2E suite is added or run under the current verification policy.
 
 The admin development proxy retains `/api` prefix removal and `ws:true` for `/api/hubs/map`; production forwarding must be configured independently.
 

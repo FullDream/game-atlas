@@ -70,7 +70,7 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
                     b.ToTable("Categories", (string)null);
                 });
 
-            modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
+            modelBuilder.Entity("GameAtlas.Domain.Categories.CategoryGroup", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
@@ -280,14 +280,14 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("GameAtlas.Domain.Categories.Category", b =>
                 {
-                    b.HasOne("GameAtlas.Domain.CategoryGroups.CategoryGroup", null)
+                    b.HasOne("GameAtlas.Domain.Categories.CategoryGroup", null)
                         .WithMany()
                         .HasForeignKey("CategoryGroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GameAtlas.Domain.CategoryGroups.CategoryGroup", b =>
+            modelBuilder.Entity("GameAtlas.Domain.Categories.CategoryGroup", b =>
                 {
                     b.HasOne("GameAtlas.Domain.Games.Game", null)
                         .WithMany()

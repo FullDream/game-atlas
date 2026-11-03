@@ -17,16 +17,17 @@ public sealed class CategoryLibraryTests
 		await using var factory = new GameApiFactory(interceptor: capture);
 
 		await factory.MigrateAsync();
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 
 		await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
 
 		capture.Enabled = true;
-		using var small = await client.GetAsync(CategoryTestData.Path(game.Id, group.Id));
+		using var small = await client.GetAsync(CategoryGroupApiTests.Path(game.Id));
 
 		small.EnsureSuccessStatusCode();
-		Assert.Equal(2, capture.Commands.Count);
+		Assert.Equal(4, capture.Commands.Count);
 		capture.Enabled = false;
 
 		for (var index = 0; index < 20; index++)
@@ -34,10 +35,10 @@ public sealed class CategoryLibraryTests
 
 		capture.Commands.Clear();
 		capture.Enabled = true;
-		using var larger = await client.GetAsync(CategoryTestData.Path(game.Id, group.Id));
+		using var larger = await client.GetAsync(CategoryGroupApiTests.Path(game.Id));
 
 		larger.EnsureSuccessStatusCode();
-		Assert.Equal(2, capture.Commands.Count);
+		Assert.Equal(4, capture.Commands.Count);
 	}
 
 	[Theory]
@@ -51,29 +52,33 @@ public sealed class CategoryLibraryTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
+
 		var image = await MediaTestData.UploadImageAsync(client, format);
 		using var created = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id),
 			new { name = "Category", iconAssetId = image.Id, color = "#fff" });
+
 		var category = await CategoryApiTests.ReadAsync(created);
 
 		Assert.Equal(image, category.Icon);
-		var listed = await client.GetFromJsonAsync<CategoryDto[]>(CategoryTestData.Path(game.Id, group.Id));
+
+		var listed = await CategoryTestData.ReadTreeCategoriesAsync(client, CategoryTestData.Path(game.Id, group.Id));
 
 		Assert.Equal(image, Assert.Single(listed!).Icon);
 	}
 
 	[Theory]
-	[InlineData(null, 422)]
 	[InlineData("not-a-guid", 400)]
-	[InlineData("00000000-0000-0000-0000-000000000000", 422)]
+	[InlineData("00000000-0000-0000-0000-000000000000", 404)]
 	[InlineData("019a0000-0000-7000-8000-000000000999", 404)]
 	public async Task CreationRejectsInvalidOrMissingIcons(string? iconAssetId, int expected)
 	{
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
 		using var response = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id),
@@ -89,9 +94,13 @@ public sealed class CategoryLibraryTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var (firstGame, firstGroup) = await CategoryTestData.ParentAsync(factory);
+
 		var (secondGame, secondGroup) = await CategoryTestData.ParentAsync(factory);
+
 		var first = await CategoryTestData.SeedAsync(factory, firstGroup.Id);
+
 		var second = await CategoryTestData.SeedAsync(factory, secondGroup.Id);
 		using var client = factory.CreateHttpsClient();
 		using var protectedDelete = await client.DeleteAsync($"/media/assets/{MediaTestData.IconId}");
@@ -107,7 +116,8 @@ public sealed class CategoryLibraryTests
 			(firstGame, firstGroup, first), (secondGame, secondGroup, second)
 		})
 		{
-			var result = await client.GetFromJsonAsync<CategoryDto[]>(CategoryTestData.Path(game.Id, group.Id));
+			var result = await CategoryTestData.ReadTreeCategoriesAsync(client, CategoryTestData.Path(game.Id, group.Id));
+
 			var dto = Assert.Single(result!);
 
 			Assert.Equal("Shared renamed icon", dto.Icon.Name);
@@ -141,9 +151,13 @@ public sealed class CategoryLibraryTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
+
 		var video = VideoAsset.Create(Guid.CreateVersion7(), "Video", null, "video/mp4", 12).Value!;
+
 		var folder = MediaFolder.Create("Folder").Value!;
 
 		await using (var scope = factory.Services.CreateAsyncScope())

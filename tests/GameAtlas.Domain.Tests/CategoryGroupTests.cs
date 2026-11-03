@@ -1,4 +1,4 @@
-using GameAtlas.Domain.CategoryGroups;
+using GameAtlas.Domain.Categories;
 
 namespace GameAtlas.Domain.Tests;
 
@@ -10,6 +10,7 @@ public class CategoryGroupTests
 	public void CreatesWithNormalizedNameAndImmutableMetadata(string input, string name, string key)
 	{
 		var gameId = Guid.NewGuid();
+
 		var result = CategoryGroup.Create(gameId, input, 2);
 
 		Assert.True(result.IsSuccess);
@@ -28,6 +29,7 @@ public class CategoryGroupTests
 	public void InvalidOrderDoesNotPartiallyRename(int? order)
 	{
 		var group = CategoryGroup.Create(Guid.NewGuid(), "Resources", 1).Value!;
+
 		var before = group.UpdatedAt;
 
 		Assert.True(group.Update("New", order).IsFailure);
@@ -47,6 +49,7 @@ public class CategoryGroupTests
 	public void InvalidNameDoesNotPartiallyChangeOrder(string? name)
 	{
 		var group = CategoryGroup.Create(Guid.NewGuid(), "Resources", 1).Value!;
+
 		var before = group.UpdatedAt;
 
 		Assert.True(group.Update(name, 2).IsFailure);
@@ -59,6 +62,7 @@ public class CategoryGroupTests
 	public void UpdatesEitherFieldOrBothAndPreservesNoOps()
 	{
 		var group = CategoryGroup.Create(Guid.NewGuid(), "Resources", 1).Value!;
+
 		var created = group.CreatedAt;
 
 		Assert.False(group.Update().Value);
@@ -71,6 +75,7 @@ public class CategoryGroupTests
 		Assert.Equal("New", group.Name);
 		Assert.Equal(5, group.Order);
 		Assert.Equal(created, group.CreatedAt);
+
 		var updated = group.UpdatedAt;
 
 		Assert.False(group.Update(" New ", 5).Value);

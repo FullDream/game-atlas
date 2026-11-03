@@ -114,7 +114,7 @@ Content-Type: application/merge-patch+json
 
 {
   "name": "Collectibles",
-  "order": 10
+  "beforeId": null
 }
 
 ###
@@ -137,7 +137,7 @@ Content-Type: application/json
 ###
 
 # Full ordered array with current marker counts.
-GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups/{{categoryGroupId}}/categories
+GET {{GameAtlas_Api_HostAddress}}/games/{{gameId}}/maps/{{mapId}}/category-groups
 
 ###
 
@@ -147,7 +147,7 @@ Content-Type: application/merge-patch+json
 
 {
   "name": "Rare chests",
-  "order": 10,
+  "beforeId": null,
   "color": "#ABCDEF"
 }
 

@@ -12,7 +12,4 @@ public static class CreateCategoryErrors
 		"Category.Name.Conflict", "A category with this name already exists in this group.",
 		nameof(CreateCategory.Name), ErrorType.Conflict);
 
-	public static readonly Error ExplicitOrderRequired = new(
-		"Category.Order.Required", "The order range is exhausted. Supply an explicit positive order.",
-		nameof(CreateCategory.Order), ErrorType.Validation);
 }

@@ -10,3 +10,5 @@ export type {
 	LibraryParams,
 	PickerContext,
 } from './lib/media-picker-source'
+
+export { reorder } from './lib/reorder'

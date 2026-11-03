@@ -62,7 +62,18 @@
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in oklch, var(--muted-foreground) 45%, transparent) transparent;
 	}
+
+	html,
+	.overflow-auto,
+	.overflow-y-auto,
+	.overflow-scroll,
+	.overflow-y-scroll {
+		scrollbar-gutter: stable;
+	}
+
 	body {
 		@apply bg-background text-foreground;
 	}

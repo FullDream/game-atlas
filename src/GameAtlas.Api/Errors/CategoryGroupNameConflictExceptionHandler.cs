@@ -1,5 +1,5 @@
 using GameAtlas.Application.Abstractions.Persistence;
-using GameAtlas.Application.CategoryGroups.CreateCategoryGroup;
+using GameAtlas.Application.Categories.Groups.CreateCategoryGroup;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace GameAtlas.Api.Errors;

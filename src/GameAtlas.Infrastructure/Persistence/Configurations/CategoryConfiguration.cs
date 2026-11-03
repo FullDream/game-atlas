@@ -1,6 +1,5 @@
 using GameAtlas.Application.Categories;
 using GameAtlas.Domain.Categories;
-using GameAtlas.Domain.CategoryGroups;
 using GameAtlas.Domain.Media;
 using GameAtlas.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;

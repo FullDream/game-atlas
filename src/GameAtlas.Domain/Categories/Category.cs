@@ -14,7 +14,7 @@ public sealed class Category
 	public Guid CategoryGroupId { get; private set; }
 	public string Name { get; private set; } = string.Empty;
 	public string NormalizedName { get; private set; } = string.Empty;
-	public Guid IconAssetId { get; private set; }
+	public Guid? IconAssetId { get; private set; }
 	public string Color { get; private set; } = string.Empty;
 	public int Order { get; private set; }
 	public DateTimeOffset CreatedAt { get; private set; }
@@ -25,6 +25,7 @@ public sealed class Category
 	public static Result<Category> Create(Guid categoryGroupId, string? name, Guid? iconAssetId, string? color, int order)
 	{
 		var category = new Category(Guid.CreateVersion7());
+
 		var result = category.Update(name, iconAssetId, color, order, categoryGroupId);
 
 		if (result.IsFailure)
@@ -39,16 +40,18 @@ public sealed class Category
 		Optional<string?> color = default, Optional<int?> order = default, Optional<Guid?> categoryGroupId = default)
 	{
 		var nextName = name.GetValueOrDefault(Name)?.Trim();
+
 		var nextIcon = iconAssetId.GetValueOrDefault(IconAssetId);
+
 		var nextColor = color.GetValueOrDefault(Color);
+
 		var nextOrder = order.GetValueOrDefault(Order);
+
 		var nextGroupId = categoryGroupId.GetValueOrDefault(CategoryGroupId);
 
 		if (string.IsNullOrEmpty(nextName))
 			return CategoryErrors.NameRequired;
 
-		if (nextIcon is null || nextIcon == Guid.Empty)
-			return CategoryErrors.IconRequired;
 
 		if (nextColor is null || !ColorRegex.IsMatch(nextColor))
 			return CategoryErrors.InvalidColor;
@@ -67,7 +70,7 @@ public sealed class Category
 
 		Name = nextName;
 		NormalizedName = NormalizeName(nextName);
-		IconAssetId = nextIcon.Value;
+		IconAssetId = nextIcon;
 		Color = nextColor;
 		Order = nextOrder.Value;
 		CategoryGroupId = nextGroupId.Value;
@@ -76,7 +79,19 @@ public sealed class Category
 		return true;
 	}
 
-	private static string NormalizeColor(string color)
+	public void PlaceAt(int order)
+	{
+		SetDisplayOrder(order);
+		UpdatedAt = DateTimeOffset.UtcNow;
+	}
+
+	public void SetDisplayOrder(int order)
+	{
+		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(order);
+		Order = order;
+	}
+
+	internal static string NormalizeColor(string color)
 	{
 		color = color.ToUpperInvariant();
 

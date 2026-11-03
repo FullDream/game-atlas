@@ -18,7 +18,7 @@ Keep dependencies directed inward. Domain must not depend on API DTOs or infrast
 
 ## Frontend and domains
 
-The Angular/Nx workspace in `frontend/` contains an admin browser SPA and a separate statically prerendered public web application. Shared libraries use explicit type, domain and platform boundaries. Games and maps may consume media; shared libraries remain independent of product domains. Category groups, categories and markers belong to maps.
+The Angular/Nx workspace in `frontend/` contains an admin browser SPA and a separate statically prerendered public web application. Shared libraries use explicit type, domain and platform boundaries. Games and maps may consume media; shared libraries remain independent of product domains. Category groups, categories and markers belong to maps. Backend group/category entities share Domain/Categories; group use cases live in Application/Categories/Groups; HTTP operations share Api/Categories and the Categories OpenAPI tag. Tables and entity identities remain separate.
 
 See [frontend architecture](frontend/architecture.md) for application structure and the dependency matrix. ESLint enforces frontend import boundaries; backend project references expose layer dependencies but do not by themselves check every architectural convention.
 

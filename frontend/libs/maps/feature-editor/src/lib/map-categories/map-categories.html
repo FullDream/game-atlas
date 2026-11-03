@@ -1,0 +1,350 @@
+<section
+	hlmAccordionItem
+	[isOpened]="sectionOpen()"
+	(openedChange)="sectionOpen.set($event)"
+	class="min-h-0 flex flex-1 flex-col overflow-hidden"
+>
+	<header class="h-14 gap-2 px-3 flex shrink-0 items-center border-b">
+		<h2 class="min-w-0 text-sm font-semibold flex-1 truncate">Categories</h2>
+		<div hlmButtonGroup aria-label="Add map content">
+			<button
+				id="category-add"
+				ui-button
+				variant="outline"
+				size="sm"
+				icon="matAddRound"
+				[disabled]="busy() || query.isLoading() || query.isError()"
+				(click)="edit(groups().length ? 'category' : 'group')"
+			>
+				{{ groups().length ? 'Add category' : 'Add group' }}
+			</button>
+			<button
+				ui-button
+				variant="outline"
+				size="icon-sm"
+				icon="matKeyboardArrowDownRound"
+				aria-label="More add options"
+				[hlmDropdownMenuTrigger]="addMenu"
+				[disabled]="busy() || query.isLoading() || query.isError()"
+			></button>
+		</div>
+		<hlm-accordion-trigger
+			class="shrink-0"
+			triggerClass="size-8 p-0 items-center justify-center hover:bg-muted hover:no-underline **:data-[slot=accordion-trigger-icon]:ms-0"
+		>
+			<span class="sr-only">Toggle categories</span>
+		</hlm-accordion-trigger>
+		<ng-template #addMenu>
+			<div hlmDropdownMenu>
+				<button hlmDropdownMenuItem (triggered)="edit('group')">
+					<ng-icon name="matFolderRound" aria-hidden="true" />
+					Add group
+				</button>
+				<button hlmDropdownMenuItem (triggered)="edit('category')">
+					<ng-icon name="matAddRound" aria-hidden="true" />
+					Add category
+				</button>
+			</div>
+		</ng-template>
+	</header>
+
+	<hlm-accordion-content class="min-h-0 [&>div]:pb-0 flex-1 overflow-hidden data-[state=open]:h-auto [&>div]:h-full">
+		<div #categoriesContainer cdkScrollable class="min-h-0 h-full scrollbar-gutter-stable overflow-y-auto">
+			@if (query.isLoading()) {
+				<div
+					class="gap-3 px-3 pb-3 flex flex-col"
+					role="status"
+					aria-label="Loading categories"
+					aria-busy="true"
+				>
+					@for (row of [1, 2, 3, 4]; track row) {
+						<hlm-skeleton class="h-8 w-full" />
+					}
+				</div>
+			} @else if (query.isError()) {
+				<ui-error-state class="p-3">
+					<ng-container uiErrorStateHeading>Could not load categories</ng-container>
+					<ng-container uiErrorStateDescription>Try loading this map's category tree again.</ng-container>
+					<button ui-button variant="outline" size="sm" (click)="query.refetch()">Retry</button>
+				</ui-error-state>
+			} @else if (!groups().length) {
+				<div hlmEmpty class="m-3 mt-0 border">
+					<div hlmEmptyHeader>
+						<h3 hlmEmptyTitle>No categories yet</h3>
+						<p hlmEmptyDescription>Create a group to organize your map's categories.</p>
+					</div>
+					<div hlmEmptyContent>
+						<button ui-button variant="outline" size="sm" (click)="edit('group')">
+							<ng-icon name="matFolderRound" aria-hidden="true" />
+							Add group
+						</button>
+					</div>
+				</div>
+			} @else {
+				<ul
+					ngTree
+					#tree="ngTree"
+					focusMode="roving"
+					aria-label="Map categories"
+					[attr.aria-busy]="busy()"
+					class="category-tree px-2 pb-3"
+					cdkDropList
+					[cdkDropListData]="{ kind: 'group', groupId: '' }"
+					[cdkDropListEnterPredicate]="acceptsGroup"
+					[cdkDropListDisabled]="busy()"
+					(cdkDropListDropped)="drop($event)"
+				>
+					@for (group of groups(); track group.id; let groupIndex = $index) {
+						<li
+							ngTreeItem
+							#groupItem="ngTreeItem"
+							[parent]="tree"
+							[value]="group.id"
+							[label]="group.name"
+							[selectable]="false"
+							[expanded]="expanded(group.id)"
+							(expandedChange)="setExpanded(group.id, $event)"
+							cdkDrag
+							[cdkDragBoundary]="categoriesContainer"
+							cdkDragPreviewContainer="parent"
+							[cdkDragData]="{ kind: 'group', id: group.id, groupId: group.id }"
+							cdkDragLockAxis="y"
+							(cdkDragStarted)="dragging.set(true)"
+							(cdkDragEnded)="dragging.set(false)"
+						>
+							<div
+								class="category-row"
+								cdkDropList
+								[id]="'category-header-' + group.id"
+								cdkDragLockAxis="y"
+								[cdkDropListData]="{ kind: 'category', groupId: group.id }"
+								[cdkDropListConnectedTo]="dropIds()"
+								[cdkDropListEnterPredicate]="acceptsCategory"
+								[cdkDropListDisabled]="busy()"
+								(cdkDropListDropped)="drop($event)"
+							>
+								<button
+									ui-button
+									cdkDragHandle
+									class="text-muted-foreground hover:text-foreground cursor-grab touch-none active:cursor-grabbing"
+									variant="ghost"
+									size="icon-sm"
+									icon="matDragIndicatorRound"
+									[attr.aria-label]="'Drag group ' + group.name"
+									[disabled]="busy()"
+									(click)="$event.stopPropagation()"
+									(keydown)="$event.stopPropagation()"
+								></button>
+								<button
+									ui-button
+									variant="ghost"
+									size="icon-sm"
+									[icon]="expanded(group.id) ? 'matKeyboardArrowDownRound' : 'matChevronRightRound'"
+									[attr.aria-label]="(expanded(group.id) ? 'Collapse ' : 'Expand ') + group.name"
+									[attr.aria-expanded]="expanded(group.id)"
+									(click)="$event.stopPropagation(); setExpanded(group.id, !expanded(group.id))"
+									(keydown)="$event.stopPropagation()"
+								></button>
+								@if (group.icon; as icon) {
+									<ui-media-thumbnail class="size-5 shrink-0" [image]="icon" />
+								}
+								<span class="min-w-0 text-sm font-medium flex-1 truncate">{{ group.name }}</span>
+								<span
+									class="text-xs text-muted-foreground tabular-nums"
+									[attr.aria-label]="group.markersCount + ' markers'"
+								>
+									{{ group.markersCount }}
+								</span>
+								<button
+									ui-button
+									variant="ghost"
+									size="icon-sm"
+									icon="matMoreHorizRound"
+									[id]="'category-actions-' + group.id"
+									[attr.aria-label]="'Actions for ' + group.name"
+									[hlmDropdownMenuTrigger]="groupActions"
+									[disabled]="busy()"
+									(click)="$event.stopPropagation()"
+									(keydown)="$event.stopPropagation()"
+								></button>
+							</div>
+							<ng-template #groupActions>
+								<div hlmDropdownMenu>
+									<button hlmDropdownMenuItem (triggered)="edit('category', group)">
+										<ng-icon name="matAddRound" aria-hidden="true" />
+										Add category
+									</button>
+									<button hlmDropdownMenuItem (triggered)="edit('group', group)">
+										<ng-icon name="matEditRound" aria-hidden="true" />
+										Edit group
+									</button>
+									<button
+										hlmDropdownMenuItem
+										[disabled]="groupIndex === 0"
+										(triggered)="moveGroup(group.id, groupIndex - 1)"
+									>
+										<ng-icon name="matArrowUpwardRound" aria-hidden="true" />
+										Move up
+									</button>
+									<button
+										hlmDropdownMenuItem
+										[disabled]="groupIndex === groups().length - 1"
+										(triggered)="moveGroup(group.id, groupIndex + 1)"
+									>
+										<ng-icon name="matArrowDownwardRound" aria-hidden="true" />
+										Move down
+									</button>
+									<button hlmDropdownMenuItem variant="destructive" (triggered)="remove(group)">
+										<ng-icon name="matDeleteRound" aria-hidden="true" />
+										Delete group
+									</button>
+								</div>
+							</ng-template>
+							<ul
+								role="group"
+								class="category-children ml-11 pl-1 border-l"
+								cdkDropList
+								cdkDropListHasAnchor
+								[id]="'category-list-' + group.id"
+								[cdkDropListData]="{ kind: 'category', groupId: group.id }"
+								[cdkDropListConnectedTo]="dropIds()"
+								[cdkDropListEnterPredicate]="acceptsCategory"
+								[cdkDropListDisabled]="busy()"
+								(cdkDropListDropped)="drop($event)"
+							>
+								<ng-template ngTreeItemGroup [ownedBy]="groupItem" #children="ngTreeItemGroup">
+									@for (category of group.categories; track category.id; let categoryIndex = $index) {
+										<li
+											ngTreeItem
+											[parent]="children"
+											[value]="category.id"
+											[label]="category.name"
+											[selectable]="false"
+											cdkDrag
+											[cdkDragBoundary]="categoriesContainer"
+											cdkDragPreviewContainer="parent"
+											cdkDragLockAxis="y"
+											[cdkDragData]="{ kind: 'category', id: category.id, groupId: group.id }"
+											(cdkDragStarted)="dragging.set(true)"
+											(cdkDragEnded)="dragging.set(false)"
+										>
+											<div class="category-row">
+												<button
+													ui-button
+													cdkDragHandle
+													class="text-muted-foreground hover:text-foreground cursor-grab touch-none active:cursor-grabbing"
+													variant="ghost"
+													size="icon-sm"
+													icon="matDragIndicatorRound"
+													[attr.aria-label]="'Drag category ' + category.name"
+													[disabled]="busy()"
+													(click)="$event.stopPropagation()"
+													(keydown)="$event.stopPropagation()"
+												></button>
+												<span
+													class="size-5 flex shrink-0 items-center justify-center"
+													[style.color]="category.color"
+												>
+													@if (category.icon; as icon) {
+														<ui-media-thumbnail class="size-5" [image]="icon" />
+													} @else {
+														<ng-icon name="matLocationOnRound" aria-hidden="true" />
+													}
+												</span>
+												<span class="min-w-0 text-sm flex-1 truncate">{{ category.name }}</span>
+												<span
+													class="text-xs text-muted-foreground tabular-nums"
+													[attr.aria-label]="category.markersCount + ' markers'"
+												>
+													{{ category.markersCount }}
+												</span>
+												<button
+													ui-button
+													variant="ghost"
+													size="icon-sm"
+													icon="matMoreHorizRound"
+													[id]="'category-actions-' + category.id"
+													[attr.aria-label]="'Actions for ' + category.name"
+													[hlmDropdownMenuTrigger]="categoryActions"
+													[disabled]="busy()"
+													(click)="$event.stopPropagation()"
+													(keydown)="$event.stopPropagation()"
+												></button>
+											</div>
+											<ng-template #categoryActions>
+												<div hlmDropdownMenu>
+													<button
+														hlmDropdownMenuItem
+														(triggered)="edit('category', group, category)"
+													>
+														<ng-icon name="matEditRound" aria-hidden="true" />
+														Edit category
+													</button>
+													<button
+														hlmDropdownMenuItem
+														[disabled]="categoryIndex === 0"
+														(triggered)="
+															moveCategory(group, category, group, categoryIndex - 1)
+														"
+													>
+														<ng-icon name="matArrowUpwardRound" aria-hidden="true" />
+														Move up
+													</button>
+													<button
+														hlmDropdownMenuItem
+														[disabled]="categoryIndex === group.categories.length - 1"
+														(triggered)="
+															moveCategory(group, category, group, categoryIndex + 1)
+														"
+													>
+														<ng-icon name="matArrowDownwardRound" aria-hidden="true" />
+														Move down
+													</button>
+													<div hlmDropdownMenuSeparator></div>
+													@for (destination of groups(); track destination.id) {
+														@if (destination.id !== group.id) {
+															<button
+																hlmDropdownMenuItem
+																(triggered)="
+																	moveCategory(
+																		group,
+																		category,
+																		destination,
+																		destination.categories.length
+																	)
+																"
+															>
+																<ng-icon
+																	name="matDriveFileMoveRound"
+																	aria-hidden="true"
+																/>
+																Move to {{ destination.name }}
+															</button>
+														}
+													}
+													<div hlmDropdownMenuSeparator></div>
+													<button
+														hlmDropdownMenuItem
+														variant="destructive"
+														(triggered)="remove(group, category)"
+													>
+														<ng-icon name="matDeleteRound" aria-hidden="true" />
+														Delete category
+													</button>
+												</div>
+											</ng-template>
+										</li>
+									} @empty {
+										<li class="px-2 py-2 text-xs text-muted-foreground" role="presentation">
+											No categories. Drop one here or use Add category.
+										</li>
+									}
+								</ng-template>
+							</ul>
+						</li>
+					}
+				</ul>
+			}
+		</div>
+	</hlm-accordion-content>
+</section>

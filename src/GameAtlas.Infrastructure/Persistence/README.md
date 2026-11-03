@@ -101,3 +101,13 @@ Legacy category icons, marker media and map originals are not migrated into the 
 Historical migrations remain unchanged. Existing consumer migration guards refuse unresolved legacy references rather than silently deleting them. A populated legacy database is not a supported upgrade source for this change. Database recreation or deletion of existing files must be requested explicitly; application startup never resets a database or applies migrations.
 
 Keep database and filesystem backups together when required. Populated rollback is unsupported; restore matching backups with the prior application. Fresh empty upgrade and rollback are verified using disposable test stores.
+
+## Category tree
+
+20261101172032_CategoryTree makes Categories.IconAssetId nullable and adds a restrictive optional image FK/index to CategoryGroups. Existing order is normalized by order/createdAt/id within each map/group, preserving visible sequence, IDs, marker/media references and timestamps. Apply explicitly with the EF database update command above; startup does not migrate.
+
+Downgrade rejects null category icons before altering schema. Restore matching backups or explicitly attach valid icons before downgrade; do not invent references. Dropping the group icon column loses those associations, so preserve a backup. Folder/namespace consolidation does not rename tables or marker foreign keys.
+
+## Category group colors
+
+CategoryGroupColor adds required CategoryGroups.Color with default #F59E0B for existing groups, preserving other columns and timestamps. Apply explicitly after CategoryTree through EF CLI. Downgrade removes group color values only.

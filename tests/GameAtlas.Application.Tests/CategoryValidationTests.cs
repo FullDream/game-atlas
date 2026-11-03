@@ -42,30 +42,25 @@ public class CategoryValidationTests
 		Assert.Equal(valid, new UpdateCategoryValidation().Validate(Update() with { Color = color }).IsValid);
 	}
 
-	[Theory]
-	[InlineData(null, false)]
-	[InlineData(0, false)]
-	[InlineData(-1, false)]
-	[InlineData(1, true)]
-	[InlineData(int.MaxValue, true)]
-	public void OptionalOrderValidatesSuppliedValue(int? order, bool valid)
+	[Fact]
+	public void OptionalPlacementAndIconsAllowNull()
 	{
-		Assert.Equal(valid, new CreateCategoryValidation().Validate(Create() with { Order = order }).IsValid);
-		Assert.Equal(valid, new UpdateCategoryValidation().Validate(Update() with { Order = order }).IsValid);
-		Assert.True(new CreateCategoryValidation().Validate(Create()).IsValid);
+		Assert.True(new CreateCategoryValidation().Validate(Create() with { BeforeId = (Guid?)null, IconAssetId = null }).IsValid);
+		Assert.True(new UpdateCategoryValidation().Validate(Update() with { BeforeId = (Guid?)null, IconAssetId = (Guid?)null }).IsValid);
 	}
 
 	[Fact]
 	public void RejectsEmptyPatchAndNullRequiredFieldsButAllowsGuidLookupMiss()
 	{
 		var create = new CreateCategoryValidation();
+
 		var update = new UpdateCategoryValidation();
 
 		Assert.False(create.Validate(Create(name: null)).IsValid);
-		Assert.False(create.Validate(Create() with { IconAssetId = null }).IsValid);
+		Assert.True(create.Validate(Create() with { IconAssetId = null }).IsValid);
 		Assert.False(update.Validate(Update()).IsValid);
 		Assert.False(update.Validate(Update() with { Name = (string?)null }).IsValid);
-		Assert.False(update.Validate(Update() with { IconAssetId = (Guid?)null }).IsValid);
+		Assert.True(update.Validate(Update() with { IconAssetId = (Guid?)null }).IsValid);
 		Assert.False(update.Validate(Update() with { Color = (string?)null }).IsValid);
 		Assert.False(update.Validate(Update() with { CategoryGroupId = (Guid?)null }).IsValid);
 		Assert.True(update.Validate(Update() with { CategoryGroupId = Guid.Empty }).IsValid);

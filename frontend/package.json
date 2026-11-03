@@ -8,6 +8,7 @@
 		"#theme.css": "./libs/shared/ui/src/theme/styles.css"
 	},
 	"dependencies": {
+		"@angular/aria": "^22.2.5",
 		"@angular/cdk": "^22.2.3",
 		"@angular/common": "~22.1.0",
 		"@angular/compiler": "~22.1.0",

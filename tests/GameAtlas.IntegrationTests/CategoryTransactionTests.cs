@@ -14,10 +14,14 @@ public class CategoryTransactionTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		using var client = factory.CreateHttpsClient();
+
 		var path = CategoryTestData.Path(game.Id, group.Id);
+
 		var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
 		var tasks = Enumerable.Range(0, 3).Select(index => Task.Run(async () =>
 		{
 			await gate.Task;
@@ -26,6 +30,7 @@ public class CategoryTransactionTests
 		})).ToArray();
 
 		gate.SetResult();
+
 		var responses = await Task.WhenAll(tasks);
 
 		foreach (var response in responses)
@@ -35,9 +40,10 @@ public class CategoryTransactionTests
 		}
 
 		Assert.Equal(new[] { 1, 2, 3 },
-			(await CategoryTestData.LoadAsync(factory, group.Id)).Select(item => item.Order));
+			await Task.WhenAll((await CategoryTestData.LoadAsync(factory, group.Id)).Select(item => CategoryTestData.OrderAsync(factory, item.Id))));
 
 		var duplicatesGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
 		var duplicateTasks = new[] { "Ресурсы", " ресурсы " }.Select(name => Task.Run(async () =>
 		{
 			await duplicatesGate.Task;
@@ -46,6 +52,7 @@ public class CategoryTransactionTests
 		})).ToArray();
 
 		duplicatesGate.SetResult();
+
 		var duplicates = await Task.WhenAll(duplicateTasks);
 
 		Assert.Single(duplicates, response => response.StatusCode == HttpStatusCode.OK);
@@ -66,12 +73,18 @@ public class CategoryTransactionTests
 		await using var factory = new GameApiFactory(interceptor: interceptor);
 
 		await factory.MigrateAsync();
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var destination = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Destination", 2);
+
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
+
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
+
 		var beforeDestination = await CategoryTestData.LoadAsync(factory, destination.Id);
 		using var client = factory.CreateHttpsClient();
+
 		var path = CategoryTestData.Path(game.Id, group.Id, category.Id);
 
 		interceptor.Enabled = true;
@@ -79,13 +92,14 @@ public class CategoryTransactionTests
 		{
 			"create" => await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id),
 				CategoryApiTests.Body("New")),
-			"update" => await client.PatchAsJsonAsync(path, new { name = "New", order = 20 }),
+			"update" => await client.PatchAsJsonAsync(path, new { name = "New", beforeId = (Guid?)null }),
 			"transfer" => await client.PatchAsJsonAsync(path,
-				new { categoryGroupId = destination.Id, name = "New", order = 20 }),
+				new { categoryGroupId = destination.Id, name = "New", beforeId = (Guid?)null }),
 			_ => await client.DeleteAsync(path)
 		};
 
 		Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+
 		var body = await response.Content.ReadAsStringAsync();
 
 		Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
@@ -106,15 +120,21 @@ public class CategoryTransactionTests
 		await using var factory = new GameApiFactory(interceptor: interceptor);
 
 		await factory.MigrateAsync();
+
 		var (game, source) = await CategoryTestData.ParentAsync(factory);
+
 		var destination = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Destination", 2);
 
 		await CategoryTestData.SeedAsync(factory, source.Id, "Taken");
 		await CategoryTestData.SeedAsync(factory, destination.Id, "Taken");
+
 		var category = await CategoryTestData.SeedAsync(factory, source.Id, "Target", 2);
+
 		var before = await CategoryTestData.LoadAsync(factory, source.Id);
+
 		var beforeDestination = await CategoryTestData.LoadAsync(factory, destination.Id);
 		using var client = factory.CreateHttpsClient();
+
 		var path = CategoryTestData.Path(game.Id, source.Id, category.Id);
 
 		interceptor.Enabled = true;
@@ -122,8 +142,8 @@ public class CategoryTransactionTests
 		{
 			"create" => await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, source.Id),
 				CategoryApiTests.Body("New")),
-			"rename" => await client.PatchAsJsonAsync(path, new { name = "New", order = 20 }),
-			_ => await client.PatchAsJsonAsync(path, new { categoryGroupId = destination.Id, name = "New", order = 20 })
+			"rename" => await client.PatchAsJsonAsync(path, new { name = "New", beforeId = (Guid?)null }),
+			_ => await client.PatchAsJsonAsync(path, new { categoryGroupId = destination.Id, name = "New", beforeId = (Guid?)null })
 		};
 
 		Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
@@ -139,7 +159,9 @@ public class CategoryTransactionTests
 		await using var factory = new GameApiFactory(interceptor: interceptor);
 
 		await factory.MigrateAsync();
+
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
+
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 		using var client = factory.CreateHttpsClient();
 

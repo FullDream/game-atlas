@@ -30,3 +30,13 @@ Applies to shared UI, owned Spartan Helm components and feature presentation. Pa
 - Keep filter labels accessible without adding a visible label row when placeholders and named triggers communicate the controls. Prefer a compact combined sorting control when it avoids redundant fields.
 - Use navigation appropriate to the editor layout: a named back-arrow beside the title for compact editors, or a Cancel action beside Save/Create in the workspace header for full settings pages. Put status beside the title and avoid a redundant All games action. Header submit buttons target the editor form by its stable form ID.
 - Reusable confirmation and picker dialogs belong to shared UI. Data-driven shared dialogs own injectQuery/injectMutation and depend on a shared port, not a domain QueryOptions class. Implement the adapter in the owning domain and provide it at application level.
+
+## Category tree
+
+Show Categories below styles in the same left panel. Group rows contain handle, expansion arrow, optional icon, name, marker count and actions; indented children contain handle, optional icon, name, count and actions. Counts/actions stay visible while names truncate. Missing icons do not show broken images.
+
+Use Angular Aria Tree because Spartan has no installed tree. Retain project theme tokens and Material Symbols Rounded. Use labelled CDK handles, allow empty/collapsed destinations, and provide Move up/down and Move to group menu alternatives. Preserve focus and show failures locally. Category writes currently await persistence and exact tree invalidation; optimistic behavior is deferred.
+
+The category header uses Spartan Button Group for the primary create action and dropdown. Add and row menus include decorative Material Symbols icons. Both groups and categories expose hex colors; iconless rows display colored map-pin fallback icons for categories; groups without library images render no icon.
+
+The map editor left panel fills its available height and uses Spartan accordion sections for styles and categories. Both start open and share remaining height; collapsed sections retain their headers while open sections use freed space. Scroll only the individual content areas, not the entire panel. Keep creation controls outside accordion trigger buttons and register each content scroller with CDK for drag auto-scrolling.
