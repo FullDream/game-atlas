@@ -57,6 +57,7 @@ export class MapViewport {
 	readonly defaultStyleId = input<string | null>(null)
 	readonly markers = input<MapMarker[]>([])
 	readonly tool = input<MapTool>('pan')
+	readonly fullscreenTarget = input<HTMLElement>()
 
 	readonly markerSelected = output<string>()
 	readonly markerPlaced = output<MapPoint>()
@@ -146,7 +147,10 @@ export class MapViewport {
 
 			this.fullscreenAvailable.set(!!document.fullscreenEnabled)
 
-			const update = (): void => this.fullscreen.set(document.fullscreenElement === this.#host.nativeElement)
+			const update = (): void =>
+				this.fullscreen.set(
+					document.fullscreenElement === (this.fullscreenTarget() ?? this.#host.nativeElement),
+				)
 
 			document.addEventListener('fullscreenchange', update)
 			this.#destroy.onDestroy(() => document.removeEventListener('fullscreenchange', update))
@@ -173,7 +177,9 @@ export class MapViewport {
 
 	protected toggleFullscreen(): void {
 		const host = this.#host.nativeElement
-		const operation = this.fullscreen() ? host.ownerDocument.exitFullscreen() : host.requestFullscreen()
+		const operation = this.fullscreen()
+			? host.ownerDocument.exitFullscreen()
+			: (this.fullscreenTarget() ?? host).requestFullscreen()
 
 		void operation.catch(() => this.fullscreenAvailable.set(false))
 	}

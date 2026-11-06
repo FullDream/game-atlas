@@ -27,3 +27,9 @@ Hover enlarges interactive marker icons and raises them above neighboring marker
 Hovered markers show their plain-text name in an OpenLayers overlay using the shared Helm tooltip styles, since Canvas markers have no DOM tooltip trigger. The tooltip does not intercept pointer events, adjusts its alignment near map edges and closes with Escape or when hover clears. Starting a camera movement also clears hover and the tooltip.
 
 `revealMarker(id, region)` accepts an unobscured pixel rectangle relative to the viewport. This explicit operation minimally pans a hidden selected point into the rectangle with padding, preserving zoom and marker coordinates; ordinary data/style updates preserve the camera. Use `getBounds()` to translate overlay bounds. This is used above the mobile marker Drawer and does not emit a persistence event.
+
+The optional mapLeadingToolbar content slot appears before the style selector and remains rendered when the selector is absent. Consumers own its controls and state. Resizing around a hidden or shown consumer panel uses the existing ResizeObserver without recreating the map or fitting the camera.
+
+The leading controls and style selector share flexible width in the top toolbar. On narrow viewports the selector shrinks and truncates its label while zoom/fit/fullscreen retain their sizes in the same row.
+
+Consumers may supply fullscreenTarget to expand a containing workspace instead of only the viewport. The fullscreen control tracks that element and the default remains the viewport host. The target must contain the viewport and any panels that should remain visible.

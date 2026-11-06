@@ -1,7 +1,17 @@
 import { CategoryIcon } from '@game-atlas/maps/ui'
 import { CdkScrollable } from '@angular/cdk/scrolling'
 import { HlmAccordionImports } from '@spartan-ng/helm/accordion'
-import { ChangeDetectorRef, Component, computed, DestroyRef, inject, input, linkedSignal, signal } from '@angular/core'
+import {
+	ChangeDetectorRef,
+	Component,
+	computed,
+	DestroyRef,
+	inject,
+	input,
+	linkedSignal,
+	model,
+	signal,
+} from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { Tree, TreeItem, TreeItemGroup } from '@angular/aria/tree'
 import {
@@ -31,11 +41,12 @@ import {
 	matMoreHorizRound,
 	matDragIndicatorRound,
 	matChevronRightRound,
-	matKeyboardArrowDownRound,
+	matCreateNewFolderRound,
 } from '@ng-icons/material-symbols/round'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
 import { HlmButtonGroup } from '@spartan-ng/helm/button-group'
+import { HlmTooltip } from '@spartan-ng/helm/tooltip'
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
@@ -58,6 +69,7 @@ type MoveCallbacks = { onError: (error: unknown) => void }
 		HlmAccordionImports,
 		Button,
 		NgIcon,
+		HlmTooltip,
 		HlmButtonGroup,
 		ErrorState,
 		HlmDropdownMenuImports,
@@ -84,11 +96,11 @@ type MoveCallbacks = { onError: (error: unknown) => void }
 			matMoreHorizRound,
 			matDragIndicatorRound,
 			matChevronRightRound,
-			matKeyboardArrowDownRound,
+			matCreateNewFolderRound,
 		}),
 	],
 	host: {
-		class: 'flex min-h-14 basis-14 shrink-0 flex-col transition-[flex-grow] duration-200 ease-out motion-reduce:transition-none',
+		class: 'flex min-h-10 basis-10 shrink-0 flex-col transition-[flex-grow] duration-200 ease-out motion-reduce:transition-none',
 		'[style.flex-grow]': 'sectionOpen() ? 1 : 0',
 	},
 })
@@ -122,7 +134,7 @@ export class MapCategories {
 	protected readonly acceptsCategory = (drag: CdkDrag<DragItem | undefined>): boolean =>
 		drag.data?.kind === 'category'
 
-	readonly sectionOpen = signal(true)
+	readonly sectionOpen = model(false)
 
 	protected readonly groups = linkedSignal(() => this.query.data() ?? [])
 	protected readonly busy = computed(() => this.#pending() > 0)

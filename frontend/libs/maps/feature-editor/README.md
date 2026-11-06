@@ -2,7 +2,7 @@
 
 Administration editor at `/games/:gameId/maps/:mapId/edit`, outside game settings tabs and inside the persistent shell. Admin supplies `gameId`, `mapId` and `gameName`. The feature consumes Maps data-access and Maps UI; it does not import Games or Media libraries.
 
-The left panel shows source thumbnails and dimensions. Below the dimensions, unfinished or failed styles show their current server status; the server-derived ready default shows Default in the same slot. Other ready styles have no badge, and ready is never shown as status text. Ready styles can be selected from either panel or viewport. Narrow screens toggle between styles and map. Search and filters are disabled placeholders.
+The left panel shows source thumbnails and dimensions. Below the dimensions, unfinished or failed styles show their current server status; the server-derived ready default shows Default in the same slot. Other ready styles have no badge, and ready is never shown as status text. Ready styles can be selected from either panel or viewport. Narrow screens toggle between styles and map. Search and filter placeholders are omitted. The map toolbar stays in one row on narrow screens by shrinking the style selector and truncating its selected label while keeping map controls reachable.
 
 Add and edit open Spartan modal dialogs inside the editor. Creation selects a committed compatible raster image through the shared media picker; editing changes name/background only. Deletion confirms that library media and map content remain. Forms retain values after errors and prevent duplicate submission.
 
@@ -24,9 +24,9 @@ Group and category moves update the displayed tree synchronously before CDK fini
 
 Creation/editing and confirmed cascading deletion use CategoriesQueryOptions. Successful mutations await exact tree invalidation; optimistic category updates are intentionally deferred. Conflicting controls are disabled while pending and failed forms retain input. Dialogs use their built-in focus restoration; moves do not programmatically refocus rows. Categories load/fail independently from styles and do not change the viewer camera. On narrow screens, Map content exposes both sections.
 
-Category creation uses a Spartan Button Group with a primary action and an add-options menu. Group and category action menus use Material Symbols icons. Both editors expose hex colors. Category color is optional: leaving it empty sends null and preserves the original icon without recoloring or an outline. Group color remains required. Iconless category rows use a filled map-pin fallback; groups without library images render no icon.
+Category creation uses a Spartan Button Group containing two icon-only ghost header actions: plus for Add category and folder-plus for Add group. Both have accessible names and Spartan tooltips; creation has no dropdown. Group and category action menus use Material Symbols icons. Both editors expose hex colors. Category color is optional: leaving it empty sends null and preserves the original icon without recoloring or an outline. Group color remains required. Iconless category rows use a filled map-pin fallback; groups without library images render no icon.
 
-The left panel fills the available editor height. Spartan accordion sections for map styles, categories and markers start open, share the available space, and scroll independently inside their content. Their headers and creation controls remain visible; collapsing a section gives its space to the remaining open sections. The style/category scrollers are registered with CDK for drag auto-scrolling.
+The left panel fills the available editor height. Its four Spartan accordion sections are Map styles, Categories, Markers and Settings & Tools, with 40px headers and leading icons. Map styles starts open; at most one section is expanded and all can be collapsed. Only the expanded content scrolls and receives the remaining height. Creation actions stay separate from the section triggers and precede the chevrons aligned at the far right. The style/category scrollers are registered with CDK for drag auto-scrolling.
 
 ## Marker editing
 
@@ -41,3 +41,13 @@ On desktop, the marker editor is a nonmodal aside with a labelled close button a
 `MapMarkers` owns the marker accordion and its open state, independently scrolling rows, loading/error/empty states and selection/retry outputs. The editor passes existing query data, category lookup, selection and pending IDs without a duplicate query. Row presentation is computed from marker/category changes. Photo stacks use the shared media thumbnail with the existing image-loading and placeholder behavior.
 
 `MapContentPanel` owns the left-panel queries for markers/categories, local loading/error/retry states, pending-row detection, visibility and style selection/reconciliation. It observes the same TanStack cache as the viewport/editor and the category child rather than copying their data into signals. The page supplies the current map, selected marker and connection status, delegates shell controls through the panel API, and retains connection lifetime, viewport rendering and marker writes. `map-marker-presentation.ts` provides the pure mapping from persisted/pending marker data to viewport presentation.
+
+## Map settings and panel visibility
+
+Settings & Tools contains only Map name with an explicit icon-only Save action in a trailing Spartan Input Group addon. It uses the existing map update mutation, trims names to 1..200 characters, skips unchanged names and preserves drafts on failure, section switches and panel hiding. Successful saves reconcile the existing cache and breadcrumbs. Map-list modal editing remains available.
+
+The map-leading toolbar button uses directional left/right chevrons and toggles the panel on desktop and mobile, even without a style selector. Desktop starts visible and mobile starts hidden with a close control inside the open panel and no separate header above the map. Tailwind utilities animate panel margin, opacity and visibility over 200ms, with transitions disabled for reduced motion. Hiding immediately makes its controls inert and keeps panel state and drafts mounted. Viewport resizing preserves center, resolution and style; the selected accordion section survives hiding. State is local to the mounted editor, with no browser persistence.
+
+The map-name form keeps a small editable model for the current map ID, matching the game editor pattern. Cache updates for that same map do not replace form input; switching maps initializes its name, and successful saves explicitly accept the server name and reset form state.
+
+Editor fullscreen targets the whole workspace, including the left content panel and marker editor. Panel visibility and drafts are preserved on entry/exit. Existing FullscreenOverlayContainer configuration keeps selects and dialogs inside the fullscreen workspace.

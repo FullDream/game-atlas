@@ -23,21 +23,7 @@
 		}
 	</ui-error-state>
 } @else if (map.data(); as current) {
-	<div class="px-3 py-2 md:hidden flex shrink-0 items-center justify-between border-b">
-		<span class="text-sm font-medium truncate">{{ current.name }}</span>
-		<button
-			ui-button
-			variant="outline"
-			size="sm"
-			icon="matLayersRound"
-			aria-controls="map-styles-panel"
-			[attr.aria-expanded]="contentPanel.open()"
-			(click)="contentPanel.toggle()"
-		>
-			Map content
-		</button>
-	</div>
-	<div class="min-h-0 relative flex flex-1 overflow-hidden">
+	<div #workspace class="min-h-0 bg-background relative flex flex-1 overflow-hidden">
 		<maps-content-panel
 			#contentPanel
 			[gameId]="gameId()"
@@ -49,9 +35,10 @@
 		/>
 		<maps-viewport
 			class="min-h-72 flex-1"
-			[class.hidden]="contentPanel.open()"
+			[class.hidden]="contentPanel.open() && contentPanel.narrow()"
 			[class.md:block]="true"
 			[geometry]="current"
+			[fullscreenTarget]="workspace"
 			[markers]="viewMarkers()"
 			[tool]="tool()"
 			(markerSelected)="selectMarker($event)"
@@ -62,28 +49,19 @@
 			[selectedStyleId]="contentPanel.selectedStyleId()"
 			(selectedStyleIdChange)="contentPanel.selectStyle($event)"
 		>
-			<div mapToolbar class="gap-2 flex">
-				<span class="rounded-md bg-background flex" hlmTooltip="Search is coming later" tabindex="0">
-					<button
-						ui-button
-						variant="outline"
-						size="icon"
-						icon="matSearchRound"
-						aria-label="Search (coming later)"
-						disabled
-					></button>
-				</span>
-				<span class="rounded-md bg-background flex" hlmTooltip="Filters are coming later" tabindex="0">
-					<button
-						ui-button
-						variant="outline"
-						size="icon"
-						icon="matFilterAltRound"
-						aria-label="Filters (coming later)"
-						disabled
-					></button>
-				</span>
-			</div>
+			<button
+				mapLeadingToolbar
+				id="map-content-toggle"
+				ui-button
+				variant="outline"
+				size="icon"
+				[icon]="contentPanel.open() ? 'matChevronLeftRound' : 'matChevronRightRound'"
+				aria-label="Toggle map content"
+				hlmTooltip="Toggle map content"
+				aria-controls="map-styles-panel"
+				[attr.aria-expanded]="contentPanel.open()"
+				(click)="contentPanel.toggle()"
+			></button>
 			<div
 				mapBottomToolbar
 				class="bottom-4 gap-2 absolute left-1/2 z-10 flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-col items-center pb-[env(safe-area-inset-bottom)]"

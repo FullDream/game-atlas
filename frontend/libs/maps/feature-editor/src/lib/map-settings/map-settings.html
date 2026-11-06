@@ -1,0 +1,42 @@
+<section
+	hlmAccordionItem
+	[isOpened]="sectionOpen()"
+	(openedChange)="sectionOpen.set($event)"
+	class="min-h-0 flex flex-1 flex-col overflow-hidden"
+>
+	<header class="h-10 px-3 flex shrink-0 items-center border-b">
+		<hlm-accordion-trigger
+			class="min-w-0 flex-1 [&>h3]:w-full"
+			triggerClass="h-10 w-full gap-2 rounded-sm py-0 items-center hover:no-underline focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-inset"
+		>
+			<ng-icon name="matSettingsRound" size="18" aria-hidden="true" />
+			<span class="min-w-0 font-semibold flex-1 truncate">Settings &amp; Tools</span>
+		</hlm-accordion-trigger>
+	</header>
+	<hlm-accordion-content class="min-h-0 [&>div]:pb-0 flex-1 overflow-hidden data-[state=open]:h-auto [&>div]:h-full">
+		<form [formRoot]="fields" class="p-3 gap-4 flex h-full flex-col overflow-y-auto">
+			<hlm-field>
+				<label hlmFieldLabel for="map-settings-name">Map name</label>
+				<div hlmInputGroup>
+					<input id="map-settings-name" hlmInputGroupInput [formField]="fields.name" autocomplete="off" />
+					<div hlmInputGroupAddon align="inline-end">
+						<button
+							ui-button
+							type="submit"
+							variant="ghost"
+							size="icon-sm"
+							icon="matSaveRound"
+							aria-label="Save map name"
+							hlmTooltip="Save map name"
+							[loading]="fields().submitting()"
+							[disabled]="!fields().dirty()"
+						></button>
+					</div>
+				</div>
+			</hlm-field>
+			@if (error()) {
+				<hlm-field-error forceShow>{{ error() }}</hlm-field-error>
+			}
+		</form>
+	</hlm-accordion-content>
+</section>

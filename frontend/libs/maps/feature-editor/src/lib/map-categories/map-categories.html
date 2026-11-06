@@ -4,48 +4,37 @@
 	(openedChange)="sectionOpen.set($event)"
 	class="min-h-0 flex flex-1 flex-col overflow-hidden"
 >
-	<header class="h-14 gap-2 px-3 flex shrink-0 items-center border-b">
-		<h2 class="min-w-0 text-sm font-semibold flex-1 truncate">Categories</h2>
-		<div hlmButtonGroup aria-label="Add map content">
+	<header class="h-10 gap-1 px-3 relative flex shrink-0 items-center border-b">
+		<hlm-accordion-trigger
+			class="min-w-0 flex-1 [&>h3]:w-full"
+			triggerClass="h-10 w-full gap-2 rounded-sm py-0 items-center hover:no-underline focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-inset"
+		>
+			<ng-icon name="matFolderRound" size="18" aria-hidden="true" />
+			<span class="min-w-0 font-semibold pr-18 flex-1 truncate">Categories</span>
+		</hlm-accordion-trigger>
+		<div hlmButtonGroup class="right-10 absolute" aria-label="Create category or group">
 			<button
 				id="category-add"
 				ui-button
-				variant="outline"
-				size="sm"
+				variant="ghost"
+				size="icon-sm"
 				icon="matAddRound"
+				aria-label="Add category"
+				hlmTooltip="Add category"
 				[disabled]="busy() || query.isLoading() || query.isError()"
-				(click)="edit(groups().length ? 'category' : 'group')"
-			>
-				{{ groups().length ? 'Add category' : 'Add group' }}
-			</button>
+				(click)="edit('category')"
+			></button>
 			<button
 				ui-button
-				variant="outline"
+				variant="ghost"
 				size="icon-sm"
-				icon="matKeyboardArrowDownRound"
-				aria-label="More add options"
-				[hlmDropdownMenuTrigger]="addMenu"
+				icon="matCreateNewFolderRound"
+				aria-label="Add group"
+				hlmTooltip="Add group"
 				[disabled]="busy() || query.isLoading() || query.isError()"
+				(click)="edit('group')"
 			></button>
 		</div>
-		<hlm-accordion-trigger
-			class="shrink-0"
-			triggerClass="size-8 p-0 items-center justify-center hover:bg-muted hover:no-underline **:data-[slot=accordion-trigger-icon]:ms-0"
-		>
-			<span class="sr-only">Toggle categories</span>
-		</hlm-accordion-trigger>
-		<ng-template #addMenu>
-			<div hlmDropdownMenu>
-				<button hlmDropdownMenuItem (triggered)="edit('group')">
-					<ng-icon name="matFolderRound" aria-hidden="true" />
-					Add group
-				</button>
-				<button hlmDropdownMenuItem (triggered)="edit('category')">
-					<ng-icon name="matAddRound" aria-hidden="true" />
-					Add category
-				</button>
-			</div>
-		</ng-template>
 	</header>
 
 	<hlm-accordion-content class="min-h-0 [&>div]:pb-0 flex-1 overflow-hidden data-[state=open]:h-auto [&>div]:h-full">

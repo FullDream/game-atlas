@@ -83,7 +83,7 @@ import { StyleEditorDialog } from './style-editor-dialog/style-editor-dialog'
 		}),
 	],
 	host: {
-		class: 'flex min-h-14 basis-14 shrink-0 flex-col transition-[flex-grow] duration-200 ease-out motion-reduce:transition-none',
+		class: 'flex min-h-10 basis-10 shrink-0 flex-col transition-[flex-grow] duration-200 ease-out motion-reduce:transition-none',
 		'[style.flex-grow]': 'sectionOpen() ? 1 : 0',
 	},
 })
@@ -108,7 +108,7 @@ export class MapStyles {
 	protected readonly busy = computed(
 		() => this.presentation.isPending() || this.deleteStyle.isPending() || this.retrying.isPending(),
 	)
-	readonly sectionOpen = signal(true)
+	readonly sectionOpen = model(false)
 	protected readonly dragging = signal(false)
 	protected readonly styles = linkedSignal(() => this.map().styles)
 

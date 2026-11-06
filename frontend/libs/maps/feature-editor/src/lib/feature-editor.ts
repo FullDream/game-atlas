@@ -21,13 +21,12 @@ import {
 	matAddLocationAltRound,
 	matArrowBackRound,
 	matCloudOffRound,
-	matFilterAltRound,
-	matLayersRound,
+	matChevronLeftRound,
+	matChevronRightRound,
 	matLibraryAddRound,
 	matOpenWithRound,
 	matPanToolRound,
 	matRefreshRound,
-	matSearchRound,
 } from '@ng-icons/material-symbols/round'
 import { toast } from '@spartan-ng/brain/sonner'
 import { HlmSeparator } from '@spartan-ng/helm/separator'
@@ -69,9 +68,9 @@ type MarkerSelectionSource = { mapId: string; markers: Marker[] | undefined }
 			matOpenWithRound,
 			matAddLocationAltRound,
 			matLibraryAddRound,
-			matSearchRound,
-			matFilterAltRound,
-			matLayersRound,
+
+			matChevronLeftRound,
+			matChevronRightRound,
 			matRefreshRound,
 			matCloudOffRound,
 			matArrowBackRound,

@@ -4,30 +4,26 @@
 	(openedChange)="sectionOpen.set($event)"
 	class="min-h-0 flex flex-1 flex-col overflow-hidden"
 >
-	<header class="bg-background h-14 px-3 shrink-0 border-b">
-		<div class="gap-2 flex h-full items-center">
-			<h2 class="min-w-0 text-sm font-semibold flex-1 truncate">
-				Map styles
-				<span class="text-muted-foreground">({{ map().styles.length }})</span>
-			</h2>
-			<button
-				id="style-add"
-				ui-button
-				variant="outline"
-				size="sm"
-				icon="matAddRound"
-				[disabled]="busy()"
-				(click)="edit()"
-			>
-				Add style
-			</button>
-			<hlm-accordion-trigger
-				class="shrink-0"
-				triggerClass="size-8 p-0 items-center justify-center hover:bg-muted hover:no-underline **:data-[slot=accordion-trigger-icon]:ms-0"
-			>
-				<span class="sr-only">Toggle map styles</span>
-			</hlm-accordion-trigger>
-		</div>
+	<header class="h-10 gap-1 px-3 relative flex shrink-0 items-center border-b">
+		<hlm-accordion-trigger
+			class="min-w-0 flex-1 [&>h3]:w-full"
+			triggerClass="h-10 w-full gap-2 rounded-sm py-0 items-center hover:no-underline focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-inset"
+		>
+			<ng-icon name="matLayersRound" size="18" aria-hidden="true" />
+			<span class="min-w-0 font-semibold pr-10 flex-1 truncate">Map styles ({{ map().styles.length }})</span>
+		</hlm-accordion-trigger>
+		<button
+			id="style-add"
+			class="right-10 absolute"
+			ui-button
+			variant="ghost"
+			size="icon-sm"
+			icon="matAddRound"
+			aria-label="Add style"
+			hlmTooltip="Add style"
+			[disabled]="busy()"
+			(click)="edit()"
+		></button>
 	</header>
 	<hlm-accordion-content class="min-h-0 [&>div]:pb-0 flex-1 overflow-hidden data-[state=open]:h-auto [&>div]:h-full">
 		<div #stylesContainer cdkScrollable class="min-h-0 h-full overflow-y-auto">

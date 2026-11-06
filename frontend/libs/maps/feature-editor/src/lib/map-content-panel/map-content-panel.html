@@ -1,3 +1,16 @@
+<div class="h-10 px-3 md:hidden flex shrink-0 items-center justify-between border-b">
+	<span class="text-sm font-semibold">Map content</span>
+	<button
+		ui-button
+		type="button"
+		variant="ghost"
+		size="icon-sm"
+		icon="matChevronLeftRound"
+		aria-label="Close map content"
+		hlmTooltip="Close map content"
+		(click)="toggle()"
+	></button>
+</div>
 @if (liveStatus() === 'stale' || liveStatus() === 'reconnecting') {
 	<div class="p-3 gap-2 flex shrink-0 items-center justify-between border-b">
 		<p class="text-xs text-muted-foreground" role="status">
@@ -14,17 +27,24 @@
 		}
 	</div>
 }
-<div hlmAccordion type="multiple" class="min-h-0 flex-1 overflow-hidden">
+<div hlmAccordion type="single" class="min-h-0 flex-1 overflow-hidden">
 	<maps-styles
-		#stylesPanel
+		[sectionOpen]="activeSection() === 'styles'"
+		(sectionOpenChange)="setSection('styles', $event)"
 		[gameId]="gameId()"
 		[map]="map()"
 		[(selectedStyleId)]="selectedStyleId"
 		(styleSelected)="close()"
 	/>
-	<maps-categories #categoriesPanel [gameId]="gameId()" [mapId]="map().id" />
+	<maps-categories
+		[sectionOpen]="activeSection() === 'categories'"
+		(sectionOpenChange)="setSection('categories', $event)"
+		[gameId]="gameId()"
+		[mapId]="map().id"
+	/>
 	<maps-markers
-		#markersPanel
+		[sectionOpen]="activeSection() === 'markers'"
+		(sectionOpenChange)="setSection('markers', $event)"
 		[markers]="markers.data() ?? []"
 		[categories]="categoriesById()"
 		[selectedId]="selectedId()"
@@ -34,11 +54,11 @@
 		(markerSelected)="markerSelected.emit($event)"
 		(retryRequested)="markers.refetch()"
 	/>
-	<div
-		aria-hidden="true"
-		class="min-h-0 basis-0 ease-out transition-[flex-grow] duration-200 motion-reduce:transition-none"
-		[style.flex-grow]="
-			stylesPanel.sectionOpen() || categoriesPanel.sectionOpen() || markersPanel.sectionOpen() ? 0 : 1
-		"
-	></div>
+	<maps-settings
+		[gameId]="gameId()"
+		[map]="map()"
+		[sectionOpen]="activeSection() === 'settings'"
+		(sectionOpenChange)="setSection('settings', $event)"
+	/>
+	<div aria-hidden="true" class="min-h-0 flex-1" [class.hidden]="activeSection() !== null"></div>
 </div>

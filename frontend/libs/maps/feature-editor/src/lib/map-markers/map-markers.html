@@ -4,12 +4,13 @@
 	(openedChange)="sectionOpen.set($event)"
 	class="min-h-0 flex flex-1 flex-col overflow-hidden"
 >
-	<header class="h-14 gap-2 px-3 flex shrink-0 items-center border-b">
-		<h2 class="min-w-0 text-sm font-semibold flex-1 truncate">Markers ({{ markers().length }})</h2>
+	<header class="h-10 gap-1 px-3 flex shrink-0 items-center border-b">
 		<hlm-accordion-trigger
-			triggerClass="size-8 p-0 items-center justify-center hover:bg-muted hover:no-underline **:data-[slot=accordion-trigger-icon]:ms-0"
+			class="min-w-0 flex-1 [&>h3]:w-full"
+			triggerClass="h-10 w-full gap-2 rounded-sm py-0 items-center hover:no-underline focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-inset"
 		>
-			<span class="sr-only">Toggle markers</span>
+			<ng-icon name="matLocationOnRound" size="18" aria-hidden="true" />
+			<span class="min-w-0 font-semibold flex-1 truncate">Markers ({{ markers().length }})</span>
 		</hlm-accordion-trigger>
 	</header>
 	<hlm-accordion-content class="min-h-0 [&>div]:pb-0 flex-1 overflow-hidden data-[state=open]:h-auto [&>div]:h-full">

@@ -6,46 +6,48 @@
 	aria-label="Interactive map. Use arrow keys to pan and plus or minus to zoom."
 ></div>
 
-<div class="inset-x-3 top-3 gap-2 absolute flex flex-wrap items-start justify-between">
-	@if (styles().length > 1) {
-		<hlm-select
-			class="rounded-md bg-background shadow-sm"
-			[itemToString]="styleName"
-			[(ngModel)]="selectedStyleId"
-			[disabled]="!readyStyles().length"
-		>
-			<hlm-select-trigger aria-label="Map style" class="w-56">
-				@if (activeStyle(); as style) {
-					<span *hlmSelectValueTemplate class="min-w-0 gap-2 flex items-center">
-						<ui-media-thumbnail
-							class="size-6 rounded-sm shrink-0 border"
-							[image]="style.source"
-							fit="cover"
-							aria-hidden="true"
-						/>
-						<span class="truncate">{{ styleName(style.id) }}</span>
-					</span>
-				} @else {
-					<hlm-select-value placeholder="No ready styles" />
-				}
-			</hlm-select-trigger>
-			<hlm-select-content *hlmSelectPortal>
-				@for (style of readyStyles(); track style.id) {
-					<hlm-select-item [value]="style.id">
-						<ui-media-thumbnail
-							class="size-6 rounded-sm shrink-0 border"
-							[image]="style.source"
-							fit="cover"
-							aria-hidden="true"
-						/>
-						<span class="truncate">{{ styleName(style.id) }}</span>
-					</hlm-select-item>
-				}
-			</hlm-select-content>
-		</hlm-select>
-	}
-
-	<div class="gap-2 ml-auto flex items-center">
+<div class="inset-x-2 top-3 gap-1 sm:inset-x-3 sm:gap-2 absolute flex items-start justify-between">
+	<div class="min-w-0 gap-1 sm:gap-2 flex flex-1 items-center">
+		<ng-content select="[mapLeadingToolbar]" />
+		@if (styles().length > 1) {
+			<hlm-select
+				class="min-w-0 rounded-md bg-background sm:w-56 shadow-sm w-full"
+				[itemToString]="styleName"
+				[(ngModel)]="selectedStyleId"
+				[disabled]="!readyStyles().length"
+			>
+				<hlm-select-trigger aria-label="Map style" class="min-w-0 w-full">
+					@if (activeStyle(); as style) {
+						<span *hlmSelectValueTemplate class="min-w-0 gap-2 flex flex-1 items-center">
+							<ui-media-thumbnail
+								class="size-6 rounded-sm shrink-0 border"
+								[image]="style.source"
+								fit="cover"
+								aria-hidden="true"
+							/>
+							<span class="min-w-0 truncate">{{ styleName(style.id) }}</span>
+						</span>
+					} @else {
+						<hlm-select-value placeholder="No ready styles" />
+					}
+				</hlm-select-trigger>
+				<hlm-select-content *hlmSelectPortal>
+					@for (style of readyStyles(); track style.id) {
+						<hlm-select-item [value]="style.id">
+							<ui-media-thumbnail
+								class="size-6 rounded-sm shrink-0 border"
+								[image]="style.source"
+								fit="cover"
+								aria-hidden="true"
+							/>
+							<span class="truncate">{{ styleName(style.id) }}</span>
+						</hlm-select-item>
+					}
+				</hlm-select-content>
+			</hlm-select>
+		}
+	</div>
+	<div class="gap-1 sm:gap-2 ml-auto flex shrink-0 items-center">
 		<ng-content select="[mapToolbar]" />
 		<div class="gap-1 rounded-md bg-background p-0.5 shadow-sm flex">
 			<button

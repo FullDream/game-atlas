@@ -69,6 +69,8 @@ Keep Nx caching for normal build/lint/test tasks. HTTP generation is explicitly 
 
 ## Documentation maintenance
 
+Write OpenSpec specifications and all change artifacts (including proposals, designs and tasks) in English. Non-English example data is allowed when needed to specify Unicode behavior.
+
 Keep each convention in its owning document and link to it from the agent entry points. Update affected documentation in the same change as behavior or architecture changes. Distinguish implemented behavior from planned work, and preserve existing user constraints when moving instructions. Run the documentation checker below and `git diff --check` after documentation changes. Existing formatter/linter configuration owns automated style checks; frontend dependency directions are enforced by `@nx/enforce-module-boundaries` in `frontend/eslint.config.mjs`. Prose conventions still require review.
 
 ### Documentation checker
