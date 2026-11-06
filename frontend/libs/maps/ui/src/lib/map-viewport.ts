@@ -8,6 +8,7 @@ import {
 	inject,
 	input,
 	model,
+	output,
 	signal,
 	viewChild,
 	ViewEncapsulation,
@@ -26,7 +27,15 @@ import {
 	matFitScreenRound,
 } from '@ng-icons/material-symbols/round'
 import type { MapEngine } from './map-engine'
-import type { MapGeometry, MapViewStyle } from './map-viewport-types'
+import type {
+	MapGeometry,
+	MapViewStyle,
+	MapMarker,
+	MapTool,
+	MapPoint,
+	MarkerMove,
+	VisibleMapRegion,
+} from './map-viewport-types'
 
 @Component({
 	selector: 'maps-viewport',
@@ -46,10 +55,30 @@ export class MapViewport {
 	readonly geometry = input.required<MapGeometry>()
 	readonly styles = input.required<MapViewStyle[]>()
 	readonly defaultStyleId = input<string | null>(null)
+	readonly markers = input<MapMarker[]>([])
+	readonly tool = input<MapTool>('pan')
+
+	readonly markerSelected = output<string>()
+	readonly markerPlaced = output<MapPoint>()
+	readonly markerMoved = output<MarkerMove>()
+
 	readonly selectedStyleId = model<string | null>(null)
 
 	readonly #host = inject(ElementRef<HTMLElement>)
 	readonly #destroy = inject(DestroyRef)
+
+	protected readonly styleName = (id: string): string => {
+		const name = this.styles().find(style => style.id === id)?.name ?? id
+
+		return id === this.defaultStyleId() ? `${name} (Default)` : name
+	}
+
+	#engine: MapEngine | undefined
+	#initializing = ''
+	#loadedId = ''
+	#initialization = 0
+
+	readonly ready = signal(false)
 
 	protected readonly canvas = viewChild.required<ElementRef<HTMLElement>>('canvas')
 	protected readonly fullscreenAvailable = signal(false)
@@ -64,31 +93,33 @@ export class MapViewport {
 		this.readyStyles().find(style => style.id === this.selectedStyleId()),
 	)
 
-	protected readonly styleName = (id: string): string => {
-		const name = this.styles().find(style => style.id === id)?.name ?? id
-
-		return id === this.defaultStyleId() ? `${name} (Default)` : name
-	}
-
-	#engine: MapEngine | undefined
-	#initializing = ''
-	#loadedId = ''
-	#initialization = 0
-
 	constructor() {
 		afterRenderEffect(() => {
 			const geometry = this.geometry()
 			const style = this.activeStyle()
+			const markers = this.markers()
+			const tool = this.tool()
 
-			if (!geometry.extent) return
+			if (!geometry.extent) {
+				this.ready.set(false)
+				this.#initialization++
+				this.#engine?.dispose()
+				this.#engine = undefined
+				this.#loadedId = ''
+				this.#initializing = ''
+
+				return
+			}
 
 			if (this.#loadedId === geometry.id) {
 				this.#engine?.setStyle(style)
+				this.#engine?.setMarkers(markers, tool)
 			} else if (this.#initializing !== geometry.id) {
 				const initialization = ++this.#initialization
 
 				this.#initializing = geometry.id
 				this.#loadedId = ''
+				this.ready.set(false)
 				this.#engine?.dispose()
 				this.#engine = undefined
 
@@ -96,9 +127,15 @@ export class MapViewport {
 					.then(({ MapEngine }) => {
 						if (this.#destroy.destroyed || initialization !== this.#initialization) return
 
-						this.#engine = new MapEngine(this.canvas().nativeElement, geometry)
+						this.#engine = new MapEngine(this.canvas().nativeElement, geometry, {
+							select: id => this.markerSelected.emit(id),
+							place: position => this.markerPlaced.emit(position),
+							move: movement => this.markerMoved.emit(movement),
+						})
 						this.#loadedId = geometry.id
 						this.#engine.setStyle(this.activeStyle())
+						this.#engine.setMarkers(this.markers(), this.tool())
+						this.ready.set(true)
 					})
 					.catch(() => this.engineError.set(true))
 			}
@@ -116,6 +153,14 @@ export class MapViewport {
 		})
 
 		this.#destroy.onDestroy(() => this.#engine?.dispose())
+	}
+
+	revealMarker(id: string, region: VisibleMapRegion): void {
+		this.#engine?.reveal(id, region)
+	}
+
+	getBounds(): DOMRect {
+		return this.#host.nativeElement.getBoundingClientRect()
 	}
 
 	protected zoom(delta: number): void {

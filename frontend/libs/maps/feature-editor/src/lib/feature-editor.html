@@ -2,7 +2,7 @@
 	<a ui-button variant="outline" icon="matArrowBackRound" [routerLink]="['/games', gameId(), 'maps']">Back to maps</a>
 </ng-template>
 
-@if (map.isLoading() || (!map.data() && live().status === 'synchronizing')) {
+@if (map.isLoading()) {
 	<div class="min-h-0 gap-4 p-4 flex flex-1" role="status" aria-label="Loading map" aria-busy="true">
 		<hlm-skeleton class="w-76 md:block hidden shrink-0" />
 		<hlm-skeleton class="flex-1" />
@@ -19,7 +19,7 @@
 		</ng-container>
 
 		@if (!missing()) {
-			<button ui-button icon="matRefreshRound" (click)="recover.next()">Retry</button>
+			<button ui-button icon="matRefreshRound" (click)="live.reload()">Retry</button>
 		}
 	</ui-error-state>
 } @else if (map.data(); as current) {
@@ -31,59 +31,36 @@
 			size="sm"
 			icon="matLayersRound"
 			aria-controls="map-styles-panel"
-			[attr.aria-expanded]="panelOpen()"
-			(click)="panelOpen.set(!panelOpen())"
+			[attr.aria-expanded]="contentPanel.open()"
+			(click)="contentPanel.toggle()"
 		>
 			Map content
 		</button>
 	</div>
 	<div class="min-h-0 relative flex flex-1 overflow-hidden">
-		<aside
-			id="map-styles-panel"
-			aria-label="Map content"
-			class="bg-background md:flex md:w-80 min-h-0 flex h-full w-full shrink-0 flex-col overflow-hidden border-r"
-			[class.hidden]="!panelOpen()"
-		>
-			@if (live().status === 'stale' || live().status === 'reconnecting') {
-				<div class="p-3 gap-2 flex shrink-0 items-center justify-between border-b">
-					<p class="text-xs text-muted-foreground" role="status">
-						{{
-							live().status === 'reconnecting'
-								? 'Reconnecting… Status may be out of date.'
-								: 'Updates disconnected. Status may be out of date.'
-						}}
-					</p>
-					@if (live().status === 'stale') {
-						<button ui-button variant="ghost" size="sm" icon="matRefreshRound" (click)="recover.next()">
-							Reconnect
-						</button>
-					}
-				</div>
-			}
-			<div hlmAccordion type="multiple" class="min-h-0 flex-1 overflow-hidden">
-				<maps-styles
-					#stylesPanel
-					[gameId]="gameId()"
-					[map]="current"
-					[(selectedStyleId)]="selectedStyleId"
-					(styleSelected)="panelOpen.set(false)"
-				/>
-				<maps-categories #categoriesPanel [gameId]="gameId()" [mapId]="current.id" />
-				<div
-					aria-hidden="true"
-					class="min-h-0 basis-0 ease-out transition-[flex-grow] duration-200 motion-reduce:transition-none"
-					[style.flex-grow]="stylesPanel.sectionOpen() || categoriesPanel.sectionOpen() ? 0 : 1"
-				></div>
-			</div>
-		</aside>
+		<maps-content-panel
+			#contentPanel
+			[gameId]="gameId()"
+			[map]="current"
+			[selectedId]="selectedId()"
+			[liveStatus]="live.value().status"
+			(markerSelected)="selectMarker($event)"
+			(reconnectRequested)="live.reload()"
+		/>
 		<maps-viewport
 			class="min-h-72 flex-1"
-			[class.hidden]="panelOpen()"
+			[class.hidden]="contentPanel.open()"
 			[class.md:block]="true"
 			[geometry]="current"
+			[markers]="viewMarkers()"
+			[tool]="tool()"
+			(markerSelected)="selectMarker($event)"
+			(markerPlaced)="placeMarker($event)"
+			(markerMoved)="move($event)"
 			[styles]="current.styles"
 			[defaultStyleId]="current.defaultStyleId"
-			[(selectedStyleId)]="selectedStyleId"
+			[selectedStyleId]="contentPanel.selectedStyleId()"
+			(selectedStyleIdChange)="contentPanel.selectStyle($event)"
 		>
 			<div mapToolbar class="gap-2 flex">
 				<span class="rounded-md bg-background flex" hlmTooltip="Search is coming later" tabindex="0">
@@ -107,6 +84,120 @@
 					></button>
 				</span>
 			</div>
+			<div
+				mapBottomToolbar
+				class="bottom-4 gap-2 absolute left-1/2 z-10 flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-col items-center pb-[env(safe-area-inset-bottom)]"
+			>
+				@if (categoryGroups.isError()) {
+					<button ui-button variant="outline" size="sm" (click)="categoryGroups.refetch()">
+						Retry categories
+					</button>
+				}
+				@for (placement of placements(); track placement.submittedAt) {
+					@if (placement.status === 'error') {
+						<div class="bg-background rounded-md p-2 text-sm shadow border" role="alert">
+							<p>
+								{{
+									placementUncertain(placement)
+										? 'Placement outcome uncertain. Refresh and inspect markers before creating another copy.'
+										: 'Could not place marker.'
+								}}
+							</p>
+							<div class="mt-2 gap-2 flex">
+								@if (!placementUncertain(placement)) {
+									<button ui-button size="sm" (click)="retryPlacement(placement)">Retry</button>
+								} @else {
+									<button ui-button variant="outline" size="sm" (click)="markers.refetch()">
+										Refresh markers
+									</button>
+								}
+								<button
+									ui-button
+									variant="ghost"
+									size="sm"
+									(click)="dismissPlacement(placement.submittedAt)"
+								>
+									Dismiss
+								</button>
+							</div>
+						</div>
+					}
+				}
+				@if (template(); as template) {
+					<div
+						class="bg-background rounded-md p-2 gap-2 text-sm shadow flex flex-wrap items-center border"
+						role="status"
+					>
+						<span>
+							{{ markerCategoryName(template.categoryId) }} · {{ template.name }} ·
+							{{ placedCount() }} created
+						</span>
+						<button ui-button size="sm" variant="outline" (click)="finishPlacing()">Finish</button>
+					</div>
+				} @else if (tool() === 'add' || !placementAvailable()) {
+					<p class="bg-background rounded-md p-2 text-sm shadow border" role="status">
+						{{ placementHint() }}
+					</p>
+				}
+				<div
+					class="bg-background rounded-xl p-1.5 gap-1 shadow-lg flex items-center border"
+					role="toolbar"
+					id="map-marker-tools"
+					tabindex="-1"
+					aria-label="Map editing tools"
+				>
+					<hlm-toggle-group
+						type="single"
+						[nullable]="false"
+						[value]="tool()"
+						(valueChange)="selectTool($event)"
+					>
+						<button hlmToggleGroupItem value="pan" aria-label="Pan map" hlmTooltip="Pan map">
+							<ng-icon name="matPanToolRound" aria-hidden="true" />
+						</button>
+						<button hlmToggleGroupItem value="move" aria-label="Move marker" hlmTooltip="Move marker">
+							<ng-icon name="matOpenWithRound" aria-hidden="true" />
+						</button>
+					</hlm-toggle-group>
+					<hlm-separator orientation="vertical" class="h-6" />
+					<button
+						ui-button
+						type="button"
+						size="icon"
+						[variant]="tool() === 'add' && !template() ? 'secondary' : 'ghost'"
+						icon="matAddLocationAltRound"
+						aria-label="Add marker"
+						hlmTooltip="Add marker"
+						[attr.aria-pressed]="tool() === 'add' && !template()"
+						[disabled]="!placementAvailable()"
+						(click)="selectTool('add')"
+					></button>
+					<button
+						ui-button
+						type="button"
+						size="icon"
+						[variant]="template() ? 'secondary' : 'ghost'"
+						icon="matLibraryAddRound"
+						aria-label="Add several markers"
+						hlmTooltip="Add several markers"
+						[attr.aria-pressed]="!!template()"
+						[disabled]="!placementAvailable()"
+						(click)="repeatMarkers()"
+					></button>
+				</div>
+			</div>
 		</maps-viewport>
+		@if (editorSession(); as session) {
+			<maps-marker-editor
+				[gameId]="gameId()"
+				[mapId]="mapId()"
+				[groups]="groups()"
+				[session]="session"
+				(saved)="savedMarker($event)"
+				(templateReady)="startTemplate($event)"
+				(dismissed)="editorSession.set(null)"
+				(boundsChanged)="revealMarker($event)"
+			/>
+		}
 	</div>
 }

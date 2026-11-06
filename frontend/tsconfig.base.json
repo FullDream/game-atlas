@@ -61,7 +61,9 @@
 			"@spartan-ng/helm/badge": ["./libs/shared/ui/src/lib/helm/badge/src/index.ts"],
 			"@game-atlas/shared/data-access": ["./libs/shared/data-access/src/index.ts"],
 			"@spartan-ng/helm/button-group": ["./libs/shared/ui/src/lib/helm/button-group/src/index.ts"],
-			"@spartan-ng/helm/accordion": ["./libs/shared/ui/src/lib/helm/accordion/src/index.ts"]
+			"@spartan-ng/helm/accordion": ["./libs/shared/ui/src/lib/helm/accordion/src/index.ts"],
+			"@spartan-ng/helm/drawer": ["./libs/shared/ui/src/lib/helm/drawer/src/index.ts"],
+			"@spartan-ng/helm/carousel": ["./libs/shared/ui/src/lib/helm/carousel/src/index.ts"]
 		}
 	},
 	"exclude": ["node_modules", "tmp"]

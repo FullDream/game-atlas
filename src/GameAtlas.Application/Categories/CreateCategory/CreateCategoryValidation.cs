@@ -1,5 +1,4 @@
 using FluentValidation;
-using GameAtlas.Application.Common.Validation;
 using GameAtlas.Domain.Categories;
 
 namespace GameAtlas.Application.Categories.CreateCategory;
@@ -11,7 +10,6 @@ public sealed class CreateCategoryValidation : AbstractValidator<CreateCategory>
 		RuleFor(command => command.Name == null ? null : command.Name.Trim())
 			.NotEmpty().MaximumLength(CategoryLimits.NameMaxLength).OverridePropertyName(nameof(CreateCategory.Name));
 
-
-		RuleFor(command => command.Color).NotEmpty().Length(4, 7).Matches(Category.ColorPattern);
+		RuleFor(command => command.Color).Length(4, 7).Matches(Category.ColorPattern);
 	}
 }

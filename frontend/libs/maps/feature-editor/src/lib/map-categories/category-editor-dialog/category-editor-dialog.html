@@ -3,7 +3,7 @@
 	{{
 		context.kind === 'group'
 			? 'Organize related categories together.'
-			: 'Choose a group, color and optional library icon.'
+			: 'Choose a group and optional color or library icon.'
 	}}
 </p>
 
@@ -55,7 +55,13 @@
 	<hlm-field>
 		<label hlmFieldLabel for="category-color">Color</label>
 		<input id="category-color" hlmInput [formField]="fields.color" autocomplete="off" />
-		<p hlmFieldDescription>Hex color, for example #F59E0B. Required even without an icon.</p>
+		<p hlmFieldDescription>
+			{{
+				context.kind === 'category'
+					? 'Optional hex color. Leave empty to use the original icon without recoloring.'
+					: 'Hex color, for example #F59E0B.'
+			}}
+		</p>
 	</hlm-field>
 
 	<hlm-field>
@@ -65,7 +71,7 @@
 		</label>
 		@if (icon(); as image) {
 			<div class="gap-3 flex items-center">
-				<ui-media-thumbnail class="size-12 rounded-md shrink-0 border" [image]="image" />
+				<maps-category-icon class="size-12" [iconUrl]="image.url" [color]="fields.color().value() || null" />
 				<span class="min-w-0 text-sm truncate">{{ image.name }}</span>
 			</div>
 		}

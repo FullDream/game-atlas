@@ -12,6 +12,42 @@ namespace GameAtlas.IntegrationTests;
 public class CategoryPersistenceTests
 {
 	[Fact]
+	public async Task NullableColorMigrationPreservesExistingCategoryAndAllowsClearing()
+	{
+		await using var factory = new GameApiFactory();
+
+		await using (var scope = factory.Services.CreateAsyncScope())
+		{
+			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+			await context.GetService<IMigrator>().MigrateAsync("20261101185456_CategoryGroupColor");
+		}
+
+		var (_, group) = await CategoryTestData.ParentAsync(factory);
+		var category = await CategoryTestData.SeedAsync(factory, group.Id, "Preserved", 1);
+
+		await factory.MigrateAsync();
+
+		await using (var scope = factory.Services.CreateAsyncScope())
+		{
+			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+			var stored = await context.Categories.AsTracking().SingleAsync(item => item.Id == category.Id);
+
+			Assert.Equal(category.Color, stored.Color);
+			Assert.Equal(category.Name, stored.Name);
+			Assert.Equal(category.IconAssetId, stored.IconAssetId);
+			Assert.True(stored.Update(color: (string?)null).Value);
+
+			await context.SaveChangesAsync();
+		}
+
+		await using var reload = factory.Services.CreateAsyncScope();
+		var reloaded = reload.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+		Assert.Null((await reloaded.Categories.SingleAsync(item => item.Id == category.Id)).Color);
+	}
+
+	[Fact]
 	public async Task MigrationUpgradeRoundTripAndRollbackPreserveParents()
 	{
 		await using var factory = new GameApiFactory();

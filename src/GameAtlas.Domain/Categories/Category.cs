@@ -15,7 +15,7 @@ public sealed class Category
 	public string Name { get; private set; } = string.Empty;
 	public string NormalizedName { get; private set; } = string.Empty;
 	public Guid? IconAssetId { get; private set; }
-	public string Color { get; private set; } = string.Empty;
+	public string? Color { get; private set; }
 	public int Order { get; private set; }
 	public DateTimeOffset CreatedAt { get; private set; }
 	public DateTimeOffset UpdatedAt { get; private set; }
@@ -52,8 +52,7 @@ public sealed class Category
 		if (string.IsNullOrEmpty(nextName))
 			return CategoryErrors.NameRequired;
 
-
-		if (nextColor is null || !ColorRegex.IsMatch(nextColor))
+		if (nextColor is not null && !ColorRegex.IsMatch(nextColor))
 			return CategoryErrors.InvalidColor;
 
 		if (nextOrder is null or <= 0)
@@ -62,7 +61,7 @@ public sealed class Category
 		if (nextGroupId is null)
 			return CategoryErrors.GroupRequired;
 
-		nextColor = NormalizeColor(nextColor);
+		nextColor = nextColor is null ? null : NormalizeColor(nextColor);
 
 		if (nextName == Name && nextIcon == IconAssetId && nextColor == Color && nextOrder == Order &&
 			nextGroupId == CategoryGroupId)

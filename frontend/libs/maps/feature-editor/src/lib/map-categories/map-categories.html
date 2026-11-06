@@ -241,16 +241,10 @@
 													(click)="$event.stopPropagation()"
 													(keydown)="$event.stopPropagation()"
 												></button>
-												<span
-													class="size-5 flex shrink-0 items-center justify-center"
-													[style.color]="category.color"
-												>
-													@if (category.icon; as icon) {
-														<ui-media-thumbnail class="size-5" [image]="icon" />
-													} @else {
-														<ng-icon name="matLocationOnRound" aria-hidden="true" />
-													}
-												</span>
+												<maps-category-icon
+													[iconUrl]="category.icon?.url"
+													[color]="category.color"
+												/>
 												<span class="min-w-0 text-sm flex-1 truncate">{{ category.name }}</span>
 												<span
 													class="text-xs text-muted-foreground tabular-nums"

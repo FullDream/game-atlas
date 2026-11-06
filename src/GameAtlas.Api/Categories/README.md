@@ -20,9 +20,9 @@ Base route: `/games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories`.
 | PATCH  | /{id}  | 200 complete category |
 | DELETE | /{id}  | empty 204             |
 
-POST requires name and color, with optional nullable iconAssetId and beforeId. Names trim to 1..200 characters and are unique within the resulting group after invariant case normalization. Colors accept #RGB/#RRGGBB and normalize to uppercase #RRGGBB. UUID v7 and UTC timestamps are server-generated.
+POST requires name, with optional nullable color, iconAssetId and beforeId. Omitted or null color stores no color. Names trim to 1..200 characters and are unique within the resulting group after invariant case normalization. Colors accept #RGB/#RRGGBB and normalize to uppercase #RRGGBB. UUID v7 and UTC timestamps are server-generated.
 
-PATCH accepts optional name, iconAssetId, color, categoryGroupId and beforeId. Omission preserves metadata; iconAssetId null detaches the icon. Name/color/group cannot be null. Creation without an icon is valid.
+PATCH accepts optional name, iconAssetId, color, categoryGroupId and beforeId. Omission preserves metadata; iconAssetId null detaches the icon. Name/group cannot be null; color null clears the color. Creation without an icon is valid.
 
 ## Placement and transfer
 

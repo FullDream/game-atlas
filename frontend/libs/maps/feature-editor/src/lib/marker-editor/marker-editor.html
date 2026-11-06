@@ -1,0 +1,266 @@
+<ng-template #content>
+	@if (discardRequested()) {
+		<div class="p-6 gap-4 flex flex-col" [class.pr-14]="!narrow()">
+			<div hlmAlert>
+				<h2 id="marker-editor-title" hlmAlertTitle>Discard changes?</h2>
+				<p hlmAlertDescription>Your unsaved marker changes will be lost.</p>
+			</div>
+			<div class="gap-2 flex flex-wrap justify-end">
+				<button ui-button type="button" variant="outline" (click)="resolveDiscard(false)">
+					Continue editing
+				</button>
+				<button ui-button type="button" variant="destructive" (click)="resolveDiscard(true)">
+					Discard changes
+				</button>
+			</div>
+		</div>
+	} @else {
+		<form [formRoot]="fields" class="min-h-0 flex flex-1 flex-col overflow-hidden">
+			<div class="p-4 shrink-0 border-b" [class.pr-14]="!narrow()">
+				<h2 class="text-lg font-semibold" id="marker-editor-title">{{ title() }}</h2>
+				<p class="text-sm text-muted-foreground">
+					{{
+						isRepeated()
+							? 'Fill once, then click the map to place copies.'
+							: 'Edit the point and its library photographs.'
+					}}
+				</p>
+			</div>
+			<div class="p-4 gap-4 min-h-0 flex flex-1 flex-col overflow-y-auto">
+				@if (attachments().length) {
+					<hlm-carousel aria-label="Marker attachments" #gallery>
+						<hlm-carousel-content>
+							@for (asset of attachments(); track asset.id; let index = $index) {
+								<hlm-carousel-item>
+									@if (asset.type === 'image') {
+										<ui-media-thumbnail
+											class="aspect-video rounded-md block overflow-hidden border"
+											[image]="asset"
+											fit="contain"
+										/>
+									} @else {
+										<div
+											class="aspect-video bg-muted rounded-md gap-2 flex flex-col items-center justify-center border"
+										>
+											@if (asset.preview) {
+												<ui-media-thumbnail
+													class="h-24 w-40"
+													[image]="asset.preview"
+													fit="contain"
+												/>
+											}
+											<span>Video: {{ asset.name }}</span>
+										</div>
+									}
+									<div class="gap-1 mt-2 flex flex-wrap items-center">
+										@if (asset.type === 'image') {
+											<button
+												ui-button
+												type="button"
+												variant="ghost"
+												size="sm"
+												[disabled]="fields().submitting()"
+												(click)="reorder(index, -1)"
+											>
+												Earlier
+											</button>
+											<button
+												ui-button
+												type="button"
+												variant="ghost"
+												size="sm"
+												[disabled]="fields().submitting()"
+												(click)="reorder(index, 1)"
+											>
+												Later
+											</button>
+										}
+										<button
+											ui-button
+											type="button"
+											variant="ghost"
+											size="sm"
+											[disabled]="fields().submitting()"
+											(click)="detach(asset.id)"
+										>
+											Detach
+										</button>
+									</div>
+								</hlm-carousel-item>
+							}
+						</hlm-carousel-content>
+						@if (attachments().length > 1) {
+							<div class="mt-2 gap-2 flex items-center justify-center">
+								<button
+									ui-button
+									type="button"
+									variant="outline"
+									size="sm"
+									[disabled]="!gallery.canScrollPrev()"
+									(click)="gallery.scrollPrev()"
+								>
+									Previous
+								</button>
+								<span class="text-xs text-muted-foreground">
+									{{ gallery.currentSlide() + 1 }} / {{ attachments().length }}
+								</span>
+								<button
+									ui-button
+									type="button"
+									variant="outline"
+									size="sm"
+									[disabled]="!gallery.canScrollNext()"
+									(click)="gallery.scrollNext()"
+								>
+									Next
+								</button>
+							</div>
+						}
+					</hlm-carousel>
+				}
+				<button
+					ui-button
+					id="marker-photo"
+					type="button"
+					variant="outline"
+					[disabled]="fields().submitting()"
+					(click)="choosePhoto()"
+				>
+					Add photo
+				</button>
+				<hlm-field>
+					<label hlmFieldLabel for="marker-name">Name</label>
+					<input hlmInput id="marker-name" [formField]="fields.name" autocomplete="off" />
+				</hlm-field>
+				<hlm-field>
+					<label hlmFieldLabel for="marker-description">Description</label>
+					<textarea hlmTextarea id="marker-description" [formField]="fields.description" rows="4"></textarea>
+				</hlm-field>
+				<hlm-field>
+					<label hlmFieldLabel for="marker-category">Category</label>
+					<hlm-select [formField]="fields.categoryId" [itemToString]="categoryName">
+						<hlm-select-trigger id="marker-category" class="w-full">
+							@if (selectedCategory(); as category) {
+								<span *hlmSelectValueTemplate class="gap-2 min-w-0 flex items-center">
+									<maps-category-icon [iconUrl]="category.icon?.url" [color]="category.color" />
+									<span class="truncate">{{ category.name }}</span>
+								</span>
+							} @else {
+								<hlm-select-value placeholder="Choose a category" />
+							}
+						</hlm-select-trigger>
+						<hlm-select-content *hlmSelectPortal>
+							@for (group of groups(); track group.id) {
+								<hlm-select-group>
+									<hlm-select-label>{{ group.name }}</hlm-select-label>
+									@for (category of group.categories; track category.id) {
+										<hlm-select-item [value]="category.id">
+											<maps-category-icon
+												[iconUrl]="category.icon?.url"
+												[color]="category.color"
+											/>
+											<span>{{ category.name }}</span>
+										</hlm-select-item>
+									}
+								</hlm-select-group>
+							}
+						</hlm-select-content>
+					</hlm-select>
+				</hlm-field>
+				@if (!isRepeated()) {
+					<div class="gap-3 grid grid-cols-2">
+						<hlm-field>
+							<label hlmFieldLabel for="marker-x">X</label>
+							<input hlmInput id="marker-x" type="number" step="any" [formField]="fields.position.x" />
+						</hlm-field>
+						<hlm-field>
+							<label hlmFieldLabel for="marker-y">Y</label>
+							<input hlmInput id="marker-y" type="number" step="any" [formField]="fields.position.y" />
+						</hlm-field>
+					</div>
+				}
+				@if (error()) {
+					<hlm-field-error forceShow>{{ error() }}</hlm-field-error>
+				}
+				@if (uncertain()) {
+					<p class="text-sm" role="alert">
+						The create outcome is uncertain. Close this form and refresh markers to inspect the map before
+						creating another copy.
+					</p>
+				}
+			</div>
+			<div class="p-4 gap-2 flex shrink-0 flex-wrap border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
+				@if (isEditing()) {
+					<button
+						ui-button
+						type="button"
+						variant="destructive"
+						[loading]="remove.isPending()"
+						[disabled]="fields().submitting()"
+						(click)="deleteMarker()"
+					>
+						Delete
+					</button>
+				}
+				<button
+					ui-button
+					type="button"
+					variant="outline"
+					class="ml-auto"
+					[disabled]="fields().submitting() || remove.isPending()"
+					(click)="close()"
+				>
+					Cancel
+				</button>
+				<button
+					ui-button
+					[loading]="fields().submitting()"
+					[disabled]="remove.isPending() || uncertain() || (isEditing() && !fields().dirty())"
+				>
+					{{ isRepeated() ? 'Start placing' : isEditing() ? 'Save changes' : 'Create' }}
+				</button>
+			</div>
+		</form>
+	}
+</ng-template>
+
+@if (narrow()) {
+	<hlm-drawer
+		state="open"
+		aria-labelledby="marker-editor-title"
+		[restoreFocus]="'#map-marker-tools'"
+		(closed)="dismissed.emit()"
+	>
+		<hlm-drawer-content
+			*hlmDrawerPortal
+			mapsMarkerPanel
+			[blockClose]="needsGuard"
+			[confirmClose]="canLeave"
+			(boundsChanged)="handleBoundsChanged($event)"
+			class="h-[60dvh] max-h-[60dvh] overflow-hidden"
+		>
+			<ng-container [ngTemplateOutlet]="content" />
+		</hlm-drawer-content>
+	</hlm-drawer>
+} @else {
+	<aside
+		#desktopPanel
+		class="bg-background inset-y-0 right-0 w-96 shadow-xl fixed z-40 flex max-w-full flex-col border-l"
+		aria-labelledby="marker-editor-title"
+		tabindex="-1"
+		(keydown.escape)="$event.stopPropagation(); close()"
+	>
+		<button
+			ui-button
+			type="button"
+			variant="ghost"
+			size="icon-sm"
+			icon="matCloseRound"
+			class="top-4 right-4 absolute"
+			aria-label="Close marker editor"
+			[disabled]="fields().submitting() || remove.isPending()"
+			(click)="close()"
+		></button>
+		<ng-container [ngTemplateOutlet]="content" />
+	</aside>
+}

@@ -1,0 +1,11 @@
+<div
+	emblaCarousel
+	class="overflow-hidden"
+	[plugins]="plugins()"
+	[options]="emblaOptions()"
+	[subscribeToEvents]="['init', 'select', 'reInit']"
+	(emblaChange)="onEmblaEvent($event)"
+>
+	<ng-content select="[hlmCarouselContent],hlm-carousel-content" />
+</div>
+<ng-content />

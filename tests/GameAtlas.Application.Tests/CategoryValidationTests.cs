@@ -19,7 +19,7 @@ public class CategoryValidationTests
 	}
 
 	[Theory]
-	[InlineData(null, false)]
+	[InlineData(null, true)]
 	[InlineData("", false)]
 	[InlineData("red", false)]
 	[InlineData("#F80", true)]
@@ -36,7 +36,7 @@ public class CategoryValidationTests
 	[InlineData("#GG8800", false)]
 	[InlineData("#ff8800", true)]
 	[InlineData("#FF8800", true)]
-	public void ColorRequiresExactHexFormat(string? color, bool valid)
+	public void ColorIsOptionalButRequiresExactHexFormatWhenPresent(string? color, bool valid)
 	{
 		Assert.Equal(valid, new CreateCategoryValidation().Validate(Create(color: color)).IsValid);
 		Assert.Equal(valid, new UpdateCategoryValidation().Validate(Update() with { Color = color }).IsValid);
@@ -61,7 +61,7 @@ public class CategoryValidationTests
 		Assert.False(update.Validate(Update()).IsValid);
 		Assert.False(update.Validate(Update() with { Name = (string?)null }).IsValid);
 		Assert.True(update.Validate(Update() with { IconAssetId = (Guid?)null }).IsValid);
-		Assert.False(update.Validate(Update() with { Color = (string?)null }).IsValid);
+		Assert.True(update.Validate(Update() with { Color = (string?)null }).IsValid);
 		Assert.False(update.Validate(Update() with { CategoryGroupId = (Guid?)null }).IsValid);
 		Assert.True(update.Validate(Update() with { CategoryGroupId = Guid.Empty }).IsValid);
 	}

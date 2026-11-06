@@ -8,6 +8,29 @@ export type MapGeometry = {
 	maxZoom: number | null
 }
 
+export type MapPoint = { x: number; y: number }
+export type MapTool = 'pan' | 'move' | 'add'
+
+export type MapMarker = {
+	id: string
+	name: string
+	position: MapPoint
+	color: string | null
+	icon: string | null
+	selected?: boolean
+	pending?: boolean
+	failed?: boolean
+}
+
+export type MarkerMove = { id: string; position: MapPoint }
+export type VisibleMapRegion = { left: number; top: number; right: number; bottom: number }
+
+export type MarkerInteractions = {
+	select: (id: string) => void
+	place: (position: MapPoint) => void
+	move: (movement: MarkerMove) => void
+}
+
 export type MapViewStyle = {
 	id: string
 	name: string

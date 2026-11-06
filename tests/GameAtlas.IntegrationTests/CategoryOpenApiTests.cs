@@ -109,6 +109,8 @@ public class CategoryOpenApiTests
 
 			var color = Resolve(root, properties.GetProperty("color"));
 
+			Assert.Contains("null", color.GetProperty("type").EnumerateArray().Select(value => value.GetString()));
+
 			var order = Resolve(root, properties.GetProperty("beforeId"));
 			Assert.False(properties.TryGetProperty("order", out _));
 

@@ -10,6 +10,7 @@ import { reorder, toPromise } from '@game-atlas/shared/util'
 import { CategoriesService } from '../generated'
 import type { Category, CategoryGroup } from '../generated/models'
 import { type GroupsQueryKey, getGroupsQueryKey } from './category-query-keys'
+import { getMarkersQueryKey } from '../markers/marker-query-keys'
 import type {
 	CreateCategoryVariables,
 	UpdateCategoryVariables,
@@ -106,6 +107,7 @@ export class CategoriesQueryOptions {
 		return mutationOptions({
 			mutationKey: ['categories', 'deleteGroup'],
 			mutationFn: ({ gameId, mapId, id }) => toPromise(this.#service.deleteCategoryGroup(gameId, mapId, id)),
+
 			onMutate: async (variables, context) => {
 				const queryKey = getGroupsQueryKey(variables.gameId, variables.mapId)
 
@@ -118,6 +120,10 @@ export class CategoriesQueryOptions {
 				)
 
 				return { previousGroups }
+			},
+
+			onSuccess: async (data, { gameId, mapId }, snapshot, { client }) => {
+				await client.invalidateQueries({ queryKey: getMarkersQueryKey(gameId, mapId), exact: true })
 			},
 
 			onError: (error, result, onMutateResult, context) =>
@@ -169,7 +175,7 @@ export class CategoriesQueryOptions {
 						...category,
 						categoryGroupId,
 						name: variables.name ?? category.name,
-						color: variables.color ?? category.color,
+						color: variables.color === undefined ? category.color : variables.color,
 						icon: variables.iconAssetId === null ? null : category.icon,
 					}
 
@@ -235,6 +241,10 @@ export class CategoriesQueryOptions {
 				)
 
 				return { previousGroups }
+			},
+
+			onSuccess: async (data, { gameId, mapId }, snapshot, { client }) => {
+				await client.invalidateQueries({ queryKey: getMarkersQueryKey(gameId, mapId), exact: true })
 			},
 
 			onError: (error, result, onMutateResult, context) =>

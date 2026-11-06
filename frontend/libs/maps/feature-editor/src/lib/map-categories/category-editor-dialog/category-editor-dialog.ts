@@ -1,3 +1,4 @@
+import { CategoryIcon } from '@game-atlas/maps/ui'
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { disabled, form, FormField, FormRoot, validate } from '@angular/forms/signals'
@@ -7,7 +8,7 @@ import {
 	type Category,
 	type CategoryGroup,
 } from '@game-atlas/maps/data-access'
-import { Button, MediaPickerDialog, MediaThumbnail } from '@game-atlas/shared/ui'
+import { MediaThumbnail, Button, MediaPickerDialog } from '@game-atlas/shared/ui'
 import { getDirtyValues, type LibraryImage, type PickerContext } from '@game-atlas/shared/util'
 import { BrnDialogRef, BrnDialogService, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
@@ -27,7 +28,7 @@ export type CategoryEditorContext = {
 
 @Component({
 	selector: 'maps-category-editor-dialog',
-	imports: [Button, MediaThumbnail, HlmFieldImports, HlmInput, HlmSelectImports, FormField, FormRoot],
+	imports: [MediaThumbnail, CategoryIcon, Button, HlmFieldImports, HlmInput, HlmSelectImports, FormField, FormRoot],
 	templateUrl: './category-editor-dialog.html',
 	host: {
 		class: 'block max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] overflow-auto rounded-xl border bg-background p-6 text-foreground shadow-xl',
@@ -36,6 +37,7 @@ export type CategoryEditorContext = {
 export class CategoryEditorDialog {
 	protected readonly context = injectBrnDialogContext<CategoryEditorContext>()
 	protected readonly dialog = inject(BrnDialogRef)
+
 	readonly #options = inject(CategoriesQueryOptions)
 	readonly #dialogs = inject(BrnDialogService)
 	readonly #destroy = inject(DestroyRef)
@@ -46,16 +48,19 @@ export class CategoryEditorDialog {
 	readonly #updateGroup = injectMutation(() => this.#options.updateGroup())
 
 	protected readonly existing = this.context.kind === 'group' ? this.context.group : this.context.category
+
 	protected readonly title =
 		(this.existing ? 'Edit ' : 'Add ') + (this.context.kind === 'group' ? 'group' : 'category')
-	protected readonly icon = signal<LibraryImage | null>(this.existing?.icon ?? null)
+
 	protected readonly groupName = (value: unknown): string =>
 		this.context.groups.find(group => group.id === value)?.name ?? 'Choose a group'
+
+	protected readonly icon = signal<LibraryImage | null>(this.existing?.icon ?? null)
 
 	readonly #model = signal({
 		name: this.existing?.name ?? '',
 		iconAssetId: this.existing?.icon?.id ?? (null as string | null),
-		color: this.existing?.color ?? '#F59E0B',
+		color: this.context.kind === 'group' ? (this.existing?.color ?? '#F59E0B') : (this.existing?.color ?? ''),
 		categoryGroupId:
 			this.context.category?.categoryGroupId ?? this.context.group?.id ?? this.context.groups[0]?.id ?? '',
 	})
@@ -77,13 +82,14 @@ export class CategoryEditorDialog {
 			validate(path.name, ({ value }) => {
 				const name = value().trim()
 
-				return !name
-					? { kind: 'required', message: 'Name is required.' }
-					: name.length > 200
-						? { kind: 'maxLength', message: 'Use at most 200 characters.' }
-						: undefined
+				if (!name) return { kind: 'required', message: 'Name is required.' }
+
+				if (name.length > 200) return { kind: 'maxLength', message: 'Use at most 200 characters.' }
+
+				return undefined
 			})
 			validate(path.color, ({ value }) =>
+				(this.context.kind === 'category' && !value().trim()) ||
 				/^#(?:[a-f\d]{3}|[a-f\d]{6})(?![\s\S])/i.test(value())
 					? undefined
 					: { kind: 'color', message: 'Use a hex color such as #FFF or #FFFFFF.' },
@@ -148,6 +154,7 @@ export class CategoryEditorDialog {
 									id: category.id,
 									...patch,
 									...(patch.name === undefined ? {} : { name: patch.name.trim() }),
+									...(patch.color === undefined ? {} : { color: patch.color.trim() || null }),
 								},
 								callbacks,
 							)
@@ -160,7 +167,7 @@ export class CategoryEditorDialog {
 									mapId,
 									groupId: values.categoryGroupId,
 									name: values.name.trim(),
-									color: values.color,
+									color: values.color.trim() || null,
 									iconAssetId: values.iconAssetId,
 								},
 								callbacks,

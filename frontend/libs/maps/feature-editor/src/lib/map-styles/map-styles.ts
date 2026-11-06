@@ -99,14 +99,14 @@ export class MapStyles {
 	readonly #document = inject(DOCUMENT)
 	readonly #changeDetector = inject(ChangeDetectorRef)
 
-	protected readonly deleting = injectMutation(() => this.#options.deleteStyle(this.gameId(), this.map().id))
+	protected readonly deleteStyle = injectMutation(() => this.#options.deleteStyle(this.gameId(), this.map().id))
 	protected readonly presentation = injectMutation(() => this.#options.update(this.gameId(), this.map().id))
 	protected readonly retrying = injectMutation(() => this.#options.retryStyle(this.gameId(), this.map().id))
 
 	protected readonly styleError = getMapRetryErrorMessage
 	protected readonly mapId = computed(() => this.map().id)
 	protected readonly busy = computed(
-		() => this.presentation.isPending() || this.deleting.isPending() || this.retrying.isPending(),
+		() => this.presentation.isPending() || this.deleteStyle.isPending() || this.retrying.isPending(),
 	)
 	readonly sectionOpen = signal(true)
 	protected readonly dragging = signal(false)
@@ -189,7 +189,7 @@ export class MapStyles {
 			.subscribe(confirmed => {
 				if (confirmed !== true) return
 
-				this.deleting.mutate(style.id, {
+				this.deleteStyle.mutate(style.id, {
 					onError: error => toast.error(getMapStyleErrorMessage(error)),
 					onSuccess: () => this.#document.getElementById('style-add')?.focus(),
 				})

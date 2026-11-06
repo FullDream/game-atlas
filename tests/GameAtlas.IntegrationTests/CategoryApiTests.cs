@@ -13,6 +13,50 @@ namespace GameAtlas.IntegrationTests;
 public class CategoryApiTests
 {
 	[Theory]
+	[InlineData("{\"name\":\"Name\"}")]
+	[InlineData("{\"name\":\"Name\",\"color\":null}")]
+	public async Task NullableColorRoundTripsAndPatchOmissionPreservesIt(string body)
+	{
+		await using var factory = new GameApiFactory();
+
+		await factory.MigrateAsync();
+
+		var (game, group) = await CategoryTestData.ParentAsync(factory);
+		using var client = factory.CreateHttpsClient();
+		var path = CategoryTestData.Path(game.Id, group.Id);
+		using var content = new StringContent(body, Encoding.UTF8, "application/json");
+		using var created = await client.PostAsync(path, content);
+		var category = await ReadAsync(created);
+
+		Assert.Null(category.Color);
+
+		path += $"/{category.Id}";
+		using var colored = await PatchAsync(client, path, "{\"color\":\"#abc\"}");
+
+		Assert.Equal("#AABBCC", (await ReadAsync(colored)).Color);
+
+		using var renamed = await PatchAsync(client, path, "{\"name\":\"Renamed\"}");
+
+		Assert.Equal("#AABBCC", (await ReadAsync(renamed)).Color);
+
+		using var cleared = await PatchAsync(client, path, "{\"color\":null}");
+		var clearedCategory = await ReadAsync(cleared);
+
+		Assert.Null(clearedCategory.Color);
+
+		using var unchanged = await PatchAsync(client, path, "{\"color\":null}");
+
+		Assert.Equal(clearedCategory.UpdatedAt, (await ReadAsync(unchanged)).UpdatedAt);
+
+		await using var scope = factory.Services.CreateAsyncScope();
+		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+		var stored = await context.Categories.SingleAsync(item => item.Id == category.Id);
+
+		Assert.Null(stored.Color);
+		Assert.Equal("Renamed", stored.Name);
+	}
+
+	[Theory]
 	[InlineData("#fff", "#FFFFFF")]
 	[InlineData("#F80", "#FF8800")]
 	[InlineData("#aBc", "#AABBCC")]
@@ -48,7 +92,7 @@ public class CategoryApiTests
 	[Theory]
 	[InlineData("{}", 422)]
 	[InlineData("{\"name\":null,\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\"}", 422)]
-	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\"}", 422)]
+	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"\"}", 422)]
 	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"red\"}", 422)]
 	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":null}", 400)]
 	[InlineData("{\"name\":\"Name\",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\",\"order\":0}", 400)]
@@ -317,7 +361,6 @@ public class CategoryApiTests
 	[Theory]
 	[InlineData("{}", 422)]
 	[InlineData("{\"name\":null}", 422)]
-	[InlineData("{\"color\":null}", 422)]
 	[InlineData("{\"order\":null}", 400)]
 	[InlineData("{\"categoryGroupId\":null}", 422)]
 	[InlineData("{\"name\":\"New\",\"order\":0}", 400)]

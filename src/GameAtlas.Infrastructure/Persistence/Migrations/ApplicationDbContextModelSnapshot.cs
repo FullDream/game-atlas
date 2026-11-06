@@ -27,7 +27,6 @@ namespace GameAtlas.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Color")
-                        .IsRequired()
                         .HasMaxLength(7)
                         .HasColumnType("TEXT");
 

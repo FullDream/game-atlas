@@ -1,3 +1,4 @@
+import { CategoryIcon } from '@game-atlas/maps/ui'
 import { CdkScrollable } from '@angular/cdk/scrolling'
 import { HlmAccordionImports } from '@spartan-ng/helm/accordion'
 import { ChangeDetectorRef, Component, computed, DestroyRef, inject, input, linkedSignal, signal } from '@angular/core'
@@ -17,7 +18,7 @@ import {
 	type Category,
 	type CategoryGroup,
 } from '@game-atlas/maps/data-access'
-import { Button, ConfirmationDialog, ErrorState, MediaThumbnail } from '@game-atlas/shared/ui'
+import { MediaThumbnail, Button, ConfirmationDialog, ErrorState } from '@game-atlas/shared/ui'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
 	matAddRound,
@@ -27,7 +28,6 @@ import {
 	matArrowDownwardRound,
 	matDriveFileMoveRound,
 	matFolderRound,
-	matLocationOnRound,
 	matMoreHorizRound,
 	matDragIndicatorRound,
 	matChevronRightRound,
@@ -43,6 +43,8 @@ import { injectQuery, injectMutation, injectIsMutating } from '@tanstack/angular
 import { take } from 'rxjs'
 import { CategoryEditorDialog } from './category-editor-dialog/category-editor-dialog'
 
+type CategoryMutationScope = { gameId?: string; mapId?: string }
+
 type DragItem = { kind: 'group' | 'category'; id: string; groupId: string }
 type DropTarget = { kind: string; groupId: string }
 type MoveCallbacks = { onError: (error: unknown) => void }
@@ -50,13 +52,14 @@ type MoveCallbacks = { onError: (error: unknown) => void }
 @Component({
 	selector: 'maps-categories',
 	imports: [
+		MediaThumbnail,
+		CategoryIcon,
 		CdkScrollable,
 		HlmAccordionImports,
 		Button,
 		NgIcon,
 		HlmButtonGroup,
 		ErrorState,
-		MediaThumbnail,
 		HlmDropdownMenuImports,
 		HlmEmptyImports,
 		HlmSkeleton,
@@ -77,7 +80,6 @@ type MoveCallbacks = { onError: (error: unknown) => void }
 			matArrowDownwardRound,
 			matDriveFileMoveRound,
 			matFolderRound,
-			matLocationOnRound,
 			matAddRound,
 			matMoreHorizRound,
 			matDragIndicatorRound,
@@ -104,7 +106,7 @@ export class MapCategories {
 	readonly #pending = injectIsMutating({
 		mutationKey: ['categories'],
 		predicate: mutation => {
-			const variables = mutation.state.variables as { gameId?: string; mapId?: string } | undefined
+			const variables = mutation.state.variables as CategoryMutationScope | undefined
 
 			return variables?.gameId === this.gameId() && variables.mapId === this.mapId()
 		},
@@ -115,17 +117,22 @@ export class MapCategories {
 	readonly #delete = injectMutation(() => this.#options.delete())
 	readonly #deleteGroup = injectMutation(() => this.#options.deleteGroup())
 
+	protected readonly acceptsGroup = (drag: CdkDrag<DragItem | undefined>): boolean => drag.data?.kind === 'group'
+
+	protected readonly acceptsCategory = (drag: CdkDrag<DragItem | undefined>): boolean =>
+		drag.data?.kind === 'category'
+
+	readonly sectionOpen = signal(true)
+
 	protected readonly groups = linkedSignal(() => this.query.data() ?? [])
 	protected readonly busy = computed(() => this.#pending() > 0)
+
 	protected readonly dropIds = computed(() =>
 		this.groups().flatMap(group => ['category-list-' + group.id, 'category-header-' + group.id]),
 	)
+
 	protected readonly collapsed = signal<ReadonlySet<string>>(new Set())
-	readonly sectionOpen = signal(true)
 	protected readonly dragging = signal(false)
-	protected readonly acceptsGroup = (drag: CdkDrag<DragItem | undefined>): boolean => drag.data?.kind === 'group'
-	protected readonly acceptsCategory = (drag: CdkDrag<DragItem | undefined>): boolean =>
-		drag.data?.kind === 'category'
 
 	protected expanded(id: string): boolean {
 		return !this.collapsed().has(id)
@@ -156,17 +163,18 @@ export class MapCategories {
 			return
 		}
 
+		let restoreFocus = '#category-add'
+
+		if (category) restoreFocus = '#category-actions-' + category.id
+		else if (group) restoreFocus = '#group-actions-' + group.id
+
 		this.#dialogs.open(
 			CategoryEditorDialog,
 			undefined,
 			{ gameId: this.gameId(), mapId: this.mapId(), groups: this.groups(), kind, group, category },
 			{
 				ariaLabel: (category || (kind === 'group' && group) ? 'Edit ' : 'Add ') + kind,
-				restoreFocus: category
-					? '#category-actions-' + category.id
-					: group
-						? '#category-actions-' + group.id
-						: '#category-add',
+				restoreFocus,
 				disableClose: true,
 				closeOnOutsidePointerEvents: false,
 			},
@@ -234,7 +242,9 @@ export class MapCategories {
 		else transferArrayItem(sourceCategories, categories, current, index)
 
 		categories[index] = { ...category, categoryGroupId: destination.id }
+
 		this.setExpanded(destination.id, true)
+
 		this.groups.update(groups =>
 			groups.map(group => {
 				if (group.id === destination.id) return { ...group, categories }

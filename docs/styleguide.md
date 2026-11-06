@@ -65,5 +65,6 @@ Follow the existing Prettier and ESLint configuration.
 - Use Remeda collection helpers when they make transformations clearer or shorter (for example, `takeLast`, `dropLast` or non-mutating sorting). Do not replace straightforward native operations merely to use the library.
 - Do not use nested ternary expressions. Use explicit `if`/`else` branches or `switch` for multiple conditions.
 - Keep functions focused and reasonably small.
+- Aim for a maximum of about 400 lines per handwritten TypeScript file that declares a component or class, including imports and blank lines. When a file approaches or exceeds this size, split distinct UI sections into colocated components and extract cohesive non-UI logic into purpose-named modules. Keep ownership and initialization dependencies clear; do not compress formatting or create arbitrary fragments merely to satisfy the line count. Generated files are exempt.
 - Do not introduce unnecessary abstractions.
 - Do not add comments that merely restate the code.

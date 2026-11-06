@@ -6,18 +6,29 @@ import { remove as removeTransform } from 'ol/proj/transforms.js'
 import TileGrid from 'ol/tilegrid/TileGrid.js'
 import TileLayer from 'ol/layer/Tile.js'
 import XYZ from 'ol/source/XYZ.js'
-import type { MapGeometry, MapViewStyle } from './map-viewport-types'
+import { defaults as defaultInteractions } from 'ol/interaction/defaults.js'
+import { MapMarkers } from './map-markers'
+import type {
+	MapGeometry,
+	MapViewStyle,
+	MapMarker,
+	MapTool,
+	MarkerInteractions,
+	VisibleMapRegion,
+} from './map-viewport-types'
 
 export class MapEngine {
+	readonly #markers: MapMarkers
 	readonly #layer = new TileLayer<XYZ>()
 	readonly #map: Map
 	readonly #observer: ResizeObserver
 	readonly #extent: number[]
+
 	#url: string | null = null
 	#fitted = false
 	#sourceProjection: Projection | undefined
 
-	constructor(target: HTMLElement, geometry: MapGeometry) {
+	constructor(target: HTMLElement, geometry: MapGeometry, interactions: MarkerInteractions) {
 		if (!geometry.extent) throw new Error('Logical map geometry is required.')
 
 		this.#extent = geometry.extent
@@ -41,7 +52,15 @@ export class MapEngine {
 			constrainResolution: false,
 		})
 
-		this.#map = new Map({ target, layers: [this.#layer], view, controls: [] })
+		this.#map = new Map({
+			target,
+			layers: [this.#layer],
+			view,
+			controls: [],
+			interactions: defaultInteractions({ onFocusOnly: false }),
+		})
+
+		this.#markers = new MapMarkers(this.#map, interactions)
 
 		this.#observer = new ResizeObserver(() => {
 			this.#map.updateSize()
@@ -91,6 +110,7 @@ export class MapEngine {
 			coordinate => [coordinate[0] * scaleX, coordinate[1] * scaleY],
 			coordinate => [coordinate[0] / scaleX, coordinate[1] / scaleY],
 		)
+
 		this.#sourceProjection = sourceProjection
 
 		this.#layer.setSource(
@@ -116,11 +136,21 @@ export class MapEngine {
 		this.#map.getView().adjustZoom(delta)
 	}
 
+	setMarkers(markers: MapMarker[], tool: MapTool): void {
+		this.#markers.setMarkers(markers)
+		this.#markers.setTool(tool)
+	}
+
+	reveal(id: string, region: VisibleMapRegion): void {
+		this.#markers.reveal(id, region)
+	}
+
 	fit(): void {
 		this.#map.getView().fit(this.#extent, { size: this.#map.getSize(), padding: [24, 24, 24, 24] })
 	}
 
 	dispose(): void {
+		this.#markers.dispose()
 		this.#observer.disconnect()
 		this.#map.setTarget(undefined)
 		this.#layer.getSource()?.dispose()

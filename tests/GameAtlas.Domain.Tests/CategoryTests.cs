@@ -30,7 +30,6 @@ public class CategoryTests
 	[Theory]
 	[InlineData(null, "icon", "#123456", 1)]
 	[InlineData(" ", "icon", "#123456", 1)]
-	[InlineData("Name", "icon", null, 1)]
 	[InlineData("Name", "icon", "red", 1)]
 	[InlineData("Name", "icon", "#12", 1)]
 	[InlineData("Name", "icon", "#1234", 1)]
@@ -52,6 +51,20 @@ public class CategoryTests
 		Assert.True(Category.Create(Guid.NewGuid(), name, iconId, color, order).IsFailure);
 		Assert.True(category.Update(name, iconId, color, order, Guid.NewGuid()).IsFailure);
 		Assert.Equal(before, Snapshot(category));
+	}
+
+	[Fact]
+	public void NullColorCanBeCreatedClearedAndPreservedWhenOmitted()
+	{
+		var category = Assert.IsType<Category>(Category.Create(Guid.NewGuid(), "Name", null, null, 1).Value);
+
+		Assert.Null(category.Color);
+		Assert.True(category.Update(color: "#abc").Value);
+		Assert.Equal("#AABBCC", category.Color);
+		Assert.True(category.Update(color: (string?)null).Value);
+		Assert.Null(category.Color);
+		Assert.False(category.Update().Value);
+		Assert.False(category.Update(color: (string?)null).Value);
 	}
 
 	[Fact]

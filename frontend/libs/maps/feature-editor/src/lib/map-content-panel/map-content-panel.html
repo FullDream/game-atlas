@@ -1,0 +1,44 @@
+@if (liveStatus() === 'stale' || liveStatus() === 'reconnecting') {
+	<div class="p-3 gap-2 flex shrink-0 items-center justify-between border-b">
+		<p class="text-xs text-muted-foreground" role="status">
+			{{
+				liveStatus() === 'reconnecting'
+					? 'Reconnecting… Status may be out of date.'
+					: 'Updates disconnected. Status may be out of date.'
+			}}
+		</p>
+		@if (liveStatus() === 'stale') {
+			<button ui-button variant="ghost" size="sm" icon="matRefreshRound" (click)="reconnectRequested.emit()">
+				Reconnect
+			</button>
+		}
+	</div>
+}
+<div hlmAccordion type="multiple" class="min-h-0 flex-1 overflow-hidden">
+	<maps-styles
+		#stylesPanel
+		[gameId]="gameId()"
+		[map]="map()"
+		[(selectedStyleId)]="selectedStyleId"
+		(styleSelected)="close()"
+	/>
+	<maps-categories #categoriesPanel [gameId]="gameId()" [mapId]="map().id" />
+	<maps-markers
+		#markersPanel
+		[markers]="markers.data() ?? []"
+		[categories]="categoriesById()"
+		[selectedId]="selectedId()"
+		[pendingMarkerIds]="pendingMarkerIds()"
+		[loading]="markers.isLoading()"
+		[error]="markers.isError()"
+		(markerSelected)="markerSelected.emit($event)"
+		(retryRequested)="markers.refetch()"
+	/>
+	<div
+		aria-hidden="true"
+		class="min-h-0 basis-0 ease-out transition-[flex-grow] duration-200 motion-reduce:transition-none"
+		[style.flex-grow]="
+			stylesPanel.sectionOpen() || categoriesPanel.sectionOpen() || markersPanel.sectionOpen() ? 0 : 1
+		"
+	></div>
+</div>

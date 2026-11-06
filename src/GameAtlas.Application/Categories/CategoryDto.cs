@@ -7,7 +7,7 @@ public sealed record CategoryDto(
 	Guid CategoryGroupId,
 	string Name,
 	ImageAssetDto? Icon,
-	string Color,
+	string? Color,
 	int MarkersCount,
 	DateTimeOffset CreatedAt,
 	DateTimeOffset UpdatedAt);

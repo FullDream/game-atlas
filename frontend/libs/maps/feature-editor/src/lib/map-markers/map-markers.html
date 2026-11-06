@@ -1,0 +1,99 @@
+<section
+	hlmAccordionItem
+	[isOpened]="sectionOpen()"
+	(openedChange)="sectionOpen.set($event)"
+	class="min-h-0 flex flex-1 flex-col overflow-hidden"
+>
+	<header class="h-14 gap-2 px-3 flex shrink-0 items-center border-b">
+		<h2 class="min-w-0 text-sm font-semibold flex-1 truncate">Markers ({{ markers().length }})</h2>
+		<hlm-accordion-trigger
+			triggerClass="size-8 p-0 items-center justify-center hover:bg-muted hover:no-underline **:data-[slot=accordion-trigger-icon]:ms-0"
+		>
+			<span class="sr-only">Toggle markers</span>
+		</hlm-accordion-trigger>
+	</header>
+	<hlm-accordion-content class="min-h-0 [&>div]:pb-0 flex-1 overflow-hidden data-[state=open]:h-auto [&>div]:h-full">
+		<div class="min-h-0 h-full scrollbar-gutter-stable overflow-y-auto">
+			@if (loading()) {
+				<div class="p-3 gap-3 flex flex-col" role="status" aria-label="Loading markers" aria-busy="true">
+					@for (row of [1, 2, 3]; track row) {
+						<hlm-skeleton class="h-12 w-full" />
+					}
+				</div>
+			} @else if (error()) {
+				<ui-error-state class="p-3">
+					<ng-container uiErrorStateHeading>Could not load markers</ng-container>
+					<ng-container uiErrorStateDescription>Try loading this map's markers again.</ng-container>
+					<button ui-button variant="outline" size="sm" (click)="retryRequested.emit()">Retry</button>
+				</ui-error-state>
+			} @else if (!markers().length) {
+				<div hlmEmpty class="m-3 border">
+					<div hlmEmptyHeader>
+						<h3 hlmEmptyTitle>No markers yet</h3>
+						<p hlmEmptyDescription>Use the map toolbar to place your first marker.</p>
+					</div>
+				</div>
+			} @else {
+				<ul aria-label="Map markers" class="p-2 gap-1 flex flex-col">
+					@for (row of rows(); track row.marker.id) {
+						@let marker = row.marker;
+						<li>
+							<button
+								ui-button
+								type="button"
+								class="px-3 py-3 min-h-16 [&>span]:min-w-0 h-auto w-full grid-cols-1 text-left whitespace-normal [&>span]:w-full [&>span]:justify-start"
+								[variant]="selectedId() === marker.id ? 'secondary' : 'ghost'"
+								[attr.aria-current]="selectedId() === marker.id ? 'true' : null"
+								[disabled]="pendingMarkerIds().has(marker.id)"
+								(click)="markerSelected.emit(marker.id)"
+								(keydown)="$event.stopPropagation()"
+							>
+								<span class="min-w-0 gap-3 flex w-full items-start">
+									@if (row.category; as category) {
+										<maps-category-icon [iconUrl]="category.icon?.url" [color]="category.color" />
+									}
+									<span class="min-w-0 gap-1 flex flex-1 flex-col items-start">
+										<span
+											class="max-w-full truncate"
+											[hlmTooltip]="marker.name"
+											uiTooltipOnOverflow
+										>
+											{{ marker.name }}
+										</span>
+										<span class="text-xs text-muted-foreground max-w-full truncate">
+											{{ row.category?.name ?? 'Category' }}
+										</span>
+									</span>
+									@let photos = row.photos;
+									@if (photos.length) {
+										<span
+											class="h-10 w-16 relative isolate block shrink-0 self-center"
+											[attr.aria-label]="photos.length + ' screenshots'"
+										>
+											@for (photo of photos; track photo.id; let index = $index) {
+												<span
+													class="top-0 left-0 h-8 w-14 absolute block"
+													[style.z-index]="photos.length - index"
+													[style.transform]="
+														'translate(' + index * 4 + 'px, ' + index * 4 + 'px)'
+													"
+												>
+													<ui-media-thumbnail
+														class="bg-background border-background rounded-md shadow-sm block h-full w-full border-2"
+														[image]="photo"
+														fit="cover"
+														aria-hidden="true"
+													/>
+												</span>
+											}
+										</span>
+									}
+								</span>
+							</button>
+						</li>
+					}
+				</ul>
+			}
+		</div>
+	</hlm-accordion-content>
+</section>

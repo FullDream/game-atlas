@@ -22,7 +22,7 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
 		builder.HasOne<ImageAsset>().WithMany().HasForeignKey(category => category.IconAssetId)
 			.OnDelete(DeleteBehavior.Restrict);
 
-		builder.Property(category => category.Color).HasMaxLength(7).IsRequired();
+		builder.Property(category => category.Color).HasMaxLength(7).IsRequired(false);
 		builder.HasIndex(category => new { category.CategoryGroupId, category.NormalizedName }).IsUnique();
 		builder.HasIndex(category => new { category.CategoryGroupId, category.Order });
 		builder.Property(category => category.CreatedAt).HasConversion<UtcTimestampConverter>();

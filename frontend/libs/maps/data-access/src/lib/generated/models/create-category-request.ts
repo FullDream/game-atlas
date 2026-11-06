@@ -16,9 +16,10 @@ export type CreateCategoryRequest = {
 	/**
 	 * @minLength 4
 	 * @maxLength 7
+	 * @nullable
 	 * @pattern ^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})(?![\s\S])
 	 */
-	color?: string
+	color?: string | null
 	/** @nullable */
 	beforeId?: string | null
 }

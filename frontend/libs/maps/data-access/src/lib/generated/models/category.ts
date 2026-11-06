@@ -11,7 +11,8 @@ export type Category = {
 	categoryGroupId: string
 	name: string
 	readonly icon: null | ImageAsset
-	color: string
+	/** @nullable */
+	color: string | null
 	readonly markersCount: number
 	readonly createdAt: string
 	readonly updatedAt: string

@@ -42,3 +42,11 @@ The admin development proxy retains `/api` prefix removal and `ws:true` for `/ap
 Map rename uses optimistic known cached names with rollback and then the complete PATCH response. Delete retains rows until server success, then removes detail/list data. Both reconcile without a duplicate list GET. Admin invalidates only the exact game-detail query after successful map create/update/delete through its mutation-cache callback. Maps never imports Games; the game list cache is left unchanged. The admin list disables mount/focus/reconnect refetches and polling; HTTP data remains a snapshot until an explicit read.
 
 Map creation accepts only name; geometry fields are nullable until the first style attachment. Style responses expose native tileGeometry. Map update also accepts defaultStyleId and the complete styleOrder array, with optimistic presentation changes and rollback. A surviving ready default is preserved when changing or deleting other styles.
+
+## Marker query options
+
+`MarkersQueryOptions` follows the category layout under `src/lib/markers`: `getList(gameId, mapId)`, `create()`, `update(id)` and `delete(id)`, with separate variable types, query keys and error messages. Generated MarkersService is transport only. Reads use the complete map-scoped array; writes upsert authoritative responses in createdAt/id order after cancelling stale reads. Deletion removes only the persisted item. Creation/deletion/category changes invalidate the exact category tree to refresh group/category counts; successful category/group cascades invalidate the marker list.
+
+Mutation retries are disabled. A lost POST response can follow a committed create: refresh and inspect the map before another create, since duplicate names are valid and the API has no idempotency token. Features own draft state, pending locks and notifications; they do not maintain a second persisted marker store.
+
+Create variables may include a client-only requestGroup correlation key; it is omitted from HTTP payloads. The feature uses it to keep repeated-placement success counts stable across mutation-cache expiry.
