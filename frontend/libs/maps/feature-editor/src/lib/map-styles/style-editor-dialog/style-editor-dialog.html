@@ -8,19 +8,15 @@
 </p>
 
 <form class="mt-5 gap-4 flex flex-col" [formRoot]="fields">
-	<hlm-field>
-		<label hlmFieldLabel for="style-name">Style name</label>
+	<ui-field label="Style name">
 		<input id="style-name" hlmInput [formField]="fields.name" autocomplete="off" />
-	</hlm-field>
-	<hlm-field>
-		<label hlmFieldLabel for="style-color">Background color</label>
-		<input id="style-color" hlmInput [formField]="fields.backgroundColor" autocomplete="off" />
-		<p hlmFieldDescription>Shown behind transparent tiles. Does not change the image.</p>
-	</hlm-field>
+	</ui-field>
+	<ui-field label="Background color" description="Shown behind transparent tiles. Does not change the image.">
+		<ui-color-picker id="style-color" [formField]="fields.backgroundColor" />
+	</ui-field>
 
 	@if (!context.style) {
-		<hlm-field>
-			<label hlmFieldLabel for="style-source">Source image</label>
+		<ui-field label="Source image" description="JPEG, PNG, WebP or AVIF at any supported resolution.">
 			<input type="hidden" [formField]="fields.sourceAssetId" />
 
 			@if (source(); as image) {
@@ -38,8 +34,7 @@
 			>
 				Choose library image
 			</button>
-			<p hlmFieldDescription>JPEG, PNG, WebP or AVIF at any supported resolution.</p>
-		</hlm-field>
+		</ui-field>
 	}
 
 	@if (aspectRatioMismatch() && !context.style) {

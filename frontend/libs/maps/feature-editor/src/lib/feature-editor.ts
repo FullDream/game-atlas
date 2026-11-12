@@ -16,7 +16,7 @@ import {
 } from '@game-atlas/maps/data-access'
 import { MapViewport, type MapPoint, type MapTool, type MarkerMove } from '@game-atlas/maps/ui'
 import { Button, ErrorState, PageHeaderPortal } from '@game-atlas/shared/ui'
-import { NgIcon, provideIcons } from '@ng-icons/core'
+import { NgIcon, NgIconStack, provideIcons } from '@ng-icons/core'
 import {
 	matAddLocationAltRound,
 	matArrowBackRound,
@@ -27,6 +27,8 @@ import {
 	matOpenWithRound,
 	matPanToolRound,
 	matRefreshRound,
+	matLocationOnRound,
+	matLocationOnFillRound,
 } from '@ng-icons/material-symbols/round'
 import { toast } from '@spartan-ng/brain/sonner'
 import { HlmSeparator } from '@spartan-ng/helm/separator'
@@ -37,9 +39,7 @@ import { injectMutation, injectMutationState, injectQuery } from '@tanstack/angu
 import { MapContentPanel } from './map-content-panel/map-content-panel'
 import { createMapMarkers, type MarkerMovementVariables, type PlacementState } from './map-marker-presentation'
 import { MarkerEditor, type MarkerEditorSession } from './marker-editor/marker-editor'
-
 type MarkerSelectionSource = { mapId: string; markers: Marker[] | undefined }
-
 @Component({
 	selector: 'maps-editor',
 	imports: [
@@ -48,6 +48,7 @@ type MarkerSelectionSource = { mapId: string; markers: Marker[] | undefined }
 		HlmToggleGroupImports,
 		HlmSeparator,
 		NgIcon,
+		NgIconStack,
 		Button,
 		ErrorState,
 		MapViewport,
@@ -57,6 +58,7 @@ type MarkerSelectionSource = { mapId: string; markers: Marker[] | undefined }
 		HlmTooltip,
 	],
 	templateUrl: './feature-editor.html',
+	styleUrl: './feature-editor.css',
 	providers: [
 		MarkersQueryOptions,
 		CategoriesQueryOptions,
@@ -68,7 +70,8 @@ type MarkerSelectionSource = { mapId: string; markers: Marker[] | undefined }
 			matOpenWithRound,
 			matAddLocationAltRound,
 			matLibraryAddRound,
-
+			matLocationOnRound,
+			matLocationOnFillRound,
 			matChevronLeftRound,
 			matChevronRightRound,
 			matRefreshRound,

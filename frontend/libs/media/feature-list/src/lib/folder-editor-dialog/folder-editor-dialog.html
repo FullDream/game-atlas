@@ -1,10 +1,9 @@
 <h2 class="text-lg font-semibold">{{ context.folder ? 'Rename folder' : 'New folder' }}</h2>
 
 <form class="mt-5 gap-4 flex flex-col" [formRoot]="folderForm">
-	<hlm-field>
-		<label hlmFieldLabel for="folder-editor-name">Name</label>
+	<ui-field label="Name">
 		<input id="folder-editor-name" hlmInput [formField]="folderForm.name" autocomplete="off" />
-	</hlm-field>
+	</ui-field>
 
 	@if (errorMessage()) {
 		<hlm-field-error forceShow>{{ errorMessage() }}</hlm-field-error>

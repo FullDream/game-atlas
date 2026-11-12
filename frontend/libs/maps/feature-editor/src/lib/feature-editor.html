@@ -155,13 +155,18 @@
 						type="button"
 						size="icon"
 						[variant]="template() ? 'secondary' : 'ghost'"
-						icon="matLibraryAddRound"
 						aria-label="Add several markers"
 						hlmTooltip="Add several markers"
 						[attr.aria-pressed]="!!template()"
 						[disabled]="!placementAvailable()"
 						(click)="repeatMarkers()"
-					></button>
+					>
+						<ng-icon-stack size="20px" aria-hidden="true">
+							<ng-icon name="matLocationOnRound" class="-translate-x-1/4" />
+							<ng-icon name="matLocationOnRound" class="-translate-x-1/8" />
+							<ng-icon name="matAddLocationAltRound" class="marker-stack-primary" />
+						</ng-icon-stack>
+					</button>
 				</div>
 			</div>
 		</maps-viewport>

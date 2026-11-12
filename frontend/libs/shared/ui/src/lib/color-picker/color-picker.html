@@ -1,0 +1,25 @@
+<button
+	#trigger
+	[hlmPopoverTriggerFor]="popover"
+	tabindex="-1"
+	class="gap-3 text-s h-9 pointer-events-none inline-flex w-full items-center justify-start"
+>
+	<span
+		class="size-5 rounded-sm shadow-xs text-muted-foreground text-xs flex items-center justify-center border"
+		[style.background]="value()"
+	>
+		@if (!value()) {
+			/
+		}
+	</span>
+	<span class="truncate" [class.text-muted-foreground]="!value()">{{ value() || 'No color' }}</span>
+</button>
+
+<div *hlmPopoverPortal="let ctx" class="p-0 w-auto max-w-[calc(100vw-1rem)] bg-transparent shadow-none ring-0">
+	<sim-color-picker [(value)]="value" [(format)]="format" [presets]="presets" [clearable]="clearable()">
+		<sim-color-area />
+		<sim-color-adjustment-controls showOpacity="false" />
+		<sim-color-value-editor showFormat="false" showOpacity="false" />
+		<sim-color-presets showAddColorButton="false" />
+	</sim-color-picker>
+</div>

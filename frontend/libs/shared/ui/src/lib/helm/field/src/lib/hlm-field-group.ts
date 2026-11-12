@@ -1,5 +1,5 @@
-import { Directive } from '@angular/core'
-import { classes } from '@spartan-ng/helm/utils'
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
 
 @Directive({
 	selector: '[hlmFieldGroup],hlm-field-group',
@@ -8,9 +8,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmFieldGroup {
 	constructor() {
-		classes(
-			() =>
-				'gap-7 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4 group/field-group @container/field-group flex w-full flex-col',
-		)
+		classes(() => 'gap-7 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4 group/field-group @container/field-group flex w-full flex-col');
 	}
 }

@@ -128,16 +128,13 @@
 				>
 					Add photo
 				</button>
-				<hlm-field>
-					<label hlmFieldLabel for="marker-name">Name</label>
+				<ui-field label="Name">
 					<input hlmInput id="marker-name" [formField]="fields.name" autocomplete="off" />
-				</hlm-field>
-				<hlm-field>
-					<label hlmFieldLabel for="marker-description">Description</label>
+				</ui-field>
+				<ui-field label="Description">
 					<textarea hlmTextarea id="marker-description" [formField]="fields.description" rows="4"></textarea>
-				</hlm-field>
-				<hlm-field>
-					<label hlmFieldLabel for="marker-category">Category</label>
+				</ui-field>
+				<ui-field label="Category">
 					<hlm-select [formField]="fields.categoryId" [itemToString]="categoryName">
 						<hlm-select-trigger id="marker-category" class="w-full">
 							@if (selectedCategory(); as category) {
@@ -166,17 +163,15 @@
 							}
 						</hlm-select-content>
 					</hlm-select>
-				</hlm-field>
+				</ui-field>
 				@if (!isRepeated()) {
 					<div class="gap-3 grid grid-cols-2">
-						<hlm-field>
-							<label hlmFieldLabel for="marker-x">X</label>
+						<ui-field label="X">
 							<input hlmInput id="marker-x" type="number" step="any" [formField]="fields.position.x" />
-						</hlm-field>
-						<hlm-field>
-							<label hlmFieldLabel for="marker-y">Y</label>
+						</ui-field>
+						<ui-field label="Y">
 							<input hlmInput id="marker-y" type="number" step="any" [formField]="fields.position.y" />
-						</hlm-field>
+						</ui-field>
 					</div>
 				}
 				@if (error()) {

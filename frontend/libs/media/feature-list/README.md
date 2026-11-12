@@ -69,7 +69,7 @@ The feature owns getMediaErrorMessage and all toast/dialog/router reactions. Per
 
 Validated editors use FormRoot and the form options submission.action with awaited mutateAsync calls. Form submitting() controls loading and leave protection. Schema-based disabling follows the mutation's pending state so getDirtyValues runs before disabling fields: Angular excludes non-interactive fields from dirty state. There are no manual submit handlers, preventDefault calls or duplicate validity/busy guards. Server messages are derived from mutation errors, so retries remain possible without changing otherwise valid input. Successful saves use feature onSuccess callbacks and reset the form baseline.
 
-Folder and asset editors compose inputs with hlm-field/hlmFieldLabel. Required/max-length validation messages are defined in the Signal Forms schema; owned HlmField handles touched-state error rendering centrally. Alternative-text help uses hlmFieldDescription, while general server feedback remains a separate force-shown field-error.
+Folder and asset editors compose inputs with ui-field and its label/description inputs. Required/max-length validation messages are defined in the Signal Forms schema; shared Field handles error rendering centrally. General server feedback remains a separate force-shown field-error.
 
 Editors pass only id and patch to update mutations. getDirtyValues extracts patches from Signal Forms dirty fields. Choosing/clearing a video cover marks previewAssetId dirty and uses a nullable ID, preserving explicit null. Success/discard resets form flags; pristine fields never enter PATCH bodies and empty patches are not submitted.
 

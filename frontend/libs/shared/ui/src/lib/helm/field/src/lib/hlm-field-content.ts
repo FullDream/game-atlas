@@ -1,5 +1,5 @@
-import { Directive } from '@angular/core'
-import { classes } from '@spartan-ng/helm/utils'
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
 
 @Directive({
 	selector: '[hlmFieldContent],hlm-field-content',
@@ -8,6 +8,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmFieldContent {
 	constructor() {
-		classes(() => 'gap-1 group/field-content leading-snug flex flex-1 flex-col')
+		classes(() => 'gap-1 group/field-content flex flex-1 flex-col leading-snug');
 	}
 }

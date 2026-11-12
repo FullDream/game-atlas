@@ -9,7 +9,6 @@ import {
 	matLinkRound,
 	matFormatListBulletedRound,
 } from '@ng-icons/material-symbols/round'
-import { HlmFieldImports } from '@spartan-ng/helm/field'
 import { HlmSelectImports } from '@spartan-ng/helm/select'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmInputGroupImports } from '@spartan-ng/helm/input-group'
@@ -17,16 +16,16 @@ import { HlmToggleGroupImports } from '@spartan-ng/helm/toggle-group'
 import { HlmSeparator } from '@spartan-ng/helm/separator'
 import { HlmDatePicker, HlmDatePickerInput } from '@spartan-ng/helm/date-picker'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
-import { Button, MediaThumbnail } from '@game-atlas/shared/ui'
+import { Button, MediaThumbnail, Field } from '@game-atlas/shared/ui'
 import { type LibraryImage } from '@game-atlas/shared/util'
 import { type GameForm } from './game-form'
 
 @Component({
 	selector: 'games-fields',
 	imports: [
+		Field,
 		NgIcon,
 		FormField,
-		HlmFieldImports,
 		HlmSelectImports,
 		HlmInput,
 		HlmInputGroupImports,

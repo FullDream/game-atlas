@@ -72,11 +72,7 @@
 	<h2 class="mb-6 text-sm font-semibold">Basic information</h2>
 	<div class="gap-6 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-8 grid grid-cols-1">
 		<div class="min-w-0 gap-5 flex flex-col">
-			<hlm-field>
-				<label hlmFieldLabel for="game-name">
-					Name
-					<span class="text-destructive" aria-hidden="true">*</span>
-				</label>
+			<ui-field label="Name">
 				<input
 					id="game-name"
 					hlmInput
@@ -84,12 +80,8 @@
 					autocomplete="off"
 					placeholder="e.g. Grand Theft Auto V"
 				/>
-			</hlm-field>
-			<hlm-field>
-				<label hlmFieldLabel for="game-slug">
-					Slug
-					<span class="text-destructive" aria-hidden="true">*</span>
-				</label>
+			</ui-field>
+			<ui-field description="Used in URLs. Lowercase letters, numbers and single hyphens." label="Slug">
 				<input
 					id="game-slug"
 					hlmInput
@@ -98,12 +90,8 @@
 					spellcheck="false"
 					placeholder="e.g. gta-v"
 				/>
-				<p hlmFieldDescription class="text-xs text-muted-foreground">
-					Used in URLs. Lowercase letters, numbers and single hyphens.
-				</p>
-			</hlm-field>
-			<hlm-field>
-				<label hlmFieldLabel [for]="description.id()">Description</label>
+			</ui-field>
+			<ui-field label="Description" description="Plain text. Formatting will be available in a future update.">
 				<div hlmInputGroup>
 					<div hlmInputGroupAddon align="block-start" class="border-b" aria-label="Description tools">
 						<hlm-toggle-group type="multiple" size="sm" disabled aria-label="Text formatting">
@@ -137,11 +125,9 @@
 						class="min-h-32"
 					></textarea>
 				</div>
-				<p hlmFieldDescription>Plain text. Formatting will be available in a future update.</p>
-			</hlm-field>
+			</ui-field>
 			<div class="gap-4 sm:grid-cols-2 grid">
-				<hlm-field>
-					<label hlmFieldLabel for="game-release">Release date</label>
+				<ui-field label="Release date">
 					<hlm-date-picker
 						captionLayout="dropdown"
 						[formField]="formFields.releaseDate"
@@ -157,7 +143,7 @@
 							[formatInputDate]="formatReleaseDate"
 						/>
 					</hlm-date-picker>
-				</hlm-field>
+				</ui-field>
 				<div>
 					<label for="game-developer" class="mb-2 text-sm font-medium block">Developer</label>
 					<input
@@ -169,8 +155,7 @@
 				</div>
 			</div>
 			@if (editing()) {
-				<hlm-field>
-					<label hlmFieldLabel for="game-status">Publication status</label>
+				<ui-field label="Publication status">
 					<input type="hidden" [formField]="formFields.status" />
 					<hlm-select
 						[value]="formFields.status().value()"
@@ -186,15 +171,11 @@
 							<hlm-select-item value="published">Published</hlm-select-item>
 						</hlm-select-content>
 					</hlm-select>
-				</hlm-field>
+				</ui-field>
 			}
 		</div>
 		<div class="min-w-0 gap-6 flex flex-col">
-			<hlm-field>
-				<label hlmFieldLabel for="game-cover">
-					Cover image
-					<span class="text-destructive" aria-hidden="true">*</span>
-				</label>
+			<ui-field label="Cover image">
 				<input type="hidden" [formField]="formFields.coverId" />
 				<div class="gap-4 border-border p-4 flex flex-wrap items-center rounded-[.65rem] border">
 					@if (cover(); as image) {
@@ -224,9 +205,8 @@
 						</button>
 					</div>
 				</div>
-			</hlm-field>
-			<hlm-field>
-				<label hlmFieldLabel for="game-banner">Banner image</label>
+			</ui-field>
+			<ui-field label="Banner image" description="A wide image for the game header. Optional.">
 				<input type="hidden" [formField]="formFields.bannerId" />
 				@if (banner(); as image) {
 					<ui-media-thumbnail
@@ -241,7 +221,6 @@
 						<ng-icon name="matImageRound" size="32" aria-hidden="true" />
 					</div>
 				}
-				<p hlmFieldDescription>A wide image for the game header. Optional.</p>
 				<div class="gap-2 flex">
 					<button
 						ui-button
@@ -265,7 +244,7 @@
 						</button>
 					}
 				</div>
-			</hlm-field>
+			</ui-field>
 		</div>
 	</div>
 }

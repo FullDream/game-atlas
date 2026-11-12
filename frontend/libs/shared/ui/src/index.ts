@@ -9,6 +9,8 @@ export { PendingChanges } from './lib/navigation/pending-changes'
 export { WorkspaceBreadcrumbs } from './lib/navigation/workspace-breadcrumbs'
 export type { WorkspaceBreadcrumb } from './lib/navigation/workspace-navigation'
 
+export { ColorPicker } from './lib/color-picker/color-picker'
+export { Field } from './lib/field/field'
 export { TooltipOnOverflow } from './lib/tooltip/tooltip-on-overflow'
 export { ConfirmationDialog, type Confirmation } from './lib/confirmation-dialog/confirmation-dialog'
 export { MediaThumbnail } from './lib/media-thumbnail/media-thumbnail'

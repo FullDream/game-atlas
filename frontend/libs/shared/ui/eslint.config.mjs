@@ -20,7 +20,7 @@ export default [
 				'error',
 				{
 					type: 'element',
-					prefix: ['hlm', 'ui'],
+					prefix: ['hlm', 'ui', 'sim'],
 					style: 'kebab-case',
 				},
 			],

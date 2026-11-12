@@ -41,17 +41,14 @@
 				}
 
 				<form class="mt-5 gap-4 flex flex-col" [formRoot]="mediaForm">
-					<hlm-field>
-						<label hlmFieldLabel for="media-details-name">Name</label>
+					<ui-field label="Name">
 						<input id="media-details-name" hlmInput [formField]="mediaForm.name" />
-					</hlm-field>
+					</ui-field>
 
 					@if (asset.type === 'image') {
-						<hlm-field>
-							<label hlmFieldLabel for="media-details-alt">Alternative text</label>
+						<ui-field label="Alternative text" description="Shared wherever this image is used.">
 							<input id="media-details-alt" hlmInput [formField]="mediaForm.alt" />
-							<p hlmFieldDescription>Shared wherever this image is used.</p>
-						</hlm-field>
+						</ui-field>
 					} @else {
 						<div class="gap-2 flex flex-col">
 							<span class="text-sm font-medium">Video cover</span>

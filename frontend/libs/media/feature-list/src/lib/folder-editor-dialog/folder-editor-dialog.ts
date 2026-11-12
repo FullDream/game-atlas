@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core'
 import { disabled, form, FormField, FormRoot, maxLength, required } from '@angular/forms/signals'
 import { MediaQueryOptions, type MediaFolder } from '@game-atlas/media/data-access'
-import { Button } from '@game-atlas/shared/ui'
+import { Button, Field } from '@game-atlas/shared/ui'
 import { getDirtyValues } from '@game-atlas/shared/util'
 import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
@@ -21,7 +21,7 @@ type FolderFormModel = {
 
 @Component({
 	selector: 'media-folder-editor-dialog',
-	imports: [Button, HlmInput, FormField, FormRoot, HlmFieldImports],
+	imports: [Field, Button, HlmInput, FormField, FormRoot, HlmFieldImports],
 	templateUrl: './folder-editor-dialog.html',
 	host: {
 		'[attr.data-state]': 'dialog.state()',

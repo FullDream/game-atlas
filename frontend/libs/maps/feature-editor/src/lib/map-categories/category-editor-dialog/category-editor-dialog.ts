@@ -4,11 +4,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { disabled, form, FormField, FormRoot, validate } from '@angular/forms/signals'
 import {
 	CategoriesQueryOptions,
-	getCategoryErrorMessage,
 	type Category,
 	type CategoryGroup,
+	getCategoryErrorMessage,
 } from '@game-atlas/maps/data-access'
-import { MediaThumbnail, Button, MediaPickerDialog } from '@game-atlas/shared/ui'
+import { Button, ColorPicker, MediaPickerDialog, MediaThumbnail, Field } from '@game-atlas/shared/ui'
 import { getDirtyValues, type LibraryImage, type PickerContext } from '@game-atlas/shared/util'
 import { BrnDialogRef, BrnDialogService, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
@@ -16,6 +16,24 @@ import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmSelectImports } from '@spartan-ng/helm/select'
 import { injectMutation } from '@tanstack/angular-query-experimental'
 import { take } from 'rxjs'
+import { HlmButtonGroupImports } from '@spartan-ng/helm/button-group'
+import { HlmButtonImports } from '@spartan-ng/helm/button'
+import { HlmInputGroupImports } from '@spartan-ng/helm/input-group'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import {
+	matAddRound,
+	matArrowDownwardRound,
+	matArrowUpwardRound,
+	matChevronRightRound,
+	matCreateNewFolderRound,
+	matDeleteRound,
+	matDragIndicatorRound,
+	matDriveFileMoveRound,
+	matEditRound,
+	matFolderRound,
+	matFormatColorResetRound,
+	matMoreHorizRound,
+} from '@ng-icons/material-symbols/round'
 
 export type CategoryEditorContext = {
 	gameId: string
@@ -28,7 +46,36 @@ export type CategoryEditorContext = {
 
 @Component({
 	selector: 'maps-category-editor-dialog',
-	imports: [MediaThumbnail, CategoryIcon, Button, HlmFieldImports, HlmInput, HlmSelectImports, FormField, FormRoot],
+	imports: [
+		Field,
+		MediaThumbnail,
+		CategoryIcon,
+		Button,
+		HlmFieldImports,
+		HlmInput,
+		HlmSelectImports,
+		FormField,
+		FormRoot,
+		ColorPicker,
+		HlmInputGroupImports,
+		NgIcon,
+	],
+	providers: [
+		provideIcons({
+			matEditRound,
+			matDeleteRound,
+			matArrowUpwardRound,
+			matArrowDownwardRound,
+			matDriveFileMoveRound,
+			matFolderRound,
+			matAddRound,
+			matMoreHorizRound,
+			matFormatColorResetRound,
+			matDragIndicatorRound,
+			matChevronRightRound,
+			matCreateNewFolderRound,
+		}),
+	],
 	templateUrl: './category-editor-dialog.html',
 	host: {
 		class: 'block max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] overflow-auto rounded-xl border bg-background p-6 text-foreground shadow-xl',

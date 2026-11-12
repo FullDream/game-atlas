@@ -1,52 +1,99 @@
-import { _IdGenerator as IdGenerator } from '@angular/cdk/a11y'
-import type { BooleanInput } from '@angular/cdk/coercion'
-import { booleanAttribute, Component, computed, effect, inject, input } from '@angular/core'
-import { BrnField, BrnFieldA11yService } from '@spartan-ng/brain/field'
-import { classes } from '@spartan-ng/helm/utils'
+import { BooleanInput } from '@angular/cdk/coercion';
+import {
+	booleanAttribute,
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	effect,
+	EffectRef,
+	inject,
+	input,
+	OnDestroy,
+} from '@angular/core';
+import { BrnField, BrnFieldA11yService } from '@spartan-ng/brain/field';
+import { classes } from '@spartan-ng/helm/utils';
 
 @Component({
 	selector: 'hlm-field-error',
 	exportAs: 'hlmFieldError',
-	template: '<ng-content />',
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: {
 		role: 'alert',
 		'data-slot': 'field-error',
 		'[attr.id]': 'id()',
-		'[hidden]': '!display()',
+		'[hidden]': '!_display()',
 	},
+	template: `
+		@if (_display()) {
+			<ng-content />
+		}
+	`,
 })
-export class HlmFieldError {
-	readonly id = input(inject(IdGenerator).getId('hlm-field-error-'))
-	readonly validator = input<string>()
-	readonly forceShow = input<boolean, BooleanInput>(false, { transform: booleanAttribute })
+export class HlmFieldError implements OnDestroy {
+	private static _id = 0;
 
-	readonly #field = inject(BrnField, { optional: true })
-	readonly #a11y = inject(BrnFieldA11yService, { optional: true, host: true })
+	private readonly _field = inject(BrnField, { optional: true });
+	private readonly _a11y = inject(BrnFieldA11yService, { optional: true, host: true });
 
-	protected readonly display = computed(() => {
-		if (this.forceShow() || !this.#field) return true
+	private _registeredId?: string | undefined;
 
-		const errors = this.#field.errors()
-		const validator = this.validator()
+	private readonly _hasParentField = !!this._field;
 
-		return (
-			!!this.#field.controlState()?.spartanInvalid &&
-			!!errors &&
-			(validator ? validator in errors : Object.keys(errors).length > 0)
-		)
-	})
+	/** The unique ID for the field error. If none is supplied, it will be auto-generated. */
+	public readonly id = input<string>(`hlm-field-error-${HlmFieldError._id++}`);
+
+	/**
+	 * The name of the specific validator error key to match (e.g. 'required').
+	 * When omitted, the error is shown if any validation error is present.
+	 */
+	public readonly validator = input<string>();
+
+	/** Forces the error message to be visible regardless of the control's validation state. */
+	public readonly forceShow = input<boolean, BooleanInput>(false, { transform: booleanAttribute });
+
+	protected readonly _display = computed(() => !this._hasParentField || this.forceShow() || this._hasError());
+
+	protected readonly _hasError = computed(() => {
+		const errors = this._field?.errors();
+		if (!errors) return false;
+
+		const validator = this.validator();
+		const spartanInvalid = this._field?.controlState()?.spartanInvalid;
+
+		if (!spartanInvalid) return false;
+
+		return validator ? validator in errors : Object.keys(errors).length > 0;
+	});
+
+	private readonly _cleanup: EffectRef | null = this._a11y
+		? effect(() => {
+				const a11y = this._a11y;
+				if (!a11y) return;
+
+				const id = this.id();
+				const hasError = this._hasError();
+
+				if (this._registeredId && (this._registeredId !== id || !hasError)) {
+					a11y.unregisterError(this._registeredId);
+					this._registeredId = undefined;
+				}
+
+				if (hasError && this._registeredId !== id) {
+					a11y.registerError(id);
+					this._registeredId = id;
+				}
+			})
+		: null;
 
 	constructor() {
-		classes(() => 'spartan-field-error font-normal')
+		classes(() => 'text-destructive text-sm font-normal');
+	}
 
-		effect(onCleanup => {
-			if (!this.#a11y || !this.display()) return
+	ngOnDestroy() {
+		this._cleanup?.destroy();
 
-			const id = this.id()
-			const a11y = this.#a11y
-
-			a11y.registerError(id)
-			onCleanup(() => a11y.unregisterError(id))
-		})
+		if (this._registeredId) {
+			this._a11y?.unregisterError(this._registeredId);
+		}
 	}
 }

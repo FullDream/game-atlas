@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, model } from '@angular/core'
 import { disabled, form, FormField, FormRoot, validate } from '@angular/forms/signals'
 import { getMapErrorMessage, MapsQueryOptions, type Map as GameMap } from '@game-atlas/maps/data-access'
-import { Button } from '@game-atlas/shared/ui'
+import { Button, Field } from '@game-atlas/shared/ui'
 import { getDirtyValues } from '@game-atlas/shared/util'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { matSaveRound, matSettingsRound } from '@ng-icons/material-symbols/round'
@@ -16,6 +16,7 @@ type MapNameForm = { name: string }
 @Component({
 	selector: 'maps-settings',
 	imports: [
+		Field,
 		Button,
 		NgIcon,
 		FormField,

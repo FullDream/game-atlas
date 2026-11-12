@@ -15,8 +15,7 @@
 	</header>
 	<hlm-accordion-content class="min-h-0 [&>div]:pb-0 flex-1 overflow-hidden data-[state=open]:h-auto [&>div]:h-full">
 		<form [formRoot]="fields" class="p-3 gap-4 flex h-full flex-col overflow-y-auto">
-			<hlm-field>
-				<label hlmFieldLabel for="map-settings-name">Map name</label>
+			<ui-field label="Map name">
 				<div hlmInputGroup>
 					<input id="map-settings-name" hlmInputGroupInput [formField]="fields.name" autocomplete="off" />
 					<div hlmInputGroupAddon align="inline-end">
@@ -33,7 +32,7 @@
 						></button>
 					</div>
 				</div>
-			</hlm-field>
+			</ui-field>
 			@if (error()) {
 				<hlm-field-error forceShow>{{ error() }}</hlm-field-error>
 			}

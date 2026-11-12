@@ -1,12 +1,12 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core'
-import { disabled, form, FormField, FormRoot, validate } from '@angular/forms/signals'
+import { disabled, form, FormField, FormRoot, maxLength, required, validate } from '@angular/forms/signals'
 import {
 	MapsQueryOptions,
 	getMapStyleErrorMessage,
 	type MapStyle,
 	type Map as GameMap,
 } from '@game-atlas/maps/data-access'
-import { Button, MediaPickerDialog, MediaThumbnail } from '@spartan-ng/helm'
+import { Button, ColorPicker, Field, MediaPickerDialog, MediaThumbnail } from '@spartan-ng/helm'
 import { getDirtyValues, type LibraryImage, type PickerContext } from '@game-atlas/shared/util'
 import { BrnDialogRef, BrnDialogService, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
@@ -14,14 +14,27 @@ import { HlmInput } from '@spartan-ng/helm/input'
 import { injectMutation } from '@tanstack/angular-query-experimental'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { take } from 'rxjs'
+import { HlmInputGroup, HlmInputGroupAddon, HlmInputGroupButton } from '@spartan-ng/helm/input-group'
+import { NgIcon, provideIcons } from '@ng-icons/core'
+import { matFormatColorResetRound } from '@ng-icons/material-symbols/round'
 
 type StyleEditorContext = { gameId: string; map: GameMap; style: MapStyle | null }
 type StyleForm = { name: string; backgroundColor: string; sourceAssetId: string }
 
 @Component({
 	selector: 'maps-style-editor-dialog',
-	imports: [Button, MediaThumbnail, HlmFieldImports, HlmInput, FormField, FormRoot],
+	imports: [
+		Button,
+		MediaThumbnail,
+		HlmFieldImports,
+		HlmInput,
+		FormField,
+		FormRoot,
+		ColorPicker,
+		Field,
+	],
 	templateUrl: './style-editor-dialog.html',
+	providers: [provideIcons({ matFormatColorResetRound })],
 	host: {
 		class: 'block max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] overflow-auto rounded-xl border bg-background p-6 text-foreground shadow-xl',
 	},
@@ -49,28 +62,23 @@ export class StyleEditorDialog {
 		path => {
 			disabled(path, { when: () => this.#create.isPending() || this.#update.isPending() })
 
-			validate(path.name, ({ value }) => {
-				const name = value().trim()
-
-				if (!name) return { kind: 'required', message: 'Style name is required.' }
-
-				return name.length > 200 ? { kind: 'maxLength', message: 'Use at most 200 characters.' } : undefined
-			})
+			required(path.name, { message: 'Style name is required' })
+			maxLength(path.name, 200)
 
 			validate(path.backgroundColor, ({ value }) =>
 				/^#(?:[a-f\d]{3}|[a-f\d]{6})$/i.test(value())
 					? undefined
-					: { kind: 'color', message: 'Use a hex color such as #FFF or #FFFFFF.' },
+					: { kind: 'color', message: 'Use a hex color such as #FFF or #FFFFFF' },
 			)
+
+			required(path.sourceAssetId)
 
 			validate(path.sourceAssetId, () => {
 				if (this.context.style) return undefined
 
 				const source = this.source()
 
-				if (!source) return { kind: 'required', message: 'Choose a library image.' }
-
-				if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(source.contentType))
+				if (source && !['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(source.contentType))
 					return { kind: 'format', message: 'Use a JPEG, PNG, WebP or AVIF image.' }
 
 				return undefined

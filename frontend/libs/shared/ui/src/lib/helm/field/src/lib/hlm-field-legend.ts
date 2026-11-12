@@ -1,5 +1,5 @@
-import { Directive, input } from '@angular/core'
-import { classes } from '@spartan-ng/helm/utils'
+import { Directive, input } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
 
 @Directive({
 	selector: 'legend[hlmFieldLegend]',
@@ -10,9 +10,9 @@ import { classes } from '@spartan-ng/helm/utils'
 	},
 })
 export class HlmFieldLegend {
-	readonly variant = input<'label' | 'legend'>('legend')
+	public readonly variant = input<'label' | 'legend'>('legend');
 
 	constructor() {
-		classes(() => 'mb-3 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-base')
+		classes(() => 'mb-3 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-base');
 	}
 }

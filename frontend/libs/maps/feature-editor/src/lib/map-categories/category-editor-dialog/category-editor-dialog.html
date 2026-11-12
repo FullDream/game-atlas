@@ -8,14 +8,12 @@
 </p>
 
 <form class="mt-5 gap-4 flex flex-col" [formRoot]="fields">
-	<hlm-field>
-		<label hlmFieldLabel for="category-name">Name</label>
+	<ui-field label="Name">
 		<input id="category-name" hlmInput [formField]="fields.name" autocomplete="off" />
-	</hlm-field>
+	</ui-field>
 
 	@if (context.kind === 'category') {
-		<hlm-field>
-			<label hlmFieldLabel for="category-group">Group</label>
+		<ui-field label="Group">
 			<hlm-select [formField]="fields.categoryGroupId" [itemToString]="groupName">
 				<hlm-select-trigger id="category-group" class="w-full">
 					@if (selectedGroup(); as group) {
@@ -50,25 +48,29 @@
 					}
 				</hlm-select-content>
 			</hlm-select>
-		</hlm-field>
+		</ui-field>
 	}
-	<hlm-field>
-		<label hlmFieldLabel for="category-color">Color</label>
-		<input id="category-color" hlmInput [formField]="fields.color" autocomplete="off" />
-		<p hlmFieldDescription>
-			{{
-				context.kind === 'category'
-					? 'Optional hex color. Leave empty to use the original icon without recoloring.'
-					: 'Hex color, for example #F59E0B.'
-			}}
-		</p>
-	</hlm-field>
+	<ui-field label="Color">
+		<hlm-input-group>
+			<ui-color-picker [clearable]="context.kind === 'category'" group [formField]="fields.color" />
+			@if (context.kind === 'category') {
+				<hlm-input-group-addon align="inline-end">
+					<button
+						hlmInputGroupButton
+						[disabled]="!fields.color().value()"
+						(click)="fields.color().markAsDirty(); fields.color().value.set('')"
+						class="ml-auto"
+						size="icon-xs"
+						variant="ghost"
+					>
+						<ng-icon name="matFormatColorResetRound" />
+					</button>
+				</hlm-input-group-addon>
+			}
+		</hlm-input-group>
+	</ui-field>
 
-	<hlm-field>
-		<label hlmFieldLabel for="category-icon">
-			Icon
-			<span class="text-muted-foreground">(optional)</span>
-		</label>
+	<ui-field label="Icon (optional)">
 		@if (icon(); as image) {
 			<div class="gap-3 flex items-center">
 				<maps-category-icon class="size-12" [iconUrl]="image.url" [color]="fields.color().value() || null" />
@@ -98,7 +100,7 @@
 				</button>
 			}
 		</div>
-	</hlm-field>
+	</ui-field>
 
 	@if (error()) {
 		<hlm-field-error forceShow>{{ error() }}</hlm-field-error>

@@ -41,7 +41,7 @@ import {
 	type UpdateMarkerRequest,
 } from '@game-atlas/maps/data-access'
 import { CategoryIcon, type MapPoint } from '@game-atlas/maps/ui'
-import { Button, ConfirmationDialog, MediaPickerDialog, MediaThumbnail } from '@game-atlas/shared/ui'
+import { Button, ConfirmationDialog, MediaPickerDialog, MediaThumbnail, Field } from '@game-atlas/shared/ui'
 import { getDirtyValues, type LibraryImage, type PickerContext } from '@game-atlas/shared/util'
 
 import { MarkerPanel } from './marker-panel'
@@ -75,6 +75,7 @@ function createMarkerDraft(session: MarkerEditorSession, defaultCategoryId: stri
 @Component({
 	selector: 'maps-marker-editor',
 	imports: [
+		Field,
 		CategoryIcon,
 		HlmAlertImports,
 		NgTemplateOutlet,

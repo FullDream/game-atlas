@@ -1,13 +1,9 @@
 <h2 class="text-lg font-semibold">{{ context.map ? 'Edit map' : 'Add map' }}</h2>
 
 <form class="mt-5 gap-4 flex flex-col" [formRoot]="fields">
-	<hlm-field>
-		<label hlmFieldLabel for="map-editor-name">
-			Map name
-			<span aria-hidden="true">*</span>
-		</label>
+	<ui-field label="Map name">
 		<input id="map-editor-name" hlmInput [formField]="fields.name" autocomplete="off" />
-	</hlm-field>
+	</ui-field>
 
 	<p class="text-sm text-muted-foreground">
 		@if (context.map?.width) {

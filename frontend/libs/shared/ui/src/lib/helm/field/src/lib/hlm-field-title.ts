@@ -1,5 +1,5 @@
-import { Directive } from '@angular/core'
-import { classes } from '@spartan-ng/helm/utils'
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
 
 @Directive({
 	selector: '[hlmFieldTitle],hlm-field-title',
@@ -8,9 +8,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmFieldTitle {
 	constructor() {
-		classes(
-			() =>
-				'gap-2 text-sm leading-snug font-medium flex w-fit items-center group-data-[disabled=true]/field:opacity-50',
-		)
+		classes(() => 'gap-2 text-sm leading-snug font-medium group-data-[disabled=true]/field:opacity-50 flex w-fit items-center');
 	}
 }

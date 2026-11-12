@@ -66,13 +66,13 @@
 		scrollbar-color: color-mix(in oklch, var(--muted-foreground) 45%, transparent) transparent;
 	}
 
-	html,
-	.overflow-auto,
-	.overflow-y-auto,
-	.overflow-scroll,
-	.overflow-y-scroll {
-		scrollbar-gutter: stable;
-	}
+	/*html,*/
+	/*.overflow-auto,*/
+	/*.overflow-y-auto,*/
+	/*.overflow-scroll,*/
+	/*.overflow-y-scroll {*/
+	/*	scrollbar-gutter: stable;*/
+	/*}*/
 
 	body {
 		@apply bg-background text-foreground;

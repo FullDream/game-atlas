@@ -1,0 +1,17 @@
+@if (label()) {
+	<label hlmFieldLabel [for]="id()">
+		{{ label() }}
+
+		@if (formField()?.state()?.required()) {
+			<span class="text-destructive" aria-hidden="true">*</span>
+		}
+	</label>
+}
+
+<ng-content />
+
+<hlm-field-error>{{ error() }}</hlm-field-error>
+
+@if (description()) {
+	<p hlmFieldDescription>{{ description() }}</p>
+}

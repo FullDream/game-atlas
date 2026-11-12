@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core'
 import { disabled, form, FormField, FormRoot, validate } from '@angular/forms/signals'
 import { MapsQueryOptions, getMapErrorMessage, type Map as GameMap } from '@game-atlas/maps/data-access'
-import { Button } from '@game-atlas/shared/ui'
+import { Button, Field } from '@game-atlas/shared/ui'
 import { getDirtyValues } from '@game-atlas/shared/util'
 import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
@@ -13,7 +13,7 @@ type MapForm = { name: string }
 
 @Component({
 	selector: 'maps-editor-dialog',
-	imports: [Button, HlmFieldImports, HlmInput, FormField, FormRoot],
+	imports: [Field, Button, HlmFieldImports, HlmInput, FormField, FormRoot],
 	templateUrl: './map-editor-dialog.html',
 	host: {
 		'[attr.data-state]': 'dialog.state()',

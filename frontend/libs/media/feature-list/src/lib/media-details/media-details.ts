@@ -9,7 +9,7 @@ import {
 	type MediaAsset,
 	type PaginatedResultOfMediaItem,
 } from '@game-atlas/media/data-access'
-import { Button, PendingChanges } from '@game-atlas/shared/ui'
+import { Button, PendingChanges, Field } from '@game-atlas/shared/ui'
 import { getDirtyValues } from '@game-atlas/shared/util'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
@@ -40,6 +40,7 @@ type MediaFormModel = {
 @Component({
 	selector: 'media-details',
 	imports: [
+		Field,
 		HlmSpinner,
 		MediaDetailsDismiss,
 		Button,
