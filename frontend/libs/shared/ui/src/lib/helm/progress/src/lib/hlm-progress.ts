@@ -10,6 +10,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmProgress {
 	constructor() {
-		classes(() => 'bg-muted h-1.5 relative inline-flex w-full overflow-hidden rounded-full')
+		classes(() => 'bg-muted h-3 rounded-4xl relative inline-flex w-full overflow-hidden')
 	}
 }

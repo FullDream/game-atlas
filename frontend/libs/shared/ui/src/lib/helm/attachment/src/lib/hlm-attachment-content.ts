@@ -8,6 +8,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmAttachmentContent {
 	constructor() {
-		classes(() => 'min-w-0 leading-normal group-data-[orientation=vertical]/attachment:px-1 max-w-full flex-1')
+		classes(() => 'min-w-0 leading-snug group-data-[orientation=vertical]/attachment:px-1 max-w-full flex-1')
 	}
 }

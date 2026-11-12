@@ -13,7 +13,7 @@ import { HlmSidebarService } from './hlm-sidebar.service'
 import { injectHlmSidebarConfig } from './hlm-sidebar.token'
 
 const sidebarMenuButtonVariants = cva(
-	'peer/menu-button group/menu-button gap-2 rounded-md p-2 text-sm ring-sidebar-ring group-has-data-[sidebar=menu-action]/menu-item:pe-8 group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-2.5! hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground [&_ng-icon]:text-[length:--spacing(5)] flex w-full items-center overflow-hidden text-start outline-hidden transition-[width,height,padding] focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_ng-icon]:shrink-0 [&>span:last-child]:truncate',
+	'ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground gap-2 rounded-lg px-3 py-2 text-sm group-has-data-[sidebar=menu-action]/menu-item:pe-8 data-active:font-medium peer/menu-button group/menu-button group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-2.5! [&_ng-icon]:text-[length:--spacing(5)] flex w-full items-center overflow-hidden text-start outline-hidden transition-[width,height,padding] focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_ng-icon]:shrink-0 [&>span:last-child]:truncate',
 	{
 		variants: {
 			variant: {
@@ -23,8 +23,8 @@ const sidebarMenuButtonVariants = cva(
 			},
 			size: {
 				default: 'h-10 gap-3 px-3 text-sm',
-				sm: 'h-7 text-xs',
-				lg: 'h-12 text-sm group-data-[collapsible=icon]:p-0!',
+				sm: 'h-8 text-xs',
+				lg: 'h-14 px-3 text-sm group-data-[collapsible=icon]:p-0!',
 			},
 		},
 		defaultVariants: {

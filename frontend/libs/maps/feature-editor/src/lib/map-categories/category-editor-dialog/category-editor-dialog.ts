@@ -78,7 +78,7 @@ export type CategoryEditorContext = {
 	],
 	templateUrl: './category-editor-dialog.html',
 	host: {
-		class: 'block max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] overflow-auto rounded-xl border bg-background p-6 text-foreground shadow-xl',
+		class: 'block max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] overflow-auto rounded-4xl bg-popover p-6 text-popover-foreground ring-1 ring-foreground/5',
 	},
 })
 export class CategoryEditorDialog {

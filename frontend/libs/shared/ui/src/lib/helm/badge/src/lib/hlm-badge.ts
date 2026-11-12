@@ -3,7 +3,7 @@ import { classes } from '@spartan-ng/helm/utils'
 import { type VariantProps, cva } from 'class-variance-authority'
 
 const badgeVariants = cva(
-	'h-5 gap-1 rounded-4xl px-2 py-0.5 text-xs font-medium has-data-[icon=inline-end]:pe-1.5 has-data-[icon=inline-start]:ps-1.5 [&>ng-icon]:text-[length:--spacing(3)] group/badge focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 inline-flex w-fit shrink-0 items-center justify-center overflow-hidden border border-transparent whitespace-nowrap transition-all focus-visible:ring-[3px] [&>ng-icon]:pointer-events-none',
+	'h-5 gap-1 rounded-4xl px-2 py-0.5 text-xs font-medium has-data-[icon=inline-end]:pe-1.5 has-data-[icon=inline-start]:ps-1.5 [&>ng-icon]:text-[length:--spacing(3)] group/badge focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 inline-flex w-fit shrink-0 items-center justify-center overflow-hidden border border-transparent whitespace-nowrap transition-all focus-visible:ring-3 [&>ng-icon]:pointer-events-none',
 	{
 		variants: {
 			variant: {
@@ -11,7 +11,7 @@ const badgeVariants = cva(
 				secondary: 'bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80',
 				destructive:
 					'bg-destructive/10 [a]:hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive dark:bg-destructive/20',
-				outline: 'border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground',
+				outline: 'border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground bg-input/30',
 				ghost: 'hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50',
 				link: 'text-primary underline-offset-4 hover:underline',
 			},

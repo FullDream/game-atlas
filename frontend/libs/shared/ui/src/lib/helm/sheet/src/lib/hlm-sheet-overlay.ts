@@ -14,7 +14,7 @@ export class HlmSheetOverlay {
 	public readonly userClass = input<ClassValue>('', { alias: 'class' })
 	protected readonly computedClass = computed(() =>
 		hlm(
-			'bg-black/10 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 isolate duration-100',
+			'data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-black/80 supports-backdrop-filter:backdrop-blur-xs isolate duration-100',
 			this.userClass(),
 		),
 	)

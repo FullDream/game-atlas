@@ -10,6 +10,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmDrawerTitle {
 	constructor() {
-		classes(() => 'text-foreground font-medium')
+		classes(() => 'text-foreground text-base font-medium')
 	}
 }

@@ -13,7 +13,7 @@ export class HlmSidebarGroupLabel {
 	constructor() {
 		classes(
 			() =>
-				'h-8 rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring group-data-[collapsible=icon]:-mt-8 [&>ng-icon]:text-[length:--spacing(4)] flex shrink-0 items-center outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>ng-icon]:shrink-0',
+				'text-sidebar-foreground/70 ring-sidebar-ring h-8 rounded-md px-3 text-xs font-medium group-data-[collapsible=icon]:-mt-8 [&>ng-icon]:text-[length:--spacing(4)] flex shrink-0 items-center outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>ng-icon]:shrink-0',
 		)
 	}
 }

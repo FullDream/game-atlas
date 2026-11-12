@@ -25,7 +25,7 @@ type FolderFormModel = {
 	templateUrl: './folder-editor-dialog.html',
 	host: {
 		'[attr.data-state]': 'dialog.state()',
-		class: 'block w-[min(28rem,calc(100vw-2rem))] rounded-xl border bg-background p-6 text-foreground shadow-xl',
+		class: 'block w-[min(28rem,calc(100vw-2rem))] rounded-4xl bg-popover p-6 text-popover-foreground ring-1 ring-foreground/5',
 	},
 })
 export class FolderEditorDialog {

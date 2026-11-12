@@ -2,6 +2,10 @@
 command = "npx"
 args = [ "nx", "mcp" ]
 
+[mcp_servers.spartan-ui]
+command = "npx"
+args = [ "-y", "@spartan-ng/mcp" ]
+
 [features]
 multi_agent = true
 

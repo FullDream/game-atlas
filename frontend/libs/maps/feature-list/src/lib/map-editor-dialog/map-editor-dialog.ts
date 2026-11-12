@@ -18,7 +18,7 @@ type MapForm = { name: string }
 	host: {
 		'[attr.data-state]': 'dialog.state()',
 		style: 'max-height: calc(100dvh - 2rem)',
-		class: 'block w-[min(28rem,calc(100vw-2rem))] overflow-auto rounded-xl border bg-background p-6 text-foreground shadow-xl',
+		class: 'block w-[min(28rem,calc(100vw-2rem))] overflow-auto rounded-4xl bg-popover p-6 text-popover-foreground ring-1 ring-foreground/5',
 	},
 })
 export class MapEditorDialog {

@@ -2,6 +2,6 @@
 	"componentsPath": "libs/shared/ui/src/lib/helm",
 	"buildable": false,
 	"generateAs": "entrypoint",
-	"style": "vega",
+	"style": "maia",
 	"importAlias": "@spartan-ng/helm"
 }

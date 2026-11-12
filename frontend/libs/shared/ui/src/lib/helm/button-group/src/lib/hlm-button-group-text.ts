@@ -12,7 +12,7 @@ export class HlmButtonGroupText {
 	constructor() {
 		classes(
 			() =>
-				"bg-muted gap-2 rounded-md px-2.5 text-sm font-medium shadow-xs [&_ng-icon:not([class*='text-'])]:text-[length:--spacing(4)] flex items-center border [&_ng-icon]:pointer-events-none",
+				"bg-muted gap-2 rounded-4xl px-2.5 text-sm font-medium [&_ng-icon:not([class*='text-'])]:text-[length:--spacing(4)] flex items-center border [&_ng-icon]:pointer-events-none",
 		)
 	}
 }

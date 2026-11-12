@@ -48,7 +48,7 @@ export class HlmMonthYearCalendar<T> {
 		buttonVariants({ variant: 'ghost' }),
 		'data-[today=true]:bg-muted',
 		'data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground data-[selected=true]:hover:bg-primary data-[selected=true]:hover:text-primary-foreground',
-		'data-[focused=true]:border-ring data-[focused=true]:ring-ring/50 data-[focused=true]:ring-[3px]',
+		'data-[focused=true]:border-ring data-[focused=true]:ring-ring/50 data-[focused=true]:ring-3',
 		'aria-disabled:pointer-events-none aria-disabled:opacity-50',
 		'h-(--cell-size)',
 	)
@@ -56,7 +56,7 @@ export class HlmMonthYearCalendar<T> {
 	constructor() {
 		classes(
 			() =>
-				'p-3 [--cell-size:--spacing(8)] group/calendar bg-background block [--cell-radius:var(--radius-md)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
+				'p-3 [--cell-size:--spacing(8)] group/calendar bg-background block [--cell-radius:var(--radius-4xl)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
 		)
 	}
 }

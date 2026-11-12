@@ -4,7 +4,7 @@ import { classes } from '@spartan-ng/helm/utils'
 import { type VariantProps, cva } from 'class-variance-authority'
 
 export const listVariants = cva(
-	'rounded-lg group-data-horizontal/tabs:h-9 group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center p-[3px] group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col data-[variant=line]:rounded-none',
+	'rounded-4xl group-data-horizontal/tabs:h-9 group-data-vertical/tabs:rounded-2xl group/tabs-list text-muted-foreground p-0.75 inline-flex w-fit items-center justify-center group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col data-[variant=line]:rounded-none',
 	{
 		variants: {
 			variant: {

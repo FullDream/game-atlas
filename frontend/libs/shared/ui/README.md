@@ -2,6 +2,8 @@
 
 Owned Spartan Helm components and UI-specific helpers in one non-buildable Nx project, `ui-helm`, with `type:ui`, `scope:shared`, `platform:shared`.
 
+Helm components use Spartan's Maia style. `components.json` selects `maia` for future CLI additions; existing components contain the copied Maia classes, retaining Material Symbols Rounded and project-specific behavior. The shared semantic color tokens and light/system/dark theme selection apply to both applications.
+
 Import the required entrypoint, for example `@spartan-ng/helm/button` or `@spartan-ng/helm/sidebar`. The root entrypoint deliberately does not re-export every component. Production builds can tree-shake unused exports.
 
 Use `@spartan-ng/helm/date-picker` for ready-made date pickers, composed with the owned Calendar and Popover entrypoints. Prefer importing the specific components needed by a view. These generated entrypoints use Material Symbols Rounded and the workspace Angular conventions.

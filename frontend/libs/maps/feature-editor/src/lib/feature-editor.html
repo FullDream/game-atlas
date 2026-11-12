@@ -118,7 +118,7 @@
 					</p>
 				}
 				<div
-					class="bg-background rounded-xl p-1.5 gap-1 shadow-lg flex items-center border"
+					class="bg-background rounded-4xl p-1.5 gap-1 shadow-lg flex items-center border"
 					role="toolbar"
 					id="map-marker-tools"
 					tabindex="-1"
@@ -126,6 +126,7 @@
 				>
 					<hlm-toggle-group
 						type="single"
+						[spacing]="1"
 						[nullable]="false"
 						[value]="tool()"
 						(valueChange)="selectTool($event)"

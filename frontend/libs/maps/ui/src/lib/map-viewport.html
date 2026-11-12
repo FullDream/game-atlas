@@ -11,7 +11,7 @@
 		<ng-content select="[mapLeadingToolbar]" />
 		@if (styles().length > 1) {
 			<hlm-select
-				class="min-w-0 rounded-md bg-background sm:w-56 shadow-sm w-full"
+				class="min-w-0 rounded-4xl bg-background sm:w-56 shadow-sm w-full"
 				[itemToString]="styleName"
 				[(ngModel)]="selectedStyleId"
 				[disabled]="!readyStyles().length"
@@ -49,7 +49,7 @@
 	</div>
 	<div class="gap-1 sm:gap-2 ml-auto flex shrink-0 items-center">
 		<ng-content select="[mapToolbar]" />
-		<div class="gap-1 rounded-md bg-background p-0.5 shadow-sm flex">
+		<div class="gap-1 rounded-4xl bg-background p-0.5 shadow-sm flex">
 			<button
 				ui-button
 				variant="ghost"
@@ -69,7 +69,7 @@
 				(click)="zoom(1)"
 			></button>
 		</div>
-		<span class="rounded-md bg-background flex">
+		<span class="rounded-4xl bg-background flex">
 			<button
 				ui-button
 				variant="outline"
@@ -80,7 +80,7 @@
 				(click)="fit()"
 			></button>
 		</span>
-		<span class="rounded-md bg-background flex">
+		<span class="rounded-4xl bg-background flex">
 			<button
 				ui-button
 				variant="outline"

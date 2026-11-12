@@ -61,7 +61,7 @@ export class HlmCalendarMulti<T> {
 
 	protected readonly btnClass = hlm(
 		buttonVariants({ variant: 'ghost', size: 'icon' }),
-		'data-[today=true]:bg-muted group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:bg-muted/50 dark:hover:text-foreground gap-1 font-normal [&>span]:text-xs relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col border-0 leading-none group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-e-(--cell-radius) data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-s-(--cell-radius) [&>span]:opacity-70',
+		'data-[today=true]:bg-muted group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:bg-muted/50 dark:hover:text-foreground gap-1 font-normal [&>span]:text-xs relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col border-0 leading-none group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-3 data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-e-(--cell-radius) data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-s-(--cell-radius) [&>span]:opacity-70',
 		'data-[outside=true]:opacity-50',
 		"data-[highlighted]:before:content-['']",
 		'data-[highlighted]:before:absolute',
@@ -79,7 +79,7 @@ export class HlmCalendarMulti<T> {
 	constructor() {
 		classes(
 			() =>
-				'p-3 [--cell-size:--spacing(8)] group/calendar bg-background block [--cell-radius:var(--radius-md)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
+				'p-3 [--cell-size:--spacing(8)] group/calendar bg-background block [--cell-radius:var(--radius-4xl)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
 		)
 	}
 }

@@ -29,7 +29,7 @@ export class HlmAccordionTrigger {
 
 	protected readonly triggerClasses = computed(() =>
 		hlm(
-			'focus-visible:ring-ring/50 focus-visible:border-ring **:data-[slot=accordion-trigger-icon]:text-muted-foreground! rounded-md py-4 text-sm font-medium **:data-[slot=accordion-trigger-icon]:text-[length:--spacing(4)] group/accordion-trigger relative flex flex-1 items-start justify-between border border-transparent text-start transition-all outline-none hover:underline focus-visible:ring-3 aria-disabled:pointer-events-none aria-disabled:opacity-50 **:data-[slot=accordion-trigger-icon]:ms-auto',
+			'**:data-[slot=accordion-trigger-icon]:text-muted-foreground! gap-6 p-4 focus-visible:border-ring focus-visible:ring-ring/50 text-sm font-medium **:data-[slot=accordion-trigger-icon]:text-[length:--spacing(4)] group/accordion-trigger relative flex flex-1 items-start justify-between border border-transparent text-start transition-all outline-none hover:underline focus-visible:ring-3 aria-disabled:pointer-events-none aria-disabled:opacity-50 **:data-[slot=accordion-trigger-icon]:ms-auto',
 			this.triggerClass(),
 		),
 	)

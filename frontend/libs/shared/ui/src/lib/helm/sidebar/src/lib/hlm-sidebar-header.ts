@@ -11,6 +11,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmSidebarHeader {
 	constructor() {
-		classes(() => 'gap-2 p-2 flex flex-col')
+		classes(() => 'gap-2 p-2 flex flex-col [--radius:var(--radius-xl)]')
 	}
 }

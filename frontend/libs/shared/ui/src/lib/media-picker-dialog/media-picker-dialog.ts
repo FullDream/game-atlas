@@ -33,7 +33,7 @@ import { injectQuery } from '@tanstack/angular-query-experimental'
 		}),
 	],
 	host: {
-		class: 'flex max-h-[90dvh] w-[min(52rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border bg-background text-foreground shadow-xl',
+		class: 'flex max-h-[90dvh] w-[min(52rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-4xl bg-popover text-popover-foreground ring-1 ring-foreground/5',
 	},
 })
 export class MediaPickerDialog {

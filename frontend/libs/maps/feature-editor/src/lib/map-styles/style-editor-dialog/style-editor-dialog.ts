@@ -23,20 +23,11 @@ type StyleForm = { name: string; backgroundColor: string; sourceAssetId: string 
 
 @Component({
 	selector: 'maps-style-editor-dialog',
-	imports: [
-		Button,
-		MediaThumbnail,
-		HlmFieldImports,
-		HlmInput,
-		FormField,
-		FormRoot,
-		ColorPicker,
-		Field,
-	],
+	imports: [Button, MediaThumbnail, HlmFieldImports, HlmInput, FormField, FormRoot, ColorPicker, Field],
 	templateUrl: './style-editor-dialog.html',
 	providers: [provideIcons({ matFormatColorResetRound })],
 	host: {
-		class: 'block max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] overflow-auto rounded-xl border bg-background p-6 text-foreground shadow-xl',
+		class: 'block max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] overflow-auto rounded-4xl bg-popover p-6 text-popover-foreground ring-1 ring-foreground/5',
 	},
 })
 export class StyleEditorDialog {

@@ -13,7 +13,7 @@ import type { ThemePreference } from './theme-preference'
 	host: {
 		'[attr.role]': 'compact() ? null : "radiogroup"',
 		'aria-label': 'Color theme',
-		class: 'inline-flex shrink-0 items-center gap-1 rounded-lg border p-1 has-focus-visible:border-ring has-focus-visible:ring-2 has-focus-visible:ring-ring/50',
+		class: 'inline-flex shrink-0 items-center gap-1 rounded-4xl border p-1 has-focus-visible:border-ring has-focus-visible:ring-2 has-focus-visible:ring-ring/50',
 	},
 })
 export class ThemeSwitcher {

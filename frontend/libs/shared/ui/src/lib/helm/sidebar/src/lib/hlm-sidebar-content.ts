@@ -13,7 +13,7 @@ export class HlmSidebarContent {
 	constructor() {
 		classes(
 			() =>
-				'no-scrollbar min-h-0 gap-2 flex flex-1 flex-col overflow-auto group-data-[collapsible=icon]:overflow-hidden',
+				'no-scrollbar gap-2 min-h-0 flex flex-1 flex-col overflow-auto [--radius:var(--radius-xl)] group-data-[collapsible=icon]:overflow-hidden',
 		)
 	}
 }

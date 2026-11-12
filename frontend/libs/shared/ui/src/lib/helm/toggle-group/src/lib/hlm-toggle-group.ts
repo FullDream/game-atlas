@@ -34,7 +34,7 @@ export class HlmToggleGroup {
 	constructor() {
 		classes(
 			() =>
-				'rounded-md data-[spacing=0]:data-[variant=outline]:shadow-xs group/toggle-group gap-[--spacing(var(--gap))] flex w-fit flex-row items-center data-vertical:flex-col data-vertical:items-stretch',
+				'data-[spacing=0]:data-[variant=outline]:rounded-4xl group/toggle-group gap-[--spacing(var(--gap))] flex w-fit flex-row items-center data-vertical:flex-col data-vertical:items-stretch',
 		)
 	}
 }

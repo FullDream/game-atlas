@@ -13,7 +13,7 @@ export class HlmInput {
 	constructor() {
 		classes(
 			() =>
-				'h-9 min-w-0 rounded-md border-input px-2.5 py-1 text-base shadow-xs file:h-7 file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:border-destructive data-[matches-spartan-invalid=true]:ring-destructive/20 md:text-sm dark:bg-input/30 dark:data-[matches-spartan-invalid=true]:border-destructive/50 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 w-full border bg-transparent transition-[color,box-shadow] outline-none file:inline-flex file:border-0 file:bg-transparent focus-visible:ring-3 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-[matches-spartan-invalid=true]:ring-3',
+				'bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 h-9 rounded-4xl px-3 py-1 text-base file:h-7 file:text-sm file:font-medium md:text-sm file:text-foreground placeholder:text-muted-foreground min-w-0 w-full border transition-colors outline-none file:inline-flex file:border-0 file:bg-transparent focus-visible:ring-3 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-[matches-spartan-invalid=true]:ring-3',
 		)
 	}
 }

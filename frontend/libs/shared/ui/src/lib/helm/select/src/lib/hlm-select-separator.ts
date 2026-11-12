@@ -10,6 +10,6 @@ import { classes } from '@spartan-ng/helm/utils'
 })
 export class HlmSelectSeparator {
 	constructor() {
-		classes(() => 'bg-border -mx-1 my-1 pointer-events-none h-px')
+		classes(() => 'bg-border/50 -mx-1 my-1 pointer-events-none h-px')
 	}
 }

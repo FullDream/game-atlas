@@ -20,7 +20,8 @@ import { classes } from '@spartan-ng/helm/utils'
 export class HlmAccordionContent {
 	constructor() {
 		classes(
-			() => 'text-sm data-[state=closed]:h-0 transition-all data-[state=open]:h-(--brn-accordion-content-height)',
+			() =>
+				'px-4 text-sm data-[state=closed]:h-0 transition-all data-[state=open]:h-(--brn-accordion-content-height)',
 		)
 	}
 }
