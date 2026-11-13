@@ -19,6 +19,11 @@
 		"@angular/build:unit-test": {
 			"cache": true,
 			"inputs": ["default", "^production"]
+		},
+		"@nx/angular:ng-packagr-lite": {
+			"cache": true,
+			"dependsOn": ["^build"],
+			"inputs": ["production", "^production"]
 		}
 	},
 	"plugins": [
@@ -48,6 +53,9 @@
 		"@nx/angular:library": {
 			"linter": "eslint",
 			"unitTestRunner": "none"
+		},
+		"@spartan-ng/cli:ui": {
+			"tags": "type:ui,scope:shared,platform:shared"
 		}
 	}
 }

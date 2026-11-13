@@ -46,12 +46,6 @@ export default [
 		},
 	},
 	{
-		files: ['**/carousel/src/lib/hlm-carousel-next.ts', '**/carousel/src/lib/hlm-carousel-previous.ts'],
-		rules: {
-			'@angular-eslint/component-selector': ['error', { type: 'attribute', prefix: 'hlm', style: 'camelCase' }],
-		},
-	},
-	{
 		files: ['**/*.html'],
 		// Override or add rules here
 		rules: {

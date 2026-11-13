@@ -6,7 +6,7 @@ import {
 	type MapStyle,
 	type Map as GameMap,
 } from '@game-atlas/maps/data-access'
-import { Button, ColorPicker, Field, MediaPickerDialog, MediaThumbnail } from '@spartan-ng/helm'
+import { Button, ColorPicker, Field, MediaPickerDialog, MediaThumbnail } from '@game-atlas/shared/ui'
 import { getDirtyValues, type LibraryImage, type PickerContext } from '@game-atlas/shared/util'
 import { BrnDialogRef, BrnDialogService, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
