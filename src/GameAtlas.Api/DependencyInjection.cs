@@ -82,6 +82,7 @@ public static class DependencyInjection
 
 			options.AddOptionalSupport();
 			options.AddOperationTransformer<CamelCaseQueryParametersTransformer>();
+			options.AddSchemaTransformer<CamelCaseQueryEnumSchemaTransformer>();
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
 			options.AddDocumentTransformer<MediaSchemaTransformer>();
 			options.AddDocumentTransformer<CategorySchemaTransformer>();

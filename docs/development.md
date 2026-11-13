@@ -9,7 +9,7 @@ Commands specify their working directory. Read the relevant configuration and pr
 
 ## Backend
 
-Run the API from the repository root with `dotnet run --project src/GameAtlas.Api --launch-profile http`. The HTTP launch profile uses `http://localhost:5041`. Build the solution with `dotnet build GameAtlas.slnx`. Apply EF migrations explicitly; see [backend persistence](backend.md#persistence).
+Install the .NET 11 SDK. Run the API from the repository root with `dotnet run --project src/GameAtlas.Api --launch-profile http`. The HTTP launch profile uses `http://localhost:5041`. Build the solution with `dotnet build GameAtlas.slnx`. Apply EF migrations explicitly; see [backend persistence](backend.md#persistence).
 
 ## Frontend
 

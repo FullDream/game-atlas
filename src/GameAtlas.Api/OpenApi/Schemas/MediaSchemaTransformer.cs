@@ -109,7 +109,11 @@ internal sealed class MediaSchemaTransformer : IOpenApiDocumentTransformer
 
 	private sealed class SchemaReferenceVisitor(IReadOnlyDictionary<string, string> aliases) : OpenApiVisitorBase
 	{
-		public override void Visit(OpenApiMediaType mediaType) => mediaType.Schema = Rewrite(mediaType.Schema);
+		public override void Visit(IOpenApiMediaType mediaType)
+		{
+			if (mediaType is OpenApiMediaType mutable)
+				mutable.Schema = Rewrite(mutable.Schema);
+		}
 
 		public override void Visit(IOpenApiParameter parameter)
 		{

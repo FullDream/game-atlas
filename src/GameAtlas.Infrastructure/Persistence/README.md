@@ -1,6 +1,6 @@
 # SQLite migrations
 
-Run from the repository root with the .NET 10 SDK installed:
+Run from the repository root with the .NET 11 SDK installed:
 
 ```powershell
 dotnet tool restore
