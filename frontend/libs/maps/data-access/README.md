@@ -39,9 +39,9 @@ Generation is explicit and uncached; `GAME_ATLAS_OPENAPI_URL` overrides its inpu
 
 The admin development proxy retains `/api` prefix removal and `ws:true` for `/api/hubs/map`; production forwarding must be configured independently.
 
-Map rename uses optimistic known cached names with rollback and then the complete PATCH response. Delete retains rows until server success, then removes detail/list data. Both reconcile without a duplicate list GET. Admin invalidates only the exact game-detail query after successful map create/update/delete through its mutation-cache callback. Maps never imports Games; the game list cache is left unchanged. The admin list disables mount/focus/reconnect refetches and polling; HTTP data remains a snapshot until an explicit read.
+Map metadata updates use optimistic known cached name and slug values with rollback and then the complete PATCH response. Delete retains rows until server success, then removes detail/list data. Both reconcile without a duplicate list GET. Admin invalidates only the exact game-detail query after successful map create/update/delete through its mutation-cache callback. Maps never imports Games; the game list cache is left unchanged. The admin list disables mount/focus/reconnect refetches and polling; HTTP data remains a snapshot until an explicit read.
 
-Map creation accepts only name; geometry fields are nullable until the first style attachment. Style responses expose native tileGeometry. Map update also accepts defaultStyleId and the complete styleOrder array, with optimistic presentation changes and rollback. A surviving ready default is preserved when changing or deleting other styles.
+Map creation requires name and slug; geometry fields are nullable until the first style attachment. Style responses expose native tileGeometry. Map update also accepts defaultStyleId and the complete styleOrder array, with optimistic presentation changes and rollback. A surviving ready default is preserved when changing or deleting other styles.
 
 ## Marker query options
 
@@ -50,3 +50,5 @@ Map creation accepts only name; geometry fields are nullable until the first sty
 Mutation retries are disabled. A lost POST response can follow a committed create: refresh and inspect the map before another create, since duplicate names are valid and the API has no idempotency token. Features own draft state, pending locks and notifications; they do not maintain a second persisted marker store.
 
 Create variables may include a client-only requestGroup correlation key; it is omitted from HTTP payloads. The feature uses it to keep repeated-placement success counts stable across mutation-cache expiry.
+
+Map metadata includes a required string slug. Existing creation forms require manual name and slug input; editing supports changed-field PATCHes without generating slugs from names. Validation, conflicts, drafts and pending/error behavior follow the backend contract. Routes and cache identity remain ID-based.

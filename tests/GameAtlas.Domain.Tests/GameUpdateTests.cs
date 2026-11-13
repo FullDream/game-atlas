@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain;
 using GameAtlas.Domain.Games;
 
@@ -10,11 +11,11 @@ public class GameUpdateTests
 	[Fact]
 	public void UpdatesAllMutableFieldsAndPreservesIdentityAndCreationTime()
 	{
-		var game = Game.Create("Game", "game", coverId).Value!;
+		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 		var id = game.Id;
 		var createdAt = game.CreatedAt;
 		var before = DateTimeOffset.UtcNow;
-		var result = game.Update(" Updated ", " updated ", otherId, GameStatus.Published);
+		var result = game.Update(" Updated ", Slug.Create(" updated ").Value!, otherId, GameStatus.Published);
 
 		Assert.True(result.IsSuccess);
 		Assert.True(result.Value);
@@ -31,7 +32,7 @@ public class GameUpdateTests
 	[Fact]
 	public void PreservesOmissionsAndCanReturnToDraft()
 	{
-		var game = Game.Create("Game", "game", coverId).Value!;
+		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 
 		Assert.True(game.Update(status: GameStatus.Published).Value);
 		Assert.True(game.Update(name: "Updated").Value);
@@ -45,10 +46,10 @@ public class GameUpdateTests
 	[Fact]
 	public void DoesNotTouchTimestampForUnspecifiedOrNormalizedEqualValues()
 	{
-		var game = Game.Create("Game", "game", coverId).Value!;
+		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 		var updatedAt = game.UpdatedAt;
 		var empty = game.Update();
-		var same = game.Update(" Game ", " game ", coverId, GameStatus.Draft);
+		var same = game.Update(" Game ", Slug.Create(" game ").Value!, coverId, GameStatus.Draft);
 
 		Assert.True(empty.IsSuccess);
 		Assert.False(empty.Value);
@@ -66,9 +67,9 @@ public class GameUpdateTests
 	[InlineData("игра")]
 	public void RejectsInvalidMetadataWithoutApplyingAnyChanges(string? slug)
 	{
-		var game = Game.Create("Game", "game", coverId).Value!;
+		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 		var updatedAt = game.UpdatedAt;
-		var result = game.Update("New", Optional<string?>.From(slug), otherId, GameStatus.Published);
+		var result = game.Update("New", Optional<Slug?>.From(Slug.Create(slug).Value), otherId, GameStatus.Published);
 
 		Assert.True(result.IsFailure);
 		Assert.Contains(result.Errors, error => error.Property == nameof(Game.Slug));
@@ -82,9 +83,9 @@ public class GameUpdateTests
 	[Fact]
 	public void RejectsRequiredNullsAndUndefinedStatus()
 	{
-		var game = Game.Create("Game", "game", coverId).Value!;
+		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 		var result = game.Update(
-			Optional<string?>.From(null), Optional<string?>.From(null), Optional<Guid?>.From(null),
+			Optional<string?>.From(null), Optional<Slug?>.From(null), Optional<Guid?>.From(null),
 			status: Optional<GameStatus?>.From(null));
 
 		Assert.True(result.IsFailure);
@@ -97,7 +98,7 @@ public class GameUpdateTests
 	[Fact]
 	public void RejectsEmptyImageWithoutApplyingOtherChanges()
 	{
-		var game = Game.Create("Game", "game", coverId).Value!;
+		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 		var result = game.Update(name: "Changed", coverId: Guid.Empty);
 
 		Assert.Equal(GameErrors.CoverRequired, Assert.Single(result.Errors!));
@@ -107,10 +108,10 @@ public class GameUpdateTests
 	}
 
 	[Fact]
-	public void DoesNotEnforceTechnicalLengthLimits()
+	public void DoesNotEnforceNameTechnicalLengthLimit()
 	{
-		var game = Game.Create("Game", "game", coverId).Value!;
-		var result = game.Update(new string('n', 201), new string('s', 201), otherId);
+		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
+		var result = game.Update(new string('n', 201), Slug.Create("valid").Value!, otherId);
 
 		Assert.True(result.IsSuccess);
 		Assert.True(result.Value);

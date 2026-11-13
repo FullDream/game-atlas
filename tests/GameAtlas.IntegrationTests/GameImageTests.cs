@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -202,7 +203,7 @@ public sealed class GameImageTests
 		Assert.False(context.Database.HasPendingModelChanges());
 
 		await MediaTestData.EnsureCoverAsync(context);
-		context.Games.Add(Game.Create("Game", "game", MediaTestData.CoverId).Value!);
+		context.Games.Add(Game.Create("Game", Slug.Create("game").Value!, MediaTestData.CoverId).Value!);
 
 		await context.SaveChangesAsync();
 

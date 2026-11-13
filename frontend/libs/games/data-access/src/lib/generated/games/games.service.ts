@@ -126,7 +126,7 @@ export class GamesService {
 	private readonly http = inject(HttpClient)
 	private readonly baseUrl = inject(GAMES_BASE_URL)
 	/**
-	 * Lists all game statuses with offset/limit pagination and optional name search. Search ignores ASCII case. Without sortBy, ordering is unspecified.
+	 * Lists all game statuses with offset/limit pagination and optional name search. Search ignores ASCII case. Without sortBy, games are ordered by createdAt ascending. Id breaks sorting ties.
 	 * @summary List games
 	 */
 	listGames<TData = PaginatedResultOfGame>(
@@ -206,7 +206,7 @@ export class GamesService {
 		})
 	}
 	/**
-	 * Returns a draft or published game with its complete library image. Missing games return 404.
+	 * Returns a draft or published game with canonical cover/banner images, metadata, content counts and map summaries. Missing games return 404.
 	 * @summary Get game
 	 */
 	getGame<TData = Game>(id: string, options?: HttpClientBodyOptions): Observable<TData>
@@ -236,7 +236,7 @@ export class GamesService {
 		})
 	}
 	/**
-	 * Updates supplied fields using JSON Merge Patch semantics with either supported media type. Supply at least one mutable field. Omitted fields are preserved; null is invalid. Identity and timestamps are read-only. Status supports draft and published. Unchanged values preserve updatedAt. Returns the complete stored game.
+	 * Updates supplied fields using JSON Merge Patch semantics with either supported media type. Supply at least one mutable field. Omitted fields are preserved; null clears banner, releaseDate, developer and description, but is invalid for required fields. Identity and timestamps are read-only. Status supports draft and published. Unchanged values preserve updatedAt. Returns the complete stored game.
 	 * @summary Update game
 	 */
 	updateGame<TData = Game>(

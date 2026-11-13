@@ -41,6 +41,7 @@ public static class DependencyInjection
 			Application.Media.Folders.UpdateMediaFolder.UpdateMediaFolder>();
 		services.AddExceptionHandler<MediaFolderConflictExceptionHandler>();
 		services.AddOpenApiValidationSource<Maps.CreateMapRequest, Application.Maps.CreateMap.CreateMap>();
+		services.AddOpenApiValidationSource<Maps.UpdateMapRequest, Application.Maps.UpdateMap.UpdateMap>();
 		services.AddOpenApiValidationSource<Maps.AddMapStyleRequest, Application.Maps.AddMapStyle.AddMapStyle>();
 		services.AddOpenApiValidationSource<Maps.UpdateMapStyleRequest,
 			Application.Maps.UpdateMapStyle.UpdateMapStyle>();

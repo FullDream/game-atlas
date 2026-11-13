@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -76,7 +77,7 @@ public class MapPersistenceTests
 			Assert.Equal(map.Styles.Single().Id, stored.Styles.Single().Id);
 			Assert.Equal(MapProcessingStatus.Queued, stored.Styles.Single().Status);
 			Assert.False(context.Database.HasPendingModelChanges());
-			var duplicate = Map.Create(game.Id, map.Name).Value!;
+			var duplicate = Map.Create(game.Id, map.Name, Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 
 			context.Maps.Add(duplicate);
 			var conflict = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
@@ -92,6 +93,10 @@ public class MapPersistenceTests
 				context.GetService<IMigrator>().MigrateAsync("20261023145510_Markers"));
 
 			Assert.Contains("MapStylePresentation_RestoreBackupForNonemptyMaps", rollback.Message);
+			Assert.Equal(group.Id, await context.Database.SqlQuery<Guid>($"SELECT Id AS Value FROM CategoryGroups").SingleAsync());
+			Assert.Equal(map.Id, await context.Database.SqlQuery<Guid>($"SELECT Id AS Value FROM Maps").SingleAsync());
+
+			await context.Database.MigrateAsync();
 			DeleteGameHandlerTests.AssertSameGame(game, await context.Games.SingleAsync());
 			Assert.Equal(group.Id, (await context.CategoryGroups.SingleAsync()).Id);
 			Assert.Equal(category.Id, (await context.Categories.SingleAsync()).Id);

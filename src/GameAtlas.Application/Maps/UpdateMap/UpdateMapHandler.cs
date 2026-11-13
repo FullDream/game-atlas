@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Domain.Maps;
@@ -22,6 +23,15 @@ public sealed class UpdateMapHandler(IApplicationDbContext context, IMapProgress
 		if (map is null)
 			return MapOperationErrors.NotFound;
 
+		var slug = Slug.Create(command.Slug.GetValueOrDefault(map.Slug));
+
+		if (slug.IsFailure)
+			return slug.Errors;
+
+		if (await context.Maps.ForGame(command.GameId)
+			.AnyAsync(other => other.Id != command.MapId && other.Slug == slug.Value, cancellationToken))
+			return MapOperationErrors.SlugConflict;
+
 		var name = command.Name.GetValueOrDefault(map.Name);
 
 		if (name is not null && await context.Maps.ForGame(command.GameId)
@@ -36,7 +46,8 @@ public sealed class UpdateMapHandler(IApplicationDbContext context, IMapProgress
 			? Optional<IReadOnlyList<Guid>?>.From(command.StyleOrder.Value!.Select(id => id.GetValueOrDefault()).ToArray())
 			: default;
 
-		var result = map.Update(command.Name, command.DefaultStyleId, order);
+		var result = map.Update(command.Name, command.DefaultStyleId, order,
+			command.Slug.IsSpecified ? Optional<Slug?>.From(slug.Value) : default);
 
 		if (result.IsFailure)
 			return result.Errors;

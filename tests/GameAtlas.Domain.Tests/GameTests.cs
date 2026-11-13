@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Games;
 using GameAtlas.Domain.Result;
 
@@ -11,7 +12,7 @@ public class GameTests
 	public void CreatesNormalizedDraftWithServerMetadata()
 	{
 		var before = DateTimeOffset.UtcNow;
-		var result = Game.Create(" Elden Ring ", " elden-ring-2 ", coverId);
+		var result = Game.Create(" Elden Ring ", Slug.Create(" elden-ring-2 ").Value!, coverId);
 
 		Assert.True(result.IsSuccess);
 		var game = result.Value;
@@ -24,7 +25,7 @@ public class GameTests
 		Assert.Equal(game.CreatedAt, game.UpdatedAt);
 		Assert.Equal(TimeSpan.Zero, game.CreatedAt.Offset);
 		Assert.InRange(game.CreatedAt, before, DateTimeOffset.UtcNow);
-		Assert.NotEqual(game.Id, Game.Create("Other", "other", coverId).Value!.Id);
+		Assert.NotEqual(game.Id, Game.Create("Other", Slug.Create("other").Value!, coverId).Value!.Id);
 	}
 
 	[Theory]
@@ -33,7 +34,7 @@ public class GameTests
 	[InlineData("  ")]
 	public void RejectsMissingMetadata(string? value)
 	{
-		var result = Game.Create(value, value, null);
+		var result = Game.Create(value, Slug.Create(value).Value!, null);
 
 		Assert.True(result.IsFailure);
 		Assert.Equal(3, result.Errors.Length);
@@ -48,20 +49,20 @@ public class GameTests
 	[InlineData("elden-")]
 	[InlineData("игра")]
 	[InlineData("elden\nring")]
-	public void RejectsInvalidSlugs(string slug) => Assert.True(Game.Create("Game", slug, coverId).IsFailure);
+	public void RejectsInvalidSlugs(string slug) => Assert.True(Game.Create("Game", Slug.Create(slug).Value!, coverId).IsFailure);
 
 	[Fact]
 	public void RejectsEmptyImageId()
 	{
-		var result = Game.Create("Game", "game", Guid.Empty);
+		var result = Game.Create("Game", Slug.Create("game").Value!, Guid.Empty);
 
 		Assert.Equal(GameErrors.CoverRequired, Assert.Single(result.Errors!));
 	}
 
 	[Fact]
-	public void DoesNotEnforceTechnicalLengthLimits()
+	public void DoesNotEnforceNameTechnicalLengthLimit()
 	{
-		var result = Game.Create(new string('n', 201), new string('s', 201), otherId);
+		var result = Game.Create(new string('n', 201), Slug.Create("valid").Value!, otherId);
 
 		Assert.True(result.IsSuccess);
 	}

@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Domain.Maps;
@@ -17,7 +18,12 @@ public sealed class CreateMapHandler(IApplicationDbContext context, IMapMutation
 		if (!await context.Games.AnyAsync(game => game.Id == command.GameId, cancellationToken))
 			return MapOperationErrors.NotFound;
 
-		var created = Map.Create(command.GameId, command.Name);
+		var slug = Slug.Create(command.Slug);
+
+		if (slug.IsFailure)
+			return slug.Errors;
+
+		var created = Map.Create(command.GameId, command.Name, slug.Value);
 
 		if (created.IsFailure)
 			return created.Errors;
@@ -28,6 +34,9 @@ public sealed class CreateMapHandler(IApplicationDbContext context, IMapMutation
 
 		if (nameExists)
 			return MapOperationErrors.NameConflict;
+
+		if (await context.Maps.ForGame(command.GameId).AnyAsync(other => other.Slug == map.Slug, cancellationToken))
+			return MapOperationErrors.SlugConflict;
 
 		context.Maps.Add(map);
 		await context.SaveChangesAsync(cancellationToken);

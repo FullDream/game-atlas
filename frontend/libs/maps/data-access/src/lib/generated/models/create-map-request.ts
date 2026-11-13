@@ -11,4 +11,10 @@ export type CreateMapRequest = {
 	 * @maxLength 200
 	 */
 	name: string
+	/**
+	 * @minLength 1
+	 * @maxLength 200
+	 * @pattern \A[a-z0-9]+(-[a-z0-9]+)*\z
+	 */
+	slug: string
 }

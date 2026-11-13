@@ -6,11 +6,20 @@
  */
 
 /**
- * Supply name, defaultStyleId or the complete styleOrder. Null is invalid; geometry is immutable.
+ * Supply name, slug, defaultStyleId or the complete styleOrder. Null is invalid; geometry is immutable.
  */
 export type UpdateMapRequest = {
-	/** @nullable */
-	name?: string | null
+	/**
+	 * @minLength 1
+	 * @maxLength 200
+	 */
+	name?: string
+	/**
+	 * @minLength 1
+	 * @maxLength 200
+	 * @pattern \A[a-z0-9]+(-[a-z0-9]+)*\z
+	 */
+	slug?: string
 	/** @nullable */
 	defaultStyleId?: string | null
 	/** @nullable */

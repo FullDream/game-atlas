@@ -29,10 +29,22 @@ public class MapOpenApiTests
 			.GetProperty("application/json").GetProperty("schema"));
 
 		Assert.True(create.GetProperty("requestBody").GetProperty("required").GetBoolean());
-		Assert.Equal(new[] { "name" },
+		Assert.Equal(new[] { "name", "slug" },
 			form.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
-		Assert.Equal(new[] { "name" },
+		Assert.Equal(new[] { "name", "slug" },
 			form.GetProperty("required").EnumerateArray().Select(item => item.GetString()).Order());
+		var creationSlug = form.GetProperty("properties").GetProperty("slug");
+
+		Assert.Equal("string", creationSlug.GetProperty("type").GetString());
+		Assert.Equal(1, creationSlug.GetProperty("minLength").GetInt32());
+		Assert.Equal(200, creationSlug.GetProperty("maxLength").GetInt32());
+		Assert.Equal(GameAtlas.Domain.ValueObjects.Slug.Pattern, creationSlug.GetProperty("pattern").GetString());
+		var mapPatch = Resolve(root, paths.GetProperty("/games/{gameId}/maps/{mapId}").GetProperty("patch")
+			.GetProperty("requestBody").GetProperty("content").GetProperty("application/json").GetProperty("schema"));
+
+		Assert.False(mapPatch.TryGetProperty("required", out _));
+		Assert.Equal("string", mapPatch.GetProperty("properties").GetProperty("slug").GetProperty("type").GetString());
+		Assert.Equal(200, mapPatch.GetProperty("properties").GetProperty("slug").GetProperty("maxLength").GetInt32());
 		var add = paths.GetProperty("/games/{gameId}/maps/{mapId}/styles").GetProperty("post");
 		var addSchema = Resolve(root, add.GetProperty("requestBody").GetProperty("content")
 			.GetProperty("application/json").GetProperty("schema"));
@@ -52,7 +64,9 @@ public class MapOpenApiTests
 		var map = Resolve(root, responses.GetProperty("200").GetProperty("content").GetProperty("application/json")
 			.GetProperty("schema"));
 
-		Assert.Equal(15, map.GetProperty("properties").EnumerateObject().Count());
+		Assert.Equal(16, map.GetProperty("properties").EnumerateObject().Count());
+		Assert.Contains(map.GetProperty("required").EnumerateArray(), field => field.GetString() == "slug");
+		Assert.Equal("string", map.GetProperty("properties").GetProperty("slug").GetProperty("type").GetString());
 		var style = Resolve(root, map.GetProperty("properties").GetProperty("styles").GetProperty("items"));
 
 		Assert.Equal(new[]

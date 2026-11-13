@@ -18,9 +18,15 @@ POST {{host}}/hubs/map/negotiate?negotiateVersion=1
 POST {{host}}/games/{{gameId}}/maps
 Content-Type: application/json
 
-{"name":"World","width":1025,"height":513}
+{"name":"World","slug":"world"}
 
-### Attach an existing library image with matching map dimensions
+### Update map metadata by ID
+PATCH {{host}}/games/{{gameId}}/maps/{{mapId}}
+Content-Type: application/merge-patch+json
+
+{"name":"World map","slug":"world-map"}
+
+### Attach an existing library image
 POST {{host}}/games/{{gameId}}/maps/{{mapId}}/styles
 Content-Type: application/json
 

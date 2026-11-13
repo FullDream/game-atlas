@@ -27,8 +27,34 @@
 							variant="ghost"
 							size="icon-sm"
 							icon="matSaveRound"
-							aria-label="Save map name"
-							hlmTooltip="Save map name"
+							aria-label="Save map metadata"
+							hlmTooltip="Save map metadata"
+							[loading]="fields().submitting()"
+							[disabled]="!fields().dirty()"
+						></button>
+					</div>
+				</div>
+			</ui-field>
+
+			<ui-field label="Map slug">
+				<div hlmInputGroup>
+					<input
+						id="map-settings-slug"
+						hlmInputGroupInput
+						[formField]="fields.slug"
+						autocomplete="off"
+						autocapitalize="none"
+						spellcheck="false"
+					/>
+					<div hlmInputGroupAddon align="inline-end">
+						<button
+							ui-button
+							type="submit"
+							variant="ghost"
+							size="icon-sm"
+							icon="matSaveRound"
+							aria-label="Save map metadata"
+							hlmTooltip="Save map metadata"
 							[loading]="fields().submitting()"
 							[disabled]="!fields().dirty()"
 						></button>

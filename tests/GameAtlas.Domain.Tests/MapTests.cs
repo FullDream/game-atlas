@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Maps;
 
 namespace GameAtlas.Domain.Tests;
@@ -10,7 +11,7 @@ public class MapTests
 	[InlineData(1025, 513)]
 	public void FirstSourceFixesGeometryRegardlessOfLaterResolution(int first, int second)
 	{
-		var map = Map.Create(Guid.NewGuid(), "World").Value!;
+		var map = Map.Create(Guid.NewGuid(), "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 
 		Assert.Null(map.Geometry);
 		Assert.True(map.AddStyle(Input("Invalid", "red", first, first)).IsFailure);
@@ -40,18 +41,18 @@ public class MapTests
 		Publish(styles[1], map);
 		var timestamp = map.UpdatedAt;
 
-		Assert.True(map.Update(name: "Changed", styleOrder: new[] { styles[0].Id }).IsFailure);
+		Assert.True(map.Update(name: "Changed", styleOrder: new[] { styles[0].Id }, slug: default).IsFailure);
 		Assert.Equal("World", map.Name);
 		Assert.Equal(timestamp, map.UpdatedAt);
-		Assert.True(map.Update(styleOrder: new[] { styles[0].Id, styles[0].Id }).IsFailure);
-		Assert.True(map.Update(defaultStyleId: Guid.NewGuid()).IsFailure);
-		Assert.True(map.Update(defaultStyleId: GameAtlas.Domain.Optional<Guid?>.From(null)).IsFailure);
-		Assert.False(map.Update(styleOrder: styles.Select(style => style.Id).ToArray()).Value);
+		Assert.True(map.Update(styleOrder: new[] { styles[0].Id, styles[0].Id }, slug: default).IsFailure);
+		Assert.True(map.Update(defaultStyleId: Guid.NewGuid(), slug: default).IsFailure);
+		Assert.True(map.Update(defaultStyleId: GameAtlas.Domain.Optional<Guid?>.From(null), slug: default).IsFailure);
+		Assert.False(map.Update(styleOrder: styles.Select(style => style.Id).ToArray(), slug: default).Value);
 		Assert.Equal(timestamp, map.UpdatedAt);
-		Assert.True(map.Update(styleOrder: styles.Reverse().Select(style => style.Id).ToArray()).Value);
+		Assert.True(map.Update(styleOrder: styles.Reverse().Select(style => style.Id).ToArray(), slug: default).Value);
 		Assert.Equal(styles[0].Id, map.DefaultStyleId);
 		Assert.Equal(new[] { 1L, 2L }, styles.Select(style => style.CreationSequence));
-		Assert.True(map.Update(defaultStyleId: styles[1].Id).Value);
+		Assert.True(map.Update(defaultStyleId: styles[1].Id, slug: default).Value);
 		Assert.True(map.DeleteStyle(styles[1].Id).IsSuccess);
 		Assert.Equal(styles[0].Id, map.DefaultStyleId);
 	}
@@ -59,8 +60,8 @@ public class MapTests
 	[Fact]
 	public void MapNameLengthIsCheckedAfterTrimming()
 	{
-		Assert.True(Map.Create(Guid.CreateVersion7(), $" {new string('a', 200)} ").IsSuccess);
-		Assert.True(Map.Create(Guid.CreateVersion7(), new string('a', 201)).IsFailure);
+		Assert.True(Map.Create(Guid.CreateVersion7(), $" {new string('a', 200)} ", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).IsSuccess);
+		Assert.True(Map.Create(Guid.CreateVersion7(), new string('a', 201), Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).IsFailure);
 	}
 
 	[Theory]
@@ -68,7 +69,7 @@ public class MapTests
 	[InlineData("Карта")]
 	public void CreateWithoutStylesDefersGeometry(string name)
 	{
-		var created = Map.Create(Guid.CreateVersion7(), name);
+		var created = Map.Create(Guid.CreateVersion7(), name, Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!);
 
 		Assert.True(created.IsSuccess);
 		Assert.Equal(name.Trim(), created.Value.Name);
@@ -86,7 +87,7 @@ public class MapTests
 	[InlineData(null)]
 	[InlineData(" ")]
 	public void RejectInvalidMapMetadata(string? name) =>
-		Assert.True(Map.Create(Guid.NewGuid(), name).IsFailure);
+		Assert.True(Map.Create(Guid.NewGuid(), name, Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).IsFailure);
 
 	[Theory]
 	[InlineData(MapProcessingStatus.Queued)]
@@ -123,7 +124,7 @@ public class MapTests
 
 	private static Map Create(params MapStyleInput[] inputs)
 	{
-		var map = Map.Create(Guid.CreateVersion7(), "World").Value!;
+		var map = Map.Create(Guid.CreateVersion7(), "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 
 		foreach (var input in inputs)
 			Assert.True(map.AddStyle(input).IsSuccess);
@@ -234,7 +235,7 @@ public class MapTests
 	{
 		var input = Input() with { Name = name, BackgroundColor = color };
 
-		var map = Map.Create(Guid.NewGuid(), "World").Value!;
+		var map = Map.Create(Guid.NewGuid(), "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 
 		Assert.True(map.AddStyle(input).IsFailure);
 	}

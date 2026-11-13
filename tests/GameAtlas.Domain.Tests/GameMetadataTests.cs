@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain;
 using GameAtlas.Domain.Games;
 
@@ -9,7 +10,7 @@ public class GameMetadataTests
 	public void PreservesPlainTextAndDateNormalizesDeveloperAndSupportsClearing()
 	{
 		var date = new DateOnly(2026, 10, 31);
-		var game = Game.Create("Game", "game", Guid.NewGuid(), Guid.NewGuid(), date,
+		var game = Game.Create("Game", Slug.Create("game").Value!, Guid.NewGuid(), Guid.NewGuid(), date,
 			" Studio ", "Line one\n<b>Line two</b>").Value!;
 		Assert.Equal(date, game.ReleaseDate);
 		Assert.Equal("Studio", game.Developer);
@@ -28,10 +29,9 @@ public class GameMetadataTests
 	[Fact]
 	public void InvalidCoverDoesNotApplyOptionalMetadata()
 	{
-		var game = Game.Create("Game", "game", Guid.NewGuid()).Value!;
+		var game = Game.Create("Game", Slug.Create("game").Value!, Guid.NewGuid()).Value!;
 		var timestamp = game.UpdatedAt;
-		Assert.True(game.Update(coverId: Optional<Guid?>.From(null), developer: "Studio",
-			description: "Text", bannerId: Guid.NewGuid()).IsFailure);
+		Assert.True(game.Update(coverId: Optional<Guid?>.From(null), bannerId: Guid.NewGuid(), developer: "Studio", description: "Text").IsFailure);
 		Assert.Null(game.Developer);
 		Assert.Null(game.Description);
 		Assert.Null(game.BannerId);

@@ -1,3 +1,5 @@
+using GameAtlas.Domain;
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Media;
 using GameAtlas.Domain.Result;
@@ -17,7 +19,12 @@ public sealed class UpdateGameHandler(IApplicationDbContext context, IMediator m
 		if (game is null)
 			return UpdateGameErrors.NotFound;
 
-		var slug = command.Slug.GetValueOrDefault(game.Slug)?.Trim();
+		var parsedSlug = Slug.Create(command.Slug.GetValueOrDefault(game.Slug));
+
+		if (parsedSlug.IsFailure)
+			return parsedSlug.Errors;
+
+		var slug = parsedSlug.Value;
 
 		if (slug != game.Slug)
 		{
@@ -45,7 +52,7 @@ public sealed class UpdateGameHandler(IApplicationDbContext context, IMediator m
 				return selected.Errors;
 		}
 
-		var result = game.Update(command.Name, command.Slug, command.CoverId, command.Status, command.BannerId, command.ReleaseDate, command.Developer, command.Description);
+		var result = game.Update(command.Name, command.Slug.IsSpecified ? Optional<Slug?>.From(slug) : default, command.CoverId, command.Status, command.BannerId, command.ReleaseDate, command.Developer, command.Description);
 
 		if (result.IsFailure)
 			return result.Errors;

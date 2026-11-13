@@ -16,7 +16,7 @@ import {
 	viewChild,
 } from '@angular/core'
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop'
-import { form, FormField, FormRoot, disabled, validate } from '@angular/forms/signals'
+import { disabled, form, FormField, FormRoot, maxLength, pattern, required, validate } from '@angular/forms/signals'
 import { provideIcons } from '@ng-icons/core'
 import { matCloseRound } from '@ng-icons/material-symbols/round'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
@@ -172,20 +172,13 @@ export class MarkerEditor {
 			disabled(path, {
 				when: () => this.create.isPending() || this.update.isPending() || this.remove.isPending(),
 			})
-			validate(path.name, ({ value }) => {
-				const trimmed = value().trim()
 
-				if (!trimmed) return { kind: 'required', message: 'Name is required.' }
+			required(path.name, { message: 'Name is required.' })
+			pattern(path.name, /\S/, { message: 'Name is required.' })
+			maxLength(path.name, 200, { message: 'Use at most 200 characters.' })
 
-				if (trimmed.length > 200) return { kind: 'maxLength', message: 'Use at most 200 characters.' }
+			maxLength(path.description, 5000, { message: 'Use at most 5000 characters.' })
 
-				return undefined
-			})
-			validate(path.description, ({ value }) =>
-				value().trim().length > 5000
-					? { kind: 'maxLength', message: 'Use at most 5000 characters.' }
-					: undefined,
-			)
 			validate(path.categoryId, ({ value }) =>
 				this.categoriesById().has(value()) ? undefined : { kind: 'required', message: 'Choose a category.' },
 			)

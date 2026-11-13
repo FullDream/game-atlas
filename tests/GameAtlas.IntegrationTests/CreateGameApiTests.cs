@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -219,9 +220,9 @@ public class CreateGameApiTests
 		await using var scope = source.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-		context.Games.Add(Game.Create("Game", "game", MediaTestData.CoverId).Value!);
+		context.Games.Add(Game.Create("Game", Slug.Create("game").Value!, MediaTestData.CoverId).Value!);
 		await context.SaveChangesAsync();
-		context.Games.Add(Game.Create("Other", "game", MediaTestData.CoverId).Value!);
+		context.Games.Add(Game.Create("Other", Slug.Create("game").Value!, MediaTestData.CoverId).Value!);
 		var exception = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 		var classifier = new SqlitePersistenceFailureClassifier();
 

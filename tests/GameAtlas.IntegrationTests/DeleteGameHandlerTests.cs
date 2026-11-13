@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using GameAtlas.Application.Games.DeleteGame;
@@ -75,7 +76,7 @@ public class DeleteGameHandlerTests
 		await MediaTestData.EnsureCoverAsync(factory);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var game = Game.Create("Game", slug, MediaTestData.CoverId).Value!;
+		var game = Game.Create("Game", Slug.Create(slug).Value!, MediaTestData.CoverId).Value!;
 
 		Assert.True(game.Update(status: status).IsSuccess);
 		context.Games.Add(game);

@@ -24,6 +24,7 @@ public sealed class GetGameHandler(IApplicationDbContext context) : IQueryHandle
 			{
 				map.Id,
 				map.Name,
+				map.Slug,
 				PreviewId = context.MapStyles.Where(style => style.MapId == map.Id && style.Id == map.DefaultStyleId && style.Status == MapProcessingStatus.Ready)
 				 .OrderBy(style => style.CreationSequence).Select(style => (Guid?)style.SourceAssetId).FirstOrDefault()
 			})
@@ -47,7 +48,7 @@ public sealed class GetGameHandler(IApplicationDbContext context) : IQueryHandle
 			.ToDictionaryAsync(asset => asset.Id, asset => asset.ToDto(), cancellationToken);
 
 		// Restrictive foreign keys protect these references; missing original files retain their asset metadata.
-		var gameMaps = maps.Select(map => new GameMapDto(map.Id, map.Name,
+		var gameMaps = maps.Select(map => new GameMapDto(map.Id, map.Name, map.Slug,
 			map.PreviewId is { } previewId ? assets[previewId] : null)).ToArray();
 
 		return game.ToDto(assets[game.CoverId], game.BannerId is { } bannerId ? assets[bannerId] : null,

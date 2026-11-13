@@ -4,6 +4,7 @@ public sealed record MapDto(
 	Guid Id,
 	Guid GameId,
 	string Name,
+	string Slug,
 	int? Width,
 	int? Height,
 	IReadOnlyCollection<double>? Extent,

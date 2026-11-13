@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Media;
 using GameAtlas.Domain.Games;
@@ -11,7 +12,12 @@ public sealed class CreateGameHandler(IApplicationDbContext context, IMediator m
 {
 	public async ValueTask<Result<GameDto>> Handle(CreateGame command, CancellationToken cancellationToken)
 	{
-		var result = Game.Create(command.Name, command.Slug, command.CoverId, command.BannerId, command.ReleaseDate, command.Developer, command.Description);
+		var slug = Slug.Create(command.Slug);
+
+		if (slug.IsFailure)
+			return slug.Errors;
+
+		var result = Game.Create(command.Name, slug.Value, command.CoverId, command.BannerId, command.ReleaseDate, command.Developer, command.Description);
 
 		if (result.IsFailure)
 			return result.Errors;

@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core'
-import { disabled, form, FormField, FormRoot, validate } from '@angular/forms/signals'
+import { disabled, form, FormField, FormRoot, maxLength, pattern, required } from '@angular/forms/signals'
 import { MapsQueryOptions, getMapErrorMessage, type Map as GameMap } from '@game-atlas/maps/data-access'
 import { Button, Field } from '@game-atlas/shared/ui'
 import { getDirtyValues } from '@game-atlas/shared/util'
@@ -9,7 +9,7 @@ import { HlmInput } from '@spartan-ng/helm/input'
 import { injectMutation } from '@tanstack/angular-query-experimental'
 
 type MapEditorContext = { gameId: string; map: GameMap | null }
-type MapForm = { name: string }
+type MapForm = { name: string; slug: string }
 
 @Component({
 	selector: 'maps-editor-dialog',
@@ -31,20 +31,22 @@ export class MapEditorDialog {
 
 	readonly #model = signal<MapForm>({
 		name: this.context.map?.name ?? '',
+		slug: this.context.map?.slug ?? '',
 	})
 
 	protected readonly fields = form(
 		this.#model,
 		path => {
 			disabled(path, { when: () => this.#create.isPending() || this.#update.isPending() })
-			validate(path.name, ({ value }) => {
-				const name = value().trim()
 
-				if (!name) return { kind: 'required', message: 'Map name is required.' }
+			required(path.name, { message: 'Map name is required.' })
+			pattern(path.name, /\S/, { message: 'Map name is required.' })
+			maxLength(path.name, 200, { message: 'Name must be at most 200 characters.' })
 
-				if (name.length > 200) return { kind: 'maxLength', message: 'Name must be at most 200 characters.' }
-
-				return undefined
+			required(path.slug, { message: 'Map slug is required.' })
+			maxLength(path.slug, 200, { message: 'Slug must be at most 200 characters.' })
+			pattern(path.slug, /^[a-z0-9]+(-[a-z0-9]+)*$/, {
+				message: 'Use lowercase ASCII letters or digits separated by single hyphens.',
 			})
 		},
 		{
@@ -58,16 +60,28 @@ export class MapEditorDialog {
 					}
 
 					if (this.context.map) {
-						const { name } = getDirtyValues(fields)
+						const { name, slug } = getDirtyValues(fields)
 
-						if (name === undefined || name.trim() === this.context.map.name) return
+						const patch = {
+							...(name !== undefined && name.trim() !== this.context.map.name
+								? { name: name.trim() }
+								: {}),
+							...(slug !== undefined && slug.trim() !== this.context.map.slug
+								? { slug: slug.trim() }
+								: {}),
+						}
+
+						if (!Object.keys(patch).length) return
 
 						await this.#update
-							.mutateAsync({ id: this.context.map.id, patch: { name: name.trim() } }, callbacks)
+							.mutateAsync({ id: this.context.map.id, patch }, callbacks)
 							.catch(() => undefined)
 					} else {
 						await this.#create
-							.mutateAsync({ ...this.#model(), name: this.#model().name.trim() }, callbacks)
+							.mutateAsync(
+								{ ...this.#model(), name: this.#model().name.trim(), slug: this.#model().slug.trim() },
+								callbacks,
+							)
 							.catch(() => undefined)
 					}
 				},

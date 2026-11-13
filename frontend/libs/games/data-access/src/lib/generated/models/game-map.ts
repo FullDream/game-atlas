@@ -9,5 +9,6 @@ import type { ImageAsset } from './image-asset'
 export type GameMap = {
 	id: string
 	name: string
+	slug: string
 	preview: null | ImageAsset
 }

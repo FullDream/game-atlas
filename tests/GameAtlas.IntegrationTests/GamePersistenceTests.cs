@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ public sealed class GamePersistenceTests : IDisposable
 	[Fact]
 	public async Task MigrationPersistsMetadataAcrossConnectionsWithStringStatus()
 	{
-		var game = Game.Create(" Game ", " game ", MediaTestData.CoverId).Value!;
+		var game = Game.Create(" Game ", Slug.Create(" game ").Value!, MediaTestData.CoverId).Value!;
 
 		await using (var context = CreateContext())
 		{
@@ -48,10 +49,10 @@ public sealed class GamePersistenceTests : IDisposable
 
 		await context.Database.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(context);
-		context.Games.AddRange(Game.Create("Game", "first", MediaTestData.CoverId).Value!,
-			Game.Create("Game", "second", MediaTestData.CoverId).Value!);
+		context.Games.AddRange(Game.Create("Game", Slug.Create("first").Value!, MediaTestData.CoverId).Value!,
+			Game.Create("Game", Slug.Create("second").Value!, MediaTestData.CoverId).Value!);
 		await context.SaveChangesAsync();
-		context.Games.Add(Game.Create("Other", "first", MediaTestData.CoverId).Value!);
+		context.Games.Add(Game.Create("Other", Slug.Create("first").Value!, MediaTestData.CoverId).Value!);
 		await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 		Assert.Equal(2, await context.Games.CountAsync());
 	}

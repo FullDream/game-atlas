@@ -44,10 +44,12 @@ On desktop, the marker editor is a nonmodal aside with a labelled close button a
 
 ## Map settings and panel visibility
 
-Settings & Tools contains only Map name with an explicit icon-only Save action in a trailing Spartan Input Group addon. It uses the existing map update mutation, trims names to 1..200 characters, skips unchanged names and preserves drafts on failure, section switches and panel hiding. Successful saves reconcile the existing cache and breadcrumbs. Map-list modal editing remains available.
+Settings & Tools contains Map name and Map slug with explicit icon-only Save actions in trailing Spartan Input Group addons. It uses the existing map update mutation, trims names and slugs to 1..200 characters, validates lowercase ASCII single-hyphen slugs, skips unchanged PATCHes and preserves drafts on failure, section switches and panel hiding. Successful saves reconcile the existing cache and breadcrumbs. Map-list modal editing remains available.
 
 The map-leading toolbar button uses directional left/right chevrons and toggles the panel on desktop and mobile, even without a style selector. Desktop starts visible and mobile starts hidden with a close control inside the open panel and no separate header above the map. Tailwind utilities animate panel margin, opacity and visibility over 200ms, with transitions disabled for reduced motion. Hiding immediately makes its controls inert and keeps panel state and drafts mounted. Viewport resizing preserves center, resolution and style; the selected accordion section survives hiding. State is local to the mounted editor, with no browser persistence.
 
-The map-name form keeps a small editable model for the current map ID, matching the game editor pattern. Cache updates for that same map do not replace form input; switching maps initializes its name, and successful saves explicitly accept the server name and reset form state.
+The map metadata form keeps a small editable model for the current map ID, matching the game editor pattern. Cache updates for that same map do not replace form input; switching maps initializes its name and slug, and successful saves explicitly accept the server values and reset form state.
 
 Editor fullscreen targets the whole workspace, including the left content panel and marker editor. Panel visibility and drafts are preserved on entry/exit. Existing FullscreenOverlayContainer configuration keeps selects and dialogs inside the fullscreen workspace.
+
+Map metadata includes a required string slug. Existing creation forms require manual name and slug input; editing supports changed-field PATCHes without generating slugs from names. Validation, conflicts, drafts and pending/error behavior follow the backend contract. Routes and cache identity remain ID-based.

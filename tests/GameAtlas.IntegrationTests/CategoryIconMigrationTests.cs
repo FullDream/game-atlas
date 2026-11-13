@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +24,7 @@ public sealed class CategoryIconMigrationTests
 
 		var gameId = await MediaTestData.SeedLegacyGameAsync(context);
 
-		var map = GameAtlas.Domain.Maps.Map.Create(gameId, "World").Value!;
+		var map = GameAtlas.Domain.Maps.Map.Create(gameId, "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 
 		var now = DateTimeOffset.UtcNow;
 		await context.Database.ExecuteSqlInterpolatedAsync($"""

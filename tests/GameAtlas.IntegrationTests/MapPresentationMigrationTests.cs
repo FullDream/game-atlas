@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Games;
 using GameAtlas.Domain.Markers;
@@ -22,7 +23,7 @@ public class MapPresentationMigrationTests
 		await context.GetService<IMigrator>().MigrateAsync("20261030211320_ExpandedGameMetadata");
 		await MediaTestData.EnsureCoverAsync(context);
 
-		var game = Game.Create("Game", "migration", MediaTestData.CoverId).Value!;
+		var game = Game.Create("Game", Slug.Create("migration").Value!, MediaTestData.CoverId).Value!;
 		context.Games.Add(game);
 		await context.SaveChangesAsync();
 
@@ -51,10 +52,14 @@ public class MapPresentationMigrationTests
 		var category = Category.Create(group.Id, "Category", MediaTestData.CoverId, "#fff", 1).Value!;
 
 		var marker = Marker.Create(category.Id, "Point", Position.Create(-12.5, 64.25).Value!).Value!;
-		context.CategoryGroups.Add(group);
-		context.Categories.Add(category);
-		context.Markers.Add(marker);
-		await context.SaveChangesAsync();
+		await context.Database.ExecuteSqlAsync($"""
+			INSERT INTO CategoryGroups (Id, MapId, Name, NormalizedName, "Order", CreatedAt, UpdatedAt)
+			VALUES ({group.Id}, {mapId}, 'Group', 'GROUP', 1, {now}, {now});
+			INSERT INTO Categories (Id, CategoryGroupId, Name, NormalizedName, IconAssetId, Color, "Order", CreatedAt, UpdatedAt)
+			VALUES ({category.Id}, {group.Id}, 'Category', 'CATEGORY', {MediaTestData.CoverId}, '#FFFFFF', 1, {now}, {now});
+			INSERT INTO Markers (Id, CategoryId, Name, PositionX, PositionY, CreatedAt, UpdatedAt)
+			VALUES ({marker.Id}, {category.Id}, 'Point', -12.5, 64.25, {now}, {now});
+			""");
 
 		var tilePath = Path.Combine(factory.MapStoragePath, "tiles", mapId.ToString("N"), second.ToString("N"), "0", "0", "0.webp");
 		Directory.CreateDirectory(Path.GetDirectoryName(tilePath)!);

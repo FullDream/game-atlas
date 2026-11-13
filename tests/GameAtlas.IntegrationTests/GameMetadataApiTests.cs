@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Common.Pagination;
 using System.Net;
 using System.Net.Http.Json;
@@ -73,16 +74,16 @@ public class GameMetadataApiTests
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		await MediaTestData.EnsureCoverAsync(context);
 
-		var game = Game.Create("Game", "game", MediaTestData.CoverId).Value!;
+		var game = Game.Create("Game", Slug.Create("game").Value!, MediaTestData.CoverId).Value!;
 
-		var other = Game.Create("Other", "other", MediaTestData.CoverId).Value!;
+		var other = Game.Create("Other", Slug.Create("other").Value!, MediaTestData.CoverId).Value!;
 		context.Games.AddRange(game, other);
 
-		var map = Map.Create(game.Id, "World").Value!;
+		var map = Map.Create(game.Id, "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 
-		var blank = Map.Create(game.Id, "Blank").Value!;
+		var blank = Map.Create(game.Id, "Blank", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 
-		var foreign = Map.Create(other.Id, "Foreign").Value!;
+		var foreign = Map.Create(other.Id, "Foreign", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 		context.Maps.AddRange(map, blank, foreign);
 
 		var group = CategoryGroup.Create(map.Id, "Group", 1).Value!;
@@ -158,7 +159,7 @@ public class GameMetadataApiTests
 		var storedTimestamp = timestamp.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFFzzz", System.Globalization.CultureInfo.InvariantCulture);
 		await context.Database.ExecuteSqlAsync($"INSERT INTO Games (Id, Name, Slug, ImageAssetId, CreatedAt, UpdatedAt, Status) VALUES ({id}, 'Game', 'game', {MediaTestData.CoverId}, {storedTimestamp}, {storedTimestamp}, 'Draft')");
 
-		var map = Map.Create(id, "World").Value!;
+		var map = Map.Create(id, "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 		await context.Database.ExecuteSqlInterpolatedAsync($"""
 			INSERT INTO Maps (Id, GameId, Name, NormalizedName, Width, Height, LastCreationSequence, CreatedAt, UpdatedAt)
 			VALUES ({map.Id}, {id}, 'World', 'WORLD', 64, 48, 0, {storedTimestamp}, {storedTimestamp});

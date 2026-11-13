@@ -57,6 +57,7 @@ public sealed class ListGamesHandler(IApplicationDbContext context)
 				map.Id,
 				map.GameId,
 				map.Name,
+				map.Slug,
 				PreviewId = context.MapStyles.Where(style => style.MapId == map.Id && style.Id == map.DefaultStyleId && style.Status == MapProcessingStatus.Ready)
 				 .OrderBy(style => style.CreationSequence).Select(style => (Guid?)style.SourceAssetId).FirstOrDefault()
 			})
@@ -89,7 +90,7 @@ public sealed class ListGamesHandler(IApplicationDbContext context)
 		// Restrictive foreign keys protect these references; missing original files retain their asset metadata.
 		var items = games.Select(game =>
 		{
-			var gameMaps = summaries[game.Id].Select(map => new GameMapDto(map.Id, map.Name,
+			var gameMaps = summaries[game.Id].Select(map => new GameMapDto(map.Id, map.Name, map.Slug,
 				map.PreviewId is { } previewId ? assets[previewId] : null)).ToArray();
 
 			return game.ToDto(assets[game.CoverId], game.BannerId is { } bannerId ? assets[bannerId] : null,

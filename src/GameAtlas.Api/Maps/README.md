@@ -1,6 +1,6 @@
 # Maps
 
-A game owns zero or more independently named maps, including draft games. Each map owns its coordinate space, groups, categories, markers, and optional styles. Metadata routes start at `/games/{gameId}/maps`; static tiles use `/map-tiles`. Game responses include read-only map summaries (id, name, nullable preview) and content counts, without a selected mapId or full map geometry/styles.
+A game owns zero or more independently named maps, including draft games. Each map owns its coordinate space, groups, categories, markers, and optional styles. Metadata routes start at `/games/{gameId}/maps`; static tiles use `/map-tiles`. Game responses include read-only map summaries (id, name, slug, nullable preview) and content counts, without a selected mapId or full map geometry/styles.
 
 | Method | Suffix                          | Operation      | Success            |
 | ------ | ------------------------------- | -------------- | ------------------ |
@@ -18,13 +18,13 @@ There is no pagination, separate style GET, public source history, or PUT operat
 
 ## Creation and listing
 
-POST accepts application/json with required name only, for example `{"name":"World"}`. Names are trimmed, 1..200 characters and unique per game after invariant case normalization. Success returns 200 with null dimensions/geometry, styles=[], and defaultStyleId=null. The first successful style attachment atomically fixes logical dimensions from its source (1..16384); failed attachment leaves geometry absent. Processing failure does not undo geometry, and removing all styles does not reset it. No files, leases, or processing work are created. Groups/categories/markers can be added immediately.
+POST accepts application/json with required name and slug, for example `{"name":"World"}`. Names are trimmed, 1..200 characters and unique per game after invariant case normalization. Success returns 200 with null dimensions/geometry, styles=[], and defaultStyleId=null. The first successful style attachment atomically fixes logical dimensions from its source (1..16384); failed attachment leaves geometry absent. Processing failure does not undo geometry, and removing all styles does not reset it. No files, leases, or processing work are created. Groups/categories/markers can be added immediately.
 
 GET returns every complete map ordered by createdAt then id ascending, including [] for an existing game without maps. There are no pagination/filter/order parameters. Missing games return 404. Every item route requires both the owning game ID and map ID; a sibling or foreign map/style returns 404. Legacy singular-map and game-wide content routes are absent.
 
 ## Default and display order
 
-Map PATCH accepts optional name, defaultStyleId and styleOrder (the complete ordered style ID array). Omitted fields stay unchanged and arrays replace the full order atomically. Nulls, duplicate/incomplete orders and non-ready defaults return 422; missing/foreign IDs return 404. Normalized no-ops preserve timestamps; effective presentation changes update only the map timestamp without retiling. New styles append. A surviving ready default remains selected after reorder or later readiness; deleting it selects the first ready style in display order, or null if none remains. Game summaries use the same default.
+Map PATCH accepts optional name, slug, defaultStyleId and styleOrder (the complete ordered style ID array). Omitted fields stay unchanged and arrays replace the full order atomically. Nulls, duplicate/incomplete orders and non-ready defaults return 422; missing/foreign IDs return 404. Normalized no-ops preserve timestamps; effective presentation changes update only the map timestamp without retiling. New styles append. A surviving ready default remains selected after reorder or later readiness; deleting it selects the first ready style in display order, or null if none remains. Game summaries use the same default.
 
 The MapStylePresentation migration preserves existing dimensions, order, ready defaults, marker coordinates and tile URLs. Apply it explicitly after backing up database and storage. It is never applied on startup. Downgrading a populated store is refused; restore the coordinated backup to roll back.
 
@@ -40,7 +40,7 @@ Shared name/alt/folder changes appear in subsequent HTTP style responses without
 
 ## Responses and updates
 
-Map fields: `id`, `gameId`, `name`, `width`, `height`, `extent`, `tileOrigin`, `tileSize`, `minZoom`, `maxZoom`, `resolutions`, `defaultStyleId`, `styles`, `createdAt`, `updatedAt`. Styles are returned in persisted display order. The persisted ready default is independent of order; it is null until any style is ready. Queued, processing, and failed styles are skipped when choosing the default, but remain in the style array.
+Map fields: `id`, `gameId`, `name`, `slug`, `width`, `height`, `extent`, `tileOrigin`, `tileSize`, `minZoom`, `maxZoom`, `resolutions`, `defaultStyleId`, `styles`, `createdAt`, `updatedAt`. Styles are returned in persisted display order. The persisted ready default is independent of order; it is null until any style is ready. Queued, processing, and failed styles are skipped when choosing the default, but remain in the style array.
 
 Style fields: `id`, `name`, `backgroundColor`, `source`, `tileGeometry`, `status`, `progress`, `error`, `tilesUrlTemplate`, `createdAt`, `updatedAt`. Status is `queued`, `processing`, `ready`, or `failed`. Progress is approximate, nondecreasing within an attempt, 0..99 until full publication, and 100 only when ready. Percentages live only in server memory and do not change persisted timestamps; absent transient progress is 0, ready is always 100. Failed percentages are not retained across restart. Error is null or a safe `{code,message}`; no paths or native diagnostics are exposed. The tile template is null until ready. IDs use UUID v7; dates use UTC.
 
@@ -105,4 +105,8 @@ Deletion commits durable cleanup scheduling before 204; disk deletion may follow
 
 ## Rename a map
 
-PATCH /games/{gameId}/maps/{mapId} accepts optional name, defaultStyleId and styleOrder using the shared JSON Merge Patch contract. Nonempty valid patches return the complete map; dimensions and geometry are immutable. Names are trimmed, 1..200 characters and unique per game excluding the current map. Null/blank/overlength names and empty patches return 422; conflicts return 409; unknown or read-only fields return 400; unsupported media return 415. A trimmed identical name preserves updatedAt; a real rename updates only the map timestamp, without changing game timestamps or processing styles.
+PATCH /games/{gameId}/maps/{mapId} accepts optional name, slug, defaultStyleId and styleOrder using the shared JSON Merge Patch contract. Nonempty valid patches return the complete map; dimensions and geometry are immutable. Names are trimmed, 1..200 characters and unique per game excluding the current map. Null/blank/overlength names and empty patches return 422; conflicts return 409; unknown or read-only fields return 400; unsupported media return 415. A trimmed identical name preserves updatedAt; a real rename updates only the map timestamp, without changing game timestamps or processing styles.
+
+## Slugs
+
+Creation requires both name and slug; missing/null/blank values return 422. Slugs are trimmed, contain 1..200 lowercase ASCII letters or digits separated by single hyphens, and are never generated or repaired for new maps. They are unique within the owning game independently of name uniqueness. Duplicate create/update requests return 409, including save-time conflicts. Map PATCH accepts optional slug alongside name, defaultStyleId and styleOrder; omission preserves slug and explicit null returns 422. Failed patches are atomic; equal trimmed values preserve updatedAt. Renaming preserves slug unless explicitly supplied. List/detail/mutation responses and game map summaries include string slugs. All current routes, tile paths and subscriptions still use IDs. Existing maps receive map-{id:N} through an explicit migration; see the persistence README.

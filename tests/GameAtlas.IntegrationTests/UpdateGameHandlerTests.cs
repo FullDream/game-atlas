@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Games.UpdateGame;
 using GameAtlas.Domain;
 using GameAtlas.Domain.Games;
@@ -71,7 +72,7 @@ public class UpdateGameHandlerTests
 		Assert.All(context.ChangeTracker.Entries<Game>(), entry => Assert.Equal(EntityState.Unchanged, entry.State));
 		var stored = await context.Games.OrderBy(item => item.Slug).ToArrayAsync();
 
-		Assert.Equal(new[] { "game", "other" }, stored.Select(item => item.Slug));
+		Assert.Equal(new[] { "game", "other" }, stored.Select(item => item.Slug.Value));
 		Assert.Equal(game.UpdatedAt, stored.Single(item => item.Id == game.Id).UpdatedAt);
 		Assert.Equal(other.UpdatedAt, stored.Single(item => item.Id == other.Id).UpdatedAt);
 		Assert.All(stored, item => Assert.Equal("Game", item.Name));
@@ -116,7 +117,7 @@ public class UpdateGameHandlerTests
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 			var tracked = await context.Games.AsTracking().SingleAsync(item => item.Id == game.Id);
 
-			Assert.True(tracked.Update("New", "taken").IsSuccess);
+			Assert.True(tracked.Update("New", Slug.Create("taken").Value!).IsSuccess);
 			var exception = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 
 			Assert.True(new SqlitePersistenceFailureClassifier().IsGameSlugConflict(exception));
@@ -151,7 +152,7 @@ public class UpdateGameHandlerTests
 		await MediaTestData.EnsureCoverAsync(factory);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var game = Game.Create("Game", slug, MediaTestData.CoverId).Value!;
+		var game = Game.Create("Game", Slug.Create(slug).Value!, MediaTestData.CoverId).Value!;
 
 		context.Games.Add(game);
 		await context.SaveChangesAsync();

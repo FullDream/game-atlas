@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reflection;
 using FluentValidation;
 using FluentValidation.Validators;
+using GameAtlas.Domain.ValueObjects;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
@@ -70,6 +71,16 @@ public sealed class FluentValidationSchemaTransformer(IOpenApiValidationSourceRe
 
 	private static void ApplyValidator(IPropertyValidator validator, OpenApiSchema schema)
 	{
+		if (validator.Name == "SlugValidator")
+		{
+			RemoveNull(schema);
+			ApplyMinLength(schema, 1);
+			ApplyMaxLength(schema, Slug.MaxLength);
+			schema.Pattern = Slug.Pattern;
+
+			return;
+		}
+
 		switch (validator)
 		{
 			case INotNullValidator:

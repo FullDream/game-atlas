@@ -1,4 +1,5 @@
 using GameAtlas.Domain.Result;
+using GameAtlas.Domain.ValueObjects;
 
 namespace GameAtlas.Domain.Maps;
 
@@ -14,6 +15,8 @@ public sealed class Map
 	public Guid Id { get; }
 	public Guid GameId { get; private set; }
 	public string Name { get; private set; } = string.Empty;
+
+	public Slug Slug { get; private set; } = null!;
 	public string NormalizedName { get; private set; } = string.Empty;
 	public int? Width { get; private set; }
 	public int? Height { get; private set; }
@@ -21,24 +24,29 @@ public sealed class Map
 	public DateTimeOffset CreatedAt { get; private set; }
 	public DateTimeOffset UpdatedAt { get; private set; }
 	public IReadOnlyCollection<MapStyle> Styles => styles.AsReadOnly();
-	public MapGeometry? Geometry => geometry ??= Width is { } width && Height is { } height
-		? new MapGeometry(width, height) : null;
+
+	public MapGeometry? Geometry =>
+		geometry ??= Width is { } width && Height is { } height ? new MapGeometry(width, height) : null;
 
 	public Guid? DefaultStyleId { get; private set; }
 
 	public static string NormalizeName(string name) => name.Trim().ToUpperInvariant();
 
-	public static Result<Map> Create(Guid gameId, string? name)
+	public static Result<Map> Create(Guid gameId, string? name, Slug slug)
 	{
 		name = name?.Trim();
 
 		if (string.IsNullOrEmpty(name) || name.Length > NameMaxLength)
 			return MapErrors.InvalidMapName;
 
+		if (slug is null)
+			return SlugErrors.Required;
+
 		var now = DateTimeOffset.UtcNow;
 		var map = new Map(Guid.CreateVersion7())
 		{
 			GameId = gameId,
+			Slug = slug,
 			Name = name,
 			NormalizedName = NormalizeName(name),
 			CreatedAt = now,
@@ -70,8 +78,7 @@ public sealed class Map
 		if (input.Source is null || !input.Source.IsRaster)
 			return MapProcessingErrors.InvalidSource;
 
-		var created = MapStyle.Create(Id, LastCreationSequence + 1, input.Name, input.BackgroundColor,
-			input.Source);
+		var created = MapStyle.Create(Id, LastCreationSequence + 1, input.Name, input.BackgroundColor, input.Source);
 
 		if (created.IsFailure)
 			return created.Errors;
@@ -107,7 +114,9 @@ public sealed class Map
 		return Result.Result.Success();
 	}
 
-	public Result<bool> UpdateStyle(Guid styleId, Optional<string?> name = default,
+	public Result<bool> UpdateStyle(
+		Guid styleId,
+		Optional<string?> name = default,
 		Optional<string?> backgroundColor = default)
 	{
 		var style = styles.SingleOrDefault(item => item.Id == styleId);
@@ -149,13 +158,19 @@ public sealed class Map
 		if (styles.Any(style => style.Id == DefaultStyleId && style.Status == MapProcessingStatus.Ready))
 			return;
 
-		DefaultStyleId = styles.Where(style => style.Status == MapProcessingStatus.Ready)
-			.OrderBy(style => style.DisplayOrder).ThenBy(style => style.CreationSequence)
-			.Select(style => (Guid?)style.Id).FirstOrDefault();
+		DefaultStyleId = styles
+			.Where(style => style.Status == MapProcessingStatus.Ready)
+			.OrderBy(style => style.DisplayOrder)
+			.ThenBy(style => style.CreationSequence)
+			.Select(style => (Guid?)style.Id)
+			.FirstOrDefault();
 	}
 
-	public Result<bool> Update(Optional<string?> name = default, Optional<Guid?> defaultStyleId = default,
-		Optional<IReadOnlyList<Guid>?> styleOrder = default)
+	public Result<bool> Update(
+		Optional<string?> name = default,
+		Optional<Guid?> defaultStyleId = default,
+		Optional<IReadOnlyList<Guid>?> styleOrder = default,
+		Optional<Slug?> slug = default)
 	{
 		var nextName = name.GetValueOrDefault(Name)?.Trim();
 
@@ -190,7 +205,12 @@ public sealed class Map
 				return MapErrors.InvalidStyleOrder;
 		}
 
-		var changed = nextName != Name || defaultStyleId.GetValueOrDefault(DefaultStyleId) != DefaultStyleId;
+		var nextSlug = slug.GetValueOrDefault(Slug);
+
+		if (nextSlug is null)
+			return SlugErrors.Required;
+
+		var changed = nextSlug != Slug || nextName != Name || defaultStyleId.GetValueOrDefault(DefaultStyleId) != DefaultStyleId;
 
 		if (styleOrder.IsSpecified)
 		{
@@ -208,6 +228,7 @@ public sealed class Map
 			return false;
 
 		Name = nextName;
+		Slug = nextSlug;
 		NormalizedName = NormalizeName(nextName);
 		DefaultStyleId = defaultStyleId.GetValueOrDefault(DefaultStyleId);
 		UpdatedAt = DateTimeOffset.UtcNow;

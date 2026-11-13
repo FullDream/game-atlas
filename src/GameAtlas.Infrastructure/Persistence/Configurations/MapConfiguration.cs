@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Games;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Infrastructure.Persistence.Converters;
@@ -14,6 +15,8 @@ public sealed class MapConfiguration : IEntityTypeConfiguration<Map>
 		builder.HasKey(map => map.Id);
 		builder.Property(map => map.Id).ValueGeneratedNever();
 		builder.HasIndex(map => map.GameId);
+		builder.Property(map => map.Slug).HasConversion<SlugConverter>().HasMaxLength(Slug.MaxLength).IsRequired();
+		builder.HasIndex(map => new { map.GameId, map.Slug }).IsUnique();
 		builder.Property(map => map.Name).HasMaxLength(Map.NameMaxLength).IsRequired();
 		builder.Property(map => map.NormalizedName).HasMaxLength(Map.NameMaxLength).IsRequired();
 		builder.HasIndex(map => new { map.GameId, map.NormalizedName }).IsUnique();

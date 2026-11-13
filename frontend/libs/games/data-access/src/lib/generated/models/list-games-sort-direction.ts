@@ -5,4 +5,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type SortDirection = 'asc' | 'desc' | null
+export type ListGamesSortDirection = 'asc' | 'desc'

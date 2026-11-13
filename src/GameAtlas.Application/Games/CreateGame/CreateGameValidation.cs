@@ -1,3 +1,5 @@
+using GameAtlas.Domain.ValueObjects;
+using GameAtlas.Application.Common.Validation;
 using FluentValidation;
 
 namespace GameAtlas.Application.Games.CreateGame;
@@ -12,9 +14,7 @@ public sealed class CreateGameValidation : AbstractValidator<CreateGame>
 			.OverridePropertyName(nameof(CreateGame.Name));
 
 		RuleFor(command => command.Slug == null ? null : command.Slug.Trim())
-			.NotEmpty()
-			.MaximumLength(GameMetadataLimits.SlugMaxLength)
-			.Matches(@"\A[a-z0-9]+(-[a-z0-9]+)*\z")
+			.ValidSlug()
 			.OverridePropertyName(nameof(CreateGame.Slug));
 
 		RuleFor(command => command.CoverId).NotNull().NotEqual(Guid.Empty);

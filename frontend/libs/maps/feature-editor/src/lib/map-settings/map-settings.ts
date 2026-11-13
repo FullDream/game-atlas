@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal, model } from '@angular/core'
-import { disabled, form, FormField, FormRoot, validate } from '@angular/forms/signals'
+import { disabled, form, FormField, FormRoot, maxLength, pattern, required } from '@angular/forms/signals'
 import { getMapErrorMessage, MapsQueryOptions, type Map as GameMap } from '@game-atlas/maps/data-access'
 import { Button, Field } from '@game-atlas/shared/ui'
 import { getDirtyValues } from '@game-atlas/shared/util'
@@ -11,7 +11,7 @@ import { HlmInputGroupImports } from '@spartan-ng/helm/input-group'
 import { HlmTooltip } from '@spartan-ng/helm/tooltip'
 import { injectMutation } from '@tanstack/angular-query-experimental'
 
-type MapNameForm = { name: string }
+type MapNameForm = { name: string; slug: string }
 
 @Component({
 	selector: 'maps-settings',
@@ -44,40 +44,47 @@ export class MapSettings {
 
 	protected readonly nameModel = linkedSignal<GameMap, MapNameForm>({
 		source: this.map,
-		computation: (map, previous) => (previous?.source.id === map.id ? previous.value : { name: map.name }),
+		computation: (map, previous) =>
+			previous?.source.id === map.id ? previous.value : { name: map.name, slug: map.slug },
 	})
 
 	protected readonly fields = form(
 		this.nameModel,
 		path => {
 			disabled(path, { when: () => this.update.isPending() })
-			validate(path.name, ({ value }) => {
-				const name = value().trim()
 
-				if (!name) return { kind: 'required', message: 'Map name is required.' }
+			required(path.name, { message: 'Map name is required.' })
+			pattern(path.name, /\S/, { message: 'Map name is required.' })
+			maxLength(path.name, 200, { message: 'Name must be at most 200 characters.' })
 
-				if (name.length > 200) return { kind: 'maxLength', message: 'Name must be at most 200 characters.' }
-
-				return undefined
+			required(path.slug, { message: 'Map slug is required.' })
+			maxLength(path.slug, 200, { message: 'Slug must be at most 200 characters.' })
+			pattern(path.slug, /^[a-z0-9]+(-[a-z0-9]+)*$/, {
+				message: 'Use lowercase ASCII letters or digits separated by single hyphens.',
 			})
 		},
 		{
 			submission: {
 				action: async fields => {
-					const { name } = getDirtyValues(fields)
+					const { name, slug } = getDirtyValues(fields)
 
-					if (name === undefined || name.trim() === this.map().name) return
+					const patch = {
+						...(name !== undefined && name.trim() !== this.map().name ? { name: name.trim() } : {}),
+						...(slug !== undefined && slug.trim() !== this.map().slug ? { slug: slug.trim() } : {}),
+					}
+
+					if (!Object.keys(patch).length) return
 
 					const mapId = this.map().id
 
 					await this.update
 						.mutateAsync(
-							{ id: mapId, patch: { name: name.trim() } },
+							{ id: mapId, patch },
 							{
 								onSuccess: map => {
 									if (this.map().id !== mapId) return
 
-									this.nameModel.set({ name: map.name })
+									this.nameModel.set({ name: map.name, slug: map.slug })
 									fields().reset()
 								},
 							},

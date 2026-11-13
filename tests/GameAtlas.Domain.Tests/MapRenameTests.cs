@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Maps;
 
 namespace GameAtlas.Domain.Tests;
@@ -7,7 +8,7 @@ public class MapRenameTests
 	[Fact]
 	public void RenameTrimsAndPreservesGeometryAndCreation()
 	{
-		var map = Map.Create(Guid.CreateVersion7(), "World").Value!;
+		var map = Map.Create(Guid.CreateVersion7(), "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 		var geometry = map.Geometry;
 		var createdAt = map.CreatedAt;
 		var result = map.Rename(" New World ");
@@ -24,7 +25,7 @@ public class MapRenameTests
 	[Fact]
 	public void NoOpPreservesTimestampWhileCaseChangeUpdatesSpelling()
 	{
-		var map = Map.Create(Guid.CreateVersion7(), "World").Value!;
+		var map = Map.Create(Guid.CreateVersion7(), "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 		var updatedAt = map.UpdatedAt;
 
 		Assert.False(map.Rename(" World ").Value);
@@ -40,7 +41,7 @@ public class MapRenameTests
 	[InlineData("  ")]
 	public void InvalidRenamePreservesMap(string? name)
 	{
-		var map = Map.Create(Guid.CreateVersion7(), "World").Value!;
+		var map = Map.Create(Guid.CreateVersion7(), "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 		var updatedAt = map.UpdatedAt;
 
 		Assert.True(map.Rename(name).IsFailure);

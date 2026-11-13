@@ -21,9 +21,9 @@ public class MultiMapApiTests
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "other-styles");
 		using var client = factory.CreateHttpsClient();
 		using var firstCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "World" });
+			new { name = "World", slug = "world" });
 		using var secondCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "Dungeon" });
+			new { name = "Dungeon", slug = "dungeon" });
 		var first = await MapTestData.ReadAsync(firstCreation);
 		var second = await MapTestData.ReadAsync(secondCreation);
 		using var upload = MapTestData.Style();
@@ -62,7 +62,7 @@ public class MultiMapApiTests
 		using var client = factory.CreateHttpsClient();
 		using var missingList = await client.GetAsync(MapTestData.CollectionFor(Guid.NewGuid()));
 		using var missingCreate = await client.PostAsJsonAsync(MapTestData.CollectionFor(Guid.NewGuid()),
-			new { name = "World" });
+			new { name = "World", slug = "world" });
 		using var unsupported = await client.PostAsync(MapTestData.CollectionFor(game.Id),
 			new StringContent("{}", Encoding.UTF8, "text/plain"));
 
@@ -91,15 +91,15 @@ public class MultiMapApiTests
 
 		Assert.Equal("[]", await empty.Content.ReadAsStringAsync());
 		using var first = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = " World " });
+			new { name = " World ", slug = "world" });
 		var world = await MapTestData.ReadAsync(first);
 		using var second = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "Dungeon" });
+			new { name = "Dungeon", slug = "dungeon" });
 		var dungeon = await MapTestData.ReadAsync(second);
 		using var sameNameElsewhere = await client.PostAsJsonAsync(MapTestData.CollectionFor(other.Id),
-			new { name = "World" });
+			new { name = "World", slug = "world" });
 		using var duplicate = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = " world " });
+			new { name = " world ", slug = "world" });
 		using var foreign = await client.GetAsync(MapTestData.PathFor(other.Id, world.Id));
 		using var listing = await client.GetAsync(MapTestData.CollectionFor(game.Id));
 		var maps = (await listing.Content.ReadFromJsonAsync<MapDto[]>(MapTestData.JsonOptions))!;

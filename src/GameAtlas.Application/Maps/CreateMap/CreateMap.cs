@@ -3,4 +3,4 @@ using Mediator;
 
 namespace GameAtlas.Application.Maps.CreateMap;
 
-public sealed record CreateMap(Guid GameId, string? Name) : ICommand<Result<MapDto>>;
+public sealed record CreateMap(Guid GameId, string? Name, string? Slug) : ICommand<Result<MapDto>>;

@@ -5,4 +5,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type GameSortBy = 'name' | 'createdAt' | 'updatedAt'
+export type ListGamesSortBy = 'name' | 'createdAt' | 'updatedAt'

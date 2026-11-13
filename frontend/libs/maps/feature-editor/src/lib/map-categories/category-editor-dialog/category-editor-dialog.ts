@@ -1,7 +1,7 @@
 import { CategoryIcon } from '@game-atlas/maps/ui'
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
-import { disabled, form, FormField, FormRoot, validate } from '@angular/forms/signals'
+import { disabled, form, FormField, FormRoot, maxLength, pattern, required } from '@angular/forms/signals'
 import {
 	CategoriesQueryOptions,
 	type Category,
@@ -126,26 +126,23 @@ export class CategoryEditorDialog {
 					this.#createGroup.isPending() ||
 					this.#updateGroup.isPending(),
 			})
-			validate(path.name, ({ value }) => {
-				const name = value().trim()
 
-				if (!name) return { kind: 'required', message: 'Name is required.' }
+			required(path.name, { message: 'Name is required.' })
+			pattern(path.name, /\S/, { message: 'Name is required.' })
+			maxLength(path.name, 200, { message: 'Use at most 200 characters.' })
 
-				if (name.length > 200) return { kind: 'maxLength', message: 'Use at most 200 characters.' }
-
-				return undefined
+			required(path.color, {
+				when: () => this.context.kind === 'group',
+				message: 'Use a hex color such as #FFF or #FFFFFF.',
 			})
-			validate(path.color, ({ value }) =>
-				(this.context.kind === 'category' && !value().trim()) ||
-				/^#(?:[a-f\d]{3}|[a-f\d]{6})(?![\s\S])/i.test(value())
-					? undefined
-					: { kind: 'color', message: 'Use a hex color such as #FFF or #FFFFFF.' },
-			)
-			validate(path.categoryGroupId, ({ value }) =>
-				this.context.kind === 'group' || value()
-					? undefined
-					: { kind: 'required', message: 'Choose a category group.' },
-			)
+			pattern(path.color, /^#(?:[a-f\d]{3}|[a-f\d]{6})(?![\s\S])/i, {
+				message: 'Use a hex color such as #FFF or #FFFFFF.',
+			})
+
+			required(path.categoryGroupId, {
+				when: () => this.context.kind === 'category',
+				message: 'Choose a category group.',
+			})
 		},
 		{
 			submission: {

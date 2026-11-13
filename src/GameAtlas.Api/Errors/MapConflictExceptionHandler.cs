@@ -11,13 +11,14 @@ public sealed class MapConflictExceptionHandler(IEnumerable<IPersistenceFailureC
 	public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception,
 		CancellationToken cancellationToken)
 	{
+		var slugConflict = classifiers.Any(classifier => classifier.IsMapSlugConflict(exception));
 		var mapConflict = classifiers.Any(classifier => classifier.IsMapNameConflict(exception));
 		var nameConflict = classifiers.Any(classifier => classifier.IsMapStyleNameConflict(exception));
 
-		if (!mapConflict && !nameConflict)
+		if (!slugConflict && !mapConflict && !nameConflict)
 			return false;
 
-		var error = mapConflict ? MapOperationErrors.NameConflict : MapErrors.NameConflict;
+		var error = slugConflict ? MapOperationErrors.SlugConflict : mapConflict ? MapOperationErrors.NameConflict : MapErrors.NameConflict;
 
 		await TypedResults.Problem(statusCode: 409, title: "Conflict", detail: error.Message).ExecuteAsync(context);
 

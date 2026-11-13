@@ -1,5 +1,5 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core'
-import { disabled, form, FormField, FormRoot, maxLength, required, validate } from '@angular/forms/signals'
+import { disabled, form, FormField, FormRoot, maxLength, pattern, required, validate } from '@angular/forms/signals'
 import {
 	MapsQueryOptions,
 	getMapStyleErrorMessage,
@@ -54,13 +54,13 @@ export class StyleEditorDialog {
 			disabled(path, { when: () => this.#create.isPending() || this.#update.isPending() })
 
 			required(path.name, { message: 'Style name is required' })
+			pattern(path.name, /\S/, { message: 'Style name is required' })
 			maxLength(path.name, 200)
 
-			validate(path.backgroundColor, ({ value }) =>
-				/^#(?:[a-f\d]{3}|[a-f\d]{6})$/i.test(value())
-					? undefined
-					: { kind: 'color', message: 'Use a hex color such as #FFF or #FFFFFF' },
-			)
+			required(path.backgroundColor, { message: 'Use a hex color such as #FFF or #FFFFFF' })
+			pattern(path.backgroundColor, /^#(?:[a-f\d]{3}|[a-f\d]{6})$/i, {
+				message: 'Use a hex color such as #FFF or #FFFFFF',
+			})
 
 			required(path.sourceAssetId)
 

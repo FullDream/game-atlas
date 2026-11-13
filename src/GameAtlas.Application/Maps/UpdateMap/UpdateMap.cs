@@ -5,4 +5,4 @@ using Mediator;
 namespace GameAtlas.Application.Maps.UpdateMap;
 
 public sealed record UpdateMap(Guid GameId, Guid MapId, Optional<string?> Name = default,
-	Optional<Guid?> DefaultStyleId = default, Optional<IReadOnlyList<Guid?>?> StyleOrder = default) : ICommand<Result<MapDto>>;
+	Optional<Guid?> DefaultStyleId = default, Optional<IReadOnlyList<Guid?>?> StyleOrder = default, Optional<string?> Slug = default) : ICommand<Result<MapDto>>;

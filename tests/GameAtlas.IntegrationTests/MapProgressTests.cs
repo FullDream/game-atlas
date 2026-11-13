@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Maps;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Domain.Media;
@@ -16,7 +17,7 @@ public class MapProgressTests
 	public void PercentagesAreTransientMonotonicAndCannotLeakBetweenAttempts()
 	{
 		var image = ImageAsset.Create(Guid.CreateVersion7(), "Source", null, "image/png", 100, 1, 1).Value;
-		var map = Map.Create(Guid.CreateVersion7(), "Map").Value!;
+		var map = Map.Create(Guid.CreateVersion7(), "Map", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 		map.AddStyle(new MapStyleInput("Style", "#fff", image));
 		var style = map.Styles.Single();
 		var store = new MapProgressStore();

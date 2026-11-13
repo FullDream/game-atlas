@@ -82,6 +82,7 @@ export class MapsQueryOptions {
 					? {
 							...previous,
 							name: patch.name?.trim() ?? previous.name,
+							slug: patch.slug?.trim() ?? previous.slug,
 							defaultStyleId: patch.defaultStyleId ?? previous.defaultStyleId,
 							styles: patch.styleOrder
 								? patch.styleOrder.flatMap(id => previous.styles.filter(style => style.id === id))
@@ -114,6 +115,7 @@ export class MapsQueryOptions {
 					...current,
 					styles,
 					name: current.name === optimistic.name ? previous.name : current.name,
+					slug: current.slug === optimistic.slug ? previous.slug : current.slug,
 					defaultStyleId:
 						current.defaultStyleId === optimistic.defaultStyleId
 							? previous.defaultStyleId

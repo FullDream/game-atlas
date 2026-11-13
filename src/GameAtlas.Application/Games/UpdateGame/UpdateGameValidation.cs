@@ -1,5 +1,6 @@
-using FluentValidation;
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Common.Validation;
+using FluentValidation;
 using GameAtlas.Domain;
 
 namespace GameAtlas.Application.Games.UpdateGame;
@@ -20,8 +21,7 @@ public sealed class UpdateGameValidation : AbstractValidator<UpdateGame>
 			value => value == null ? null : value.Trim());
 
 		this.OptionalRuleFor(command => command.Slug,
-			rule => rule.NotEmpty().MaximumLength(GameMetadataLimits.SlugMaxLength)
-				.Matches(@"\A[a-z0-9]+(-[a-z0-9]+)*\z"),
+			rule => rule.ValidSlug(),
 			value => value == null ? null : value.Trim());
 
 		this.OptionalRuleFor(command => command.CoverId, rule => rule.NotNull().NotEqual(Guid.Empty));

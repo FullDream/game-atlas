@@ -28,6 +28,9 @@ internal sealed class OptionalSchemaTransformer : IOpenApiSchemaTransformer
 
 		ReplaceSchema(schema, valueSchema);
 
+		if (Nullable.GetUnderlyingType(valueType) is not null)
+			schema.Type |= JsonSchemaType.Null;
+
 		if (valueType.IsValueType || context.JsonPropertyInfo?.AttributeProvider is not PropertyInfo property)
 			return;
 

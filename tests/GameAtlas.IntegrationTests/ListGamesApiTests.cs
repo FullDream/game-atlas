@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Net;
@@ -239,7 +240,7 @@ public class ListGamesApiTests
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var start = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-		var games = names.Select((name, index) => Game.Create(name, "game-" + index, MediaTestData.CoverId).Value!)
+		var games = names.Select((name, index) => Game.Create(name, Slug.Create("game-" + index).Value!, MediaTestData.CoverId).Value!)
 			.ToArray();
 
 		for (var index = 0; index < games.Length; index++)
@@ -247,7 +248,7 @@ public class ListGamesApiTests
 			var entry = context.Games.Add(games[index]);
 
 			context.Maps.Add(Domain.Maps.Map.Create(games[index].Id,
-				"World").Value!);
+				"World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!);
 
 			entry.Property(game => game.CreatedAt).CurrentValue = start.AddTicks(index);
 			entry.Property(game => game.UpdatedAt).CurrentValue = start.AddTicks(games.Length - index);

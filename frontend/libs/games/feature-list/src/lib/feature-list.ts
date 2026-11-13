@@ -15,7 +15,11 @@ import { HlmToggleGroupImports } from '@spartan-ng/helm/toggle-group'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { FormsModule } from '@angular/forms'
 import { Router, RouterLink } from '@angular/router'
-import { GamesQueryOptions, type GameSortBy, type SortDirection } from '@game-atlas/games/data-access'
+import {
+	GamesQueryOptions,
+	type ListGamesSortBy as GameSortBy,
+	type ListGamesSortDirection as SortDirection,
+} from '@game-atlas/games/data-access'
 import { Button, ErrorState, PageHeaderPortal } from '@game-atlas/shared/ui'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmNumberedPaginationQueryParams } from '@spartan-ng/helm/pagination'

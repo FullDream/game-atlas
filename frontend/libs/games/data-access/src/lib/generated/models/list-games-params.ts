@@ -4,8 +4,8 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
-import type { GameSortBy } from './game-sort-by'
-import type { SortDirection } from './sort-direction'
+import type { ListGamesSortBy } from './list-games-sort-by'
+import type { ListGamesSortDirection } from './list-games-sort-direction'
 
 export type ListGamesParams = {
 	/**
@@ -22,11 +22,11 @@ export type ListGamesParams = {
 	 */
 	search?: string
 	/**
-	 * name, createdAt, or updatedAt (case-insensitive). Omit for unspecified order.
+	 * name, createdAt, or updatedAt (case-insensitive). Omit for createdAt ascending. Id ascending breaks ties.
 	 */
-	sortBy?: GameSortBy
+	sortBy?: ListGamesSortBy
 	/**
 	 * asc or desc (case-insensitive). Requires sortBy; defaults to asc with sortBy.
 	 */
-	sortDirection?: SortDirection
+	sortDirection?: ListGamesSortDirection
 }

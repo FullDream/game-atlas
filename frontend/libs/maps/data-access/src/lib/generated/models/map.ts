@@ -10,6 +10,7 @@ export type Map = {
 	id: string
 	gameId: string
 	name: string
+	slug: string
 	/** @nullable */
 	width: number | null
 	/** @nullable */

@@ -111,3 +111,21 @@ Downgrade rejects null category icons before altering schema. Restore matching b
 ## Category group colors
 
 CategoryGroupColor adds required CategoryGroups.Color with default #F59E0B for existing groups, preserving other columns and timestamps. Apply explicitly after CategoryTree through EF CLI. Downgrade removes group color values only.
+
+## Shared game and map slugs
+
+MapSlugs stores the shared Domain slug as a required scalar string through an Infrastructure converter. Game slugs and their global unique index remain unchanged. Maps retain unique normalized names and gain a unique (GameId, Slug) index. An explicit migration backfills each existing map as map-{id:N}, using the lowercase hyphenless existing UUID without touching names, timestamps, ownership, geometry, styles, processing state, content or files. New maps require a client-supplied slug.
+
+Back up the database and file stores and stop writes before upgrading. Apply explicitly from the repository root, then deploy the compatible backend and admin clients together:
+
+```powershell
+dotnet ef database update 20261113202720_MapSlugs --project src/GameAtlas.Infrastructure --startup-project src/GameAtlas.Api
+```
+
+To downgrade only this change, stop the application, export map slug values that must be retained, and deploy the prior backend/client pair together with the downgraded database:
+
+```powershell
+dotnet ef database update 20261105152741_OptionalCategoryColor --project src/GameAtlas.Infrastructure --startup-project src/GameAtlas.Api
+```
+
+Downgrade removes map slugs and their index, preserving maps, dependent content and files. Reapplying generates the deterministic fallback values again; it does not restore edited slugs. Restore the backup to preserve those values. Validate upgrades and downgrades only against disposable stores; application startup never migrates.

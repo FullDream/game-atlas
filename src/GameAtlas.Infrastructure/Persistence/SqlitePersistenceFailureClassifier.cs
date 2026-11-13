@@ -10,6 +10,8 @@ public sealed class SqlitePersistenceFailureClassifier : IPersistenceFailureClas
 		IsUniqueConflict(exception, "MediaFolders.NormalizedName") ||
 		IsUniqueConflict(exception, "MediaFolders.ParentId, MediaFolders.NormalizedName");
 
+	public bool IsMapSlugConflict(Exception exception) => IsUniqueConflict(exception, "Maps.GameId, Maps.Slug");
+
 	public bool IsMapNameConflict(Exception exception) => IsUniqueConflict(exception,
 		"Maps.GameId, Maps.NormalizedName");
 

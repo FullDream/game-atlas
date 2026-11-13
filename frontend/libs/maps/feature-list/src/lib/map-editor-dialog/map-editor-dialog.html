@@ -5,6 +5,17 @@
 		<input id="map-editor-name" hlmInput [formField]="fields.name" autocomplete="off" />
 	</ui-field>
 
+	<ui-field label="Map slug">
+		<input
+			id="map-editor-slug"
+			hlmInput
+			[formField]="fields.slug"
+			autocomplete="off"
+			autocapitalize="none"
+			spellcheck="false"
+		/>
+	</ui-field>
+
 	<p class="text-sm text-muted-foreground">
 		@if (context.map?.width) {
 			Logical size: {{ context.map.width }} × {{ context.map.height }}.

@@ -1,3 +1,4 @@
+using GameAtlas.Domain.ValueObjects;
 using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -35,7 +36,7 @@ internal static class MapTestData
 
 		if (map is null)
 		{
-			map = Map.Create(gameId, "World").Value!;
+			map = Map.Create(gameId, "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
 			context.Maps.Add(map);
 			await context.SaveChangesAsync();
 		}
@@ -60,7 +61,7 @@ internal static class MapTestData
 
 			if (map is null)
 			{
-				var created = await client.PostAsJsonAsync(CollectionFor(gameId), new { name = "World" });
+				var created = await client.PostAsJsonAsync(CollectionFor(gameId), new { name = "World", slug = "world" });
 
 				if (!created.IsSuccessStatusCode)
 					return created;
