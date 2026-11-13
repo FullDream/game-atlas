@@ -7,7 +7,7 @@
 	"tags": ["type:app", "scope:app", "platform:web"],
 	"targets": {
 		"build": {
-			"executor": "@angular/build:application",
+			"executor": "@nx/angular:application",
 			"outputs": ["{options.outputPath}"],
 			"defaultConfiguration": "production",
 			"options": {
@@ -22,7 +22,8 @@
 				],
 				"styles": ["libs/shared/ui/src/theme/styles.css", "apps/web/src/styles.css"],
 				"server": "apps/web/src/main.server.ts",
-				"outputMode": "static"
+				"outputMode": "static",
+				"buildLibsFromSource": false
 			},
 			"configurations": {
 				"production": {
@@ -49,7 +50,7 @@
 		},
 		"serve": {
 			"continuous": true,
-			"executor": "@angular/build:dev-server",
+			"executor": "@nx/angular:dev-server",
 			"defaultConfiguration": "development",
 			"configurations": {
 				"production": {
@@ -58,6 +59,11 @@
 				"development": {
 					"buildTarget": "web:build:development"
 				}
+			},
+			"dependsOn": ["^build"],
+			"options": {
+				"buildLibsFromSource": false,
+				"watchDependencies": false
 			}
 		},
 		"lint": {

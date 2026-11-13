@@ -18,6 +18,12 @@ Run frontend commands from `frontend/` using npm. Use a Node.js version supporte
 - Test work is deferred until the user explicitly requests it for a task. Do not add new tests or run unit/E2E suites in the meantime. Use formatting, lint and production builds for verification. Preserve existing test coverage; resume test work only when requested.
 - Choose checks for the changed files and affected projects. Run Prettier on supported handwritten files and ESLint through the affected projects' Nx targets when their linted sources or lint configuration change. Keep generated Nx agent assets in their installed format.
 
+### Compiled Helm dependencies
+
+Both applications build through `@nx/angular:application` with `buildLibsFromSource: false` in all configurations. Nx builds or restores buildable Helm dependencies before application compilation. Non-buildable feature, data-access, UI and utility libraries still compile from source.
+
+`npm exec nx -- serve admin` and `npm exec nx -- serve web` use `@nx/angular:dev-server`. Their `^build` prerequisites rebuild changed Helm libraries or restore unchanged results from the Nx cache before the dev-server starts. `watchDependencies: false` disables automatic Helm rebuilding during the session. Restart `serve` after editing Helm. Application and non-buildable library source changes still use normal live rebuilding. No custom watcher or Nx Daemon is required. Unit/E2E test targets remain under the existing deferral policy.
+
 ## Verification scope
 
 Start with the smallest relevant checks. Broaden them when shared dependencies, configuration changes or failures justify it.

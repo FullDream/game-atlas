@@ -7,3 +7,5 @@ Each owned Spartan Helm primitive is a separate buildable Nx library under `<com
 Each library has its own `project.json`, `ng-package.json`, package metadata and TypeScript configuration. Build output goes to `dist/libs/shared/ui-helm/<component>`. Nx builds required Helm dependencies first.
 
 From `frontend/`, run `npm exec nx -- build button` or select all Helm libraries with `npm exec nx -- run-many -t build -p "libs/shared/ui-helm/*"`. Use the corresponding lint targets and consuming application production builds for verification. Unit and E2E test work remains deferred until explicitly requested.
+
+Both application build targets consume compiled Helm output in every configuration (`buildLibsFromSource: false`). Their `serve` targets run `^build` dependencies before starting the dev-server, rebuilding changed Helm libraries and restoring unchanged ones from the Nx cache. Helm dependency watching is disabled. Restart `serve` after editing Helm. Non-buildable GameAtlas libraries continue to compile from source.

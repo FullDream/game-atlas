@@ -11,6 +11,8 @@ npm exec nx -- run games-data-access:generate-api
 
 Admin development runs on port 4201; `/api/**` and `/media/files/**` are proxied to the backend on port 5041. API generation needs the running backend, but normal builds use checked-in generated files and do not fetch OpenAPI.
 
+Both applications use `@nx/angular:application` with `buildLibsFromSource: false` in development and production. Nx builds or restores the required Helm libraries before application builds and before starting `serve`; other internal libraries remain source dependencies. Helm libraries are not rebuilt while the dev-server is running. Restart `serve` after changing Helm to rebuild changed dependencies or restore them from cache.
+
 Admin provides a Media library for folder browsing, file uploads, metadata editing, cover selection, moving items and confirmed deletion. Media is lazy loaded from `@game-atlas/media/feature-list`; API transport and query/mutation options live in `@game-atlas/media/data-access`. Games provides a searchable, sortable list and dedicated creation/editing pages, with library covers, publication controls and confirmed deletion. Authentication is not implemented yet.
 
 - [Administration setup and hosting](apps/admin/README.md)

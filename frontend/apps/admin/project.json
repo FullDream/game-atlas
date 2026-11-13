@@ -7,7 +7,7 @@
 	"tags": ["type:app", "scope:app", "platform:admin"],
 	"targets": {
 		"build": {
-			"executor": "@angular/build:application",
+			"executor": "@nx/angular:application",
 			"outputs": ["{options.outputPath}"],
 			"defaultConfiguration": "production",
 			"options": {
@@ -20,7 +20,8 @@
 						"input": "apps/admin/public"
 					}
 				],
-				"styles": ["libs/shared/ui/src/theme/styles.css", "apps/admin/src/styles.css"]
+				"styles": ["libs/shared/ui/src/theme/styles.css", "apps/admin/src/styles.css"],
+				"buildLibsFromSource": false
 			},
 			"configurations": {
 				"production": {
@@ -47,7 +48,7 @@
 		},
 		"serve": {
 			"continuous": true,
-			"executor": "@angular/build:dev-server",
+			"executor": "@nx/angular:dev-server",
 			"defaultConfiguration": "development",
 			"configurations": {
 				"production": {
@@ -59,8 +60,11 @@
 			},
 			"options": {
 				"port": 4201,
-				"proxyConfig": "apps/admin/proxy.conf.cjs"
-			}
+				"proxyConfig": "apps/admin/proxy.conf.cjs",
+				"buildLibsFromSource": false,
+				"watchDependencies": false
+			},
+			"dependsOn": ["^build"]
 		},
 		"lint": {
 			"executor": "@nx/eslint:lint"

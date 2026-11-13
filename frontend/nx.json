@@ -7,11 +7,6 @@
 		"sharedGlobals": ["{workspaceRoot}/.postcssrc.json", "{workspaceRoot}/libs/shared/ui/src/theme/styles.css"]
 	},
 	"targetDefaults": {
-		"@angular/build:application": {
-			"cache": true,
-			"dependsOn": ["^build"],
-			"inputs": ["production", "^production"]
-		},
 		"@nx/eslint:lint": {
 			"cache": true,
 			"inputs": ["default", "^default", "{workspaceRoot}/eslint.config.mjs"]
@@ -24,6 +19,14 @@
 			"cache": true,
 			"dependsOn": ["^build"],
 			"inputs": ["production", "^production"]
+		},
+		"@nx/angular:application": {
+			"cache": true,
+			"dependsOn": ["^build"],
+			"inputs": ["production", "^production"],
+			"options": {
+				"buildLibsFromSource": false
+			}
 		}
 	},
 	"plugins": [
