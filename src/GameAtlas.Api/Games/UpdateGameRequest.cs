@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 using GameAtlas.Domain;
-using GameAtlas.Domain.Games;
 
 namespace GameAtlas.Api.Games;
 
@@ -17,5 +16,5 @@ public sealed record UpdateGameRequest
 	public Optional<DateOnly?> ReleaseDate { get; init; }
 	public Optional<string?> Developer { get; init; }
 	public Optional<string?> Description { get; init; }
-	public Optional<GameStatus?> Status { get; init; }
+	public Optional<PublicationStatus?> Status { get; init; }
 }

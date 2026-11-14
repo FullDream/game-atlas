@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ImageAsset } from './image-asset'
+import type { PublicationStatus } from './publication-status'
 
 export type Category = {
 	readonly id: string
@@ -16,4 +17,5 @@ export type Category = {
 	readonly markersCount: number
 	readonly createdAt: string
 	readonly updatedAt: string
+	status: PublicationStatus
 }

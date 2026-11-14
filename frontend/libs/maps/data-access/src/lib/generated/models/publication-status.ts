@@ -5,4 +5,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type GameStatus = 'draft' | 'published'
+export type PublicationStatus = 'draft' | 'published'

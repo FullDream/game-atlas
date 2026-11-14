@@ -45,6 +45,7 @@ import {
 } from '@ng-icons/material-symbols/round'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
+import { HlmBadge } from '@spartan-ng/helm/badge'
 import { HlmButtonGroup } from '@spartan-ng/helm/button-group'
 import { HlmTooltip } from '@spartan-ng/helm/tooltip'
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu'
@@ -67,6 +68,7 @@ type MoveCallbacks = { onError: (error: unknown) => void }
 		CategoryIcon,
 		CdkScrollable,
 		HlmAccordionImports,
+		HlmBadge,
 		Button,
 		NgIcon,
 		HlmTooltip,

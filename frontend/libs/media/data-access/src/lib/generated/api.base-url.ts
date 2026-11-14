@@ -11,7 +11,7 @@ import { InjectionToken, inject, type Provider } from '@angular/core'
  * time from the OpenAPI specification's `servers` field (`''` when the
  * specification has no servers).
  */
-export const MEDIA_SERVER_URL: string = 'http://localhost:5042/'
+export const MEDIA_SERVER_URL: string = 'http://localhost:5041'
 
 /**
  * Strips trailing slashes from a base URL.

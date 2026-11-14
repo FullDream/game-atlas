@@ -13,5 +13,7 @@ public sealed class CreateCategoryGroupValidation : AbstractValidator<CreateCate
 			.OverridePropertyName(nameof(CreateCategoryGroup.Name));
 
 		RuleFor(command => command.Color).NotEmpty().Length(4, 7).Matches(Category.ColorPattern);
+
+		this.OptionalRuleFor(command => command.Status, rule => rule.NotNull().IsInEnum());
 	}
 }

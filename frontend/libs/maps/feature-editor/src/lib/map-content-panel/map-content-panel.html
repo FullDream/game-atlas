@@ -47,6 +47,7 @@
 		(sectionOpenChange)="setSection('markers', $event)"
 		[markers]="markers.data() ?? []"
 		[categories]="categoriesById()"
+		[groups]="groupsById()"
 		[selectedId]="selectedId()"
 		[pendingMarkerIds]="pendingMarkerIds()"
 		[loading]="markers.isLoading()"

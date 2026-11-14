@@ -21,11 +21,13 @@ import { provideIcons } from '@ng-icons/core'
 import { matCloseRound } from '@ng-icons/material-symbols/round'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
 import { HlmAlertImports } from '@spartan-ng/helm/alert'
+import { HlmBadge } from '@spartan-ng/helm/badge'
 import { HlmCarouselImports } from '@spartan-ng/helm/carousel'
 import { HlmDrawerImports } from '@spartan-ng/helm/drawer'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmSelectImports } from '@spartan-ng/helm/select'
+import { HlmSwitchImports } from '@spartan-ng/helm/switch'
 import { HlmTextarea } from '@spartan-ng/helm/textarea'
 import { injectMutation } from '@tanstack/angular-query-experimental'
 import { firstValueFrom, map, take } from 'rxjs'
@@ -52,6 +54,7 @@ type MarkerDraft = {
 	categoryId: string
 	position: MapPoint
 	media: string[]
+	published: boolean
 }
 
 export type MarkerEditorSession = {
@@ -69,6 +72,7 @@ function createMarkerDraft(session: MarkerEditorSession, defaultCategoryId: stri
 		categoryId: marker?.categoryId ?? defaultCategoryId,
 		position: { ...session.position },
 		media: marker?.media.map(asset => asset.id) ?? [],
+		published: marker?.status === 'published',
 	}
 }
 
@@ -78,6 +82,7 @@ function createMarkerDraft(session: MarkerEditorSession, defaultCategoryId: stri
 		Field,
 		CategoryIcon,
 		HlmAlertImports,
+		HlmBadge,
 		NgTemplateOutlet,
 		Button,
 		MediaThumbnail,
@@ -89,6 +94,7 @@ function createMarkerDraft(session: MarkerEditorSession, defaultCategoryId: stri
 		HlmInput,
 		HlmTextarea,
 		HlmSelectImports,
+		HlmSwitchImports,
 		MarkerPanel,
 	],
 	templateUrl: './marker-editor.html',
@@ -194,9 +200,12 @@ export class MarkerEditor {
 				action: async fields => {
 					const values = this.draft()
 					const payload: CreateMarkerRequest = {
-						...values,
 						name: values.name.trim(),
 						description: values.description.trim() || null,
+						categoryId: values.categoryId,
+						position: values.position,
+						media: values.media,
+						status: values.published ? 'published' : 'draft',
 					}
 
 					if (this.isRepeated()) {
@@ -211,11 +220,18 @@ export class MarkerEditor {
 					const marker = this.marker()
 
 					if (marker) {
-						const dirty = getDirtyValues(fields)
+						const { published, ...dirty } = getDirtyValues(fields)
+						const nextStatus =
+							published === undefined
+								? undefined
+								: published
+									? ('published' as const)
+									: ('draft' as const)
 						const patch: UpdateMarkerRequest = {
 							...dirty,
 							...(dirty.name === undefined ? {} : { name: payload.name }),
 							...(dirty.description === undefined ? {} : { description: payload.description }),
+							...(nextStatus !== undefined && nextStatus !== marker.status ? { status: nextStatus } : {}),
 						}
 
 						if (!Object.keys(patch).length) return

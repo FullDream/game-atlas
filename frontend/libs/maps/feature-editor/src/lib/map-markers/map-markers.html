@@ -56,12 +56,13 @@
 										<maps-category-icon [iconUrl]="category.icon?.url" [color]="category.color" />
 									}
 									<span class="min-w-0 gap-1 flex flex-1 flex-col items-start">
-										<span
-											class="max-w-full truncate"
-											[hlmTooltip]="marker.name"
-											uiTooltipOnOverflow
-										>
-											{{ marker.name }}
+										<span class="gap-2 flex max-w-full items-center">
+											<span class="truncate" [hlmTooltip]="marker.name" uiTooltipOnOverflow>
+												{{ marker.name }}
+											</span>
+											@if (row.isDraft) {
+												<span hlmBadge variant="secondary">Draft</span>
+											}
 										</span>
 										<span class="text-xs text-muted-foreground max-w-full truncate">
 											{{ row.category?.name ?? 'Category' }}

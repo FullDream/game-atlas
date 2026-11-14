@@ -137,7 +137,7 @@ public class CategoryOpenApiTests
 
 		Assert.Equal(new[]
 			{
-				"categoryGroupId", "color", "createdAt", "icon", "id", "markersCount", "name", "updatedAt"
+				"categoryGroupId", "color", "createdAt", "icon", "id", "markersCount", "name", "status", "updatedAt"
 			},
 			properties.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
 		Assert.Equal("integer", Resolve(root, properties.GetProperty("markersCount")).GetProperty("type").GetString());

@@ -1,5 +1,5 @@
-import type { CategoryGroup, CreateMarkerVariables, Marker } from '@game-atlas/maps/data-access'
-import type { MapMarker, MapPoint } from '@game-atlas/maps/ui'
+import type { CategoryGroup, CreateMarkerVariables, Marker, PublicationStatus } from '@game-atlas/maps/data-access'
+import type { MapMarker, MapPoint, MarkerDraftState } from '@game-atlas/maps/ui'
 
 export type MarkerMovementVariables = { id: string; mapId: string; position?: MapPoint }
 
@@ -28,9 +28,24 @@ export function createMapMarkers({
 	selectedId,
 	placements,
 }: MapMarkerPresentation): MapMarker[] {
+	const groupsById = new Map(groups.map(group => [group.id, group]))
 	const categories = groups.flatMap(group => group.categories)
-	const present = (id: string, name: string, position: MapPoint, categoryId: string): MapMarker => {
+	const present = (
+		id: string,
+		name: string,
+		position: MapPoint,
+		categoryId: string,
+		markerStatus: PublicationStatus | undefined,
+	): MapMarker => {
 		const category = categories.find(category => category.id === categoryId)
+		const group = category ? groupsById.get(category.categoryGroupId) : undefined
+		const draftStates: MarkerDraftState[] = []
+
+		if (markerStatus === 'draft') draftStates.push('marker')
+
+		if (category?.status === 'draft') draftStates.push('category')
+
+		if (group?.status === 'draft') draftStates.push('group')
 
 		return {
 			id,
@@ -38,6 +53,7 @@ export function createMapMarkers({
 			position,
 			color: category ? category.color : '#71717a',
 			icon: category?.icon?.url ?? null,
+			...(draftStates.length ? { draftStates } : {}),
 		}
 	}
 
@@ -45,7 +61,7 @@ export function createMapMarkers({
 		const moving = movements.find(state => state.mapId === mapId && state.id === marker.id)
 
 		return {
-			...present(marker.id, marker.name, moving?.position ?? marker.position, marker.categoryId),
+			...present(marker.id, marker.name, moving?.position ?? marker.position, marker.categoryId, marker.status),
 			selected: marker.id === selectedId,
 			pending: !!moving,
 		}
@@ -60,7 +76,13 @@ export function createMapMarkers({
 
 			return [
 				{
-					...present(`placement:${state.submittedAt}`, request.name, request.position, request.categoryId),
+					...present(
+						`placement:${state.submittedAt}`,
+						request.name,
+						request.position,
+						request.categoryId,
+						request.status ?? 'draft',
+					),
 					pending: true,
 					failed: state.status === 'error',
 				},

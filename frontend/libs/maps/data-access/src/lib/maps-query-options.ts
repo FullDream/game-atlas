@@ -10,19 +10,30 @@ import { toPromise } from '@game-atlas/shared/util'
 import { MapsService } from './generated/maps/maps.service'
 import type {
 	AddMapStyleRequest,
+	CategoryGroup,
 	CreateMapRequest,
 	Map as GameMap,
 	MapStyle,
+	Marker,
 	UpdateMapStyleRequest,
 	UpdateMapRequest,
 } from './generated/models'
+import { getGroupsQueryKey } from './categories/category-query-keys'
 import { mapQueryKeys } from './map-query-keys'
 import { acceptMap, acceptStyle, withStyle } from './map-cache'
+import { getMarkersQueryKey } from './markers/marker-query-keys'
 
 type AddStyleVariables = { mapId: string; data: AddMapStyleRequest }
 type RetryStyleVariables = { mapId: string; styleId: string }
 type UpdateMapVariables = { id: string; patch: UpdateMapRequest }
+type PublishVariables = { gameId: string; mapId: string }
 type RenameSnapshot = { previous: GameMap | undefined; optimistic: GameMap | undefined }
+type PublishSnapshot = {
+	previousMap: GameMap | undefined
+	previousList: GameMap[] | undefined
+	previousGroups: CategoryGroup[] | undefined
+	previousMarkers: Marker[] | undefined
+}
 type UpdateStyleVariables = { styleId: string; patch: UpdateMapStyleRequest }
 type StyleSnapshot = {
 	previous: MapStyle | undefined
@@ -83,6 +94,7 @@ export class MapsQueryOptions {
 							...previous,
 							name: patch.name?.trim() ?? previous.name,
 							slug: patch.slug?.trim() ?? previous.slug,
+							status: patch.status ?? previous.status,
 							defaultStyleId: patch.defaultStyleId ?? previous.defaultStyleId,
 							styles: patch.styleOrder
 								? patch.styleOrder.flatMap(id => previous.styles.filter(style => style.id === id))
@@ -116,6 +128,7 @@ export class MapsQueryOptions {
 					styles,
 					name: current.name === optimistic.name ? previous.name : current.name,
 					slug: current.slug === optimistic.slug ? previous.slug : current.slug,
+					status: current.status === optimistic.status ? previous.status : current.status,
 					defaultStyleId:
 						current.defaultStyleId === optimistic.defaultStyleId
 							? previous.defaultStyleId
@@ -125,6 +138,65 @@ export class MapsQueryOptions {
 			onSuccess: (map, variables, snapshot, { client }) => {
 				return this.#acceptMap(client, gameId, map)
 			},
+		}
+	}
+
+	publish(): CreateMutationOptions<GameMap, HttpErrorResponse, PublishVariables, PublishSnapshot> {
+		return {
+			mutationKey: ['maps', 'publish'],
+			mutationFn: ({ gameId, mapId }) => toPromise(this.#api.publishMap(gameId, mapId)),
+			onMutate: async ({ gameId, mapId }, { client }) => {
+				const detailKey = mapQueryKeys.detail(gameId, mapId)
+				const listKey = mapQueryKeys.list(gameId)
+				const groupsKey = getGroupsQueryKey(gameId, mapId)
+				const markersKey = getMarkersQueryKey(gameId, mapId)
+
+				await Promise.all([
+					client.cancelQueries({ queryKey: ['maps', gameId] }),
+					client.cancelQueries({ queryKey: groupsKey, exact: true }),
+					client.cancelQueries({ queryKey: markersKey, exact: true }),
+				])
+
+				const previousMap = client.getQueryData<GameMap>(detailKey)
+				const previousList = client.getQueryData<GameMap[]>(listKey)
+				const previousGroups = client.getQueryData<CategoryGroup[]>(groupsKey)
+				const previousMarkers = client.getQueryData<Marker[]>(markersKey)
+
+				client.setQueryData<GameMap>(detailKey, map => (map ? { ...map, status: 'published' } : map))
+
+				client.setQueryData<GameMap[]>(listKey, maps =>
+					maps?.map(map => (map.id === mapId ? { ...map, status: 'published' } : map)),
+				)
+
+				client.setQueryData<CategoryGroup[]>(groupsKey, groups =>
+					groups?.map(group => ({
+						...group,
+						status: 'published',
+						categories: group.categories.map(category => ({
+							...category,
+							status: 'published',
+						})),
+					})),
+				)
+
+				client.setQueryData<Marker[]>(markersKey, markers =>
+					markers?.map(marker => ({ ...marker, status: 'published' })),
+				)
+
+				return { previousMap, previousList, previousGroups, previousMarkers }
+			},
+			onError: (error, { gameId, mapId }, snapshot, { client }) => {
+				if (!snapshot) return
+
+				client.setQueryData<GameMap | undefined>(mapQueryKeys.detail(gameId, mapId), snapshot.previousMap)
+				client.setQueryData<GameMap[] | undefined>(mapQueryKeys.list(gameId), snapshot.previousList)
+				client.setQueryData<CategoryGroup[] | undefined>(
+					getGroupsQueryKey(gameId, mapId),
+					snapshot.previousGroups,
+				)
+				client.setQueryData<Marker[] | undefined>(getMarkersQueryKey(gameId, mapId), snapshot.previousMarkers)
+			},
+			onSuccess: (map, { gameId }, snapshot, { client }) => this.#acceptMap(client, gameId, map),
 		}
 	}
 

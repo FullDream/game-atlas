@@ -66,13 +66,13 @@ public class UpdateGameValidationTests
 
 	[Theory]
 	[InlineData(null, false)]
-	[InlineData(GameStatus.Draft, true)]
-	[InlineData(GameStatus.Published, true)]
-	[InlineData((GameStatus)99, false)]
-	public async Task ValidatesSpecifiedStatus(GameStatus? status, bool valid)
+	[InlineData(PublicationStatus.Draft, true)]
+	[InlineData(PublicationStatus.Published, true)]
+	[InlineData((PublicationStatus)99, false)]
+	public async Task ValidatesSpecifiedStatus(PublicationStatus? status, bool valid)
 	{
 		var result = await validator.ValidateAsync(new UpdateGame(Guid.NewGuid(),
-			Status: Optional<GameStatus?>.From(status)));
+			Status: Optional<PublicationStatus?>.From(status)));
 
 		Assert.Equal(valid, result.IsValid);
 		Assert.All(result.Errors, error => Assert.Equal("Status", error.PropertyName));

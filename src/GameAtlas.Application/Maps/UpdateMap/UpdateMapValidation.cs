@@ -8,7 +8,9 @@ public sealed class UpdateMapValidation : AbstractValidator<UpdateMap>
 {
 	public UpdateMapValidation()
 	{
-		RuleFor(command => command).Must(command => command.Name.IsSpecified || command.Slug.IsSpecified || command.DefaultStyleId.IsSpecified || command.StyleOrder.IsSpecified)
+		RuleFor(command => command).Must(command =>
+				command.Name.IsSpecified || command.Slug.IsSpecified || command.DefaultStyleId.IsSpecified ||
+				command.StyleOrder.IsSpecified || command.Status.IsSpecified)
 			.WithErrorCode(MapOperationErrors.EmptyPatch.Code).WithMessage(MapOperationErrors.EmptyPatch.Message)
 			.OverridePropertyName(string.Empty);
 
@@ -18,5 +20,7 @@ public sealed class UpdateMapValidation : AbstractValidator<UpdateMap>
 		this.OptionalRuleFor(command => command.Name,
 			rule => rule.NotEmpty().MaximumLength(Map.NameMaxLength),
 			value => value == null ? null : value.Trim());
+
+		this.OptionalRuleFor(command => command.Status, rule => rule.NotNull().IsInEnum());
 	}
 }

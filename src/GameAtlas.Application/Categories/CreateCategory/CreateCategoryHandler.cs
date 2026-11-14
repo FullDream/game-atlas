@@ -1,6 +1,7 @@
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Categories.Groups;
 using GameAtlas.Application.Media;
+using GameAtlas.Domain;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Result;
 using Mediator;
@@ -20,7 +21,11 @@ public sealed class CreateCategoryHandler(IApplicationDbContext context) : IComm
 		var siblings = await context.Categories.AsTracking().Where(category => category.CategoryGroupId == command.GroupId)
 			.OrderBy(category => category.Order).ThenBy(category => category.CreatedAt).ThenBy(category => category.Id).ToListAsync(cancellationToken);
 
-		var result = Category.Create(command.GroupId, command.Name, command.IconAssetId, command.Color, siblings.Count + 1);
+		if (command.Status.IsSpecified && command.Status.Value is null)
+			return CategoryErrors.StatusRequired;
+
+		var result = Category.Create(command.GroupId, command.Name, command.IconAssetId, command.Color, siblings.Count + 1,
+			command.Status.GetValueOrDefault(PublicationStatus.Draft)!.Value);
 
 		if (result.IsFailure)
 			return result.Errors;

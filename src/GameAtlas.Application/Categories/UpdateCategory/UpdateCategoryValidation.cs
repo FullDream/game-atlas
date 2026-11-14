@@ -10,7 +10,7 @@ public sealed class UpdateCategoryValidation : AbstractValidator<UpdateCategory>
 	public UpdateCategoryValidation()
 	{
 		RuleFor(command => command).Must(command => Optional.AnySpecified(
-				command.Name, command.IconAssetId, command.Color, command.BeforeId, command.CategoryGroupId))
+				command.Name, command.IconAssetId, command.Color, command.BeforeId, command.CategoryGroupId, command.Status))
 			.WithErrorCode(UpdateCategoryErrors.EmptyPatch.Code)
 			.WithMessage(UpdateCategoryErrors.EmptyPatch.Message).OverridePropertyName(string.Empty);
 
@@ -22,5 +22,7 @@ public sealed class UpdateCategoryValidation : AbstractValidator<UpdateCategory>
 			rule => rule.Length(4, 7).Matches(Category.ColorPattern));
 
 		this.OptionalRuleFor(command => command.CategoryGroupId, rule => rule.NotNull());
+
+		this.OptionalRuleFor(command => command.Status, rule => rule.NotNull().IsInEnum());
 	}
 }

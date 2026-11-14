@@ -17,19 +17,19 @@ public class MapOpenApiTests
 		var operations = mapPaths.SelectMany(path => path.Value.EnumerateObject())
 			.Where(property => new[] { "get", "post", "patch", "delete", "put" }.Contains(property.Name)).ToArray();
 
-		Assert.Equal(9, operations.Length);
+		Assert.Equal(10, operations.Length);
 		Assert.DoesNotContain(operations, operation => operation.Name == "put");
 		Assert.Equal(new[]
 		{
 			"AddMapStyle", "CreateMap", "DeleteMap", "DeleteMapStyle", "GetMap", "ListMaps",
-			"RetryMapStyle", "UpdateMap", "UpdateMapStyle"
+			"PublishMap", "RetryMapStyle", "UpdateMap", "UpdateMapStyle"
 		}, operations.Select(operation => operation.Value.GetProperty("operationId").GetString()).Order());
 		var create = paths.GetProperty("/games/{gameId}/maps").GetProperty("post");
 		var form = Resolve(root, create.GetProperty("requestBody").GetProperty("content")
 			.GetProperty("application/json").GetProperty("schema"));
 
 		Assert.True(create.GetProperty("requestBody").GetProperty("required").GetBoolean());
-		Assert.Equal(new[] { "name", "slug" },
+		Assert.Equal(new[] { "name", "slug", "status" },
 			form.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
 		Assert.Equal(new[] { "name", "slug" },
 			form.GetProperty("required").EnumerateArray().Select(item => item.GetString()).Order());
@@ -64,8 +64,9 @@ public class MapOpenApiTests
 		var map = Resolve(root, responses.GetProperty("200").GetProperty("content").GetProperty("application/json")
 			.GetProperty("schema"));
 
-		Assert.Equal(16, map.GetProperty("properties").EnumerateObject().Count());
+		Assert.Equal(17, map.GetProperty("properties").EnumerateObject().Count());
 		Assert.Contains(map.GetProperty("required").EnumerateArray(), field => field.GetString() == "slug");
+		Assert.Contains(map.GetProperty("required").EnumerateArray(), field => field.GetString() == "status");
 		Assert.Equal("string", map.GetProperty("properties").GetProperty("slug").GetProperty("type").GetString());
 		var style = Resolve(root, map.GetProperty("properties").GetProperty("styles").GetProperty("items"));
 

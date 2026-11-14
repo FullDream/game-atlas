@@ -6,5 +6,6 @@ namespace GameAtlas.Application.Categories.CreateCategory;
 
 public sealed record CreateCategory(
 	Guid GameId,
-	Guid MapId, Guid GroupId, string? Name, Guid? IconAssetId, string? Color, Optional<Guid?> BeforeId = default)
+	Guid MapId, Guid GroupId, string? Name, Guid? IconAssetId, string? Color, Optional<Guid?> BeforeId = default,
+	Optional<PublicationStatus?> Status = default)
 	: ICommand<Result<CategoryDto>>;

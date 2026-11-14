@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { PositionRequest } from './position-request'
+import type { PublicationStatus } from './publication-status'
 
 export type CreateMarkerRequest = {
 	categoryId: string
@@ -20,4 +21,5 @@ export type CreateMarkerRequest = {
 	description?: string | null
 	position: null | PositionRequest
 	media?: (string | null)[]
+	status?: PublicationStatus
 }

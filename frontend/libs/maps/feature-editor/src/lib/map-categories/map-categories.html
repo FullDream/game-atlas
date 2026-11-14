@@ -140,6 +140,9 @@
 									<ui-media-thumbnail class="size-5 shrink-0" [image]="icon" />
 								}
 								<span class="min-w-0 text-sm font-medium flex-1 truncate">{{ group.name }}</span>
+								@if (group.status === 'draft') {
+									<span hlmBadge variant="secondary">Draft</span>
+								}
 								<span
 									class="text-xs text-muted-foreground tabular-nums"
 									[attr.aria-label]="group.markersCount + ' markers'"
@@ -237,6 +240,9 @@
 													[color]="category.color"
 												/>
 												<span class="min-w-0 text-sm flex-1 truncate">{{ category.name }}</span>
+												@if (category.status === 'draft') {
+													<span hlmBadge variant="secondary">Draft</span>
+												}
 												<span
 													class="text-xs text-muted-foreground tabular-nums"
 													[attr.aria-label]="category.markersCount + ' markers'"

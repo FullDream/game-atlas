@@ -26,7 +26,8 @@ public static class MapMappingExtensions
 		map.Styles.OrderBy(style => style.DisplayOrder).ThenBy(style => style.CreationSequence)
 			.Select(style => style.ToDto(progress)).ToArray(),
 		map.CreatedAt,
-		map.UpdatedAt);
+		map.UpdatedAt,
+		map.Status);
 
 	public static MapStyleDto ToDto(this MapStyle style, IMapProgress? progress = null)
 	{

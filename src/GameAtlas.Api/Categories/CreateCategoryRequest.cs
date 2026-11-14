@@ -10,4 +10,5 @@ public sealed record CreateCategoryRequest
 	public Guid? IconAssetId { get; init; }
 	public string? Color { get; init; }
 	public Optional<Guid?> BeforeId { get; init; }
+	public Optional<PublicationStatus?> Status { get; init; }
 }

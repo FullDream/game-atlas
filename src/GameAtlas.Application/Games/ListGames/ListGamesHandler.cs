@@ -58,6 +58,7 @@ public sealed class ListGamesHandler(IApplicationDbContext context)
 				map.GameId,
 				map.Name,
 				map.Slug,
+				map.Status,
 				PreviewId = context.MapStyles.Where(style => style.MapId == map.Id && style.Id == map.DefaultStyleId && style.Status == MapProcessingStatus.Ready)
 				 .OrderBy(style => style.CreationSequence).Select(style => (Guid?)style.SourceAssetId).FirstOrDefault()
 			})
@@ -91,7 +92,7 @@ public sealed class ListGamesHandler(IApplicationDbContext context)
 		var items = games.Select(game =>
 		{
 			var gameMaps = summaries[game.Id].Select(map => new GameMapDto(map.Id, map.Name, map.Slug,
-				map.PreviewId is { } previewId ? assets[previewId] : null)).ToArray();
+				map.PreviewId is { } previewId ? assets[previewId] : null, map.Status)).ToArray();
 
 			return game.ToDto(assets[game.CoverId], game.BannerId is { } bannerId ? assets[bannerId] : null,
 				markerCounts.GetValueOrDefault(game.Id), categoryCounts.GetValueOrDefault(game.Id), gameMaps);

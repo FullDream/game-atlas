@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { MapStyle } from './map-style'
+import type { PublicationStatus } from './publication-status'
 
 export type Map = {
 	id: string
@@ -32,4 +33,5 @@ export type Map = {
 	styles: MapStyle[]
 	createdAt: string
 	updatedAt: string
+	status: PublicationStatus
 }

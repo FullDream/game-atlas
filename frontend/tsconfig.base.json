@@ -58,6 +58,7 @@
 			"@spartan-ng/helm/skeleton": ["./libs/shared/ui-helm/skeleton/src/index.ts"],
 			"@spartan-ng/helm/sonner": ["./libs/shared/ui-helm/sonner/src/index.ts"],
 			"@spartan-ng/helm/spinner": ["./libs/shared/ui-helm/spinner/src/index.ts"],
+			"@spartan-ng/helm/switch": ["./libs/shared/ui-helm/switch/src/index.ts"],
 			"@spartan-ng/helm/tabs": ["./libs/shared/ui-helm/tabs/src/index.ts"],
 			"@spartan-ng/helm/textarea": ["./libs/shared/ui-helm/textarea/src/index.ts"],
 			"@spartan-ng/helm/toggle": ["./libs/shared/ui-helm/toggle/src/index.ts"],

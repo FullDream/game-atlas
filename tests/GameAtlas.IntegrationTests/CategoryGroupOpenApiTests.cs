@@ -98,7 +98,7 @@ public class CategoryGroupOpenApiTests
 			Assert.False(properties.TryGetProperty("order", out _));
 			Assert.Equal(GameAtlas.Domain.Categories.Category.ColorPattern, properties.GetProperty("color").GetProperty("pattern").GetString());
 
-			CategoryGroupTestData.AssertSame(4, properties.EnumerateObject().Count());
+			CategoryGroupTestData.AssertSame(5, properties.EnumerateObject().Count());
 			CategoryGroupTestData.AssertSame("string", name.GetProperty("type").GetString());
 			CategoryGroupTestData.AssertSame(1, name.GetProperty("minLength").GetInt32());
 			CategoryGroupTestData.AssertSame(200, name.GetProperty("maxLength").GetInt32());
@@ -117,7 +117,7 @@ public class CategoryGroupOpenApiTests
 		Assert.False(properties.TryGetProperty("order", out _));
 		Assert.True(properties.GetProperty("markersCount").GetProperty("readOnly").GetBoolean());
 
-		CategoryGroupTestData.AssertSame(new[] { "categories", "color", "createdAt", "icon", "id", "mapId", "markersCount", "name", "updatedAt" },
+		CategoryGroupTestData.AssertSame(new[] { "categories", "color", "createdAt", "icon", "id", "mapId", "markersCount", "name", "status", "updatedAt" },
 			properties.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
 	}
 

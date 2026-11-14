@@ -20,7 +20,7 @@ public sealed class Game
 	public string? Description { get; private set; }
 	public DateTimeOffset CreatedAt { get; private set; }
 	public DateTimeOffset UpdatedAt { get; private set; }
-	public GameStatus Status { get; private set; }
+	public PublicationStatus Status { get; private set; }
 
 	public static Result<Game> Create(
 		string? name,
@@ -57,7 +57,7 @@ public sealed class Game
 			Description = string.IsNullOrEmpty(description) ? null : description,
 			CreatedAt = now,
 			UpdatedAt = now,
-			Status = GameStatus.Draft
+			Status = PublicationStatus.Draft
 		};
 	}
 
@@ -65,7 +65,7 @@ public sealed class Game
 		Optional<string?> name = default,
 		Optional<Slug?> slug = default,
 		Optional<Guid?> coverId = default,
-		Optional<GameStatus?> status = default,
+		Optional<PublicationStatus?> status = default,
 		Optional<Guid?> bannerId = default,
 		Optional<DateOnly?> releaseDate = default,
 		Optional<string?> developer = default,

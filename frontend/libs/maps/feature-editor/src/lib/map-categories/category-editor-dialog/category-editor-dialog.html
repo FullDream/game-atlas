@@ -27,6 +27,9 @@
 								/>
 							}
 							<span class="truncate">{{ group.name }}</span>
+							@if (group.status === 'draft') {
+								<span hlmBadge variant="secondary">Draft</span>
+							}
 						</span>
 					} @else {
 						<hlm-select-value placeholder="Choose a group" />
@@ -44,6 +47,9 @@
 								/>
 							}
 							<span class="truncate">{{ group.name }}</span>
+							@if (group.status === 'draft') {
+								<span hlmBadge variant="secondary">Draft</span>
+							}
 						</hlm-select-item>
 					}
 				</hlm-select-content>
@@ -101,6 +107,11 @@
 			}
 		</div>
 	</ui-field>
+
+	<div hlmField orientation="horizontal" class="items-center justify-between">
+		<label hlmFieldLabel for="category-published">Published</label>
+		<hlm-switch inputId="category-published" [formField]="fields.published" />
+	</div>
 
 	@if (error()) {
 		<hlm-field-error forceShow>{{ error() }}</hlm-field-error>

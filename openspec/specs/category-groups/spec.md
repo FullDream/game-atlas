@@ -33,7 +33,7 @@ Group operations SHALL use /games/{gameId}/maps/{mapId}/category-groups without 
 
 ### Requirement: Create a category group at the end
 
-POST SHALL accept name, optional nullable iconAssetId and optional nullable beforeId. Omitted/null beforeId SHALL append; a valid sibling anchor SHALL insert before it. HTTP 200 SHALL return the complete group with empty categories, markersCount 0 and nullable icon. UUID v7, mapId, positive order and equal UTC timestamps SHALL be server-owned. Numeric order input SHALL return 400.
+POST SHALL accept name, optional color, optional status (`draft` or `published`, defaulting to `draft` when omitted), optional nullable iconAssetId and optional nullable beforeId. Omitted/null beforeId SHALL append; a valid sibling anchor SHALL insert before it. HTTP 200 SHALL return the complete group with string status, empty categories, markersCount 0 and nullable icon. UUID v7, mapId, positive order and equal UTC timestamps SHALL be server-owned. Numeric order input SHALL return 400; null status SHALL return 422.
 
 #### Scenario: Allocate order independently per map
 
@@ -43,9 +43,14 @@ POST SHALL accept name, optional nullable iconAssetId and optional nullable befo
 
 #### Scenario: First group
 
-- **WHEN** a group is created on an empty map without an icon
-- **THEN** order is 1, icon is null, markersCount is 0 and categories is []
+- **WHEN** a group is created on an empty map without an icon or status
+- **THEN** status is `draft`, order is 1, icon is null, markersCount is 0 and categories is []
 - **AND** it survives reopening storage
+
+#### Scenario: Create group with explicit status
+
+- **WHEN** a group is created with status `published` (or `draft`)
+- **THEN** the persisted and returned group has the supplied status
 
 #### Scenario: Append after existing groups
 
@@ -117,7 +122,7 @@ Group names SHALL be unique within their map after trimming and invariant case n
 
 ### Requirement: Read groups in display order without pagination
 
-GET /games/{gameId}/maps/{mapId}/category-groups SHALL return a plain ordered array of all groups with id, mapId, name, order, createdAt, updatedAt, nullable shared-image icon, markersCount and categories. Children SHALL contain complete category representations in display order. Empty collections SHALL be []; missing/foreign maps SHALL return 404. No pagination, alternate sorting, individual-group GET or dedicated reorder endpoint SHALL be introduced.
+GET /games/{gameId}/maps/{mapId}/category-groups SHALL return a plain ordered array of all groups with id, mapId, name, color, status, order, createdAt, updatedAt, nullable shared-image icon, markersCount and categories. Children SHALL contain complete category representations (including status) in display order. Empty collections SHALL be []; missing/foreign maps SHALL return 404. No pagination, alternate sorting, individual-group GET or dedicated reorder endpoint SHALL be introduced.
 
 #### Scenario: Complete map-specific list
 
@@ -128,7 +133,7 @@ GET /games/{gameId}/maps/{mapId}/category-groups SHALL return a plain ordered ar
 
 - **WHEN** the collection is read
 - **THEN** every group and child appears exactly once in server display order
-- **AND** each category carries id, categoryGroupId, name, nullable icon, color, order, markersCount, createdAt and updatedAt
+- **AND** each group carries status (`draft` or `published`) and each category carries id, categoryGroupId, name, nullable icon, color, status (`draft` or `published`), order, markersCount, createdAt and updatedAt
 - **AND** current image metadata and computed counts are read without per-node database queries
 
 #### Scenario: Existing game without groups
@@ -139,7 +144,7 @@ GET /games/{gameId}/maps/{mapId}/category-groups SHALL return a plain ordered ar
 
 ### Requirement: Update category group metadata and order through merge patch
 
-PATCH SHALL accept optional name, nullable iconAssetId and nullable beforeId and return the complete group with children and computed count. Omitted fields SHALL preserve state; null icon detaches, null beforeId appends, and null name returns 422. Empty patches return 422; unknown/read-only fields, including numeric order and mapId, return 400. Changes SHALL be atomic and preserve id/mapId/createdAt.
+PATCH SHALL accept optional name, color, status (`draft` or `published`), nullable iconAssetId and nullable beforeId and return the complete group with children and computed count. Omitted fields SHALL preserve state; null icon detaches, null beforeId appends, and null name, color, or status returns 422. Updating a group's status SHALL change only that group without cascading to its child categories or markers. Empty patches return 422; unknown/read-only fields, including numeric order and mapId, return 400. Changes SHALL be atomic and preserve id/mapId/createdAt.
 
 #### Scenario: Immutable map membership and atomic failure
 
@@ -149,19 +154,19 @@ PATCH SHALL accept optional name, nullable iconAssetId and nullable beforeId and
 
 #### Scenario: Update one field or both
 
-- **WHEN** valid metadata and placement are supplied
+- **WHEN** valid metadata (including status) and placement are supplied
 - **THEN** all changes commit together and HTTP 200 returns the complete group
-- **AND** other groups preserve metadata and timestamps even when their numeric order changes
+- **AND** child categories and markers retain their existing statuses and timestamps, and other groups preserve metadata and timestamps even when their numeric order changes
 
 #### Scenario: Preserve omitted fields and no-ops
 
 - **WHEN** only beforeId is supplied
-- **THEN** name and icon remain unchanged
+- **THEN** name, color, status and icon remain unchanged
 - **AND** unchanged normalized metadata and final sequence preserve updatedAt without writing
 
 #### Scenario: Invalid patches are atomic
 
-- **WHEN** the body is empty, name is null/invalid, or beforeId references self
+- **WHEN** the body is empty, name, color, or status is null/invalid, or beforeId references self
 - **THEN** HTTP 422 preserves every field and position
 
 #### Scenario: Reject server-owned fields
@@ -232,7 +237,7 @@ Successful group mutations SHALL be durable. Default order allocation SHALL be s
 
 ### Requirement: Document the category group API
 
-OpenAPI SHALL expose ListCategoryGroups, CreateCategoryGroup, UpdateCategoryGroup and DeleteCategoryGroup under Categories on existing map-scoped routes. It SHALL describe nested categories, nullable shared-image icons, computed markersCount, relative beforeId placement, read-only order and shared PATCH semantics. Category groups SHALL NOT remain a separate tag.
+OpenAPI SHALL expose ListCategoryGroups, CreateCategoryGroup, UpdateCategoryGroup and DeleteCategoryGroup under Categories on existing map-scoped routes. It SHALL describe group and nested category `status` (`draft` | `published`), nested categories, nullable shared-image icons, computed markersCount, relative beforeId placement, read-only order and shared PATCH semantics. Category groups SHALL NOT remain a separate tag.
 
 #### Scenario: Discover map-scoped CRUD
 
@@ -243,8 +248,8 @@ OpenAPI SHALL expose ListCategoryGroups, CreateCategoryGroup, UpdateCategoryGrou
 #### Scenario: Discover CRUD
 
 - **WHEN** a client reads OpenAPI
-- **THEN** list exposes a complete tree array, POST/PATCH a complete group and DELETE empty 204
-- **AND** relevant 400, 404, 409, 415, 422 and 500 ProblemDetails and name/placement/icon contracts are discoverable
+- **THEN** list exposes a complete tree array, POST/PATCH a complete group with required string `status`, and DELETE empty 204
+- **AND** CreateCategoryGroup and UpdateCategoryGroup expose optional `status` and relevant 400, 404, 409, 415, 422 and 500 ProblemDetails and name/placement/icon contracts are discoverable
 
 ### Requirement: Support explicit duplicate orders and deterministic ties
 

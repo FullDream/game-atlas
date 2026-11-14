@@ -13,5 +13,7 @@ public sealed class CreateMapValidation : AbstractValidator<CreateMap>
 
 		RuleFor(command => (command.Name ?? string.Empty).Trim()).NotEmpty().MaximumLength(Map.NameMaxLength)
 			.OverridePropertyName(nameof(CreateMap.Name));
+
+		this.OptionalRuleFor(command => command.Status, rule => rule.NotNull().IsInEnum());
 	}
 }

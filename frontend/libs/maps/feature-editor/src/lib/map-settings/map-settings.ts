@@ -7,11 +7,11 @@ import { NgIcon, provideIcons } from '@ng-icons/core'
 import { matSaveRound, matSettingsRound } from '@ng-icons/material-symbols/round'
 import { HlmAccordionImports } from '@spartan-ng/helm/accordion'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
-import { HlmInputGroupImports } from '@spartan-ng/helm/input-group'
-import { HlmTooltip } from '@spartan-ng/helm/tooltip'
+import { HlmInput } from '@spartan-ng/helm/input'
+import { HlmSwitchImports } from '@spartan-ng/helm/switch'
 import { injectMutation } from '@tanstack/angular-query-experimental'
 
-type MapNameForm = { name: string; slug: string }
+type MapSettingsForm = { name: string; slug: string; published: boolean }
 
 @Component({
 	selector: 'maps-settings',
@@ -23,8 +23,8 @@ type MapNameForm = { name: string; slug: string }
 		FormRoot,
 		HlmAccordionImports,
 		HlmFieldImports,
-		HlmInputGroupImports,
-		HlmTooltip,
+		HlmInput,
+		HlmSwitchImports,
 	],
 	templateUrl: './map-settings.html',
 	providers: [provideIcons({ matSaveRound, matSettingsRound })],
@@ -42,10 +42,22 @@ export class MapSettings {
 
 	protected readonly update = injectMutation(() => this.#options.update(this.gameId(), this.map().id))
 
-	protected readonly nameModel = linkedSignal<GameMap, MapNameForm>({
+	protected readonly nameModel = linkedSignal<GameMap, MapSettingsForm>({
 		source: this.map,
-		computation: (map, previous) =>
-			previous?.source.id === map.id ? previous.value : { name: map.name, slug: map.slug },
+		computation: (map, previous) => {
+			if (!previous || previous.source.id !== map.id) {
+				return { name: map.name, slug: map.slug, published: map.status === 'published' }
+			}
+
+			return {
+				name: previous.value.name === previous.source.name ? map.name : previous.value.name,
+				slug: previous.value.slug === previous.source.slug ? map.slug : previous.value.slug,
+				published:
+					previous.value.published === (previous.source.status === 'published')
+						? map.status === 'published'
+						: previous.value.published,
+			}
+		},
 	})
 
 	protected readonly fields = form(
@@ -66,11 +78,14 @@ export class MapSettings {
 		{
 			submission: {
 				action: async fields => {
-					const { name, slug } = getDirtyValues(fields)
+					const { name, slug, published } = getDirtyValues(fields)
+					const nextStatus =
+						published === undefined ? undefined : published ? ('published' as const) : ('draft' as const)
 
 					const patch = {
 						...(name !== undefined && name.trim() !== this.map().name ? { name: name.trim() } : {}),
 						...(slug !== undefined && slug.trim() !== this.map().slug ? { slug: slug.trim() } : {}),
+						...(nextStatus !== undefined && nextStatus !== this.map().status ? { status: nextStatus } : {}),
 					}
 
 					if (!Object.keys(patch).length) return
@@ -84,7 +99,11 @@ export class MapSettings {
 								onSuccess: map => {
 									if (this.map().id !== mapId) return
 
-									this.nameModel.set({ name: map.name, slug: map.slug })
+									this.nameModel.set({
+										name: map.name,
+										slug: map.slug,
+										published: map.status === 'published',
+									})
 									fields().reset()
 								},
 							},

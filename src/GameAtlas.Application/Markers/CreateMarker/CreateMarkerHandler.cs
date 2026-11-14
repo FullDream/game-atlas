@@ -1,5 +1,6 @@
 using GameAtlas.Application.Abstractions.Persistence;
 using GameAtlas.Application.Categories;
+using GameAtlas.Domain;
 using GameAtlas.Domain.Markers;
 using GameAtlas.Domain.Result;
 using Mediator;
@@ -33,7 +34,11 @@ public sealed class CreateMarkerHandler(IApplicationDbContext context)
 		if (command.CategoryId is not { } categoryId)
 			return MarkerErrors.CategoryRequired;
 
-		var result = Marker.Create(categoryId, command.Name, position.Value, command.Description, command.Media);
+		if (command.Status.IsSpecified && command.Status.Value is null)
+			return MarkerErrors.StatusRequired;
+
+		var result = Marker.Create(categoryId, command.Name, position.Value, command.Description, command.Media,
+			command.Status.GetValueOrDefault(PublicationStatus.Draft)!.Value);
 
 		if (result.IsFailure)
 			return result.Errors;

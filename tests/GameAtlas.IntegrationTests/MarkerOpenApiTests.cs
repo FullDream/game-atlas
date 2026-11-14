@@ -38,7 +38,7 @@ public class MarkerOpenApiTests
 		var dto = Resolve(root, list.GetProperty("items"));
 
 		Assert.Equal("array", list.GetProperty("type").GetString());
-		Assert.Equal(new[] { "categoryId", "createdAt", "description", "id", "media", "name", "position", "updatedAt" },
+		Assert.Equal(new[] { "categoryId", "createdAt", "description", "id", "media", "name", "position", "status", "updatedAt" },
 			dto.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
 		Assert.False(item.GetProperty("delete").GetProperty("responses").GetProperty("204").TryGetProperty("content", out _));
 		Assert.Equal(2, item.GetProperty("patch").GetProperty("requestBody").GetProperty("content")

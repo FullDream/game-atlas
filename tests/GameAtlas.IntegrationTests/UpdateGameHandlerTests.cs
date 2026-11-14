@@ -26,11 +26,11 @@ public class UpdateGameHandlerTests
 		{
 			var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 			var result = await mediator.Send(new UpdateGame(game.Id, " Updated ", " updated ", MediaTestData.CoverId,
-				GameStatus.Published));
+				PublicationStatus.Published));
 
 			Assert.True(result.IsSuccess);
 			Assert.Equal("Updated", result.Value.Name);
-			Assert.Equal(GameStatus.Published, result.Value.Status);
+			Assert.Equal(PublicationStatus.Published, result.Value.Status);
 			Assert.True(await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Maps
 				.AnyAsync(map => map.Id == mapId && map.GameId == game.Id));
 		}
@@ -43,14 +43,14 @@ public class UpdateGameHandlerTests
 		Assert.Equal("Updated", stored.Name);
 		Assert.Equal("updated", stored.Slug);
 		Assert.Equal(MediaTestData.CoverId, stored.CoverId);
-		Assert.Equal(GameStatus.Published, stored.Status);
+		Assert.Equal(PublicationStatus.Published, stored.Status);
 		var returned = await reloadScope.ServiceProvider.GetRequiredService<IMediator>().Send(
-			new UpdateGame(game.Id, Status: GameStatus.Draft));
+			new UpdateGame(game.Id, Status: PublicationStatus.Draft));
 
 		Assert.True(returned.IsSuccess);
 		Assert.True(await reloadScope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Maps
 			.AnyAsync(map => map.Id == mapId && map.GameId == game.Id));
-		Assert.Equal(GameStatus.Draft, returned.Value.Status);
+		Assert.Equal(PublicationStatus.Draft, returned.Value.Status);
 	}
 
 	[Fact]
@@ -89,7 +89,7 @@ public class UpdateGameHandlerTests
 		await using var scope = factory.Services.CreateAsyncScope();
 		var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 		var unchanged = await mediator.Send(new UpdateGame(game.Id, " Game ", " game ", MediaTestData.CoverId,
-			GameStatus.Draft));
+			PublicationStatus.Draft));
 		var invalid = await mediator.Send(new UpdateGame(game.Id, Name: "New", CoverId: Optional<Guid?>.From(null)));
 		var empty = await mediator.Send(new UpdateGame(game.Id));
 

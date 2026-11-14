@@ -1,3 +1,4 @@
+using GameAtlas.Domain;
 using GameAtlas.Domain.ValueObjects;
 using System.Net;
 using System.Net.Http.Json;
@@ -65,7 +66,7 @@ public class CreateGameApiTests
 		Assert.Equal("Elden Ring", stored.Name);
 		Assert.Equal("elden-ring-2", stored.Slug);
 		Assert.Equal(MediaTestData.CoverId, stored.CoverId);
-		Assert.Equal(GameStatus.Draft, stored.Status);
+		Assert.Equal(PublicationStatus.Draft, stored.Status);
 
 		Assert.False(body.TryGetProperty("mapId", out _));
 	}

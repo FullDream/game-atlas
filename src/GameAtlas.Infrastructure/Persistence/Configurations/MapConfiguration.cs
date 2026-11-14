@@ -21,6 +21,7 @@ public sealed class MapConfiguration : IEntityTypeConfiguration<Map>
 		builder.Property(map => map.NormalizedName).HasMaxLength(Map.NameMaxLength).IsRequired();
 		builder.HasIndex(map => new { map.GameId, map.NormalizedName }).IsUnique();
 		builder.HasOne<Game>().WithMany().HasForeignKey(map => map.GameId).OnDelete(DeleteBehavior.Cascade);
+		builder.Property(map => map.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
 		builder.Property(map => map.CreatedAt).HasConversion<UtcTimestampConverter>();
 		builder.Property(map => map.UpdatedAt).HasConversion<UtcTimestampConverter>();
 		builder.Ignore(map => map.Geometry);

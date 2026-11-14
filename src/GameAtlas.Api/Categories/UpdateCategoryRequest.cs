@@ -11,4 +11,5 @@ public sealed record UpdateCategoryRequest
 	public Optional<string?> Color { get; init; }
 	public Optional<Guid?> BeforeId { get; init; }
 	public Optional<Guid?> CategoryGroupId { get; init; }
+	public Optional<PublicationStatus?> Status { get; init; }
 }

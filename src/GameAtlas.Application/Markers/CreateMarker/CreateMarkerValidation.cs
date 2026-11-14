@@ -1,4 +1,5 @@
 using FluentValidation;
+using GameAtlas.Application.Common.Validation;
 using GameAtlas.Domain.Markers;
 
 namespace GameAtlas.Application.Markers.CreateMarker;
@@ -19,5 +20,7 @@ public sealed class CreateMarkerValidation : AbstractValidator<CreateMarker>
 		RuleForEach(command => command.Media).NotNull().NotEqual(Guid.Empty);
 		RuleFor(command => command.Media).Must(ids => ids is null || ids.Distinct().Count() == ids.Count)
 			.WithMessage("Media asset IDs must be distinct.");
+
+		this.OptionalRuleFor(command => command.Status, rule => rule.NotNull().IsInEnum());
 	}
 }

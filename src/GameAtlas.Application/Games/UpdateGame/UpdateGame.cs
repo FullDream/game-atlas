@@ -1,5 +1,4 @@
 using GameAtlas.Domain;
-using GameAtlas.Domain.Games;
 using GameAtlas.Domain.Result;
 using Mediator;
 
@@ -10,7 +9,7 @@ public sealed record UpdateGame(
 	Optional<string?> Name = default,
 	Optional<string?> Slug = default,
 	Optional<Guid?> CoverId = default,
-	Optional<GameStatus?> Status = default,
+	Optional<PublicationStatus?> Status = default,
 	Optional<Guid?> BannerId = default,
 	Optional<DateOnly?> ReleaseDate = default,
 	Optional<string?> Developer = default,

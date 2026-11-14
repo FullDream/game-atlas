@@ -57,7 +57,7 @@ public sealed class UpdateCategoryHandler(IApplicationDbContext context) : IComm
 
 		var nextOrder = sequenceChanged ? placement.Value + 1 : category.Order;
 
-		var result = category.Update(command.Name, command.IconAssetId, command.Color, nextOrder, command.CategoryGroupId);
+		var result = category.Update(command.Name, command.IconAssetId, command.Color, nextOrder, command.CategoryGroupId, command.Status);
 
 		if (result.IsFailure)
 			return result.Errors;

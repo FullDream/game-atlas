@@ -4,6 +4,7 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
+import type { PublicationStatus } from './publication-status'
 import type { UpdateMarkerRequestPosition } from './update-marker-request-position'
 
 export type UpdateMarkerRequest = {
@@ -20,4 +21,5 @@ export type UpdateMarkerRequest = {
 	description?: string | null
 	position?: UpdateMarkerRequestPosition
 	media?: (string | null)[]
+	status?: PublicationStatus
 }

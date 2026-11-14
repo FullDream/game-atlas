@@ -6,6 +6,7 @@ using GameAtlas.Application.Maps.DeleteMap;
 using GameAtlas.Application.Maps.DeleteMapStyle;
 using GameAtlas.Application.Maps.GetMap;
 using GameAtlas.Application.Maps.ListMaps;
+using GameAtlas.Application.Maps.PublishMap;
 using GameAtlas.Application.Maps.RetryMapStyle;
 using Mediator;
 
@@ -40,6 +41,8 @@ public static class Endpoints
 
 		maps.MapDelete("/{mapId}/styles/{styleId}", DeleteMapStyleAsync)
 			.WithName("DeleteMapStyle").WithSummary("Delete map style");
+
+		maps.MapPost("/{mapId}/publish", PublishMapAsync).WithName("PublishMap").WithSummary("Publish map");
 
 		maps.MapPatch("/{mapId}", UpdateMapAsync).WithName("UpdateMap").WithSummary("Update map")
 			.WithMergePatch<UpdateMapRequest>();
@@ -76,6 +79,10 @@ public static class Endpoints
 		IMediator mediator,
 		CancellationToken cancellationToken) =>
 		await mediator.Send(new DeleteMapStyle(gameId, mapId, styleId), cancellationToken);
+
+	private static async Task<OutcomeResult<MapDto>> PublishMapAsync(Guid gameId, Guid mapId, IMediator mediator,
+		CancellationToken cancellationToken) =>
+		await mediator.Send(new PublishMap(gameId, mapId), cancellationToken);
 
 	private static async Task<OutcomeResult<MapDto>> UpdateMapAsync(Guid gameId, Guid mapId, UpdateMapRequest request,
 		IMediator mediator, CancellationToken cancellationToken) =>

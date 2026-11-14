@@ -4,9 +4,9 @@ Groups and categories share the Categories OpenAPI tag and functional folders in
 
 ## Tree retrieval
 
-GET `/games/{gameId}/maps/{mapId}/category-groups` (ListCategoryGroups) returns the complete ordered tree as a plain array. Each group contains id, mapId, name, color, createdAt, updatedAt, nullable icon, markersCount and categories. Array positions define display order for groups and their nested categories; numeric order is not exposed. Empty maps return []; empty groups contain categories [] and count 0.
+GET `/games/{gameId}/maps/{mapId}/category-groups` (ListCategoryGroups) returns the complete ordered tree as a plain array. Each group contains id, mapId, name, color, status, createdAt, updatedAt, nullable icon, markersCount and categories. Array positions define display order for groups and their nested categories; numeric order is not exposed. Empty maps return []; empty groups contain categories [] and count 0.
 
-Each category contains id, categoryGroupId, name, nullable icon, color, order, markersCount, createdAt and updatedAt. Icons resolve canonical ImageAsset metadata. Counts derive from current persisted markers; group counts sum their categories. Retrieval uses a bounded number of reads rather than one per node.
+Each category contains id, categoryGroupId, name, nullable icon, color, status, order, markersCount, createdAt and updatedAt. Icons resolve canonical ImageAsset metadata. Counts derive from current persisted markers; group counts sum their categories. Retrieval uses a bounded number of reads rather than one per node.
 
 The per-group category collection GET and ListCategories are removed. GET on the retained POST path returns 405. No individual GET, PUT, pagination, batch or dedicated reorder route is exposed.
 
@@ -20,9 +20,9 @@ Base route: `/games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories`.
 | PATCH  | /{id}  | 200 complete category |
 | DELETE | /{id}  | empty 204             |
 
-POST requires name, with optional nullable color, iconAssetId and beforeId. Omitted or null color stores no color. Names trim to 1..200 characters and are unique within the resulting group after invariant case normalization. Colors accept #RGB/#RRGGBB and normalize to uppercase #RRGGBB. UUID v7 and UTC timestamps are server-generated.
+POST requires name, with optional nullable color, iconAssetId, beforeId, and status (`draft` | `published`, defaulting to `draft`). Omitted or null color stores no color; explicit null status returns 422. Names trim to 1..200 characters and are unique within the resulting group after invariant case normalization. Colors accept #RGB/#RRGGBB and normalize to uppercase #RRGGBB. UUID v7 and UTC timestamps are server-generated.
 
-PATCH accepts optional name, iconAssetId, color, categoryGroupId and beforeId. Omission preserves metadata; iconAssetId null detaches the icon. Name/group cannot be null; color null clears the color. Creation without an icon is valid.
+PATCH accepts optional name, iconAssetId, color, categoryGroupId, beforeId, and status (`draft` | `published`). Omission preserves metadata; iconAssetId null detaches the icon. Name/group/status cannot be null; color null clears the color. Creation without an icon is valid.
 
 ## Placement and transfer
 

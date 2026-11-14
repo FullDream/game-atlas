@@ -24,7 +24,8 @@ internal static class CategoryMappingExtensions
 			category.Color,
 			markers.Count(marker => marker.CategoryId == category.Id),
 			category.CreatedAt,
-			category.UpdatedAt);
+			category.UpdatedAt,
+			category.Status);
 
 	internal static CategoryDto ToDto(this Category category, int markersCount, ImageAssetDto? icon) => new(
 		category.Id,
@@ -34,5 +35,6 @@ internal static class CategoryMappingExtensions
 		category.Color,
 		markersCount,
 		category.CreatedAt,
-		category.UpdatedAt);
+		category.UpdatedAt,
+		category.Status);
 }

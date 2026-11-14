@@ -30,7 +30,7 @@ POST accepts categoryId, name, and position, plus optional description and media
 }
 ```
 
-The response has exactly id, categoryId, name, description, position, media, createdAt, and updatedAt.
+The response has exactly id, categoryId, name, description, position, media, status, createdAt, and updatedAt.
 The server generates UUID v7 and equal UTC creation/update timestamps. Supplied server-owned creation properties
 cannot override these values. Id and createdAt are immutable. Duplicate marker names are allowed.
 
@@ -42,6 +42,7 @@ cannot override these values. Id and createdAt are immutable. Duplicate marker n
 - Category must exist in the route map. Missing, all-zero, or foreign category IDs return 404; missing/null category
   input returns 422. Malformed GUIDs return 400.
 - Omitted media defaults to []. Array order is preserved.
+- Omitted status defaults to `draft` (`draft` | `published`); explicit null returns 422.
 
 ## Shared media attachments
 
@@ -66,7 +67,7 @@ PATCH accepts application/merge-patch+json and application/json, with charset pa
 semantics. Other types, including application/json-patch+json and text/plain, return 415. Bodies must be JSON objects.
 
 Every mutable root field is optional. Omission preserves its value. Description may be cleared with null;
-categoryId, name, position, individual supplied coordinates, and media cannot be null (422).
+categoryId, name, position, individual supplied coordinates, media, and status cannot be null (422).
 Unknown/read-only PATCH members and unknown position members return 400. Root {} returns 422.
 
 Objects merge recursively, while arrays replace as a whole:

@@ -21,7 +21,7 @@ public class GameOpenApiTests
 			Assert.True(responses.TryGetProperty(status, out _));
 
 		var schemas = root.GetProperty("components").GetProperty("schemas");
-		var statusSchema = schemas.GetProperty("GameStatus");
+		var statusSchema = schemas.GetProperty("PublicationStatus");
 
 		Assert.All(statusSchema.GetProperty("enum").EnumerateArray(), value =>
 			Assert.Equal(JsonValueKind.String, value.ValueKind));
@@ -34,5 +34,33 @@ public class GameOpenApiTests
 
 		foreach (var property in new[] { "id", "name", "slug", "cover", "banner", "releaseDate", "developer", "description", "markersCount", "categoriesCount", "maps", "createdAt", "updatedAt", "status" })
 			Assert.True(dto.TryGetProperty(property, out _));
+	}
+
+	[Fact]
+	public async Task DocumentsSharedPublicationStatusReferencesForRequestSchemas()
+	{
+		await using var factory = new GameApiFactory("Development");
+		using var client = factory.CreateHttpsClient();
+		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
+		var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
+
+		foreach (var schemaName in new[]
+		{
+			"UpdateGameRequest",
+			"CreateMapRequest",
+			"UpdateMapRequest",
+			"CreateCategoryGroupRequest",
+			"UpdateCategoryGroupRequest",
+			"CreateCategoryRequest",
+			"UpdateCategoryRequest",
+			"CreateMarkerRequest",
+			"UpdateMarkerRequest"
+		})
+		{
+			var statusProperty = schemas.GetProperty(schemaName).GetProperty("properties").GetProperty("status");
+
+			Assert.Equal("#/components/schemas/PublicationStatus", statusProperty.GetProperty("$ref").GetString());
+			Assert.False(statusProperty.TryGetProperty("enum", out _));
+		}
 	}
 }

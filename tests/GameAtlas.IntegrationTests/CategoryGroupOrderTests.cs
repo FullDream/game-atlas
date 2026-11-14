@@ -60,7 +60,7 @@ public class CategoryGroupOrderTests
 
 		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, response.StatusCode);
 
-		var dto = await response.Content.ReadFromJsonAsync<CategoryGroupDto>();
+		var dto = await response.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions);
 
 		CategoryGroupTestData.AssertSame("Second", dto!.Name);
 		CategoryGroupTestData.AssertSame(1, await CategoryGroupTestData.OrderAsync(factory, dto.Id));
@@ -70,13 +70,13 @@ public class CategoryGroupOrderTests
 
 		using var noOp = await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, second.Id), new { beforeId = first.Id });
 
-		CategoryGroupTestData.AssertSame(dto, await noOp.Content.ReadFromJsonAsync<CategoryGroupDto>());
+		CategoryGroupTestData.AssertSame(dto, await noOp.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions));
 		using var both = await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, second.Id),
 			new { name = " New ", beforeId = (Guid?)null });
 
 		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, both.StatusCode);
 
-		var updated = await both.Content.ReadFromJsonAsync<CategoryGroupDto>();
+		var updated = await both.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions);
 
 		CategoryGroupTestData.AssertSame("New", updated!.Name);
 		CategoryGroupTestData.AssertSame(2, await CategoryGroupTestData.OrderAsync(factory, updated.Id));
@@ -114,7 +114,7 @@ public class CategoryGroupOrderTests
 
 		using var client = factory.CreateHttpsClient();
 
-		var response = await client.GetFromJsonAsync<CategoryGroupDto[]>(CategoryGroupApiTests.Path(game.Id));
+		var response = await client.GetFromJsonAsync<CategoryGroupDto[]>(CategoryGroupApiTests.Path(game.Id), MapTestData.JsonOptions);
 
 		CategoryGroupTestData.AssertSame(third.Id, response![0].Id);
 		CategoryGroupTestData.AssertSame(new[] { first.Id, second.Id }.Order(), response.Skip(1).Select(item => item.Id));
@@ -134,7 +134,7 @@ public class CategoryGroupOrderTests
 		using var client = factory.CreateHttpsClient();
 		using var first = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id), new { name = "First" });
 
-		CategoryGroupTestData.AssertSame(1, (await CategoryGroupTestData.OrderAsync(factory, (await first.Content.ReadFromJsonAsync<CategoryGroupDto>())!.Id)));
+		CategoryGroupTestData.AssertSame(1, (await CategoryGroupTestData.OrderAsync(factory, (await first.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions))!.Id)));
 		using var maximum = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id),
 			new { name = "Maximum" });
 

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using GameAtlas.Domain;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -12,9 +13,9 @@ namespace GameAtlas.IntegrationTests;
 public class MarkerApiTests
 {
 	[Theory]
-	[InlineData(GameStatus.Draft)]
-	[InlineData(GameStatus.Published)]
-	public async Task MixedMediaCrudPreservesParentsAndCounts(GameStatus status)
+	[InlineData(PublicationStatus.Draft)]
+	[InlineData(PublicationStatus.Published)]
+	public async Task MixedMediaCrudPreservesParentsAndCounts(PublicationStatus status)
 	{
 		await using var factory = new GameApiFactory();
 
@@ -29,7 +30,7 @@ public class MarkerApiTests
 		var id = created.GetProperty("id").GetGuid();
 		var before = await MarkerTestData.LoadAsync(factory, id);
 
-		Assert.Equal(8, created.EnumerateObject().Count());
+		Assert.Equal(9, created.EnumerateObject().Count());
 		Assert.Equal(7, id.Version);
 		Assert.Equal("Description", created.GetProperty("description").GetString());
 		Assert.Equal(created.GetProperty("createdAt").GetDateTimeOffset(),

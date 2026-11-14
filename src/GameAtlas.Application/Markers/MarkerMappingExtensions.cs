@@ -13,7 +13,8 @@ internal static class MarkerMappingExtensions
 		marker.Position.ToDto(),
 		marker.Media.OrderBy(item => item.Order).Select(item => assets[item.AssetId]).ToArray(),
 		marker.CreatedAt,
-		marker.UpdatedAt);
+		marker.UpdatedAt,
+		marker.Status);
 
 	internal static PositionDto ToDto(this Position position) => new(position.X, position.Y);
 }

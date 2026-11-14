@@ -100,6 +100,10 @@ export class MapContentPanel {
 		},
 	})
 
+	protected readonly groupsById = computed(
+		() => new Map((this.categoryGroups.data() ?? []).map(group => [group.id, group])),
+	)
+
 	protected readonly categoriesById = computed(
 		() =>
 			new Map(

@@ -34,4 +34,10 @@ public static class MapErrors
 
 	public static readonly Error DuplicateStyle = new(
 		"Map.Style.Id.Conflict", "This style has already been added to the map.", "StyleId", ErrorType.Conflict);
+
+	public static readonly Error StatusRequired = new(
+		"Map.Status.Required", "Status is required.", nameof(Map.Status), ErrorType.Validation);
+
+	public static readonly Error InvalidStatus = new(
+		"Map.Status.Invalid", "Status must be draft or published.", nameof(Map.Status), ErrorType.Validation);
 }

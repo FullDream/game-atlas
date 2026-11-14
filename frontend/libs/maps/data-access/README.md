@@ -6,7 +6,7 @@ Shared Maps HTTP transport, handwritten query/mutation options and editor-owned 
 
 Provide `provideMapsBaseUrl('/api')` alongside HttpClient and TanStack Query in the consuming application. For a separate API host, provide its absolute URL. Generation normalizes the embedded fallback to `/api`; the OpenAPI input server's local port does not configure deployment.
 
-`MapsQueryOptions` exposes `getList`, `getDetail`, `create`, `update(gameId, mapId)`, `delete(gameId, mapId)`, `addStyle(gameId, mapId)`, `updateStyle(gameId, mapId)`, `deleteStyle(gameId, mapId)` and `retryStyle`. Use `injectQuery` for reads and `injectMutation` for writes. Preserve cache callbacks when adding feature-owned notifications. Query keys are exported as `mapQueryKeys`.
+`MapsQueryOptions` exposes `getList`, `getDetail`, `create`, `update(gameId, mapId)`, `publish()`, `delete(gameId, mapId)`, `addStyle(gameId, mapId)`, `updateStyle(gameId, mapId)`, `deleteStyle(gameId, mapId)` and `retryStyle`. Use `injectQuery` for reads and `injectMutation` for writes. Preserve cache callbacks when adding feature-owned notifications. Query keys are exported as `mapQueryKeys`.
 
 Style metadata updates are optimistic when a baseline exists, with rollback on failure. Success replaces the style without reordering. Deletion waits for server success, removes the style from known detail/list snapshots and preserves a surviving ready default or derives the first remaining ready style in display order. Per-map scopes serialize style add/update/delete. Detail queries disable automatic focus/reconnect refresh and retries; editor entry deliberately reads metadata. Known mutation results update caches directly; live lifecycle events and ambiguous overlaps trigger scoped HTTP reconciliation.
 

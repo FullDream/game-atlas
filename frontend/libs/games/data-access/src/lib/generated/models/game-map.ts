@@ -5,10 +5,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ImageAsset } from './image-asset'
+import type { PublicationStatus } from './publication-status'
 
 export type GameMap = {
 	id: string
 	name: string
 	slug: string
 	preview: null | ImageAsset
+	status: PublicationStatus
 }

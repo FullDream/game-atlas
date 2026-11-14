@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using GameAtlas.Domain;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -53,7 +54,7 @@ public class UpdateGameApiTests
 		Assert.Equal("Updated", stored.Name);
 		Assert.Equal("updated", stored.Slug);
 		Assert.Equal(MediaTestData.IconId, stored.CoverId);
-		Assert.Equal(GameStatus.Published, stored.Status);
+		Assert.Equal(PublicationStatus.Published, stored.Status);
 		using var nameOnly = await PatchAsync(client, game.Id, "{\"name\":\"Renamed\"}", mediaType);
 		var renamed = await LoadAsync(factory, game.Id);
 
@@ -66,7 +67,7 @@ public class UpdateGameApiTests
 		var draft = await LoadAsync(factory, game.Id);
 
 		Assert.Equal(HttpStatusCode.OK, clearAndDraft.StatusCode);
-		Assert.Equal(GameStatus.Draft, draft.Status);
+		Assert.Equal(PublicationStatus.Draft, draft.Status);
 		Assert.Equal(game.Id, draft.Id);
 		Assert.Equal(game.CreatedAt, draft.CreatedAt);
 	}
@@ -92,7 +93,7 @@ public class UpdateGameApiTests
 		Assert.Equal(field == "name" ? value : game.Name, stored.Name);
 		Assert.Equal(field == "slug" ? value : game.Slug, stored.Slug);
 		Assert.Equal(field == "coverId" ? Guid.Parse(value) : game.CoverId, stored.CoverId);
-		Assert.Equal(field == "status" ? GameStatus.Published : game.Status, stored.Status);
+		Assert.Equal(field == "status" ? PublicationStatus.Published : game.Status, stored.Status);
 	}
 
 	public static IEnumerable<object[]> InvalidBodies()

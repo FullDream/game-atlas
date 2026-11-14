@@ -21,6 +21,7 @@ public sealed class CategoryGroupConfiguration : IEntityTypeConfiguration<Catego
 		builder.Property(group => group.Name).HasMaxLength(CategoryGroupLimits.NameMaxLength).IsRequired();
 		builder.Property(group => group.NormalizedName).HasMaxLength(CategoryGroupLimits.NameMaxLength).IsRequired();
 		builder.Property(group => group.Color).HasMaxLength(7).HasDefaultValue("#F59E0B").IsRequired();
+		builder.Property(group => group.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
 		builder.HasIndex(group => new { group.MapId, group.NormalizedName }).IsUnique();
 		builder.HasIndex(group => new { group.MapId, group.Order });
 		builder.Property(group => group.CreatedAt).HasConversion<UtcTimestampConverter>();

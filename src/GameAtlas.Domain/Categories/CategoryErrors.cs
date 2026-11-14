@@ -18,4 +18,10 @@ public static class CategoryErrors
 	public static readonly Error GroupRequired = new(
 		"Category.CategoryGroupId.Required", "CategoryGroupId must not be null.",
 		nameof(Category.CategoryGroupId), ErrorType.Validation);
+
+	public static readonly Error StatusRequired = new(
+		"Category.Status.Required", "Status is required.", nameof(Category.Status), ErrorType.Validation);
+
+	public static readonly Error InvalidStatus = new(
+		"Category.Status.Invalid", "Status must be draft or published.", nameof(Category.Status), ErrorType.Validation);
 }

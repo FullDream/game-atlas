@@ -6,14 +6,15 @@ import { getDirtyValues } from '@game-atlas/shared/util'
 import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
 import { HlmInput } from '@spartan-ng/helm/input'
+import { HlmSwitchImports } from '@spartan-ng/helm/switch'
 import { injectMutation } from '@tanstack/angular-query-experimental'
 
 type MapEditorContext = { gameId: string; map: GameMap | null }
-type MapForm = { name: string; slug: string }
+type MapForm = { name: string; slug: string; published: boolean }
 
 @Component({
 	selector: 'maps-editor-dialog',
-	imports: [Field, Button, HlmFieldImports, HlmInput, FormField, FormRoot],
+	imports: [Field, Button, HlmFieldImports, HlmInput, HlmSwitchImports, FormField, FormRoot],
 	templateUrl: './map-editor-dialog.html',
 	host: {
 		'[attr.data-state]': 'dialog.state()',
@@ -32,6 +33,7 @@ export class MapEditorDialog {
 	readonly #model = signal<MapForm>({
 		name: this.context.map?.name ?? '',
 		slug: this.context.map?.slug ?? '',
+		published: this.context.map?.status === 'published',
 	})
 
 	protected readonly fields = form(
@@ -60,7 +62,13 @@ export class MapEditorDialog {
 					}
 
 					if (this.context.map) {
-						const { name, slug } = getDirtyValues(fields)
+						const { name, slug, published } = getDirtyValues(fields)
+						const nextStatus =
+							published === undefined
+								? undefined
+								: published
+									? ('published' as const)
+									: ('draft' as const)
 
 						const patch = {
 							...(name !== undefined && name.trim() !== this.context.map.name
@@ -68,6 +76,9 @@ export class MapEditorDialog {
 								: {}),
 							...(slug !== undefined && slug.trim() !== this.context.map.slug
 								? { slug: slug.trim() }
+								: {}),
+							...(nextStatus !== undefined && nextStatus !== this.context.map.status
+								? { status: nextStatus }
 								: {}),
 						}
 
@@ -77,9 +88,15 @@ export class MapEditorDialog {
 							.mutateAsync({ id: this.context.map.id, patch }, callbacks)
 							.catch(() => undefined)
 					} else {
+						const model = this.#model()
+
 						await this.#create
 							.mutateAsync(
-								{ ...this.#model(), name: this.#model().name.trim(), slug: this.#model().slug.trim() },
+								{
+									name: model.name.trim(),
+									slug: model.slug.trim(),
+									status: model.published ? 'published' : 'draft',
+								},
 								callbacks,
 							)
 							.catch(() => undefined)

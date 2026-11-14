@@ -21,4 +21,10 @@ public static class MarkerErrors
 	public static readonly Error InvalidMedia = new(
 		"Marker.Media.Invalid", "Media must be a non-null ordered list of distinct, nonempty asset IDs.",
 		nameof(Marker.Media), ErrorType.Validation);
+
+	public static readonly Error StatusRequired = new(
+		"Marker.Status.Required", "Status is required.", nameof(Marker.Status), ErrorType.Validation);
+
+	public static readonly Error InvalidStatus = new(
+		"Marker.Status.Invalid", "Status must be draft or published.", nameof(Marker.Status), ErrorType.Validation);
 }

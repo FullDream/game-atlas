@@ -10,7 +10,7 @@ public sealed class UpdateMarkerValidation : AbstractValidator<UpdateMarker>
 	public UpdateMarkerValidation()
 	{
 		RuleFor(command => command).Must(command => Optional.AnySpecified(command.CategoryId, command.Name,
-				command.Description, command.Position, command.Media))
+				command.Description, command.Position, command.Media, command.Status))
 			.WithErrorCode(UpdateMarkerErrors.EmptyPatch.Code)
 			.WithMessage(UpdateMarkerErrors.EmptyPatch.Message).OverridePropertyName(string.Empty);
 
@@ -22,6 +22,8 @@ public sealed class UpdateMarkerValidation : AbstractValidator<UpdateMarker>
 		this.OptionalRuleFor(command => command.Description,
 			rule => rule.MaximumLength(MarkerLimits.DescriptionMaxLength),
 			value => (value ?? string.Empty).Trim());
+
+		this.OptionalRuleFor(command => command.Status, rule => rule.NotNull().IsInEnum());
 
 		When(command => command.Position.IsSpecified, () =>
 		{

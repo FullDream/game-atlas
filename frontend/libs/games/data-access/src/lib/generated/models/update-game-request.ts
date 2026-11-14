@@ -4,7 +4,7 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
-import type { UpdateGameRequestStatus } from './update-game-request-status'
+import type { PublicationStatus } from './publication-status'
 
 /**
  * Supply at least one mutable field. Omitted fields are preserved; null is invalid for required fields. Identity, mapId, and timestamps are read-only. Both supported media types use JSON Merge Patch semantics.
@@ -30,5 +30,5 @@ export type UpdateGameRequest = {
 	developer?: string | null
 	/** @nullable */
 	description?: string | null
-	status?: UpdateGameRequestStatus
+	status?: PublicationStatus
 }

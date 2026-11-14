@@ -6,6 +6,7 @@
  */
 import type { Category } from './category'
 import type { ImageAsset } from './image-asset'
+import type { PublicationStatus } from './publication-status'
 
 export type CategoryGroup = {
 	readonly id: string
@@ -17,4 +18,5 @@ export type CategoryGroup = {
 	readonly icon: null | ImageAsset
 	readonly markersCount: number
 	readonly categories: readonly Category[]
+	status: PublicationStatus
 }

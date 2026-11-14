@@ -27,6 +27,7 @@ import {
 } from '@ng-icons/material-symbols/round'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 import { HlmAlertImports } from '@spartan-ng/helm/alert'
+import { HlmBadge } from '@spartan-ng/helm/badge'
 import { HlmTabsImports } from '@spartan-ng/helm/tabs'
 import { toSignal } from '@angular/core/rxjs-interop'
 import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental'
@@ -42,6 +43,7 @@ type FeatureEditorSource = { id: string; game: Game | undefined }
 		NgIcon,
 		HlmSkeleton,
 		HlmAlertImports,
+		HlmBadge,
 		GameFields,
 		HlmTabsImports,
 		Button,

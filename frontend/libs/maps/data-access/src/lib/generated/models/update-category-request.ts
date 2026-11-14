@@ -4,6 +4,7 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
+import type { PublicationStatus } from './publication-status'
 
 export type UpdateCategoryRequest = {
 	/**
@@ -23,4 +24,5 @@ export type UpdateCategoryRequest = {
 	/** @nullable */
 	beforeId?: string | null
 	categoryGroupId?: string
+	status?: PublicationStatus
 }

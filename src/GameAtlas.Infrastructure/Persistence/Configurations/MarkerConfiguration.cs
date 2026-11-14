@@ -15,6 +15,7 @@ public sealed class MarkerConfiguration : IEntityTypeConfiguration<Marker>
 		builder.Property(marker => marker.Id).ValueGeneratedNever();
 		builder.Property(marker => marker.Name).HasMaxLength(MarkerLimits.NameMaxLength).IsRequired();
 		builder.Property(marker => marker.Description).HasMaxLength(MarkerLimits.DescriptionMaxLength);
+		builder.Property(marker => marker.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
 		builder.Property(marker => marker.CreatedAt).HasConversion<UtcTimestampConverter>();
 		builder.Property(marker => marker.UpdatedAt).HasConversion<UtcTimestampConverter>();
 		builder.HasOne<Category>().WithMany().HasForeignKey(marker => marker.CategoryId)

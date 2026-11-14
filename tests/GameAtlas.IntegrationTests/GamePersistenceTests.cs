@@ -1,3 +1,4 @@
+using GameAtlas.Domain;
 using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
@@ -34,7 +35,7 @@ public sealed class GamePersistenceTests : IDisposable
 		Assert.Equal(game.CoverId, stored.CoverId);
 		Assert.Equal(game.CreatedAt, stored.CreatedAt);
 		Assert.Equal(game.UpdatedAt, stored.UpdatedAt);
-		Assert.Equal(GameStatus.Draft, stored.Status);
+		Assert.Equal(PublicationStatus.Draft, stored.Status);
 		await reopened.Database.OpenConnectionAsync();
 		await using var command = reopened.Database.GetDbConnection().CreateCommand();
 

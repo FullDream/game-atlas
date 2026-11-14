@@ -141,6 +141,10 @@
 								<span *hlmSelectValueTemplate class="gap-2 min-w-0 flex items-center">
 									<maps-category-icon [iconUrl]="category.icon?.url" [color]="category.color" />
 									<span class="truncate">{{ category.name }}</span>
+
+									@if (category.status === 'draft') {
+										<span hlmBadge variant="secondary">Draft</span>
+									}
 								</span>
 							} @else {
 								<hlm-select-value placeholder="Choose a category" />
@@ -149,14 +153,22 @@
 						<hlm-select-content *hlmSelectPortal>
 							@for (group of groups(); track group.id) {
 								<hlm-select-group>
-									<hlm-select-label>{{ group.name }}</hlm-select-label>
+									<hlm-select-label class="gap-2 flex items-center">
+										<span class="truncate">{{ group.name }}</span>
+										@if (group.status === 'draft') {
+											<span hlmBadge variant="secondary">Draft</span>
+										}
+									</hlm-select-label>
 									@for (category of group.categories; track category.id) {
 										<hlm-select-item [value]="category.id">
 											<maps-category-icon
 												[iconUrl]="category.icon?.url"
 												[color]="category.color"
 											/>
-											<span>{{ category.name }}</span>
+											<span class="truncate">{{ category.name }}</span>
+											@if (category.status === 'draft') {
+												<span hlmBadge variant="secondary">Draft</span>
+											}
 										</hlm-select-item>
 									}
 								</hlm-select-group>
@@ -174,6 +186,10 @@
 						</ui-field>
 					</div>
 				}
+				<div hlmField orientation="horizontal" class="items-center justify-between">
+					<label hlmFieldLabel for="marker-published">Published</label>
+					<hlm-switch inputId="marker-published" [formField]="fields.published" />
+				</div>
 				@if (error()) {
 					<hlm-field-error forceShow>{{ error() }}</hlm-field-error>
 				}

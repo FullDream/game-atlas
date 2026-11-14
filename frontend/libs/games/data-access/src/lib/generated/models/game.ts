@@ -5,8 +5,8 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { GameMap } from './game-map'
-import type { GameStatus } from './game-status'
 import type { ImageAsset } from './image-asset'
+import type { PublicationStatus } from './publication-status'
 
 export type Game = {
 	id: string
@@ -25,5 +25,5 @@ export type Game = {
 	maps: GameMap[]
 	createdAt: string
 	updatedAt: string
-	status: GameStatus
+	status: PublicationStatus
 }

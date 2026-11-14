@@ -11,13 +11,13 @@ import {
 import { Button, ColorPicker, MediaPickerDialog, MediaThumbnail, Field } from '@game-atlas/shared/ui'
 import { getDirtyValues, type LibraryImage, type PickerContext } from '@game-atlas/shared/util'
 import { BrnDialogRef, BrnDialogService, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
+import { HlmBadge } from '@spartan-ng/helm/badge'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmSelectImports } from '@spartan-ng/helm/select'
+import { HlmSwitchImports } from '@spartan-ng/helm/switch'
 import { injectMutation } from '@tanstack/angular-query-experimental'
 import { take } from 'rxjs'
-import { HlmButtonGroupImports } from '@spartan-ng/helm/button-group'
-import { HlmButtonImports } from '@spartan-ng/helm/button'
 import { HlmInputGroupImports } from '@spartan-ng/helm/input-group'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
@@ -51,9 +51,11 @@ export type CategoryEditorContext = {
 		MediaThumbnail,
 		CategoryIcon,
 		Button,
+		HlmBadge,
 		HlmFieldImports,
 		HlmInput,
 		HlmSelectImports,
+		HlmSwitchImports,
 		FormField,
 		FormRoot,
 		ColorPicker,
@@ -110,6 +112,7 @@ export class CategoryEditorDialog {
 		color: this.context.kind === 'group' ? (this.existing?.color ?? '#F59E0B') : (this.existing?.color ?? ''),
 		categoryGroupId:
 			this.context.category?.categoryGroupId ?? this.context.group?.id ?? this.context.groups[0]?.id ?? '',
+		published: this.existing?.status === 'published',
 	})
 
 	protected readonly selectedGroup = computed(() =>
@@ -158,11 +161,20 @@ export class CategoryEditorDialog {
 
 					if (kind === 'group') {
 						if (group) {
-							const { name, iconAssetId, color } = getDirtyValues(fields)
+							const { name, iconAssetId, color, published } = getDirtyValues(fields)
+							const nextStatus =
+								published === undefined
+									? undefined
+									: published
+										? ('published' as const)
+										: ('draft' as const)
 							const patch = {
 								...(name === undefined ? {} : { name: name.trim() }),
 								...(iconAssetId === undefined ? {} : { iconAssetId }),
 								...(color === undefined ? {} : { color }),
+								...(nextStatus !== undefined && nextStatus !== group.status
+									? { status: nextStatus }
+									: {}),
 							}
 
 							if (!Object.keys(patch).length) return
@@ -179,13 +191,28 @@ export class CategoryEditorDialog {
 										name: values.name.trim(),
 										iconAssetId: values.iconAssetId,
 										color: values.color,
+										status: values.published ? 'published' : 'draft',
 									},
 									callbacks,
 								)
 								.catch(() => undefined)
 						}
 					} else if (category) {
-						const patch = getDirtyValues(fields)
+						const { published, ...dirty } = getDirtyValues(fields)
+						const nextStatus =
+							published === undefined
+								? undefined
+								: published
+									? ('published' as const)
+									: ('draft' as const)
+						const patch = {
+							...dirty,
+							...(dirty.name === undefined ? {} : { name: dirty.name.trim() }),
+							...(dirty.color === undefined ? {} : { color: dirty.color.trim() || null }),
+							...(nextStatus !== undefined && nextStatus !== category.status
+								? { status: nextStatus }
+								: {}),
+						}
 
 						if (!Object.keys(patch).length) return
 
@@ -197,8 +224,6 @@ export class CategoryEditorDialog {
 									groupId: category.categoryGroupId,
 									id: category.id,
 									...patch,
-									...(patch.name === undefined ? {} : { name: patch.name.trim() }),
-									...(patch.color === undefined ? {} : { color: patch.color.trim() || null }),
 								},
 								callbacks,
 							)
@@ -213,6 +238,7 @@ export class CategoryEditorDialog {
 									name: values.name.trim(),
 									color: values.color.trim() || null,
 									iconAssetId: values.iconAssetId,
+									status: values.published ? 'published' : 'draft',
 								},
 								callbacks,
 							)

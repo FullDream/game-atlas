@@ -10,10 +10,10 @@ internal static class MapMappingExtensions
 		Guid gameId, Guid mapId) => new(gameId, mapId, request.Name, request.BackgroundColor, request.SourceAssetId);
 
 	internal static UpdateMap ToCommand(this UpdateMapRequest request, Guid gameId, Guid mapId) =>
-		new(gameId, mapId, request.Name, request.DefaultStyleId, request.StyleOrder, request.Slug);
+		new(gameId, mapId, request.Name, request.DefaultStyleId, request.StyleOrder, request.Slug, request.Status);
 
 	internal static CreateMap ToCommand(this CreateMapRequest request, Guid gameId) =>
-		new(gameId, request.Name, request.Slug);
+		new(gameId, request.Name, request.Slug, request.Status);
 
 	internal static UpdateMapStyle ToCommand(this UpdateMapStyleRequest request, Guid gameId, Guid mapId,
 		Guid styleId) =>

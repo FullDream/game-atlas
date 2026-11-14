@@ -22,6 +22,7 @@ import {
 } from '@ng-icons/material-symbols/round'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
+import { HlmBadge } from '@spartan-ng/helm/badge'
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
@@ -40,6 +41,7 @@ import { MapEditorDialog } from './map-editor-dialog/map-editor-dialog'
 		PageHeaderPortal,
 		NgIcon,
 		DatePipe,
+		HlmBadge,
 		HlmDropdownMenuImports,
 		HlmEmptyImports,
 		HlmSkeleton,

@@ -16,17 +16,24 @@ public sealed class Category
 	public string NormalizedName { get; private set; } = string.Empty;
 	public Guid? IconAssetId { get; private set; }
 	public string? Color { get; private set; }
+	public PublicationStatus Status { get; private set; }
 	public int Order { get; private set; }
 	public DateTimeOffset CreatedAt { get; private set; }
 	public DateTimeOffset UpdatedAt { get; private set; }
 
 	public static string NormalizeName(string name) => name.Trim().ToUpperInvariant();
 
-	public static Result<Category> Create(Guid categoryGroupId, string? name, Guid? iconAssetId, string? color, int order)
+	public static Result<Category> Create(
+		Guid categoryGroupId,
+		string? name,
+		Guid? iconAssetId,
+		string? color,
+		int order,
+		PublicationStatus status = PublicationStatus.Draft)
 	{
 		var category = new Category(Guid.CreateVersion7());
 
-		var result = category.Update(name, iconAssetId, color, order, categoryGroupId);
+		var result = category.Update(name, iconAssetId, color, order, categoryGroupId, status);
 
 		if (result.IsFailure)
 			return result.Errors;
@@ -36,8 +43,13 @@ public sealed class Category
 		return category;
 	}
 
-	public Result<bool> Update(Optional<string?> name = default, Optional<Guid?> iconAssetId = default,
-		Optional<string?> color = default, Optional<int?> order = default, Optional<Guid?> categoryGroupId = default)
+	public Result<bool> Update(
+		Optional<string?> name = default,
+		Optional<Guid?> iconAssetId = default,
+		Optional<string?> color = default,
+		Optional<int?> order = default,
+		Optional<Guid?> categoryGroupId = default,
+		Optional<PublicationStatus?> status = default)
 	{
 		var nextName = name.GetValueOrDefault(Name)?.Trim();
 
@@ -48,6 +60,8 @@ public sealed class Category
 		var nextOrder = order.GetValueOrDefault(Order);
 
 		var nextGroupId = categoryGroupId.GetValueOrDefault(CategoryGroupId);
+
+		var nextStatus = status.GetValueOrDefault(Status);
 
 		if (string.IsNullOrEmpty(nextName))
 			return CategoryErrors.NameRequired;
@@ -61,16 +75,23 @@ public sealed class Category
 		if (nextGroupId is null)
 			return CategoryErrors.GroupRequired;
 
+		if (nextStatus is null)
+			return CategoryErrors.StatusRequired;
+
+		if (!Enum.IsDefined(nextStatus.Value))
+			return CategoryErrors.InvalidStatus;
+
 		nextColor = nextColor is null ? null : NormalizeColor(nextColor);
 
 		if (nextName == Name && nextIcon == IconAssetId && nextColor == Color && nextOrder == Order &&
-			nextGroupId == CategoryGroupId)
+			nextGroupId == CategoryGroupId && nextStatus.Value == Status)
 			return false;
 
 		Name = nextName;
 		NormalizedName = NormalizeName(nextName);
 		IconAssetId = nextIcon;
 		Color = nextColor;
+		Status = nextStatus.Value;
 		Order = nextOrder.Value;
 		CategoryGroupId = nextGroupId.Value;
 		UpdatedAt = DateTimeOffset.UtcNow;
@@ -88,6 +109,17 @@ public sealed class Category
 	{
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(order);
 		Order = order;
+	}
+
+	public bool Publish()
+	{
+		if (Status == PublicationStatus.Published)
+			return false;
+
+		Status = PublicationStatus.Published;
+		UpdatedAt = DateTimeOffset.UtcNow;
+
+		return true;
 	}
 
 	internal static string NormalizeColor(string color)

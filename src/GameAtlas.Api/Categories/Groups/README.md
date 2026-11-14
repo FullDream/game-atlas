@@ -13,13 +13,13 @@ See the [Categories API](../README.md) for tree shape, placement and error conve
 
 ## Creation and names
 
-POST accepts name, color, optional nullable iconAssetId and optional nullable beforeId. Names trim to 1..200 characters and are unique within their map after invariant case normalization, including Cyrillic case. Identity, mapId, timestamps, order and counts are server-owned.
+POST accepts name, color, optional nullable iconAssetId, optional nullable beforeId, and optional status (`draft` | `published`, defaulting to `draft`). Names trim to 1..200 characters and are unique within their map after invariant case normalization, including Cyrillic case. Identity, mapId, timestamps, order and counts are server-owned.
 
 An omitted/null beforeId appends; a sibling ID inserts before it. Numeric order is rejected. A new group can have no icon and has count 0 and categories [].
 
 ## Updates and display order
 
-PATCH accepts optional name, color, iconAssetId and beforeId. Omission preserves state, iconAssetId null clears and beforeId null appends. Missing/foreign anchors return 404 and self anchors 422. Group map membership is immutable.
+PATCH accepts optional name, color, iconAssetId, beforeId, and status (`draft` | `published`). Omission preserves state, iconAssetId null clears and beforeId null appends. Explicit null status returns 422. Missing/foreign anchors return 404 and self anchors 422. Group map membership is immutable.
 
 Placement normalizes positions atomically, retaining sibling metadata timestamps and child category metadata. Equivalent metadata and unchanged sequence preserve updatedAt and perform no save. Parent map/game timestamps remain unchanged.
 

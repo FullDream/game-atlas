@@ -1,5 +1,14 @@
 <ng-template uiPageHeaderPortal [breadcrumbs]="breadcrumbs()" [loading]="map.isFetching()">
-	<a ui-button variant="outline" icon="matArrowBackRound" [routerLink]="['/games', gameId(), 'maps']">Back to maps</a>
+	<button
+		ui-button
+		type="button"
+		icon="matPublishRound"
+		[loading]="publishMutation.isPending()"
+		[disabled]="!canPublish()"
+		(click)="publishMap()"
+	>
+		{{ publishLabel() }}
+	</button>
 </ng-template>
 
 @if (map.isLoading()) {

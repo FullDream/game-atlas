@@ -11,14 +11,27 @@ import {
 	matMapRound,
 	matMoreVertRound,
 	matSportsEsportsRound,
+	matVisibilityOffRound,
 } from '@ng-icons/material-symbols/round'
+import { HlmBadge } from '@spartan-ng/helm/badge'
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
+import { HlmTooltip } from '@spartan-ng/helm/tooltip'
 
 @Component({
 	selector: 'games-card',
-	imports: [RouterLink, Button, MediaThumbnail, NgIcon, HlmDropdownMenuImports, HlmSkeleton, HlmEmptyImports],
+	imports: [
+		RouterLink,
+		Button,
+		MediaThumbnail,
+		NgIcon,
+		HlmBadge,
+		HlmDropdownMenuImports,
+		HlmSkeleton,
+		HlmEmptyImports,
+		HlmTooltip,
+	],
 	templateUrl: './game-card.html',
 	styleUrl: './game-card.css',
 	providers: [
@@ -30,6 +43,7 @@ import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 			matMapRound,
 			matMoreVertRound,
 			matSportsEsportsRound,
+			matVisibilityOffRound,
 		}),
 	],
 	host: {

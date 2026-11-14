@@ -2,6 +2,7 @@ using System.Data.Common;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using GameAtlas.Domain;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -13,9 +14,9 @@ namespace GameAtlas.IntegrationTests;
 public class DeleteGameApiTests
 {
 	[Theory]
-	[InlineData(GameStatus.Draft)]
-	[InlineData(GameStatus.Published)]
-	public async Task DeletesEitherStatusWithoutAuthenticationAndReturnsEmpty204(GameStatus status)
+	[InlineData(PublicationStatus.Draft)]
+	[InlineData(PublicationStatus.Published)]
+	public async Task DeletesEitherStatusWithoutAuthenticationAndReturnsEmpty204(PublicationStatus status)
 	{
 		await using var factory = new GameApiFactory();
 

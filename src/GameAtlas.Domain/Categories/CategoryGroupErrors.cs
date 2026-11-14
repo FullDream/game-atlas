@@ -14,4 +14,10 @@ public static class CategoryGroupErrors
 	public static readonly Error InvalidOrder = new(
 		"CategoryGroup.Order.Invalid", "Order must be a positive integer.",
 		nameof(CategoryGroup.Order), ErrorType.Validation);
+
+	public static readonly Error StatusRequired = new(
+		"CategoryGroup.Status.Required", "Status is required.", nameof(CategoryGroup.Status), ErrorType.Validation);
+
+	public static readonly Error InvalidStatus = new(
+		"CategoryGroup.Status.Invalid", "Status must be draft or published.", nameof(CategoryGroup.Status), ErrorType.Validation);
 }

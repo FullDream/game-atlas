@@ -16,6 +16,11 @@
 		/>
 	</ui-field>
 
+	<div hlmField orientation="horizontal" class="items-center justify-between">
+		<label hlmFieldLabel for="map-editor-published">Published</label>
+		<hlm-switch inputId="map-editor-published" [formField]="fields.published" />
+	</div>
+
 	<p class="text-sm text-muted-foreground">
 		@if (context.map?.width) {
 			Logical size: {{ context.map.width }} × {{ context.map.height }}.

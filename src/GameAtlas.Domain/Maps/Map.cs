@@ -29,10 +29,11 @@ public sealed class Map
 		geometry ??= Width is { } width && Height is { } height ? new MapGeometry(width, height) : null;
 
 	public Guid? DefaultStyleId { get; private set; }
+	public PublicationStatus Status { get; private set; }
 
 	public static string NormalizeName(string name) => name.Trim().ToUpperInvariant();
 
-	public static Result<Map> Create(Guid gameId, string? name, Slug slug)
+	public static Result<Map> Create(Guid gameId, string? name, Slug slug, PublicationStatus status = PublicationStatus.Draft)
 	{
 		name = name?.Trim();
 
@@ -42,6 +43,9 @@ public sealed class Map
 		if (slug is null)
 			return SlugErrors.Required;
 
+		if (!Enum.IsDefined(status))
+			return MapErrors.InvalidStatus;
+
 		var now = DateTimeOffset.UtcNow;
 		var map = new Map(Guid.CreateVersion7())
 		{
@@ -49,11 +53,23 @@ public sealed class Map
 			Slug = slug,
 			Name = name,
 			NormalizedName = NormalizeName(name),
+			Status = status,
 			CreatedAt = now,
 			UpdatedAt = now
 		};
 
 		return map;
+	}
+
+	public bool Publish()
+	{
+		if (Status == PublicationStatus.Published)
+			return false;
+
+		Status = PublicationStatus.Published;
+		UpdatedAt = DateTimeOffset.UtcNow;
+
+		return true;
 	}
 
 	public Result<bool> Rename(string? name)
@@ -170,12 +186,21 @@ public sealed class Map
 		Optional<string?> name = default,
 		Optional<Guid?> defaultStyleId = default,
 		Optional<IReadOnlyList<Guid>?> styleOrder = default,
-		Optional<Slug?> slug = default)
+		Optional<Slug?> slug = default,
+		Optional<PublicationStatus?> status = default)
 	{
 		var nextName = name.GetValueOrDefault(Name)?.Trim();
 
 		if (string.IsNullOrEmpty(nextName) || nextName.Length > NameMaxLength)
 			return MapErrors.InvalidMapName;
+
+		var nextStatus = status.GetValueOrDefault(Status);
+
+		if (nextStatus is null)
+			return MapErrors.StatusRequired;
+
+		if (!Enum.IsDefined(nextStatus.Value))
+			return MapErrors.InvalidStatus;
 
 		if (defaultStyleId.IsSpecified)
 		{
@@ -210,7 +235,8 @@ public sealed class Map
 		if (nextSlug is null)
 			return SlugErrors.Required;
 
-		var changed = nextSlug != Slug || nextName != Name || defaultStyleId.GetValueOrDefault(DefaultStyleId) != DefaultStyleId;
+		var changed = nextSlug != Slug || nextName != Name || nextStatus.Value != Status ||
+			defaultStyleId.GetValueOrDefault(DefaultStyleId) != DefaultStyleId;
 
 		if (styleOrder.IsSpecified)
 		{
@@ -230,6 +256,7 @@ public sealed class Map
 		Name = nextName;
 		Slug = nextSlug;
 		NormalizedName = NormalizeName(nextName);
+		Status = nextStatus.Value;
 		DefaultStyleId = defaultStyleId.GetValueOrDefault(DefaultStyleId);
 		UpdatedAt = DateTimeOffset.UtcNow;
 

@@ -15,14 +15,14 @@ public class GameUpdateTests
 		var id = game.Id;
 		var createdAt = game.CreatedAt;
 		var before = DateTimeOffset.UtcNow;
-		var result = game.Update(" Updated ", Slug.Create(" updated ").Value!, otherId, GameStatus.Published);
+		var result = game.Update(" Updated ", Slug.Create(" updated ").Value!, otherId, PublicationStatus.Published);
 
 		Assert.True(result.IsSuccess);
 		Assert.True(result.Value);
 		Assert.Equal("Updated", game.Name);
 		Assert.Equal("updated", game.Slug);
 		Assert.Equal(otherId, game.CoverId);
-		Assert.Equal(GameStatus.Published, game.Status);
+		Assert.Equal(PublicationStatus.Published, game.Status);
 		Assert.Equal(id, game.Id);
 		Assert.Equal(createdAt, game.CreatedAt);
 		Assert.Equal(TimeSpan.Zero, game.UpdatedAt.Offset);
@@ -34,13 +34,13 @@ public class GameUpdateTests
 	{
 		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 
-		Assert.True(game.Update(status: GameStatus.Published).Value);
+		Assert.True(game.Update(status: PublicationStatus.Published).Value);
 		Assert.True(game.Update(name: "Updated").Value);
 		Assert.Equal("game", game.Slug);
 		Assert.Equal(coverId, game.CoverId);
-		Assert.Equal(GameStatus.Published, game.Status);
-		Assert.True(game.Update(status: GameStatus.Draft).Value);
-		Assert.Equal(GameStatus.Draft, game.Status);
+		Assert.Equal(PublicationStatus.Published, game.Status);
+		Assert.True(game.Update(status: PublicationStatus.Draft).Value);
+		Assert.Equal(PublicationStatus.Draft, game.Status);
 	}
 
 	[Fact]
@@ -49,7 +49,7 @@ public class GameUpdateTests
 		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 		var updatedAt = game.UpdatedAt;
 		var empty = game.Update();
-		var same = game.Update(" Game ", Slug.Create(" game ").Value!, coverId, GameStatus.Draft);
+		var same = game.Update(" Game ", Slug.Create(" game ").Value!, coverId, PublicationStatus.Draft);
 
 		Assert.True(empty.IsSuccess);
 		Assert.False(empty.Value);
@@ -69,14 +69,14 @@ public class GameUpdateTests
 	{
 		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 		var updatedAt = game.UpdatedAt;
-		var result = game.Update("New", Optional<Slug?>.From(Slug.Create(slug).Value), otherId, GameStatus.Published);
+		var result = game.Update("New", Optional<Slug?>.From(Slug.Create(slug).Value), otherId, PublicationStatus.Published);
 
 		Assert.True(result.IsFailure);
 		Assert.Contains(result.Errors, error => error.Property == nameof(Game.Slug));
 		Assert.Equal("Game", game.Name);
 		Assert.Equal("game", game.Slug);
 		Assert.Equal(coverId, game.CoverId);
-		Assert.Equal(GameStatus.Draft, game.Status);
+		Assert.Equal(PublicationStatus.Draft, game.Status);
 		Assert.Equal(updatedAt, game.UpdatedAt);
 	}
 
@@ -86,13 +86,13 @@ public class GameUpdateTests
 		var game = Game.Create("Game", Slug.Create("game").Value!, coverId).Value!;
 		var result = game.Update(
 			Optional<string?>.From(null), Optional<Slug?>.From(null), Optional<Guid?>.From(null),
-			status: Optional<GameStatus?>.From(null));
+			status: Optional<PublicationStatus?>.From(null));
 
 		Assert.True(result.IsFailure);
 		Assert.Equal(4, result.Errors.Length);
 		Assert.Equal(game.CreatedAt, game.UpdatedAt);
-		Assert.True(game.Update(status: (GameStatus)99).IsFailure);
-		Assert.Equal(GameStatus.Draft, game.Status);
+		Assert.True(game.Update(status: (PublicationStatus)99).IsFailure);
+		Assert.Equal(PublicationStatus.Draft, game.Status);
 	}
 
 	[Fact]

@@ -4,6 +4,7 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
+import type { PublicationStatus } from './publication-status'
 
 export type CreateMapRequest = {
 	/**
@@ -17,4 +18,5 @@ export type CreateMapRequest = {
 	 * @pattern \A[a-z0-9]+(-[a-z0-9]+)*\z
 	 */
 	slug: string
+	status?: PublicationStatus
 }

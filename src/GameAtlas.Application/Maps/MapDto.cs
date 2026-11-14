@@ -1,3 +1,5 @@
+using GameAtlas.Domain;
+
 namespace GameAtlas.Application.Maps;
 
 public sealed record MapDto(
@@ -16,4 +18,5 @@ public sealed record MapDto(
 	Guid? DefaultStyleId,
 	IReadOnlyCollection<MapStyleDto> Styles,
 	DateTimeOffset CreatedAt,
-	DateTimeOffset UpdatedAt);
+	DateTimeOffset UpdatedAt,
+	PublicationStatus Status);

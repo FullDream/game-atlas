@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.Json;
 using GameAtlas.Application.Common.Sorting;
 using GameAtlas.Application.Games;
+using GameAtlas.Domain;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -252,7 +253,7 @@ public class ListGamesApiTests
 
 			entry.Property(game => game.CreatedAt).CurrentValue = start.AddTicks(index);
 			entry.Property(game => game.UpdatedAt).CurrentValue = start.AddTicks(games.Length - index);
-			entry.Property(game => game.Status).CurrentValue = index % 2 == 0 ? GameStatus.Draft : GameStatus.Published;
+			entry.Property(game => game.Status).CurrentValue = index % 2 == 0 ? PublicationStatus.Draft : PublicationStatus.Published;
 		}
 
 		await context.SaveChangesAsync();

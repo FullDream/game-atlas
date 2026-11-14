@@ -43,7 +43,7 @@ public sealed class UpdateCategoryGroupHandler(IApplicationDbContext context) : 
 
 		var nextOrder = sequenceChanged ? placement.Value + 1 : group.Order;
 
-		var result = group.Update(command.Name, nextOrder, command.IconAssetId, command.Color);
+		var result = group.Update(command.Name, nextOrder, command.IconAssetId, command.Color, command.Status);
 
 		if (result.IsFailure)
 			return result.Errors;

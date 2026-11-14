@@ -27,7 +27,7 @@ internal static class CategoryTestData
 
 		var groupId = Guid.Parse(parts[1].Split("/")[0]);
 
-		var groups = await client.GetFromJsonAsync<CategoryGroupDto[]>(parts[0] + "/category-groups");
+		var groups = await client.GetFromJsonAsync<CategoryGroupDto[]>(parts[0] + "/category-groups", MapTestData.JsonOptions);
 
 		return groups!.Single(group => group.Id == groupId).Categories.ToArray();
 	}
@@ -80,6 +80,6 @@ internal static class CategoryTestData
 
 		return categories.Select(category => new CategoryDto(category.Id, category.CategoryGroupId, category.Name,
 			category.IconAssetId is { } iconId ? images[iconId].ToDto() : null, category.Color, 0,
-			category.CreatedAt, category.UpdatedAt)).ToArray();
+			category.CreatedAt, category.UpdatedAt, category.Status)).ToArray();
 	}
 }

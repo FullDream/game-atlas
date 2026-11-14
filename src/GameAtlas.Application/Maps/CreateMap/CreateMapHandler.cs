@@ -1,3 +1,4 @@
+using GameAtlas.Domain;
 using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Application.Abstractions.Persistence;
@@ -23,7 +24,11 @@ public sealed class CreateMapHandler(IApplicationDbContext context, IMapMutation
 		if (slug.IsFailure)
 			return slug.Errors;
 
-		var created = Map.Create(command.GameId, command.Name, slug.Value);
+		if (command.Status.IsSpecified && command.Status.Value is null)
+			return MapErrors.StatusRequired;
+
+		var created = Map.Create(command.GameId, command.Name, slug.Value,
+			command.Status.GetValueOrDefault(PublicationStatus.Draft)!.Value);
 
 		if (created.IsFailure)
 			return created.Errors;

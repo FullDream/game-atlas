@@ -1,4 +1,5 @@
 using GameAtlas.Application.Media;
+using GameAtlas.Domain;
 
 namespace GameAtlas.Application.Categories;
 
@@ -10,4 +11,5 @@ public sealed record CategoryDto(
 	string? Color,
 	int MarkersCount,
 	DateTimeOffset CreatedAt,
-	DateTimeOffset UpdatedAt);
+	DateTimeOffset UpdatedAt,
+	PublicationStatus Status);

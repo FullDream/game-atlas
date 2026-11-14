@@ -4,9 +4,10 @@
  * GameAtlas.Api | v1
  * OpenAPI spec version: 1.0.0
  */
+import type { PublicationStatus } from './publication-status'
 
 /**
- * Supply name, slug, defaultStyleId or the complete styleOrder. Null is invalid; geometry is immutable.
+ * Supply name, slug, defaultStyleId, styleOrder, or status. Null is invalid; geometry is immutable.
  */
 export type UpdateMapRequest = {
 	/**
@@ -24,4 +25,5 @@ export type UpdateMapRequest = {
 	defaultStyleId?: string | null
 	/** @nullable */
 	styleOrder?: (string | null)[] | null
+	status?: PublicationStatus
 }

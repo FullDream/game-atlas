@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using GameAtlas.Application.Categories;
+using GameAtlas.Domain;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -220,9 +221,9 @@ public class CategoryApiTests
 	}
 
 	[Theory]
-	[InlineData(GameStatus.Draft)]
-	[InlineData(GameStatus.Published)]
-	public async Task CreatesNormalizedRepresentationWithServerOwnedMetadata(GameStatus status)
+	[InlineData(PublicationStatus.Draft)]
+	[InlineData(PublicationStatus.Published)]
+	public async Task CreatesNormalizedRepresentationWithServerOwnedMetadata(PublicationStatus status)
 	{
 		await using var factory = new GameApiFactory();
 
@@ -574,10 +575,10 @@ public class CategoryApiTests
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 		using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-		Assert.Equal(8, json.RootElement.EnumerateObject().Count());
+		Assert.Equal(9, json.RootElement.EnumerateObject().Count());
 		Assert.False(json.RootElement.TryGetProperty("order", out _));
 
-		return Assert.IsType<CategoryDto>(await response.Content.ReadFromJsonAsync<CategoryDto>());
+		return Assert.IsType<CategoryDto>(await response.Content.ReadFromJsonAsync<CategoryDto>(MapTestData.JsonOptions));
 	}
 
 	internal static async Task<HttpResponseMessage> PatchAsync(HttpClient client, string path, string json,

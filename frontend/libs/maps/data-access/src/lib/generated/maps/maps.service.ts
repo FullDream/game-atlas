@@ -464,4 +464,42 @@ export class MapsService {
 			observe: 'body',
 		})
 	}
+	/**
+	 * @summary Publish map
+	 */
+	publishMap<TData = Map>(gameId: string, mapId: string, options?: HttpClientBodyOptions): Observable<TData>
+	publishMap<TData = Map>(
+		gameId: string,
+		mapId: string,
+		options?: HttpClientEventOptions,
+	): Observable<HttpEvent<TData>>
+	publishMap<TData = Map>(
+		gameId: string,
+		mapId: string,
+		options?: HttpClientResponseOptions,
+	): Observable<AngularHttpResponse<TData>>
+	publishMap<TData = Map>(
+		gameId: string,
+		mapId: string,
+		options?: HttpClientObserveOptions,
+	): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+		if (options?.observe === 'events') {
+			return this.http.post<TData>(`${this.baseUrl}/games/${gameId}/maps/${mapId}/publish`, undefined, {
+				...(options as Omit<NonNullable<typeof options>, 'observe'>),
+				observe: 'events',
+			})
+		}
+
+		if (options?.observe === 'response') {
+			return this.http.post<TData>(`${this.baseUrl}/games/${gameId}/maps/${mapId}/publish`, undefined, {
+				...(options as Omit<NonNullable<typeof options>, 'observe'>),
+				observe: 'response',
+			})
+		}
+
+		return this.http.post<TData>(`${this.baseUrl}/games/${gameId}/maps/${mapId}/publish`, undefined, {
+			...(options as Omit<NonNullable<typeof options>, 'observe'>),
+			observe: 'body',
+		})
+	}
 }

@@ -77,6 +77,7 @@ export class CategoriesQueryOptions {
 									name: variables.name ?? group.name,
 									color: variables.color ?? group.color,
 									icon: variables.iconAssetId === null ? null : group.icon,
+									status: variables.status ?? group.status,
 								}
 							: group,
 					)
@@ -177,6 +178,7 @@ export class CategoriesQueryOptions {
 						name: variables.name ?? category.name,
 						color: variables.color === undefined ? category.color : variables.color,
 						icon: variables.iconAssetId === null ? null : category.icon,
+						status: variables.status ?? category.status,
 					}
 
 					return groups.map(group => {

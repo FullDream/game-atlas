@@ -41,9 +41,14 @@
 					}
 
 					<div class="min-w-0">
-						<h3 class="font-semibold truncate" [hlmTooltip]="map.name" uiTooltipOnOverflow>
-							{{ map.name }}
-						</h3>
+						<div class="gap-2 flex flex-wrap items-center">
+							<h3 class="font-semibold truncate" [hlmTooltip]="map.name" uiTooltipOnOverflow>
+								{{ map.name }}
+							</h3>
+							<span hlmBadge [variant]="map.status === 'published' ? 'default' : 'secondary'">
+								{{ map.status === 'published' ? 'Published' : 'Draft' }}
+							</span>
+						</div>
 						<p class="mt-1 text-sm text-muted-foreground">
 							@if (map.width) {
 								{{ map.width }} × {{ map.height }} logical units

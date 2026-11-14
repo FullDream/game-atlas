@@ -699,7 +699,7 @@ Every game response SHALL include markersCount and categoriesCount as nonnegativ
 
 ### Requirement: Return lightweight map summaries
 
-Every game response SHALL include read-only maps ordered by map createdAt then id ascending. Entries SHALL contain only id, name, slug and preview. preview SHALL be canonical ImageAsset from the current default style source, or null when no ready style exists. Empty games SHALL return maps=[]. Complete map endpoints and default-style rules SHALL remain unchanged. PATCH maps or counts SHALL return 400.
+Every game response SHALL include read-only maps ordered by map createdAt then id ascending. Entries SHALL contain only id, name, slug, status and preview. status SHALL be the map's persisted publication status (`draft` or `published`). preview SHALL be canonical ImageAsset from the current default style source, or null when no ready style exists. Empty games SHALL return maps=[]. Complete map endpoints and default-style rules SHALL remain unchanged. PATCH maps or counts SHALL return 400.
 
 #### Scenario: Resolve the current default source
 
@@ -715,8 +715,8 @@ Every game response SHALL include read-only maps ordered by map createdAt then i
 #### Scenario: Return map slugs consistently
 
 - **WHEN** a game is returned by listing, retrieval, creation or update
-- **THEN** every included map summary contains its current required string slug
-- **AND** a map slug update is visible on subsequent game reads without changing the owning game's timestamps
+- **THEN** every included map summary contains its current required string slug and string status (`draft` or `published`)
+- **AND** a map slug or status update is visible on subsequent game reads without changing the owning game's timestamps
 
 ### Requirement: Upgrade the expanded game contract safely
 

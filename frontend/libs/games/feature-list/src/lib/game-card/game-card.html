@@ -53,14 +53,7 @@
 			<hlm-skeleton class="h-6 w-16 shrink-0" />
 			<div class="size-8 flex shrink-0 items-center justify-center"><hlm-skeleton class="size-4" /></div>
 		} @else if (current) {
-			<span
-				class="game-status px-2 font-semibold inline-flex shrink-0 rounded-[.45rem] py-[.2rem] text-[.65rem]"
-				[class]="
-					current.status === 'published'
-						? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-						: 'bg-muted text-muted-foreground'
-				"
-			>
+			<span hlmBadge [variant]="current.status === 'published' ? 'default' : 'secondary'">
 				{{ current.status === 'published' ? 'Published' : 'Draft' }}
 			</span>
 			<button
@@ -156,15 +149,29 @@
 		} @else {
 			@for (map of current?.maps ?? []; track map.id) {
 				<div class="min-w-0">
-					@if (map.preview; as image) {
-						<ui-media-thumbnail class="rounded-lg aspect-33/20 w-full overflow-hidden" [image]="image" />
-					} @else {
-						<div
-							class="rounded-lg bg-muted text-muted-foreground flex aspect-33/20 items-center justify-center border border-dashed"
-						>
-							<ng-icon name="matMapRound" aria-hidden="true" />
-						</div>
-					}
+					<div class="relative">
+						@if (map.preview; as image) {
+							<ui-media-thumbnail
+								class="rounded-lg aspect-33/20 w-full overflow-hidden"
+								[image]="image"
+							/>
+						} @else {
+							<div
+								class="rounded-lg bg-muted text-muted-foreground flex aspect-33/20 items-center justify-center border border-dashed"
+							>
+								<ng-icon name="matMapRound" aria-hidden="true" />
+							</div>
+						}
+						@if (map.status === 'draft') {
+							<span
+								class="top-1.5 right-1.5 size-5 rounded-md bg-background/85 text-muted-foreground ring-border/60 backdrop-blur-xs absolute inline-flex items-center justify-center ring-1"
+								hlmTooltip="Draft"
+								aria-label="Draft"
+							>
+								<ng-icon name="matVisibilityOffRound" class="text-xs" aria-hidden="true" />
+							</span>
+						}
+					</div>
 					<p class="mt-1.5 text-muted-foreground truncate text-[11px]">{{ map.name }}</p>
 				</div>
 			} @empty {

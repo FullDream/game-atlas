@@ -21,7 +21,7 @@ public class GameTests
 		Assert.Equal("Elden Ring", game.Name);
 		Assert.Equal("elden-ring-2", game.Slug);
 		Assert.Equal(coverId, game.CoverId);
-		Assert.Equal(GameStatus.Draft, game.Status);
+		Assert.Equal(PublicationStatus.Draft, game.Status);
 		Assert.Equal(game.CreatedAt, game.UpdatedAt);
 		Assert.Equal(TimeSpan.Zero, game.CreatedAt.Offset);
 		Assert.InRange(game.CreatedAt, before, DateTimeOffset.UtcNow);

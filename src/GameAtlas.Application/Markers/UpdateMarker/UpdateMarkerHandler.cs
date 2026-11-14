@@ -42,7 +42,8 @@ public sealed class UpdateMarkerHandler(IApplicationDbContext context)
 		if (assets.IsFailure)
 			return assets.Errors;
 
-		var result = marker.Update(command.CategoryId, command.Name, command.Description, position.Value, command.Media);
+		var result = marker.Update(command.CategoryId, command.Name, command.Description, position.Value,
+			command.Media, command.Status);
 
 		if (result.IsFailure)
 			return result.Errors;

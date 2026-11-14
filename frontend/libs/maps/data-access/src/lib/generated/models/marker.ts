@@ -6,6 +6,7 @@
  */
 import type { MediaAsset } from './media-asset'
 import type { Position } from './position'
+import type { PublicationStatus } from './publication-status'
 
 export type Marker = {
 	id: string
@@ -17,4 +18,5 @@ export type Marker = {
 	media: MediaAsset[]
 	createdAt: string
 	updatedAt: string
+	status: PublicationStatus
 }

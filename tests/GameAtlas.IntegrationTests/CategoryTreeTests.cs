@@ -21,14 +21,14 @@ public class CategoryTreeTests
 		using var client = factory.CreateHttpsClient();
 		using var created = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id), new { name = "Colored", color = "#abc" });
 		Assert.Equal(HttpStatusCode.OK, created.StatusCode);
-		var group = (await created.Content.ReadFromJsonAsync<CategoryGroupDto>())!;
+		var group = (await created.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions))!;
 		Assert.Equal("#AABBCC", group.Color);
 		using var changed = await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, group.Id), new { color = "#123456" });
 		Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
-		var updated = (await changed.Content.ReadFromJsonAsync<CategoryGroupDto>())!;
+		var updated = (await changed.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions))!;
 		Assert.Equal("#123456", updated.Color);
 		using var noOp = await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, group.Id), new { color = "#123456" });
-		Assert.Equal(updated.UpdatedAt, (await noOp.Content.ReadFromJsonAsync<CategoryGroupDto>())!.UpdatedAt);
+		Assert.Equal(updated.UpdatedAt, (await noOp.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions))!.UpdatedAt);
 		foreach (var color in new string?[] { null, "", "red", "#12", "#fff\n" })
 		{
 			using var rejected = await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, group.Id), new { name = "Must not persist", color });
@@ -36,7 +36,7 @@ public class CategoryTreeTests
 			using var rejectedCreate = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id), new { name = "Invalid color", color });
 			Assert.Equal(HttpStatusCode.UnprocessableEntity, rejectedCreate.StatusCode);
 		}
-		var tree = (await client.GetFromJsonAsync<CategoryGroupDto[]>(CategoryGroupApiTests.Path(game.Id)))!;
+		var tree = (await client.GetFromJsonAsync<CategoryGroupDto[]>(CategoryGroupApiTests.Path(game.Id), MapTestData.JsonOptions))!;
 		Assert.Equal("#F59E0B", tree.Single(item => item.Id == parent.Id).Color);
 		Assert.Equal("Colored", tree.Single(item => item.Id == group.Id).Name);
 		Assert.Equal("#123456", tree.Single(item => item.Id == group.Id).Color);
@@ -74,7 +74,7 @@ public class CategoryTreeTests
 		using var groupResponse = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id),
 			new { name = "Destination", iconAssetId = groupIcon.Id });
 
-		var destination = (await groupResponse.Content.ReadFromJsonAsync<CategoryGroupDto>())!;
+		var destination = (await groupResponse.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions))!;
 		using var created = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, source.Id),
 			new { name = "Iconless", color = "#abc" });
 
@@ -86,7 +86,7 @@ public class CategoryTreeTests
 			new { categoryGroupId = destination.Id, beforeId = (Guid?)null });
 		Assert.Equal(HttpStatusCode.OK, transfer.StatusCode);
 
-		var groups = (await client.GetFromJsonAsync<CategoryGroupDto[]>(CategoryGroupApiTests.Path(game.Id)))!;
+		var groups = (await client.GetFromJsonAsync<CategoryGroupDto[]>(CategoryGroupApiTests.Path(game.Id), MapTestData.JsonOptions))!;
 
 		Assert.Equal(0, groups.Single(group => group.Id == source.Id).MarkersCount);
 
@@ -100,7 +100,7 @@ public class CategoryTreeTests
 		using var clear = await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, destination.Id),
 			new { iconAssetId = (Guid?)null });
 		Assert.Equal(HttpStatusCode.OK, clear.StatusCode);
-		Assert.Null((await clear.Content.ReadFromJsonAsync<CategoryGroupDto>())!.Icon);
+		Assert.Null((await clear.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions))!.Icon);
 		using var attach = await client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, destination.Id, category.Id), new { iconAssetId = groupIcon.Id });
 		Assert.NotNull((await CategoryApiTests.ReadAsync(attach)).Icon);
 		using var detach = await client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, destination.Id, category.Id), new { iconAssetId = (Guid?)null });
@@ -258,7 +258,7 @@ public class CategoryTreeTests
 			Assert.Equal(HttpStatusCode.OK, responses[1].StatusCode);
 			Assert.Equal(HttpStatusCode.NoContent, responses[2].StatusCode);
 
-			var groups = (await client.GetFromJsonAsync<CategoryGroupDto[]>(CategoryGroupApiTests.Path(game.Id)))!;
+			var groups = (await client.GetFromJsonAsync<CategoryGroupDto[]>(CategoryGroupApiTests.Path(game.Id), MapTestData.JsonOptions))!;
 			Assert.Empty(groups.Single(group => group.Id == source.Id).Categories);
 
 			var children = groups.Single(group => group.Id == destination.Id).Categories;

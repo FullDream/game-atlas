@@ -11,7 +11,19 @@ import type OlMap from 'ol/Map.js'
 import { unByKey } from 'ol/Observable.js'
 import { matLocationOnFillRound } from '@ng-icons/material-symbols/round'
 import { DEFAULT_TOOLTIP_CONTENT_CLASSES } from '@spartan-ng/helm/tooltip'
-import type { MapMarker, MapTool, MarkerInteractions, VisibleMapRegion } from './map-viewport-types'
+import type { MapMarker, MapTool, MarkerDraftState, MarkerInteractions, VisibleMapRegion } from './map-viewport-types'
+
+const DRAFT_BADGE_COLORS: Record<MarkerDraftState, string> = {
+	marker: '#F59E0B',
+	category: '#0EA5E9',
+	group: '#8B5CF6',
+}
+
+const DRAFT_LEVEL_LABELS: Record<MarkerDraftState, string> = {
+	marker: 'marker',
+	category: 'category',
+	group: 'group',
+}
 
 export class MapMarkers {
 	readonly #source = new VectorSource<Feature<Point>>()
@@ -154,9 +166,19 @@ export class MapMarkers {
 
 			feature.set('pending', !!marker.pending)
 			feature.set('name', marker.name, true)
+			feature.set('draftStates', marker.draftStates, true)
 			if (marker.pending && this.#hovered === feature) this.#setHovered(null)
+			else if (this.#hovered === feature) this.#showTooltip(feature)
 
-			const signature = [marker.icon, marker.color, marker.selected, marker.pending, marker.failed].join('|')
+			const draftState = marker.draftStates?.[0]
+			const signature = [
+				marker.icon,
+				marker.color,
+				marker.selected,
+				marker.pending,
+				marker.failed,
+				draftState,
+			].join('|')
 
 			if (feature.get('presentation') === signature) continue
 
@@ -167,7 +189,14 @@ export class MapMarkers {
 			if (color && marker.failed) color = '#dc2626'
 
 			const size = marker.selected ? 30 : 22
-			const fallbackUrl = `data:image/svg+xml,${encodeURIComponent(matLocationOnFillRound.replace('<svg ', '<svg width="24" height="24" ').replace(/currentColor/g, color ?? '#000'))}`
+			const draftBadgeSvg = draftState
+				? `<circle cx="19.5" cy="4.5" r="4" fill="${DRAFT_BADGE_COLORS[draftState]}" stroke="#fff" stroke-width="1.5"/>`
+				: ''
+			const fallbackSvg = matLocationOnFillRound
+				.replace('<svg ', '<svg width="24" height="24" ')
+				.replace(/currentColor/g, color ?? '#000')
+				.replace('</svg>', `${draftBadgeSvg}</svg>`)
+			const fallbackUrl = `data:image/svg+xml,${encodeURIComponent(fallbackSvg)}`
 
 			const pin = new Style({
 				image: new Icon({
@@ -183,9 +212,10 @@ export class MapMarkers {
 			this.#updateHoverStyle(feature)
 
 			const target = feature
+			const baseFallbackUrl = `data:image/svg+xml,${encodeURIComponent(matLocationOnFillRound.replace('<svg ', '<svg width="24" height="24" ').replace(/currentColor/g, color ?? '#000'))}`
 
-			void this.#maskedIcon(marker.icon || fallbackUrl, color)
-				.then(canvas => canvas ?? this.#maskedIcon(fallbackUrl, color))
+			void this.#maskedIcon(marker.icon || baseFallbackUrl, color, draftState)
+				.then(canvas => canvas ?? this.#maskedIcon(baseFallbackUrl, color, draftState))
 				.then(canvas => {
 					if (
 						!canvas ||
@@ -288,6 +318,7 @@ export class MapMarkers {
 	#showTooltip(feature: Feature<Point> | null): void {
 		const coordinate = feature?.getGeometry()?.getCoordinates()
 		const name = feature?.get('name') as string | undefined
+		const draftStates = (feature?.get('draftStates') as readonly MarkerDraftState[] | undefined) ?? []
 		const viewport = this.map.getViewport()
 
 		if (!coordinate || !name) {
@@ -306,7 +337,20 @@ export class MapMarkers {
 		if (pixel[0] < 130) horizontal = 'left'
 		else if (pixel[0] > width - 130) horizontal = 'right'
 
-		this.#tooltipElement.textContent = name
+		this.#tooltipElement.replaceChildren()
+
+		if (draftStates.length) {
+			const titleNode = document.createElement('div')
+			const draftNode = document.createElement('div')
+
+			titleNode.textContent = name
+			draftNode.className = 'text-[11px] opacity-80'
+			draftNode.textContent = `Draft: ${draftStates.map(state => DRAFT_LEVEL_LABELS[state]).join(', ')}`
+			this.#tooltipElement.append(titleNode, draftNode)
+		} else {
+			this.#tooltipElement.textContent = name
+		}
+
 		this.#tooltip.setPositioning(`${vertical}-${horizontal}`)
 		this.#tooltip.setOffset([0, above ? -22 : 22])
 		this.#tooltip.setPosition(coordinate)
@@ -339,8 +383,8 @@ export class MapMarkers {
 		feature.changed()
 	}
 
-	#maskedIcon(url: string, color: string | null): Promise<HTMLCanvasElement | null> {
-		const key = JSON.stringify([url, color])
+	#maskedIcon(url: string, color: string | null, draftState?: MarkerDraftState): Promise<HTMLCanvasElement | null> {
+		const key = JSON.stringify([url, color, draftState ?? null])
 		const cached = this.#icons.get(key)
 
 		if (cached) return cached
@@ -376,6 +420,8 @@ export class MapMarkers {
 				context.drawImage(image, (64 - width) / 2, (64 - height) / 2, width, height)
 
 				if (color === null) {
+					if (draftState) this.#drawDraftDot(context, 52, 12, 9, 3, DRAFT_BADGE_COLORS[draftState])
+
 					resolve(canvas)
 
 					return
@@ -419,6 +465,9 @@ export class MapMarkers {
 				outline.fillRect(0, 0, 96, 96)
 				outline.globalCompositeOperation = 'source-over'
 				outline.drawImage(canvas, 16, 16)
+
+				if (draftState) this.#drawDraftDot(outline, 68, 28, 10, 3.5, DRAFT_BADGE_COLORS[draftState])
+
 				resolve(outlined)
 			}
 			image.src = url
@@ -427,5 +476,25 @@ export class MapMarkers {
 		this.#icons.set(key, result)
 
 		return result
+	}
+
+	#drawDraftDot(
+		context: CanvasRenderingContext2D,
+		cx: number,
+		cy: number,
+		radius: number,
+		strokeWidth: number,
+		fillColor: string,
+	): void {
+		context.save()
+		context.globalCompositeOperation = 'source-over'
+		context.beginPath()
+		context.arc(cx, cy, radius, 0, Math.PI * 2)
+		context.fillStyle = fillColor
+		context.fill()
+		context.lineWidth = strokeWidth
+		context.strokeStyle = '#ffffff'
+		context.stroke()
+		context.restore()
 	}
 }

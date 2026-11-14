@@ -16,7 +16,7 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261113202720_MapSlugs";
+    public override string LastMigrationId => "20261114002958_ContentPublicationStatus";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -54,6 +54,11 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
 
                 b.Property<int>("Order")
                     .HasColumnType("INTEGER");
+
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(32)
+                    .HasColumnType("TEXT");
 
                 b.Property<string>("UpdatedAt")
                     .IsRequired()
@@ -105,6 +110,11 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
 
                 b.Property<int>("Order")
                     .HasColumnType("INTEGER");
+
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(32)
+                    .HasColumnType("TEXT");
 
                 b.Property<string>("UpdatedAt")
                     .IsRequired()
@@ -210,6 +220,11 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
                 b.Property<string>("Slug")
                     .IsRequired()
                     .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(32)
                     .HasColumnType("TEXT");
 
                 b.Property<string>("UpdatedAt")
@@ -323,6 +338,11 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
                 b.Property<string>("Name")
                     .IsRequired()
                     .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(32)
                     .HasColumnType("TEXT");
 
                 b.Property<string>("UpdatedAt")

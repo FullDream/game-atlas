@@ -11,4 +11,5 @@ public sealed record UpdateMarkerRequest
 	public Optional<string?> Description { get; init; }
 	public Optional<PositionPatchRequest?> Position { get; init; }
 	public Optional<IReadOnlyCollection<Guid?>?> Media { get; init; }
+	public Optional<PublicationStatus?> Status { get; init; }
 }

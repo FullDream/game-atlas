@@ -1,3 +1,4 @@
+using GameAtlas.Domain;
 using GameAtlas.Domain.ValueObjects;
 using System.Collections.Concurrent;
 using System.Data.Common;
@@ -14,16 +15,16 @@ namespace GameAtlas.IntegrationTests;
 public class DeleteGameHandlerTests
 {
 	[Theory]
-	[InlineData(GameStatus.Draft)]
-	[InlineData(GameStatus.Published)]
-	public async Task DeletesWithOneDeleteStatementAndPreservesOtherGames(GameStatus status)
+	[InlineData(PublicationStatus.Draft)]
+	[InlineData(PublicationStatus.Published)]
+	public async Task DeletesWithOneDeleteStatementAndPreservesOtherGames(PublicationStatus status)
 	{
 		var capture = new DeleteCommandCapture();
 		await using var factory = new GameApiFactory(interceptor: capture);
 
 		await factory.MigrateAsync();
 		var game = await SeedAsync(factory, "target", status);
-		var other = await SeedAsync(factory, "other", GameStatus.Published);
+		var other = await SeedAsync(factory, "other", PublicationStatus.Published);
 
 		capture.Commands.Clear();
 
@@ -71,7 +72,7 @@ public class DeleteGameHandlerTests
 	}
 
 	internal static async Task<Game> SeedAsync(
-		GameApiFactory factory, string slug, GameStatus status = GameStatus.Draft)
+		GameApiFactory factory, string slug, PublicationStatus status = PublicationStatus.Draft)
 	{
 		await MediaTestData.EnsureCoverAsync(factory);
 		await using var scope = factory.Services.CreateAsyncScope();

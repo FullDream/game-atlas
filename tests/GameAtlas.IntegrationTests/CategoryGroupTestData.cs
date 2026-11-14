@@ -44,6 +44,7 @@ internal static class CategoryGroupTestData
 			.OrderBy(group => group.Order).ThenBy(group => group.CreatedAt).ThenBy(group => group.Id).ToArrayAsync();
 
 		return groups.Select(group => new CategoryGroupDto(group.Id, group.MapId, group.Name, group.Color,
-			group.CreatedAt, group.UpdatedAt, null, 0, Array.Empty<GameAtlas.Application.Categories.CategoryDto>())).ToArray();
+			group.CreatedAt, group.UpdatedAt, null, 0, Array.Empty<GameAtlas.Application.Categories.CategoryDto>(),
+			group.Status)).ToArray();
 	}
 }

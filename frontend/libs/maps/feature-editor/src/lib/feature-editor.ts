@@ -1,9 +1,9 @@
 import { HttpStatusCode } from '@angular/common/http'
 import { Component, computed, DestroyRef, inject, input, linkedSignal, viewChild } from '@angular/core'
 import { rxResource } from '@angular/core/rxjs-interop'
-import { RouterLink } from '@angular/router'
 import {
 	CategoriesQueryOptions,
+	getMapErrorMessage,
 	getMarkerErrorMessage,
 	isMarkerOutcomeUncertain,
 	MapsLive,
@@ -19,13 +19,13 @@ import { Button, ErrorState, PageHeaderPortal } from '@game-atlas/shared/ui'
 import { NgIcon, NgIconStack, provideIcons } from '@ng-icons/core'
 import {
 	matAddLocationAltRound,
-	matArrowBackRound,
 	matCloudOffRound,
 	matChevronLeftRound,
 	matChevronRightRound,
 	matLibraryAddRound,
 	matOpenWithRound,
 	matPanToolRound,
+	matPublishRound,
 	matRefreshRound,
 	matLocationOnRound,
 	matLocationOnFillRound,
@@ -53,7 +53,6 @@ type MarkerSelectionSource = { mapId: string; markers: Marker[] | undefined }
 		ErrorState,
 		MapViewport,
 		PageHeaderPortal,
-		RouterLink,
 		HlmSkeleton,
 		HlmTooltip,
 	],
@@ -74,9 +73,9 @@ type MarkerSelectionSource = { mapId: string; markers: Marker[] | undefined }
 			matLocationOnFillRound,
 			matChevronLeftRound,
 			matChevronRightRound,
+			matPublishRound,
 			matRefreshRound,
 			matCloudOffRound,
-			matArrowBackRound,
 		}),
 	],
 	host: {
@@ -107,6 +106,8 @@ export class FeatureEditor {
 	protected readonly markers = injectQuery(() => this.#markerOptions.getList(this.gameId(), this.mapId()))
 	protected readonly categoryGroups = injectQuery(() => this.#categoryOptions.getGroups(this.gameId(), this.mapId()))
 
+	protected readonly publishMutation = injectMutation(() => this.#options.publish())
+
 	protected readonly live = rxResource({
 		params: () => ({ gameId: this.gameId(), mapId: this.mapId() }),
 		stream: ({ params }) => this.#live.watch(params.gameId, params.mapId),
@@ -118,6 +119,35 @@ export class FeatureEditor {
 	protected readonly categoriesById = computed(
 		() => new Map(this.categories().map(category => [category.id, category])),
 	)
+
+	protected readonly hasDraftContent = computed(() => {
+		const hasDraftGroup = this.groups().some(group => group.status === 'draft')
+		const hasDraftCategory = this.categories().some(category => category.status === 'draft')
+		const hasDraftMarker = (this.markers.data() ?? []).some(marker => marker.status === 'draft')
+
+		return hasDraftGroup || hasDraftCategory || hasDraftMarker
+	})
+
+	protected readonly publishLabel = computed(() =>
+		this.map.data()?.status === 'published' ? 'Publish changes' : 'Publish',
+	)
+
+	protected readonly canPublish = computed(() => {
+		const current = this.map.data()
+
+		if (!current || this.map.isLoading() || this.map.isError() || this.publishMutation.isPending()) return false
+
+		if (
+			this.categoryGroups.isLoading() ||
+			this.categoryGroups.isError() ||
+			this.markers.isLoading() ||
+			this.markers.isError()
+		) {
+			return false
+		}
+
+		return current.status === 'draft' || this.hasDraftContent()
+	})
 
 	protected readonly missing = computed(
 		() => this.map.error()?.status === HttpStatusCode.NotFound || this.live.value().status === 'deleted',
@@ -239,6 +269,14 @@ export class FeatureEditor {
 				return null
 			}
 
+			if (session?.marker && source.markers) {
+				const latest = source.markers.find(marker => marker.id === session.marker?.id)
+
+				if (latest && latest !== session.marker) {
+					return { ...session, marker: latest }
+				}
+			}
+
 			return session
 		},
 	})
@@ -258,6 +296,17 @@ export class FeatureEditor {
 
 	async canLeave(): Promise<boolean> {
 		return (await this.markerEditor()?.canLeave()) ?? true
+	}
+
+	protected publishMap(): void {
+		if (!this.canPublish()) return
+
+		this.publishMutation.mutate(
+			{ gameId: this.gameId(), mapId: this.mapId() },
+			{
+				onError: error => toast.error(getMapErrorMessage(error)),
+			},
+		)
 	}
 
 	protected async selectTool(value: unknown): Promise<void> {

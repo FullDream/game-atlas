@@ -1,5 +1,5 @@
 using GameAtlas.Application.Media;
-using GameAtlas.Domain.Games;
+using GameAtlas.Domain;
 
 namespace GameAtlas.Application.Games;
 
@@ -17,4 +17,4 @@ public sealed record GameDto(
 	IReadOnlyList<GameMapDto> Maps,
 	DateTimeOffset CreatedAt,
 	DateTimeOffset UpdatedAt,
-	GameStatus Status);
+	PublicationStatus Status);

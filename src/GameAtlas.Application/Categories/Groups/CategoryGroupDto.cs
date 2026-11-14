@@ -1,4 +1,5 @@
 using GameAtlas.Application.Media;
+using GameAtlas.Domain;
 
 namespace GameAtlas.Application.Categories.Groups;
 
@@ -11,4 +12,5 @@ public sealed record CategoryGroupDto(
 	DateTimeOffset UpdatedAt,
 	ImageAssetDto? Icon,
 	int MarkersCount,
-	IReadOnlyCollection<CategoryDto> Categories);
+	IReadOnlyCollection<CategoryDto> Categories,
+	PublicationStatus Status);

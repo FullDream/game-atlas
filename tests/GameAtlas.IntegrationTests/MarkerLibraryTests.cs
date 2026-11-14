@@ -97,7 +97,7 @@ public sealed class MarkerLibraryTests
 			position = new { x = 0, y = 0 },
 			media = new[] { image.Id, video.Id }
 		});
-		var marker = (await creation.Content.ReadFromJsonAsync<MarkerDto>())!;
+		var marker = (await creation.Content.ReadFromJsonAsync<MarkerDto>(MapTestData.JsonOptions))!;
 
 		Assert.Equal(HttpStatusCode.OK, creation.StatusCode);
 		Assert.Equal(image, marker.Media.First());
@@ -105,7 +105,7 @@ public sealed class MarkerLibraryTests
 		using var metadata = await client.PatchAsJsonAsync($"/media/assets/{image.Id}", new { alt = "Shared entrance" });
 
 		Assert.Equal(HttpStatusCode.OK, metadata.StatusCode);
-		var listed = await client.GetFromJsonAsync<MarkerDto[]>(MarkerTestData.Path(game.Id));
+		var listed = await client.GetFromJsonAsync<MarkerDto[]>(MarkerTestData.Path(game.Id), MapTestData.JsonOptions);
 		var current = Assert.Single(listed!);
 
 		Assert.Equal(marker.UpdatedAt, current.UpdatedAt);
@@ -115,13 +115,13 @@ public sealed class MarkerLibraryTests
 			new { media = new[] { video.Id, image.Id } });
 
 		Assert.Equal(HttpStatusCode.OK, reorder.StatusCode);
-		var reversed = (await reorder.Content.ReadFromJsonAsync<MarkerDto>())!;
+		var reversed = (await reorder.Content.ReadFromJsonAsync<MarkerDto>(MapTestData.JsonOptions))!;
 
 		Assert.Equal(new[] { video.Id, image.Id }, reversed.Media.Select(asset => asset.Id));
 		using var noOp = await client.PatchAsJsonAsync(MarkerTestData.Path(game.Id) + $"/{marker.Id}",
 			new { media = new[] { video.Id, image.Id } });
 
-		Assert.Equal(reversed.UpdatedAt, (await noOp.Content.ReadFromJsonAsync<MarkerDto>())!.UpdatedAt);
+		Assert.Equal(reversed.UpdatedAt, (await noOp.Content.ReadFromJsonAsync<MarkerDto>(MapTestData.JsonOptions))!.UpdatedAt);
 		using var protectedVideo = await client.DeleteAsync($"/media/assets/{video.Id}");
 
 		Assert.Equal(HttpStatusCode.Conflict, protectedVideo.StatusCode);

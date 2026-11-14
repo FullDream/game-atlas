@@ -87,6 +87,7 @@ public static class DependencyInjection
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();
 			options.AddDocumentTransformer<MediaSchemaTransformer>();
 			options.AddDocumentTransformer<CategorySchemaTransformer>();
+			options.AddDocumentTransformer<SharedEnumSchemaTransformer>();
 		});
 
 		return services;

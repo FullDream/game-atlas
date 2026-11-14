@@ -6,6 +6,7 @@ A game owns zero or more independently named maps, including draft games. Each m
 | ------ | ------------------------------- | -------------- | ------------------ |
 | GET    | empty                           | ListMaps       | 200 complete array |
 | PATCH  | /{mapId}                        | UpdateMap      | 200 complete map   |
+| POST   | /{mapId}/publish                | PublishMap     | 200 complete map   |
 | GET    | /{mapId}                        | GetMap         | 200 complete map   |
 | POST   | empty                           | CreateMap      | 200 complete map   |
 | POST   | /{mapId}/styles                 | AddMapStyle    | 200 complete map   |
@@ -18,13 +19,13 @@ There is no pagination, separate style GET, public source history, or PUT operat
 
 ## Creation and listing
 
-POST accepts application/json with required name and slug, for example `{"name":"World"}`. Names are trimmed, 1..200 characters and unique per game after invariant case normalization. Success returns 200 with null dimensions/geometry, styles=[], and defaultStyleId=null. The first successful style attachment atomically fixes logical dimensions from its source (1..16384); failed attachment leaves geometry absent. Processing failure does not undo geometry, and removing all styles does not reset it. No files, leases, or processing work are created. Groups/categories/markers can be added immediately.
+POST accepts application/json with required name and slug and optional status (`draft` | `published`, defaulting to `draft`), for example `{"name":"World","slug":"world"}`. Names are trimmed, 1..200 characters and unique per game after invariant case normalization. Success returns 200 with null dimensions/geometry, styles=[], and defaultStyleId=null. The first successful style attachment atomically fixes logical dimensions from its source (1..16384); failed attachment leaves geometry absent. Processing failure does not undo geometry, and removing all styles does not reset it. No files, leases, or processing work are created. Groups/categories/markers can be added immediately.
 
 GET returns every complete map ordered by createdAt then id ascending, including [] for an existing game without maps. There are no pagination/filter/order parameters. Missing games return 404. Every item route requires both the owning game ID and map ID; a sibling or foreign map/style returns 404. Legacy singular-map and game-wide content routes are absent.
 
 ## Default and display order
 
-Map PATCH accepts optional name, slug, defaultStyleId and styleOrder (the complete ordered style ID array). Omitted fields stay unchanged and arrays replace the full order atomically. Nulls, duplicate/incomplete orders and non-ready defaults return 422; missing/foreign IDs return 404. Normalized no-ops preserve timestamps; effective presentation changes update only the map timestamp without retiling. New styles append. A surviving ready default remains selected after reorder or later readiness; deleting it selects the first ready style in display order, or null if none remains. Game summaries use the same default.
+Map PATCH accepts optional name, slug, defaultStyleId, styleOrder (the complete ordered style ID array), and status (`draft` | `published`). Omitted fields stay unchanged and arrays replace the full order atomically. Nulls, duplicate/incomplete orders and non-ready defaults return 422; missing/foreign IDs return 404. Normalized no-ops preserve timestamps; effective presentation changes update only the map timestamp without retiling. `POST /{mapId}/publish` atomically transitions the map and all of its draft category groups, categories, and markers to `published`. New styles append. A surviving ready default remains selected after reorder or later readiness; deleting it selects the first ready style in display order, or null if none remains. Game summaries use the same default.
 
 The MapStylePresentation migration preserves existing dimensions, order, ready defaults, marker coordinates and tile URLs. Apply it explicitly after backing up database and storage. It is never applied on startup. Downgrading a populated store is refused; restore the coordinated backup to roll back.
 

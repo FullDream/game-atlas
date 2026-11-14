@@ -23,6 +23,7 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
 			.OnDelete(DeleteBehavior.Restrict);
 
 		builder.Property(category => category.Color).HasMaxLength(7).IsRequired(false);
+		builder.Property(category => category.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
 		builder.HasIndex(category => new { category.CategoryGroupId, category.NormalizedName }).IsUnique();
 		builder.HasIndex(category => new { category.CategoryGroupId, category.Order });
 		builder.Property(category => category.CreatedAt).HasConversion<UtcTimestampConverter>();

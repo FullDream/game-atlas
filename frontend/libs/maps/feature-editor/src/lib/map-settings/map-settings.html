@@ -18,52 +18,38 @@
 	>
 		<form [formRoot]="fields" class="p-3 gap-4 flex h-full flex-col overflow-y-auto">
 			<ui-field label="Map name">
-				<div hlmInputGroup>
-					<input id="map-settings-name" hlmInputGroupInput [formField]="fields.name" autocomplete="off" />
-					<div hlmInputGroupAddon align="inline-end">
-						<button
-							ui-button
-							type="submit"
-							variant="ghost"
-							size="icon-sm"
-							icon="matSaveRound"
-							aria-label="Save map metadata"
-							hlmTooltip="Save map metadata"
-							[loading]="fields().submitting()"
-							[disabled]="!fields().dirty()"
-						></button>
-					</div>
-				</div>
+				<input id="map-settings-name" hlmInput [formField]="fields.name" autocomplete="off" />
 			</ui-field>
 
 			<ui-field label="Map slug">
-				<div hlmInputGroup>
-					<input
-						id="map-settings-slug"
-						hlmInputGroupInput
-						[formField]="fields.slug"
-						autocomplete="off"
-						autocapitalize="none"
-						spellcheck="false"
-					/>
-					<div hlmInputGroupAddon align="inline-end">
-						<button
-							ui-button
-							type="submit"
-							variant="ghost"
-							size="icon-sm"
-							icon="matSaveRound"
-							aria-label="Save map metadata"
-							hlmTooltip="Save map metadata"
-							[loading]="fields().submitting()"
-							[disabled]="!fields().dirty()"
-						></button>
-					</div>
-				</div>
+				<input
+					id="map-settings-slug"
+					hlmInput
+					[formField]="fields.slug"
+					autocomplete="off"
+					autocapitalize="none"
+					spellcheck="false"
+				/>
 			</ui-field>
+
+			<div hlmField orientation="horizontal" class="items-center justify-between">
+				<label hlmFieldLabel for="map-settings-published">Published</label>
+				<hlm-switch inputId="map-settings-published" [formField]="fields.published" />
+			</div>
+
 			@if (error()) {
 				<hlm-field-error forceShow>{{ error() }}</hlm-field-error>
 			}
+
+			<button
+				ui-button
+				type="submit"
+				icon="matSaveRound"
+				[loading]="fields().submitting()"
+				[disabled]="!fields().dirty()"
+			>
+				Save changes
+			</button>
 		</form>
 	</hlm-accordion-content>
 </section>

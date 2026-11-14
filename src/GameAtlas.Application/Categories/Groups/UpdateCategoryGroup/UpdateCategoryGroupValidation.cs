@@ -9,7 +9,8 @@ public sealed class UpdateCategoryGroupValidation : AbstractValidator<UpdateCate
 {
 	public UpdateCategoryGroupValidation()
 	{
-		RuleFor(command => command).Must(command => Optional.AnySpecified(command.Name, command.BeforeId, command.IconAssetId, command.Color))
+		RuleFor(command => command).Must(command =>
+				Optional.AnySpecified(command.Name, command.BeforeId, command.IconAssetId, command.Color, command.Status))
 			.WithErrorCode(UpdateCategoryGroupErrors.EmptyPatch.Code)
 			.WithMessage(UpdateCategoryGroupErrors.EmptyPatch.Message).OverridePropertyName(string.Empty);
 
@@ -19,5 +20,7 @@ public sealed class UpdateCategoryGroupValidation : AbstractValidator<UpdateCate
 
 		this.OptionalRuleFor(command => command.Color,
 			rule => rule.NotEmpty().Length(4, 7).Matches(Category.ColorPattern));
+
+		this.OptionalRuleFor(command => command.Status, rule => rule.NotNull().IsInEnum());
 	}
 }
