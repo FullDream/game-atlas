@@ -31,12 +31,9 @@
 				<hlm-select-value />
 			</hlm-select-trigger>
 			<hlm-select-content *hlmSelectPortal>
-				<hlm-select-item value="name:asc">Name A–Z</hlm-select-item>
-				<hlm-select-item value="name:desc">Name Z–A</hlm-select-item>
-				<hlm-select-item value="createdAt:desc">Newest first</hlm-select-item>
-				<hlm-select-item value="createdAt:asc">Oldest first</hlm-select-item>
-				<hlm-select-item value="updatedAt:desc">Recently updated</hlm-select-item>
-				<hlm-select-item value="updatedAt:asc">Least recently updated</hlm-select-item>
+				@for (option of sortOptions; track option.value) {
+					<hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+				}
 			</hlm-select-content>
 		</hlm-select>
 		<div class="games-view-switch hidden @[60rem]/games:block">
@@ -131,5 +128,5 @@
 	[(limit)]="limit"
 	(limitChange)="offset.set(0)"
 	[totalItems]="total()"
-	[pageSizes]="[24, 48, 72, 96]"
+	[pageSizes]="pageSizes"
 />

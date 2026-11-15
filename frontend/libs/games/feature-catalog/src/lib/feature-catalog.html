@@ -1,0 +1,165 @@
+<section aria-labelledby="hero-heading" class="relative overflow-hidden border-b">
+	<img
+		[ngSrc]="heroImage"
+		[placeholder]="heroPlaceholder"
+		fill
+		priority
+		alt=""
+		aria-hidden="true"
+		class="pointer-events-none object-cover object-center select-none"
+	/>
+	<div
+		aria-hidden="true"
+		class="inset-0 from-background via-background/88 to-background/30 pointer-events-none absolute bg-linear-to-r"
+	></div>
+	<div
+		aria-hidden="true"
+		class="inset-0 from-background via-background/15 pointer-events-none absolute bg-linear-to-t to-transparent"
+	></div>
+
+	<div class="max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20 relative z-10 mx-auto">
+		<div class="max-w-2xl">
+			<h1 id="hero-heading" class="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+				Interactive Game Maps
+			</h1>
+			<p class="mt-3 text-base text-muted-foreground sm:text-lg">
+				Explore detailed game worlds with collectibles, quests, bosses, and hidden locations.
+			</p>
+
+			<ul class="mt-6 gap-x-6 gap-y-2 text-sm font-medium text-foreground/90 flex flex-wrap items-center">
+				@for (feature of features; track feature.label) {
+					<li class="gap-2 inline-flex items-center">
+						<ng-icon [name]="feature.icon" class="text-primary text-lg" aria-hidden="true" />
+						<span>{{ feature.label }}</span>
+					</li>
+				}
+			</ul>
+
+			<div class="mt-8 max-w-xl">
+				<hlm-input-group class="h-12 bg-background/95 backdrop-blur-xs shadow-sm">
+					<hlm-input-group-addon align="inline-start">
+						<ng-icon name="matSearchRound" aria-hidden="true" />
+					</hlm-input-group-addon>
+					<input
+						hlmInputGroupInput
+						type="search"
+						aria-label="Search games"
+						placeholder="Search games…"
+						class="[&::-webkit-search-cancel-button]:hidden"
+						[ngModel]="searchInput()"
+						(ngModelChange)="onSearchInput($event)"
+					/>
+					@if (searchInput()) {
+						<hlm-input-group-addon align="inline-end">
+							<button
+								hlmInputGroupButton
+								size="icon-sm"
+								aria-label="Clear search"
+								(click)="clearSearch()"
+							>
+								<ng-icon name="matCloseRound" aria-hidden="true" />
+							</button>
+						</hlm-input-group-addon>
+					}
+				</hlm-input-group>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section
+	class="max-w-7xl px-4 py-8 sm:px-6 sm:py-10 mx-auto w-full flex-1"
+	aria-labelledby="catalog-heading"
+	[attr.aria-busy]="listing.isFetching()"
+>
+	<div class="mb-6 gap-4 flex flex-wrap items-end justify-between">
+		<div class="min-w-0">
+			<h2 id="catalog-heading" class="text-2xl font-semibold tracking-tight">Games</h2>
+			<p class="mt-1 text-sm text-muted-foreground">Browse all available game atlases and interactive maps.</p>
+		</div>
+
+		<hlm-select [value]="sortSelection()" [itemToString]="sortLabel" (valueChange)="changeSort($event)">
+			<hlm-select-trigger aria-label="Sort games" class="min-w-44">
+				<ng-icon name="matSortRound" aria-hidden="true" />
+				<span class="text-muted-foreground">Sort:</span>
+				<hlm-select-value />
+			</hlm-select-trigger>
+			<hlm-select-content *hlmSelectPortal>
+				@for (option of sortOptions; track option.value) {
+					<hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+				}
+			</hlm-select-content>
+		</hlm-select>
+	</div>
+
+	@if (listing.isError()) {
+		<ui-error-state class="mb-6" icon="matCloudOffRound" [variant]="listing.data() ? 'compact' : 'default'">
+			<ng-container uiErrorStateHeading>
+				@if (listing.data()) {
+					Couldn’t refresh games
+				} @else {
+					Couldn’t load games
+				}
+			</ng-container>
+			<ng-container uiErrorStateDescription>
+				{{ listing.data() ? 'Previous results are still shown. ' : '' }}Check your connection and try again.
+			</ng-container>
+			<button
+				ui-button
+				variant="outline"
+				icon="matRefreshRound"
+				[loading]="listing.isFetching()"
+				(click)="listing.refetch()"
+			>
+				Retry
+			</button>
+		</ui-error-state>
+	}
+
+	@if (listing.isPending()) {
+		<span role="status" class="sr-only">Loading games…</span>
+		<div class="gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 grid grid-cols-1">
+			@for (index of skeletons(); track index) {
+				<games-catalog-card skeleton />
+			}
+		</div>
+	} @else if (listing.data() && !listing.data()?.items?.length) {
+		<div hlmEmpty class="border">
+			<div hlmEmptyHeader>
+				<div hlmEmptyMedia variant="icon" class="size-16">
+					<ng-icon name="matSportsEsportsRound" class="text-[--spacing(10)]" aria-hidden="true" />
+				</div>
+				<h3 hlmEmptyTitle>{{ search() ? 'No matching games' : 'No games yet' }}</h3>
+				<p hlmEmptyDescription>
+					{{
+						search()
+							? 'Try another name or clear your search.'
+							: 'Games added to the atlas will appear here.'
+					}}
+				</p>
+			</div>
+			@if (search()) {
+				<div hlmEmptyContent>
+					<button ui-button variant="outline" (click)="clearSearch()">Clear search</button>
+				</div>
+			}
+		</div>
+	} @else if (listing.data()) {
+		<div class="gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 grid grid-cols-1">
+			@for (game of listing.data()?.items ?? []; track game.id) {
+				<games-catalog-card [game]="game" />
+			}
+		</div>
+	}
+
+	@if (total() > 0) {
+		<hlm-numbered-pagination-query-params
+			class="mt-8 px-0"
+			[(offset)]="offset"
+			[(limit)]="limit"
+			(limitChange)="offset.set(0)"
+			[totalItems]="total()"
+			[pageSizes]="pageSizes"
+		/>
+	}
+</section>

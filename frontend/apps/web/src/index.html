@@ -1,13 +1,31 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Game Atlas</title>
+		<meta name="color-scheme" content="light dark" />
+		<meta id="theme-color-light" name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+		<meta id="theme-color-dark" name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
+		<title>GameAtlas</title>
 		<base href="/" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" type="image/x-icon" href="favicon.ico" />
 	</head>
 	<body>
+		<script>
+			try {
+				if (!/(?:^|;\s*)game-atlas\.theme=/.test(document.cookie)) {
+					const theme = localStorage.getItem('game-atlas.theme')
+
+					if (theme === 'light' || theme === 'dark') {
+						document.querySelector('meta[name="color-scheme"]').content = theme
+
+						for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
+							meta.media = meta.id === `theme-color-${theme}` ? 'all' : 'not all'
+						}
+					}
+				}
+			} catch {}
+		</script>
 		<app-root></app-root>
 	</body>
 </html>

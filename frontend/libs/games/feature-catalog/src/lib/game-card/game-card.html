@@ -1,0 +1,73 @@
+@let current = game();
+
+<hlm-card size="sm" class="gap-3 pt-0 pb-4 hover:shadow-md hover:ring-foreground/20 transition-shadow">
+	<a
+		class="bg-muted relative block aspect-16/7 overflow-hidden"
+		[routerLink]="!skeleton() && current ? ['/games', current.slug] : null"
+		[attr.tabindex]="skeleton() ? -1 : null"
+		[attr.aria-label]="current ? 'Open ' + current.name : null"
+	>
+		@if (skeleton()) {
+			<hlm-skeleton class="size-full rounded-none" />
+		} @else if (current?.banner; as banner) {
+			<ui-media-thumbnail
+				class="size-full transition-transform duration-300 group-hover/catalog-card:scale-103"
+				[image]="banner"
+				fit="cover"
+			/>
+		} @else {
+			<div
+				class="from-muted via-muted/75 to-accent/35 flex size-full items-center justify-center bg-linear-to-br"
+			>
+				<ng-icon
+					name="matSportsEsportsRound"
+					class="text-muted-foreground/35 text-5xl -rotate-12"
+					aria-hidden="true"
+				/>
+			</div>
+		}
+	</a>
+
+	<div hlmCardContent class="px-4 gap-3 flex items-center">
+		<a
+			class="size-12 rounded-lg bg-background block shrink-0 overflow-hidden border"
+			[routerLink]="!skeleton() && current ? ['/games', current.slug] : null"
+			[attr.tabindex]="skeleton() ? -1 : null"
+			[attr.aria-label]="current ? 'Open ' + current.name : null"
+		>
+			@if (skeleton()) {
+				<hlm-skeleton class="size-full rounded-none" />
+			} @else if (current) {
+				<ui-media-thumbnail class="size-full" [image]="current.cover" fit="cover" />
+			}
+		</a>
+
+		<div class="min-w-0 flex-1">
+			@if (skeleton()) {
+				<div class="h-5 flex items-center"><hlm-skeleton class="h-4 w-32 max-w-full" /></div>
+				<div class="mt-1 h-4 flex items-center"><hlm-skeleton class="h-3 w-24 max-w-full" /></div>
+			} @else if (current) {
+				<a
+					class="text-sm font-semibold leading-snug block truncate hover:underline"
+					[routerLink]="['/games', current.slug]"
+				>
+					{{ current.name }}
+				</a>
+				<p class="mt-0.5 text-xs text-muted-foreground truncate">{{ metadataLabel() }}</p>
+			}
+		</div>
+
+		@if (skeleton()) {
+			<div class="size-8 flex shrink-0 items-center justify-center"><hlm-skeleton class="size-4" /></div>
+		} @else if (current) {
+			<a
+				ui-button
+				variant="ghost"
+				size="icon-sm"
+				icon="matArrowForwardRound"
+				[routerLink]="['/games', current.slug]"
+				[attr.aria-label]="'Open ' + current.name"
+			></a>
+		}
+	</div>
+</hlm-card>

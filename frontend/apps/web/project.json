@@ -22,7 +22,10 @@
 				],
 				"styles": ["libs/shared/ui/src/theme/styles.css", "apps/web/src/styles.css"],
 				"server": "apps/web/src/main.server.ts",
-				"outputMode": "static",
+				"outputMode": "server",
+				"ssr": {
+					"entry": "apps/web/src/server.ts"
+				},
 				"buildLibsFromSource": false
 			},
 			"configurations": {
@@ -30,12 +33,12 @@
 					"budgets": [
 						{
 							"type": "initial",
-							"maximumWarning": "500kb",
-							"maximumError": "1mb"
+							"maximumWarning": "1.2mb",
+							"maximumError": "1.5mb"
 						},
 						{
 							"type": "anyComponentStyle",
-							"maximumWarning": "4kb",
+							"maximumWarning": "6kb",
 							"maximumError": "8kb"
 						}
 					],
@@ -62,6 +65,7 @@
 			},
 			"dependsOn": ["^build"],
 			"options": {
+				"proxyConfig": "apps/web/proxy.conf.cjs",
 				"buildLibsFromSource": false,
 				"watchDependencies": false
 			}

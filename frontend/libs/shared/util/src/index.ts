@@ -12,3 +12,4 @@ export type {
 } from './lib/media-picker-source'
 
 export { reorder } from './lib/reorder'
+export { DEFAULT_PAGE_SIZE, PAGE_SIZES } from './lib/pagination'

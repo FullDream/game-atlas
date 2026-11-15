@@ -64,7 +64,9 @@
 			"@spartan-ng/helm/toggle": ["./libs/shared/ui-helm/toggle/src/index.ts"],
 			"@spartan-ng/helm/toggle-group": ["./libs/shared/ui-helm/toggle-group/src/index.ts"],
 			"@spartan-ng/helm/tooltip": ["./libs/shared/ui-helm/tooltip/src/index.ts"],
-			"@spartan-ng/helm/utils": ["./libs/shared/ui-helm/utils/src/index.ts"]
+			"@spartan-ng/helm/utils": ["./libs/shared/ui-helm/utils/src/index.ts"],
+			"@spartan-ng/helm/card": ["./libs/shared/ui-helm/card/src/index.ts"],
+			"@game-atlas/games/feature-catalog": ["./libs/games/feature-catalog/src/index.ts"]
 		}
 	},
 	"exclude": ["node_modules", "tmp"]

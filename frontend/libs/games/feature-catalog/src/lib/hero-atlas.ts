@@ -1,0 +1,4 @@
+export const HERO_ATLAS_IMAGE_SRC = '/hero-atlas.webp'
+
+export const HERO_ATLAS_PLACEHOLDER =
+	'data:image/webp;base64,UklGRoAAAABXRUJQVlA4IHQAAADwBACdASogABIAPwFsr0+rJiQiKA1RYCAJYwDGfEYj181QRZH/bUBYa6qXg17jzgAA/urtq35y1fzEO8tSgN2+7r3hOwFAK51ot9ina9qxHM954oy9HT2B/K1xlMMoN4OXQWn9YkRxdcbmi3Pqsw7tA3XgAA=='
