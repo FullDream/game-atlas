@@ -7,7 +7,7 @@ export default defineConfig({
 	games: {
 		input: {
 			target: process.env['GAME_ATLAS_OPENAPI_URL'] ?? 'http://localhost:5041/openapi/v1.json',
-			filters: { tags: ['Games'] },
+			filters: { tags: ['Games', 'Public Games'] },
 		},
 		output: {
 			target: resolve(generated, 'api.ts'),

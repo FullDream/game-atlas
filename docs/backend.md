@@ -34,3 +34,5 @@ The detailed map handler supports `PublishedOnly` and `IncludeDrafts` internally
 ## Category feature ownership
 
 Category and CategoryGroup share Domain/Categories. Group use cases live under Application/Categories/Groups, and Api/Categories/Endpoints.cs maps both route families. Markers remain separate. Pure DTO mapping stays separate from tree retrieval and placement orchestration.
+
+Public game detail summaries aggregate visible category and marker counts by map in bounded database queries. Game totals are summed from the same map aggregates; empty maps return zero counts.

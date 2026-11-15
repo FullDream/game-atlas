@@ -38,17 +38,23 @@ public sealed class GetPublicGameHandler(IApplicationDbContext context) : IQuery
 			})
 			.ToArrayAsync(cancellationToken);
 
-		var categoryIds = from category in context.Categories
+		var visibleCategories = from category in context.Categories
 						  join categoryGroup in context.CategoryGroups on category.CategoryGroupId equals categoryGroup.Id
 						  join map in context.Maps on categoryGroup.MapId equals map.Id
 						  where map.GameId == game.Id && map.Status == PublicationStatus.Published
 						&& categoryGroup.Status == PublicationStatus.Published && category.Status == PublicationStatus.Published
-						  select category.Id;
+						  select new { category.Id, MapId = map.Id };
 
-		var categoriesCount = await categoryIds.CountAsync(cancellationToken);
+		var categoryCounts = await visibleCategories.GroupBy(category => category.MapId)
+			.ToDictionaryAsync(group => group.Key, group => group.Count(), cancellationToken);
 
-		var markersCount = await context.Markers.CountAsync(
-			marker => categoryIds.Contains(marker.CategoryId) && marker.Status == PublicationStatus.Published, cancellationToken);
+		var visibleMarkers = from marker in context.Markers
+							 join category in visibleCategories on marker.CategoryId equals category.Id
+							 where marker.Status == PublicationStatus.Published
+							 select new { category.MapId };
+
+		var markerCounts = await visibleMarkers.GroupBy(marker => marker.MapId)
+			.ToDictionaryAsync(group => group.Key, group => group.Count(), cancellationToken);
 
 		var assetIds = new[] { (Guid?)game.CoverId, game.BannerId }
 			.Concat(maps.Select(map => map.PreviewId)).OfType<Guid>().Distinct().ToArray();
@@ -58,9 +64,10 @@ public sealed class GetPublicGameHandler(IApplicationDbContext context) : IQuery
 
 		// Restrictive foreign keys protect these references; missing original files retain their asset metadata.
 		var gameMaps = maps.Select(map => new PublicGameMapDto(map.Id, map.Name, map.Slug,
-			map.PreviewId is { } previewId ? assets[previewId] : null)).ToArray();
+			map.PreviewId is { } previewId ? assets[previewId] : null,
+			markerCounts.GetValueOrDefault(map.Id), categoryCounts.GetValueOrDefault(map.Id))).ToArray();
 
 		return game.ToPublicDto(assets[game.CoverId], game.BannerId is { } bannerId ? assets[bannerId] : null,
-			markersCount, categoriesCount, gameMaps);
+			gameMaps.Sum(map => map.MarkersCount), gameMaps.Sum(map => map.CategoriesCount), gameMaps);
 	}
 }

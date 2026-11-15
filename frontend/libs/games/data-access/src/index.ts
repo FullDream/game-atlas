@@ -1,4 +1,6 @@
 export { GamesQueryOptions } from './lib/games-query-options'
+export { PublicGamesQueryOptions, type PublicGameDetailData } from './lib/public-games-query-options'
+export { PublicGamesService } from './lib/generated/public-games/public-games.service'
 export { getGameErrorMessage } from './lib/get-game-error-message'
 export { GamesService } from './lib/generated/games/games.service'
 export { GAMES_SERVER_URL, provideGamesBaseUrl } from './lib/generated/api.base-url'

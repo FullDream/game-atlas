@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-import { injectColorPicker } from './color-picker.token';
-import type { ColorPickerPreset } from './type';
-import { colorsEqual, parseColor } from './utils';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core'
+import { classes } from '@spartan-ng/helm/utils'
+import { injectColorPicker } from './color-picker.token'
+import type { ColorPickerPreset } from './type'
+import { colorsEqual, parseColor } from './utils'
 
-export type ColorPalette = readonly (readonly ColorPickerPreset[])[];
+export type ColorPalette = readonly (readonly ColorPickerPreset[])[]
 
 /** The 17-by-11 palette from the SimUI color-palette design. */
 export const COLOR_PICKER_DEFAULT_PALETTE: ColorPalette = [
@@ -217,7 +217,7 @@ export const COLOR_PICKER_DEFAULT_PALETTE: ColorPalette = [
 		'#451A03',
 		'#422006',
 	],
-] as const;
+] as const
 
 @Component({
 	selector: 'sim-color-palette',
@@ -240,7 +240,7 @@ export const COLOR_PICKER_DEFAULT_PALETTE: ColorPalette = [
 						type="button"
 						role="gridcell"
 						data-slot="color-palette-swatch"
-						class="ring-ring relative min-w-0 cursor-pointer outline-none after:pointer-events-none after:absolute after:inset-0 after:border-[3px] after:border-transparent focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset aria-selected:after:border-white"
+						class="ring-ring min-w-0 after:inset-0 aria-selected:after:border-white relative cursor-pointer outline-none after:pointer-events-none after:absolute after:border-[3px] after:border-transparent focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset"
 						[style.backgroundColor]="color"
 						[attr.aria-label]="'Select ' + color"
 						[attr.aria-selected]="isSelected(rowIndex, columnIndex)"
@@ -248,7 +248,8 @@ export const COLOR_PICKER_DEFAULT_PALETTE: ColorPalette = [
 						[attr.aria-colindex]="columnIndex + 1"
 						[tabIndex]="tabIndex(rowIndex, columnIndex)"
 						(click)="select(color)"
-						(keydown)="onKeydown($event, rowIndex, columnIndex)"></button>
+						(keydown)="onKeydown($event, rowIndex, columnIndex)"
+					></button>
 				}
 			</div>
 		}
@@ -256,82 +257,90 @@ export const COLOR_PICKER_DEFAULT_PALETTE: ColorPalette = [
 })
 export class ColorPaletteComponent {
 	/** Palette rows to render. All rows should contain the same number of colors. */
-	public readonly colors = input<ColorPalette>(COLOR_PICKER_DEFAULT_PALETTE);
+	public readonly colors = input<ColorPalette>(COLOR_PICKER_DEFAULT_PALETTE)
 	/** Accessible name announced for the palette grid. */
-	public readonly ariaLabel = input('Color palette');
+	public readonly ariaLabel = input('Color palette')
 
-	protected readonly picker = injectColorPicker();
-	protected readonly columnCount = computed(() => this.colors()[0]?.length ?? 0);
-	protected readonly paletteAspectRatio = computed(() => `${this.columnCount()} / ${this.colors().length}`);
-	private readonly selectedIndex = computed(() => {
-		const current = this.picker.state();
+	protected readonly picker = injectColorPicker()
+	protected readonly columnCount = computed(() => this.colors()[0]?.length ?? 0)
+	protected readonly paletteAspectRatio = computed(() => `${this.columnCount()} / ${this.colors().length}`)
+
+	readonly #selectedIndex = computed(() => {
+		const current = this.picker.state()
+
 		return this.colors()
 			.flat()
-			.findIndex((color) => {
-				const parsed = parseColor(color, current.h);
-				return parsed ? colorsEqual({ ...parsed, a: current.a }, current, 0.5) : false;
-			});
-	});
+			.findIndex(color => {
+				const parsed = parseColor(color, current.h)
+
+				return parsed ? colorsEqual({ ...parsed, a: current.a }, current, 0.5) : false
+			})
+	})
 
 	constructor() {
 		classes(
 			() =>
-				'border-border grid w-full grid-rows-[repeat(var(--palette-rows),minmax(0,1fr))] overflow-hidden rounded-lg border',
-		);
+				'border-border rounded-lg grid w-full grid-rows-[repeat(var(--palette-rows),minmax(0,1fr))] overflow-hidden border',
+		)
 	}
 
 	protected select(color: ColorPickerPreset): void {
-		const parsed = parseColor(color, this.picker.state().h);
-		if (parsed) this.picker.commit({ ...parsed, a: this.picker.state().a });
+		const parsed = parseColor(color, this.picker.state().h)
+
+		if (parsed) this.picker.commit({ ...parsed, a: this.picker.state().a })
 	}
 
 	protected isSelected(rowIndex: number, columnIndex: number): boolean {
-		return rowIndex * this.columnCount() + columnIndex === this.selectedIndex();
+		return rowIndex * this.columnCount() + columnIndex === this.#selectedIndex()
 	}
 
 	protected tabIndex(rowIndex: number, columnIndex: number): 0 | -1 {
-		const index = rowIndex * this.columnCount() + columnIndex;
-		return index === Math.max(this.selectedIndex(), 0) ? 0 : -1;
+		const index = rowIndex * this.columnCount() + columnIndex
+
+		return index === Math.max(this.#selectedIndex(), 0) ? 0 : -1
 	}
 
 	protected onKeydown(event: KeyboardEvent, rowIndex: number, columnIndex: number): void {
-		const rows = this.colors().length;
-		const columns = this.columnCount();
-		let nextRow = rowIndex;
-		let nextColumn = columnIndex;
+		const rows = this.colors().length
+		const columns = this.columnCount()
+		let nextRow = rowIndex
+		let nextColumn = columnIndex
 
 		switch (event.key) {
 			case 'ArrowLeft':
-				nextColumn = Math.max(0, columnIndex - 1);
-				break;
+				nextColumn = Math.max(0, columnIndex - 1)
+				break
 			case 'ArrowRight':
-				nextColumn = Math.min(columns - 1, columnIndex + 1);
-				break;
+				nextColumn = Math.min(columns - 1, columnIndex + 1)
+				break
 			case 'ArrowUp':
-				nextRow = Math.max(0, rowIndex - 1);
-				break;
+				nextRow = Math.max(0, rowIndex - 1)
+				break
 			case 'ArrowDown':
-				nextRow = Math.min(rows - 1, rowIndex + 1);
-				break;
+				nextRow = Math.min(rows - 1, rowIndex + 1)
+				break
 			case 'Home':
-				nextRow = event.ctrlKey ? 0 : rowIndex;
-				nextColumn = 0;
-				break;
+				nextRow = event.ctrlKey ? 0 : rowIndex
+				nextColumn = 0
+				break
 			case 'End':
-				nextRow = event.ctrlKey ? rows - 1 : rowIndex;
-				nextColumn = columns - 1;
-				break;
+				nextRow = event.ctrlKey ? rows - 1 : rowIndex
+				nextColumn = columns - 1
+				break
 			default:
-				return;
+				return
 		}
 
-		event.preventDefault();
-		const color = this.colors()[nextRow]?.[nextColumn];
-		if (!color) return;
-		this.select(color);
+		event.preventDefault()
+		const color = this.colors()[nextRow]?.[nextColumn]
+
+		if (!color) return
+
+		this.select(color)
 		const swatches = (event.currentTarget as HTMLElement)
 			.closest('[data-slot="color-palette"]')
-			?.querySelectorAll<HTMLElement>('[data-slot="color-palette-swatch"]');
-		swatches?.[nextRow * columns + nextColumn]?.focus();
+			?.querySelectorAll<HTMLElement>('[data-slot="color-palette-swatch"]')
+
+		swatches?.[nextRow * columns + nextColumn]?.focus()
 	}
 }

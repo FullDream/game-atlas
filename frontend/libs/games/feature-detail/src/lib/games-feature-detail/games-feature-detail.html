@@ -1,0 +1,192 @@
+<ng-container [uiPageLoading]="detail.isFetching()" />
+
+<nav hlmBreadcrumb aria-label="Game breadcrumb">
+	<ol hlmBreadcrumbList>
+		<li hlmBreadcrumbItem>
+			<a hlmBreadcrumbLink link="/" aria-label="Home"><ng-icon name="matHomeRound" aria-hidden="true" /></a>
+		</li>
+		<li hlmBreadcrumbSeparator></li>
+		<li hlmBreadcrumbItem><a hlmBreadcrumbLink link="/">Games</a></li>
+		<li hlmBreadcrumbSeparator></li>
+		<li hlmBreadcrumbItem class="min-w-0">
+			@if (game(); as current) {
+				<span hlmBreadcrumbPage class="truncate">{{ current.name }}</span>
+			} @else if (detail.isError()) {
+				<span hlmBreadcrumbPage>Game unavailable</span>
+			} @else {
+				<hlm-skeleton class="h-4 w-32" />
+			}
+		</li>
+	</ol>
+</nav>
+
+@if (detail.isError()) {
+	@if (detail.error().status === 404) {
+		<div hlmEmpty class="my-12 border">
+			<div hlmEmptyHeader>
+				<div hlmEmptyMedia variant="icon"><ng-icon name="matMapRound" aria-hidden="true" /></div>
+				<h1 hlmEmptyTitle>Game unavailable</h1>
+				<p hlmEmptyDescription>This game could not be found or is no longer published.</p>
+			</div>
+			<div hlmEmptyContent>
+				<a ui-button routerLink="/" variant="outline" icon="matArrowBackRound">Back to games</a>
+			</div>
+		</div>
+	} @else {
+		<ui-error-state icon="matCloudOffRound">
+			<ng-container uiErrorStateHeading>Unable to load game</ng-container>
+			<ng-container uiErrorStateDescription>Please try again.</ng-container>
+			<button
+				ui-button
+				type="button"
+				variant="outline"
+				icon="matRefreshRound"
+				[loading]="detail.isFetching()"
+				(click)="detail.refetch()"
+			>
+				Retry
+			</button>
+			<a ui-button routerLink="/" variant="ghost">Back to games</a>
+		</ui-error-state>
+	}
+} @else {
+	<section
+		class="bg-muted rounded-2xl relative isolate overflow-hidden"
+		[attr.aria-busy]="partial()"
+		aria-label="Game overview"
+	>
+		@if (game(); as current) {
+			<ui-image-preview class="inset-0 absolute -z-20" [image]="current.banner" />
+			<div
+				class="inset-0 from-black/85 via-black/65 to-black/20 absolute -z-10 bg-linear-to-r"
+				aria-hidden="true"
+			></div>
+			<div
+				class="min-h-64 gap-6 p-6 text-white sm:flex-row sm:items-center sm:p-8 lg:min-h-72 lg:p-10 flex flex-col"
+			>
+				<ui-media-thumbnail
+					class="h-40 w-32 rounded-xl border-white/90 sm:h-44 sm:w-36 shrink-0 border-4"
+					[image]="current.cover"
+					fit="cover"
+				/>
+				<div class="min-w-0 max-w-2xl space-y-5">
+					<h1 class="text-3xl font-bold tracking-tight sm:text-4xl wrap-break-word">{{ current.name }}</h1>
+					@if (partial()) {
+						<div class="space-y-2" aria-label="Loading game description">
+							<hlm-skeleton class="h-4 max-w-md bg-white/20 w-full" />
+							<hlm-skeleton class="h-4 bg-white/20 w-3/4" />
+						</div>
+					} @else if (current.description) {
+						<p class="text-sm leading-relaxed text-white/90 sm:text-base whitespace-pre-line">
+							{{ current.description }}
+						</p>
+					}
+					<div class="gap-3 text-sm font-semibold flex flex-wrap">
+						<span class="gap-2 bg-white/15 px-4 py-2 backdrop-blur-sm flex items-center rounded-full">
+							<ng-icon name="matMapRound" aria-hidden="true" />
+							{{ countLabel(current.mapsCount, 'map') }}
+						</span>
+						<span class="gap-2 bg-white/15 px-4 py-2 backdrop-blur-sm flex items-center rounded-full">
+							<ng-icon name="matLocationOnRound" aria-hidden="true" />
+							{{ countLabel(current.markersCount, 'marker') }}
+						</span>
+					</div>
+				</div>
+			</div>
+		} @else {
+			<div
+				class="min-h-64 gap-6 p-6 sm:flex-row sm:items-center sm:p-8 lg:min-h-72 lg:p-10 flex flex-col"
+				aria-label="Loading game"
+			>
+				<hlm-skeleton class="h-40 w-32 rounded-xl sm:h-44 sm:w-36 shrink-0" />
+				<div class="space-y-5 flex-1">
+					<hlm-skeleton class="h-10 w-3/4" />
+					<hlm-skeleton class="h-4 max-w-md w-full" />
+					<hlm-skeleton class="h-8 w-48 rounded-full" />
+				</div>
+			</div>
+		}
+	</section>
+
+	<section class="pb-8" aria-labelledby="game-maps-heading" [attr.aria-busy]="partial()">
+		<div class="mb-6 space-y-1">
+			<h2 id="game-maps-heading" class="text-2xl font-bold tracking-tight sm:text-3xl">Maps</h2>
+			<p class="text-muted-foreground">Choose a map to explore</p>
+		</div>
+		<div class="gap-6 md:grid-cols-2 grid">
+			@if (partial()) {
+				@for (index of mapSkeletons(); track index) {
+					<hlm-card class="gap-0 pt-0" aria-hidden="true">
+						<hlm-skeleton class="aspect-3/1 w-full rounded-none" />
+						<div hlmCardContent class="space-y-3 pt-5">
+							<hlm-skeleton class="h-6 w-40" />
+							<hlm-skeleton class="h-4 w-56 max-w-full" />
+						</div>
+					</hlm-card>
+				}
+			} @else {
+				@for (map of game()?.maps ?? []; track map.id) {
+					<article
+						hlmCard
+						class="group/map-card gap-0 pt-0 hover:shadow-md hover:ring-foreground/20 transition-shadow"
+					>
+						<a
+							class="block aspect-3/1 overflow-hidden"
+							[routerLink]="['/games', slug(), 'maps', map.slug]"
+							[attr.aria-label]="'Open ' + map.name"
+						>
+							<ui-image-preview
+								class="size-full transform-gpu transition-transform duration-300 will-change-transform group-hover/map-card:scale-103"
+								[image]="map.preview"
+							/>
+						</a>
+						<div hlmCardContent class="gap-4 pt-5 flex items-center">
+							<div class="min-w-0 space-y-2 flex-1">
+								<h3 class="text-xl font-semibold wrap-break-word">
+									<a [routerLink]="['/games', slug(), 'maps', map.slug]" class="hover:underline">
+										{{ map.name }}
+									</a>
+								</h3>
+								<div class="text-muted-foreground gap-x-5 gap-y-2 text-sm flex flex-wrap">
+									<span class="gap-1.5 flex items-center">
+										<ng-icon
+											name="matLocationOnRound"
+											class="text-base shrink-0 leading-none [&>svg]:block"
+											aria-hidden="true"
+										/>
+										<span>{{ countLabel(map.markersCount, 'marker') }}</span>
+									</span>
+									<span class="gap-1.5 flex items-center">
+										<ng-icon
+											name="matCategoryRound"
+											class="text-base shrink-0 leading-none [&>svg]:block"
+											aria-hidden="true"
+										/>
+										<span>{{ countLabel(map.categoriesCount, 'category', 'categories') }}</span>
+									</span>
+								</div>
+							</div>
+							<a
+								ui-button
+								variant="ghost"
+								size="icon-sm"
+								icon="matArrowForwardRound"
+								class="shrink-0"
+								[routerLink]="['/games', slug(), 'maps', map.slug]"
+								[attr.aria-label]="'Open ' + map.name"
+							></a>
+						</div>
+					</article>
+				} @empty {
+					<div hlmEmpty class="md:col-span-2 border">
+						<div hlmEmptyHeader>
+							<div hlmEmptyMedia variant="icon"><ng-icon name="matMapRound" aria-hidden="true" /></div>
+							<h3 hlmEmptyTitle>No maps yet</h3>
+							<p hlmEmptyDescription>Published maps for this game will appear here.</p>
+						</div>
+					</div>
+				}
+			}
+		</div>
+	</section>
+}

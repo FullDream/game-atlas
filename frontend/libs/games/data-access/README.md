@@ -16,7 +16,7 @@ Start the backend, then run from `frontend`:
 npm exec nx -- run games-data-access:generate-api
 ```
 
-Orval reads `http://localhost:5041/openapi/v1.json`, selects the `Games` tag and writes Angular HttpClient services plus referenced schemas to `src/lib/generated`. Other resource services are not generated. Override `GAME_ATLAS_OPENAPI_URL` when the development document is elsewhere; this is a generation input, not a runtime API origin.
+Orval reads `http://localhost:5041/openapi/v1.json`, selects the `Games` and `Public Games` tags and writes Angular HttpClient services plus referenced schemas to `src/lib/generated`. Other resource services are not generated. Override `GAME_ATLAS_OPENAPI_URL` when the development document is elsewhere; this is a generation input, not a runtime API origin.
 
 Generation is deliberately uncached because the HTTP document can change without a local source-file change. The post-generation hook formats output with the repository Prettier configuration. Generated sources belong in version control; normal builds and tests do not fetch OpenAPI. An unchanged document and pinned tooling must regenerate without drift. Fetch/parse failures are errors, not a fallback to old catalog data. Orval cleans its generated directory before fetching; after a failed generation, rerun with an available document or restore the tracked generated files before building.
 
@@ -40,3 +40,9 @@ npm exec nx -- lint games-data-access
 ```
 
 The non-buildable library's test compilation uses the admin development build, while runtime source remains independent of admin. Tests use Angular's HTTP testing backend, not persistent backend data.
+
+## Public game reads
+
+`PublicGamesQueryOptions.getList(params)` uses the generated PublicGamesService and public contracts. `getDetail(slug)` uses `/public/games/{gameSlug}`. Public list/detail keys are separate from management keys. Public factories inherit application stale time: web defaults to Infinity, while management retains its existing policy. Explicit refetch/invalidation still works; normal cache garbage collection is unchanged.
+
+A detail without complete cached data uses the newest successful public list containing the exact slug as temporary placeholder data. `PublicGameDetailData` admits absent detail-only fields instead of fabricating a complete PublicGame. Placeholder data never seeds the authoritative detail cache or suppresses its request. Consumers use isPlaceholderData for partial content, isLoading for a cold fetch and isFetching for header progress. Failed requests remain errors and cancellation unsubscribes HTTP.

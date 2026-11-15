@@ -3,6 +3,7 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router'
 import { getGameQueryKey, gamesListKey, provideGamesBaseUrl } from '@game-atlas/games/data-access'
 import { MEDIA_PICKER_SOURCE } from '@game-atlas/shared/util'
+import { PageTitleStrategy } from '@game-atlas/shared/ui'
 import { provideSignalR } from '@game-atlas/shared/data-access'
 import { MediaPickerAdapter, provideMediaBaseUrl } from '@game-atlas/media/data-access'
 import { provideBrnDialogDefaultOptions } from '@spartan-ng/brain/dialog'
@@ -35,7 +36,8 @@ export const appConfig: ApplicationConfig = {
 		provideBrowserGlobalErrorListeners(),
 		{ provide: MEDIA_PICKER_SOURCE, useExisting: MediaPickerAdapter },
 		provideRouter(APP_ROUTES, withComponentInputBinding()),
-		{ provide: TitleStrategy, useClass: AdminTitleStrategy },
+		{ provide: PageTitleStrategy, useClass: AdminTitleStrategy },
+		{ provide: TitleStrategy, useExisting: PageTitleStrategy },
 		provideHttpClient(withXhr()),
 		provideSignalR(),
 		provideSpartanHlm(),

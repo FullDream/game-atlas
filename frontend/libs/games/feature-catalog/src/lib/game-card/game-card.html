@@ -9,22 +9,11 @@
 	>
 		@if (skeleton()) {
 			<hlm-skeleton class="size-full rounded-none" />
-		} @else if (current?.banner; as banner) {
-			<ui-media-thumbnail
-				class="size-full transition-transform duration-300 group-hover/catalog-card:scale-103"
-				[image]="banner"
-				fit="cover"
-			/>
 		} @else {
-			<div
-				class="from-muted via-muted/75 to-accent/35 flex size-full items-center justify-center bg-linear-to-br"
-			>
-				<ng-icon
-					name="matSportsEsportsRound"
-					class="text-muted-foreground/35 text-5xl -rotate-12"
-					aria-hidden="true"
-				/>
-			</div>
+			<ui-image-preview
+				class="size-full transform-gpu transition-transform duration-300 will-change-transform group-hover/catalog-card:scale-103"
+				[image]="current?.banner ?? null"
+			/>
 		}
 	</a>
 

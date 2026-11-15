@@ -3,7 +3,7 @@ import { CdkPortalOutlet } from '@angular/cdk/portal'
 import { Component, inject } from '@angular/core'
 import { toSignal } from '@angular/core/rxjs-interop'
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
-import { PageHeaderOutlet, ThemeSwitcher, WorkspaceBreadcrumbs } from '@game-atlas/shared/ui'
+import { PageHeaderOutlet, PageLoading, PageProgress, ThemeSwitcher, WorkspaceBreadcrumbs } from '@game-atlas/shared/ui'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import { matMapRound, matPhotoLibraryRound, matSportsEsportsRound } from '@ng-icons/material-symbols/round'
 import {
@@ -21,10 +21,9 @@ import {
 	HlmSidebarTrigger,
 	HlmSidebarWrapper,
 } from '@spartan-ng/helm/sidebar'
-import { HlmProgress, HlmProgressIndicator } from '@spartan-ng/helm/progress'
+
 import { filter, map } from 'rxjs'
 import { ThemeSettings } from '../theme-settings'
-import { NavigationLoading } from './navigation-loading'
 
 @Component({
 	selector: 'app-layout',
@@ -38,8 +37,7 @@ import { NavigationLoading } from './navigation-loading'
 		WorkspaceBreadcrumbs,
 		PageHeaderOutlet,
 		CdkPortalOutlet,
-		HlmProgress,
-		HlmProgressIndicator,
+		PageProgress,
 		HlmSidebar,
 		HlmSidebarWrapper,
 		HlmSidebarHeader,
@@ -54,13 +52,12 @@ import { NavigationLoading } from './navigation-loading'
 		HlmSidebarInset,
 	],
 	templateUrl: './layout.html',
-	providers: [provideIcons({ matSportsEsportsRound, matPhotoLibraryRound, matMapRound })],
+	providers: [PageLoading, provideIcons({ matSportsEsportsRound, matPhotoLibraryRound, matMapRound })],
 	host: { class: 'block h-dvh overflow-hidden' },
 })
 export class Layout {
 	protected readonly sidebar = inject(HlmSidebarService)
 	protected readonly themeSettings = inject(ThemeSettings)
-	protected readonly navigationLoading = inject(NavigationLoading).loading
 	readonly #router = inject(Router)
 	readonly #activatedRoute = inject(ActivatedRoute)
 

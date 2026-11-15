@@ -1,9 +1,9 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { HlmButtonImports } from '@spartan-ng/helm/button';
-import { classes } from '@spartan-ng/helm/utils';
-import { injectColorPicker } from './color-picker.token';
-import type { ColorPickerPreset } from './type';
-import { colorsEqual, formatColor, parseColor } from './utils';
+import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core'
+import { HlmButtonImports } from '@spartan-ng/helm/button'
+import { classes } from '@spartan-ng/helm/utils'
+import { injectColorPicker } from './color-picker.token'
+import type { ColorPickerPreset } from './type'
+import { colorsEqual, formatColor, parseColor } from './utils'
 
 @Component({
 	selector: 'sim-color-presets',
@@ -64,6 +64,7 @@ export class ColorPresetsComponent {
 
 	protected select(preset: ColorPickerPreset): void {
 		const parsed = parseColor(preset, this.picker.state().h)
+
 		if (parsed) this.picker.commit({ ...parsed, a: this.picker.state().a })
 	}
 
@@ -72,6 +73,7 @@ export class ColorPresetsComponent {
 		const presets = this.picker.presets()
 		const alreadySaved = presets.some(preset => {
 			const parsed = parseColor(preset, currentColor.h)
+
 			return parsed ? colorsEqual(parsed, currentColor, 0.5) : false
 		})
 
@@ -80,6 +82,7 @@ export class ColorPresetsComponent {
 
 	protected isSelected(preset: ColorPickerPreset): boolean {
 		const parsed = parseColor(preset, this.picker.state().h)
+
 		return parsed ? colorsEqual({ ...parsed, a: this.picker.state().a }, this.picker.state(), 0.5) : false
 	}
 }

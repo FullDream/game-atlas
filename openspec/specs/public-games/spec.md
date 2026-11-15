@@ -28,7 +28,7 @@ The public list SHALL use offset 0 and limit 20 by default, with offset at least
 
 ### Requirement: Resolve published game details by slug
 
-Unauthenticated GET /public/games/{gameSlug} SHALL return id, name, slug, cover, nullable banner, releaseDate, developer, description, mapsCount, markersCount, categoriesCount and maps. Maps SHALL be summaries with id, name, slug and nullable canonical ImageAsset preview, ordered by createdAt then id ascending. Missing, deleted or draft games SHALL return 404 ProblemDetails. Reads SHALL NOT change stored data or timestamps.
+Unauthenticated GET /public/games/{gameSlug} SHALL return id, name, slug, cover, nullable banner, releaseDate, developer, description, mapsCount, markersCount, categoriesCount and maps. Maps SHALL be summaries with id, name, slug, markersCount, categoriesCount and nullable canonical ImageAsset preview, ordered by createdAt then id ascending. Missing, deleted or draft games SHALL return 404 ProblemDetails. Reads SHALL NOT change stored data or timestamps.
 
 #### Scenario: Published game with mixed maps
 
@@ -40,6 +40,12 @@ Unauthenticated GET /public/games/{gameSlug} SHALL return id, name, slug, cover,
 
 - **WHEN** the game exists and is published but has no published maps
 - **THEN** details return 200 with maps=[] and zero content counts
+
+#### Scenario: Count content per map
+
+- **WHEN** summaries include maps with mixed publication states in their groups, categories and markers
+- **THEN** each summary counts only published categories under published groups and published markers under those categories
+- **AND** empty maps return zero counts and game totals equal the sums of the map counts
 
 ### Requirement: Count only publicly visible content
 

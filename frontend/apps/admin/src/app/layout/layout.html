@@ -96,15 +96,7 @@
 				<h1 class="sr-only">{{ heading() }}</h1>
 			</div>
 
-			@if (navigationLoading() || pageHeader.loading()) {
-				<hlm-progress
-					[value]="null"
-					aria-label="Loading page"
-					class="inset-x-0 bottom-0 h-0.5 absolute rounded-none"
-				>
-					<hlm-progress-indicator />
-				</hlm-progress>
-			}
+			<ui-page-progress />
 
 			<div class="gap-2 flex shrink-0 items-center empty:hidden">
 				<ng-template [cdkPortalOutlet]="pageHeader.portal()" />

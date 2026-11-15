@@ -13,3 +13,4 @@ export type {
 
 export { reorder } from './lib/reorder'
 export { DEFAULT_PAGE_SIZE, PAGE_SIZES } from './lib/pagination'
+export { formatCount } from './lib/format-count'

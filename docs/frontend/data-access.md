@@ -57,3 +57,9 @@ Generic SignalR providers are exported by `@game-atlas/shared/data-access`, spli
 ## Category tree mutations
 
 CategoriesQueryOptions exposes getList(gameId, mapId), create/update/delete and createGroup/updateGroup/deleteGroup. The tree key comes from getCategoriesQueryKey(gameId, mapId). Variables include route IDs and generated request fields. CategoriesService owns group/category operations. Successful writes await exact tree invalidation. This stage explicitly defers optimistic updates and direct cache transformations; the general optimistic policy resumes for categories in the next step. Features preserve server data until refresh, lock conflicting writes while pending and own error presentation.
+
+## Public Games and web freshness
+
+Games generation selects the exact `Games` and `Public Games` tags in the shared data-access library. Public list/detail options and keys are independent of management representations. Public options inherit application freshness; web defaults to `staleTime: Infinity`, preserving explicit refetch and invalidation and ordinary garbage collection. Admin keeps its existing policy.
+
+Public details reuse a matching card from the newest successful cached public list as `placeholderData`, never `initialData`. Card data omits detail-only fields and does not become an authoritative cached detail or block its fetch. Distinguish placeholder loading from authoritative null/empty fields; errors take precedence over partial rendering. SSR resolves complete public reads and transfers them through the existing per-request QueryClient hydration.

@@ -5,13 +5,13 @@ import { FormsModule } from '@angular/forms'
 import { Router } from '@angular/router'
 import {
 	GAME_SORT_OPTIONS,
-	GamesQueryOptions,
+	PublicGamesQueryOptions,
 	getGameSortLabel,
-	type ListGamesSortBy as GameSortBy,
-	type ListGamesSortDirection as SortDirection,
+	type ListPublicGamesSortBy as GameSortBy,
+	type ListPublicGamesSortDirection as SortDirection,
 	parseGameSort,
 } from '@game-atlas/games/data-access'
-import { Button, ErrorState } from '@game-atlas/shared/ui'
+import { Button, ErrorState, PageLoadingSource } from '@game-atlas/shared/ui'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from '@game-atlas/shared/util'
 import { NgIcon, provideIcons } from '@ng-icons/core'
 import {
@@ -37,6 +37,7 @@ import { HERO_ATLAS_IMAGE_SRC, HERO_ATLAS_PLACEHOLDER } from './hero-atlas'
 @Component({
 	selector: 'games-catalog',
 	imports: [
+		PageLoadingSource,
 		NgOptimizedImage,
 		FormsModule,
 		NgIcon,
@@ -66,7 +67,7 @@ import { HERO_ATLAS_IMAGE_SRC, HERO_ATLAS_PLACEHOLDER } from './hero-atlas'
 	},
 })
 export class FeatureCatalog {
-	readonly #options = inject(GamesQueryOptions)
+	readonly #options = inject(PublicGamesQueryOptions)
 	readonly #router = inject(Router)
 	readonly #platformId = inject(PLATFORM_ID)
 

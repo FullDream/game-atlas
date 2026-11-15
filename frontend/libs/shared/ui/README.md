@@ -40,3 +40,15 @@ The shared Field component (`<ui-field>`) composes the Helm field primitives. Pa
 Use the progress entrypoint through HlmProgress and HlmProgressIndicator. A null value selects Brain/Helm indeterminate behavior. The indicator supports default, muted and destructive variants with reduced-motion support; Brain owns progressbar semantics and accessible numeric values.
 
 ColorPicker supports the optional `clearable` input (disabled by default). When enabled, the popover value input includes a Clear color button and accepts an empty value on blur or Enter. Clearing emits an empty string and keeps the popover open. Enable it only for fields that accept an absent color.
+
+## Page loading
+
+Provide `PageLoading` on the application shell above its routed content, and mount `ui-page-progress` inside a positioned header. The shared progress component combines Router.currentNavigation with registered loading sources and renders an accessible indeterminate Spartan line without moving header content.
+
+Import `PageLoadingSource` and declare `<ng-container [uiPageLoading]="query.isFetching()" />` in a feature template. Each declaration unregisters on destruction and cannot clear another source. Existing uiPageHeaderPortal `[loading]` declarations contribute to the same context without changing their API. The context belongs to each shell, including isolated SSR requests.
+
+`ImagePreview` (`ui-image-preview`) renders a nullable image through MediaThumbnail or a styled map-icon fallback. Its host dimensions are supplied by the caller.
+
+## Page titles
+
+`PageTitleStrategy` extends Angular TitleStrategy and owns browser-title formatting for route titles and asynchronous feature titles. Each application supplies a subclass with its applicationTitle and registers it under PageTitleStrategy; Angular TitleStrategy aliases that same instance with useExisting. Features inject the shared strategy and call `setPageTitle(name)` in an effect when loaded names change. Pass only the page name; the strategy supplies the application suffix. An absent page name uses the application title alone.

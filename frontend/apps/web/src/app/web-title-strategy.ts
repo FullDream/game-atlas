@@ -1,16 +1,7 @@
-import { inject, Injectable } from '@angular/core'
-import { Title } from '@angular/platform-browser'
-import { RouterStateSnapshot, TitleStrategy } from '@angular/router'
-
-const applicationTitle = 'GameAtlas'
+import { Injectable } from '@angular/core'
+import { PageTitleStrategy } from '@game-atlas/shared/ui'
 
 @Injectable()
-export class WebTitleStrategy extends TitleStrategy {
-	readonly #title = inject(Title)
-
-	override updateTitle(snapshot: RouterStateSnapshot): void {
-		const pageTitle = this.buildTitle(snapshot)
-
-		this.#title.setTitle(pageTitle ? `${pageTitle} | ${applicationTitle}` : applicationTitle)
-	}
+export class WebTitleStrategy extends PageTitleStrategy {
+	protected readonly applicationTitle = 'GameAtlas'
 }

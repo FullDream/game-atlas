@@ -102,6 +102,8 @@ public class PublicReadTests(ITestOutputHelper output)
 		Assert.Equal(1, detail.MarkersCount);
 		Assert.Equal(1, detail.CategoriesCount);
 		Assert.Null(detail.Maps[0].Preview);
+		Assert.Equal(1, detail.Maps[0].MarkersCount);
+		Assert.Equal(1, detail.Maps[0].CategoriesCount);
 		var card = Assert.Single((await client.GetFromJsonAsync<PaginatedResult<PublicGameCardDto>>("/public/games"))!.Items);
 
 		Assert.Equal(detail.MarkersCount, card.MarkersCount);
@@ -137,6 +139,51 @@ public class PublicReadTests(ITestOutputHelper output)
 
 		Assert.Equal(game.UpdatedAt, (await db.Games.AsNoTracking().SingleAsync(item => item.Id == game.Id)).UpdatedAt);
 		Assert.Equal(map.UpdatedAt, (await db.Maps.AsNoTracking().SingleAsync(item => item.Id == map.Id)).UpdatedAt);
+	}
+
+	[Fact]
+	public async Task GameSummariesKeepPerMapCountsAndEmptyMaps()
+	{
+		await using var factory = new GameApiFactory();
+		await factory.MigrateAsync();
+		var game = await DeleteGameHandlerTests.SeedAsync(factory, "counts", PublicationStatus.Published);
+		await DeleteGameHandlerTests.SeedAsync(factory, "empty", PublicationStatus.Published);
+		await using var scope = factory.Services.CreateAsyncScope();
+		var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+		var maps = Enumerable.Range(0, 3).Select(index => Map.Create(game.Id, $"Map {index}",
+			Slug.Create($"map-{index}").Value!, PublicationStatus.Published).Value!).ToArray();
+
+		db.Maps.AddRange(maps);
+
+		foreach (var index in new[] { 0, 1 })
+		{
+			var group = CategoryGroup.Create(maps[index].Id, "Group", 1, status: PublicationStatus.Published).Value!;
+			var category = Category.Create(group.Id, "Category", null, null, 1, PublicationStatus.Published).Value!;
+
+			db.CategoryGroups.Add(group);
+			db.Categories.Add(category);
+			db.Markers.AddRange(Enumerable.Range(0, index + 1).Select(marker => Marker.Create(category.Id,
+				$"Marker {marker}", Position.Create(marker, marker).Value!, status: PublicationStatus.Published).Value!));
+		}
+
+		await db.SaveChangesAsync();
+		using var client = factory.CreateHttpsClient();
+		var detail = (await client.GetFromJsonAsync<PublicGameDto>("/public/games/counts"))!;
+
+		Assert.Equal(maps.OrderBy(map => map.CreatedAt).ThenBy(map => map.Id).Select(map => map.Id),
+			detail.Maps.Select(map => map.Id));
+		Assert.Equal(3, detail.MarkersCount);
+		Assert.Equal(2, detail.CategoriesCount);
+		Assert.Equal(detail.MarkersCount, detail.Maps.Sum(map => map.MarkersCount));
+		Assert.Equal(detail.CategoriesCount, detail.Maps.Sum(map => map.CategoriesCount));
+		Assert.Equal(0, detail.Maps.Single(map => map.Id == maps[2].Id).MarkersCount);
+		Assert.Equal(0, detail.Maps.Single(map => map.Id == maps[2].Id).CategoriesCount);
+		Assert.Equal(2, detail.Maps.Single(map => map.Id == maps[1].Id).MarkersCount);
+		var empty = (await client.GetFromJsonAsync<PublicGameDto>("/public/games/empty"))!;
+
+		Assert.Empty(empty.Maps);
+		Assert.Equal(0, empty.MarkersCount);
+		Assert.Equal(0, empty.CategoriesCount);
 	}
 
 	[Fact]

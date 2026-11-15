@@ -54,6 +54,10 @@ public class PublicReadContractTests
 		Assert.Equal("#/components/schemas/ImageAsset", schemas.GetProperty("PublicGame")
 			.GetProperty("properties").GetProperty("cover").GetProperty("$ref").GetString());
 		var map = schemas.GetProperty("PublicMapDetails").GetProperty("properties");
+		var summary = schemas.GetProperty("PublicGameMap").GetProperty("properties");
+
+		Assert.Equal("integer", summary.GetProperty("markersCount").GetProperty("type").GetString());
+		Assert.Equal("integer", summary.GetProperty("categoriesCount").GetProperty("type").GetString());
 
 		Assert.Equal("#/components/schemas/PublicCategoryGroup", map.GetProperty("categoryGroups").GetProperty("items").GetProperty("$ref").GetString());
 		Assert.Equal("#/components/schemas/PublicMarker", map.GetProperty("markers").GetProperty("items").GetProperty("$ref").GetString());

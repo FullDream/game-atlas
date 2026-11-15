@@ -1,17 +1,18 @@
 import { booleanAttribute, Component, computed, input } from '@angular/core'
 import { RouterLink } from '@angular/router'
-import { type Game } from '@game-atlas/games/data-access'
-import { Button, MediaThumbnail } from '@game-atlas/shared/ui'
-import { NgIcon, provideIcons } from '@ng-icons/core'
-import { matArrowForwardRound, matSportsEsportsRound } from '@ng-icons/material-symbols/round'
+import { type PublicGameCard } from '@game-atlas/games/data-access'
+import { Button, MediaThumbnail, ImagePreview } from '@game-atlas/shared/ui'
+import { provideIcons } from '@ng-icons/core'
+import { matArrowForwardRound } from '@ng-icons/material-symbols/round'
 import { HlmCardImports } from '@spartan-ng/helm/card'
+import { formatCount } from '@game-atlas/shared/util'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 
 @Component({
 	selector: 'games-catalog-card',
-	imports: [RouterLink, Button, MediaThumbnail, NgIcon, HlmCardImports, HlmSkeleton],
+	imports: [RouterLink, Button, MediaThumbnail, ImagePreview, HlmCardImports, HlmSkeleton],
 	templateUrl: './game-card.html',
-	providers: [provideIcons({ matArrowForwardRound, matSportsEsportsRound })],
+	providers: [provideIcons({ matArrowForwardRound })],
 	host: {
 		class: 'group/catalog-card block min-w-0',
 		'[attr.role]': "skeleton() ? null : 'article'",
@@ -19,7 +20,7 @@ import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 	},
 })
 export class GameCard {
-	readonly game = input<Game>()
+	readonly game = input<PublicGameCard>()
 	readonly skeleton = input(false, { transform: booleanAttribute })
 
 	protected readonly metadataLabel = computed(() => {
@@ -27,8 +28,8 @@ export class GameCard {
 
 		if (!current) return ''
 
-		const mapsLabel = `${current.maps.length} ${current.maps.length === 1 ? 'map' : 'maps'}`
-		const markersLabel = `${current.markersCount} ${current.markersCount === 1 ? 'marker' : 'markers'}`
+		const mapsLabel = formatCount(current.mapsCount, 'map')
+		const markersLabel = formatCount(current.markersCount, 'marker')
 
 		return `${mapsLabel} · ${markersLabel}`
 	})

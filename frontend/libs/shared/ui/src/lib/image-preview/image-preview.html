@@ -1,0 +1,7 @@
+@if (image(); as current) {
+	<ui-media-thumbnail class="size-full" [image]="current" fit="cover" />
+} @else {
+	<div class="from-muted via-muted/75 to-accent/35 flex size-full items-center justify-center bg-linear-to-br">
+		<ng-icon name="matMapRound" class="text-muted-foreground/35 text-5xl -rotate-12" aria-hidden="true" />
+	</div>
+}

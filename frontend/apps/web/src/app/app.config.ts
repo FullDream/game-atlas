@@ -14,6 +14,7 @@ import {
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser'
 import { provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router'
 import { provideGamesBaseUrl } from '@game-atlas/games/data-access'
+import { PageTitleStrategy } from '@game-atlas/shared/ui'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
 import {
 	dehydrate,
@@ -25,14 +26,14 @@ import {
 } from '@tanstack/angular-query-experimental'
 import { APP_ROUTES } from './app.routes'
 import { WebTitleStrategy } from './web-title-strategy'
-import {withDevtools} from "@tanstack/angular-query-experimental/devtools";
+import { withDevtools } from '@tanstack/angular-query-experimental/devtools'
 
 const WEB_QUERY_CLIENT = new InjectionToken<QueryClient>('WEB_QUERY_CLIENT', {
 	factory: () =>
 		new QueryClient({
 			defaultOptions: {
 				queries: {
-					staleTime: 30_000,
+					staleTime: Infinity,
 				},
 			},
 		}),
@@ -45,7 +46,8 @@ export const appConfig: ApplicationConfig = {
 		provideClientHydration(withEventReplay()),
 		provideBrowserGlobalErrorListeners(),
 		provideRouter(APP_ROUTES, withComponentInputBinding()),
-		{ provide: TitleStrategy, useClass: WebTitleStrategy },
+		{ provide: PageTitleStrategy, useClass: WebTitleStrategy },
+		{ provide: TitleStrategy, useExisting: PageTitleStrategy },
 		provideHttpClient(withFetch()),
 		provideSpartanHlm(),
 		provideTanStackQuery(WEB_QUERY_CLIENT, withDevtools()),

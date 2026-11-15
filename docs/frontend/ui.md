@@ -62,3 +62,9 @@ Use Tailwind utilities for the content-panel transition, responsive negative inl
 Do not show inactive search/filter buttons in the map editor toolbar. Keep its panel toggle, flexible style selector and working map controls on one row at 320px and above. Allow the selector and selected label to shrink/truncate while preserving control sizes and accessible names.
 
 Fullscreen in the map editor expands the whole workspace containing the map and both editing panels. Preserve panel visibility, section selection and drafts on entry/exit; selects, dialogs and mobile drawers must remain available inside fullscreen. Shared viewport consumers may supply a containing fullscreen target, with the viewport host as the default.
+
+## Shared page progress and public details
+
+Admin and web provide a shell-scoped PageLoading context and render shared PageProgress at the header bottom. Features declare `[uiPageLoading]` with isFetching; PageHeaderPortal loading inputs use the same registration mechanism. Registration is independent per owner and released on destruction. Keep routing/data progress indeterminate and preserve header dimensions.
+
+Public game details compose Spartan breadcrumbs, cards, skeletons and empty states with shared ImagePreview, MediaThumbnail, Button and ErrorState. Use an image-backed hero with a readable overlay, responsive map cards showing marker/category counts, and fallbacks for absent images. Cached card metadata appears immediately while missing detail content uses skeletons. Authoritative null/empty fields are not loading. Map previews, names and arrow actions link to a reserved componentless `/games/:slug/maps/:mapSlug` route; the viewer is not implemented yet.

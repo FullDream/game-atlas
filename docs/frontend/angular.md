@@ -14,6 +14,8 @@ Applies to handwritten Angular code and owned Helm components. Read the [TypeScr
 - Preserve Observables for dialog results, confirmations and router guards; subscribe with bounded lifetimes for component actions. Do not convert them to Promises merely to use `async`/`await`. Convert HTTP Observables only at TanStack boundaries that require Promises.
 - Use semantic links with `RouterLink` for navigation, including the parent-folder control. Preserve a disabled link's space at root with a null router link and appropriate disabled semantics; keep navigation guards responsible for unsaved edits.
 
+- Route titles contain page names only. Both apps configure a shared PageTitleStrategy instance, also exposed as Angular TitleStrategy, and supply their own application suffix. Features with asynchronously loaded names inject PageTitleStrategy and call setPageTitle(name) from their reactive effect instead of composing the browser title or importing an application class.
+
 ## Angular classes
 
 - Angular 22+ uses OnPush change detection by default. Omit redundant `changeDetection: ChangeDetectionStrategy.OnPush` metadata and its import, including in owned Helm components. Explicitly select another strategy only when required by the component; verify the installed Angular version before changing this convention.
