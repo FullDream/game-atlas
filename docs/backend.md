@@ -25,6 +25,12 @@ Applies to backend implementation and backend tests. Read the [system architectu
 - Keep EF Core migrations in Infrastructure, without a separate migrations project. Apply them explicitly through EF CLI rather than automatically at API startup.
 - Store enums as strings in the database.
 
+## Public read assembly
+
+Public game and map reads use dedicated Application DTOs and handlers, with separate API endpoint files and tags. See [public HTTP contracts](api-conventions.md#public-game-and-map-reads). Keep management DTOs and operation behavior independent.
+
+The detailed map handler supports `PublishedOnly` and `IncludeDrafts` internally so future protected preview can reuse assembly. The mode is not authorization and is never bound from public HTTP input. Filter every ancestor and descendant consistently before computing counts. Ready-style filtering applies in both modes. Materialize bounded batches with no tracking, then use separate pure mapping extensions; keep the complete map read in a short transaction for a consistent snapshot. Do not add per-marker queries or a repository abstraction.
+
 ## Category feature ownership
 
 Category and CategoryGroup share Domain/Categories. Group use cases live under Application/Categories/Groups, and Api/Categories/Endpoints.cs maps both route families. Markers remain separate. Pure DTO mapping stays separate from tree retrieval and placement orchestration.

@@ -41,9 +41,11 @@ app.UseMediaFiles();
 var api = app.MapGroup("").WithOutcomeResults().WithCaseInsensitiveEnumQueryParameters();
 
 api.MapGames();
+api.MapPublicGames();
 api.MapCategories();
 api.MapMarkers();
 api.MapMaps();
+api.MapPublicMaps();
 api.MapMedia();
 app.MapHub<MapHub>("/hubs/map");
 
