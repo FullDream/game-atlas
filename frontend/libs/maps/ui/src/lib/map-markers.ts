@@ -103,6 +103,7 @@ export class MapMarkers {
 					})
 
 					if (feature && !feature.get('pending')) interactions.select(String(feature.getId()))
+					else if (!feature) interactions.emptyClick?.()
 				}
 			}),
 			this.#translate.on('translatestart', event => {
@@ -171,12 +172,14 @@ export class MapMarkers {
 			else if (this.#hovered === feature) this.#showTooltip(feature)
 
 			const draftState = marker.draftStates?.[0]
+			const opacity = marker.opacity ?? (marker.pending ? 0.5 : 1)
 			const signature = [
 				marker.icon,
 				marker.color,
 				marker.selected,
 				marker.pending,
 				marker.failed,
+				opacity,
 				draftState,
 			].join('|')
 
@@ -202,7 +205,7 @@ export class MapMarkers {
 				image: new Icon({
 					src: fallbackUrl,
 					scale: size / 24,
-					opacity: marker.pending ? 0.5 : 1,
+					opacity,
 				}),
 				zIndex: marker.selected ? 11 : 2,
 			})
@@ -228,7 +231,7 @@ export class MapMarkers {
 					const image = new Icon({
 						img: canvas,
 						scale: size / 64,
-						opacity: marker.pending ? 0.5 : 1,
+						opacity,
 					})
 
 					target.setStyle(new Style({ image, zIndex: marker.selected ? 11 : 2 }))
@@ -238,10 +241,14 @@ export class MapMarkers {
 		}
 	}
 
-	reveal(id: string, region: VisibleMapRegion): void {
+	reveal(id: string, region: VisibleMapRegion, duration = 0): void {
 		const coordinate = this.#source.getFeatureById(id)?.getGeometry()?.getCoordinates()
 
 		if (!coordinate) return
+
+		const view = this.map.getView()
+
+		view.cancelAnimations()
 
 		const pixel = this.map.getPixelFromCoordinate(coordinate)
 		const margin = 32
@@ -256,12 +263,18 @@ export class MapMarkers {
 		const center = this.map.getView().getCenter()
 		const centerPixel = center && this.map.getPixelFromCoordinate(center)
 
-		if (centerPixel)
-			this.map
-				.getView()
-				.setCenter(
-					this.map.getCoordinateFromPixel([centerPixel[0] + pixel[0] - x, centerPixel[1] + pixel[1] - y]),
-				)
+		if (!centerPixel) return
+
+		const nextCenter = this.map.getCoordinateFromPixel([
+			centerPixel[0] + pixel[0] - x,
+			centerPixel[1] + pixel[1] - y,
+		])
+
+		if (duration > 0 && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			view.animate({ center: nextCenter, duration })
+		} else {
+			view.setCenter(nextCenter)
+		}
 	}
 
 	cancel(): void {

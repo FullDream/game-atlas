@@ -43,6 +43,6 @@ internal static class PublicMapMappingExtensions
 		return new PublicMapStyleDto(style.Id, style.Name, style.BackgroundColor,
 			new MapTileGeometryDto(geometry.Extent, geometry.TileOrigin, MapGeometry.TileSize,
 				geometry.MinZoom, geometry.MaxZoom, geometry.Resolutions),
-			$"/map-tiles/{style.MapId:N}/{style.Id:N}/{{z}}/{{x}}/{{y}}.webp");
+			$"/map-tiles/{style.MapId:N}/{style.Id:N}/{{z}}/{{x}}/{{y}}.webp", style.Source.ToDto());
 	}
 }

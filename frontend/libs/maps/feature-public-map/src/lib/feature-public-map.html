@@ -1,0 +1,31 @@
+<div class="bg-background relative h-[calc(100dvh-4rem)] w-full overflow-hidden">
+	@if (mapDetail.data(); as map) {
+		<maps-public-map-viewer
+			[data]="map"
+			[slug]="slug()"
+			[game]="game()"
+			[gameCover]="gameCover()"
+			[gameTitle]="gameTitle()"
+		/>
+	} @else if (mapDetail.isPending()) {
+		<div class="inset-0 bg-muted/40 absolute flex items-center justify-center">
+			<div class="gap-3 flex flex-col items-center">
+				<hlm-spinner />
+				<p class="text-xs text-muted-foreground font-medium">Loading interactive map...</p>
+			</div>
+		</div>
+	} @else if (mapDetail.isError()) {
+		<div class="inset-0 p-4 absolute flex items-center justify-center">
+			<div hlmEmpty>
+				<div hlmEmptyHeader>
+					<h2 hlmEmptyTitle>Could not load map</h2>
+					<p hlmEmptyDescription>This map may have been deleted or unpublished.</p>
+				</div>
+				<div hlmEmptyContent>
+					<button ui-button (click)="mapDetail.refetch()">Retry</button>
+					<a ui-button variant="outline" [routerLink]="['/games', slug()]">Back to game</a>
+				</div>
+			</div>
+		</div>
+	}
+</div>

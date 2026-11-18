@@ -55,6 +55,10 @@ export class HlmCarousel {
 		this.emblaCarousel().scrollNext()
 	}
 
+	scrollTo(index: number): void {
+		this.emblaCarousel().emblaApi?.scrollTo(index)
+	}
+
 	protected onEmblaEvent(event: EmblaEventType): void {
 		const emblaApi = this.emblaCarousel().emblaApi
 

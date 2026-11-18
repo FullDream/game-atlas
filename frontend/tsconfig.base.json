@@ -67,7 +67,10 @@
 			"@spartan-ng/helm/utils": ["./libs/shared/ui-helm/utils/src/index.ts"],
 			"@spartan-ng/helm/card": ["./libs/shared/ui-helm/card/src/index.ts"],
 			"@game-atlas/games/feature-catalog": ["./libs/games/feature-catalog/src/index.ts"],
-			"@game-atlas/games/feature-detail": ["./libs/games/feature-detail/src/index.ts"]
+			"@game-atlas/games/feature-detail": ["./libs/games/feature-detail/src/index.ts"],
+			"@game-atlas/maps/feature-public-map": ["./libs/maps/feature-public-map/src/index.ts"],
+			"@spartan-ng/helm/checkbox": ["./libs/shared/ui-helm/checkbox/src/index.ts"],
+			"@spartan-ng/helm/aspect-ratio": ["./libs/shared/ui-helm/aspect-ratio/src/index.ts"]
 		}
 	},
 	"exclude": ["node_modules", "tmp"]

@@ -6,17 +6,18 @@
 	aria-label="Interactive map. Use arrow keys to pan and plus or minus to zoom."
 ></div>
 
-<div class="inset-x-2 top-3 gap-1 sm:inset-x-3 sm:gap-2 absolute flex items-start justify-between">
+<div class="inset-x-2 top-3 gap-1 sm:inset-x-3 sm:gap-2 absolute flex items-start justify-between **:[[ui-button]]:bg-background  **:[[ui-button]:hover]:bg-accent">
 	<div class="min-w-0 gap-1 sm:gap-2 flex flex-1 items-center">
 		<ng-content select="[mapLeadingToolbar]" />
 		@if (styles().length > 1) {
 			<hlm-select
-				class="min-w-0 rounded-4xl bg-background sm:w-56 shadow-sm w-full"
+				class="min-w-0 rounded-4xl sm:w-56 shadow-sm w-full"
 				[itemToString]="styleName"
-				[(ngModel)]="selectedStyleId"
+				[ngModel]="activeStyle()?.id ?? null"
+				(ngModelChange)="selectedStyleId.set($event)"
 				[disabled]="!readyStyles().length"
 			>
-				<hlm-select-trigger aria-label="Map style" class="min-w-0 w-full">
+				<hlm-select-trigger aria-label="Map style" class="min-w-0 w-full [&>button]:bg-background [&>button:hover]:bg-accent">
 					@if (activeStyle(); as style) {
 						<span *hlmSelectValueTemplate class="min-w-0 gap-2 flex flex-1 items-center">
 							<ui-media-thumbnail
@@ -49,7 +50,7 @@
 	</div>
 	<div class="gap-1 sm:gap-2 ml-auto flex shrink-0 items-center">
 		<ng-content select="[mapToolbar]" />
-		<div class="gap-1 rounded-4xl bg-background p-0.5 shadow-sm flex">
+		<div hlmButtonGroup>
 			<button
 				ui-button
 				variant="ghost"
@@ -69,30 +70,26 @@
 				(click)="zoom(1)"
 			></button>
 		</div>
-		<span class="rounded-4xl bg-background flex">
-			<button
-				ui-button
-				variant="outline"
-				size="icon"
-				icon="matFitScreenRound"
-				aria-label="Fit map"
-				hlmTooltip="Fit map"
-				(click)="fit()"
-			></button>
-		</span>
-		<span class="rounded-4xl bg-background flex">
-			<button
-				ui-button
-				variant="outline"
-				size="icon"
-				[icon]="fullscreen() ? 'matFullscreenExitRound' : 'matFullscreenRound'"
-				aria-label="Toggle fullscreen"
-				[attr.aria-pressed]="fullscreen()"
-				hlmTooltip="Fullscreen"
-				[disabled]="!fullscreenAvailable()"
-				(click)="toggleFullscreen()"
-			></button>
-		</span>
+		<button
+			ui-button
+			variant="ghost"
+			size="icon"
+			icon="matFitScreenRound"
+			aria-label="Fit map"
+			hlmTooltip="Fit map"
+			(click)="fit()"
+		></button>
+		<button
+			ui-button
+			variant="ghost"
+			size="icon"
+			[icon]="fullscreen() ? 'matFullscreenExitRound' : 'matFullscreenRound'"
+			aria-label="Toggle fullscreen"
+			[attr.aria-pressed]="fullscreen()"
+			hlmTooltip="Fullscreen"
+			[disabled]="!fullscreenAvailable()"
+			(click)="toggleFullscreen()"
+		></button>
 	</div>
 </div>
 

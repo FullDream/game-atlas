@@ -1,0 +1,81 @@
+@if (marker(); as m) {
+	<hlm-drawer
+		[direction]="mode() === 'mobile-bottom' ? 'bottom' : 'right'"
+		state="open"
+		[hasBackdrop]="false"
+		[closeOnOutsidePointerEvents]="false"
+		[autoFocus]="false"
+		[aria-modal]="false"
+		(closed)="closed.emit()"
+	>
+		<hlm-drawer-content
+			data-marker-inspector
+			#content
+			*hlmDrawerPortal
+			class="data-[vaul-drawer-direction=right]:top-32 data-[vaul-drawer-direction=right]:w-96 overflow-hidden data-[vaul-drawer-direction=bottom]:h-[50dvh] data-[vaul-drawer-direction=right]:max-w-[85vw] data-[vaul-drawer-direction=right]:[&>div:first-child]:hidden"
+		>
+			@if (mode() === 'mobile-bottom') {
+				<h2 hlmDrawerTitle class="sr-only">{{ m.name }}</h2>
+				<maps-marker-popup
+					class="min-h-0 block flex-1"
+					[mobile]="true"
+					[panel]="true"
+					[marker]="m"
+					[category]="category()"
+					[isCompleted]="isCompleted()"
+					(toggleCompleted)="toggleCompleted.emit()"
+				/>
+			} @else {
+				<header hlmDrawerHeader class="shrink-0 border-b">
+					<div class="gap-2 flex items-center">
+						@if (category()?.icon?.url) {
+							<img [src]="category()?.icon?.url" alt="" class="size-5 shrink-0 object-contain" />
+						}
+						<div class="min-w-0 flex-1 text-start">
+							<p class="text-xs text-muted-foreground truncate">{{ category()?.name ?? 'Marker' }}</p>
+							<h2 hlmDrawerTitle class="break-words">{{ m.name }}</h2>
+						</div>
+						@if (mode() === 'desktop-right') {
+							<button
+								ui-button
+								type="button"
+								variant="ghost"
+								size="icon-sm"
+								icon="matOpenInNewOffRound"
+								aria-label="Back to popup"
+								hlmTooltip="Back to popup"
+								(click)="collapse.emit()"
+							></button>
+						}
+
+						<button
+							ui-button
+							type="button"
+							variant="ghost"
+							size="icon-sm"
+							icon="matCloseRound"
+							aria-label="Close marker details"
+							hlmTooltip="Close marker details"
+							(click)="closed.emit()"
+						></button>
+					</div>
+				</header>
+				<maps-marker-popup class="min-h-0 block flex-1" [contentOnly]="true" [panel]="true" [marker]="m" />
+				<footer hlmDrawerFooter class="shrink-0 border-t">
+					<label
+						hlmLabel
+						[for]="'drawer-marker-completed-' + m.id"
+						class="min-h-11 gap-2 flex cursor-pointer items-center"
+					>
+						<hlm-checkbox
+							[inputId]="'drawer-marker-completed-' + m.id"
+							[checked]="isCompleted()"
+							(checkedChange)="toggleCompleted.emit()"
+						/>
+						Completed
+					</label>
+				</footer>
+			}
+		</hlm-drawer-content>
+	</hlm-drawer>
+}

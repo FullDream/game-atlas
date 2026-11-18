@@ -1,0 +1,107 @@
+@if (marker(); as m) {
+	<section class="min-h-0 flex flex-col" [class.h-full]="panel()" [class.max-h-[65dvh]]="!panel()">
+		@if (!contentOnly()) {
+			<header class="gap-2 pb-3 flex shrink-0 items-center border-b">
+				@if (category()?.icon?.url) {
+					<img [src]="category()?.icon?.url" alt="" class="size-5 shrink-0 object-contain" />
+				}
+				<div class="min-w-0 flex-1">
+					<p class="text-xs text-muted-foreground truncate">{{ category()?.name ?? 'Marker' }}</p>
+					<h2 class="font-semibold break-words">{{ m.name }}</h2>
+				</div>
+
+				@if (mobile()) {
+					<div class="shrink-0"><ng-container [ngTemplateOutlet]="completedControl" /></div>
+				}
+
+				@if (!panel()) {
+					<button
+						ui-button
+						variant="ghost"
+						size="icon-sm"
+						icon="matOpenInNewRound"
+						aria-label="Expand marker details"
+						hlmTooltip="Expand marker details"
+						(click)="expand.emit()"
+					></button>
+				}
+				@if (!mobile()) {
+					<button
+						ui-button
+						variant="ghost"
+						size="icon-sm"
+						icon="matCloseRound"
+						aria-label="Close marker details"
+						hlmTooltip="Close marker details"
+						(click)="closed.emit()"
+					></button>
+				}
+			</header>
+		}
+		<div class="min-h-0 gap-4 py-3 flex flex-1 flex-col overflow-y-auto overscroll-contain">
+			@if (m.media.length > 0) {
+				@for (item of [m]; track item.id) {
+					<hlm-carousel #carousel="hlmCarousel" aria-label="Marker media" class="shrink-0">
+						<hlm-carousel-content>
+							@for (media of item.media; track media.id) {
+								<hlm-carousel-item>
+									<div [hlmAspectRatio]="16 / 9" class="rounded-lg overflow-hidden">
+										@if (media.type === 'image') {
+											<img
+												[src]="media.url"
+												[alt]="media.alt || m.name"
+												class="inset-0 absolute size-full object-contain"
+											/>
+										} @else {
+											<video
+												controls
+												[src]="media.url"
+												class="inset-0 absolute size-full"
+												[attr.aria-label]="m.name"
+											></video>
+										}
+									</div>
+								</hlm-carousel-item>
+							}
+						</hlm-carousel-content>
+
+						@if (item.media.length > 1) {
+							<div class="flex flex-wrap items-center justify-center" aria-label="Choose media">
+								@for (media of item.media; track media.id; let i = $index) {
+									<button
+										type="button"
+										class="group/dot h-11 w-6 focus-visible:outline-ring flex items-center justify-center rounded-full focus-visible:outline-2"
+										[attr.aria-label]="'Show media ' + (i + 1)"
+										[attr.aria-current]="carousel.currentSlide() === i ? 'true' : null"
+										(click)="carousel.scrollTo(i)"
+									>
+										<span
+											class="size-2 bg-muted-foreground/40 group-aria-[current=true]/dot:bg-primary rounded-full"
+										></span>
+									</button>
+								}
+							</div>
+						}
+					</hlm-carousel>
+				}
+			}
+			@if (m.description) {
+				<p class="text-sm break-words whitespace-pre-wrap">{{ m.description }}</p>
+			}
+		</div>
+		@if (!mobile() && !contentOnly()) {
+			<footer class="pt-3 shrink-0 border-t"><ng-container [ngTemplateOutlet]="completedControl" /></footer>
+		}
+	</section>
+}
+
+<ng-template #completedControl>
+	<label hlmLabel [for]="'marker-completed-' + marker()?.id" class="min-h-11 gap-2 flex cursor-pointer items-center">
+		<hlm-checkbox
+			[inputId]="'marker-completed-' + marker()?.id"
+			[checked]="isCompleted()"
+			(checkedChange)="toggleCompleted.emit()"
+		/>
+		Completed
+	</label>
+</ng-template>

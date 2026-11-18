@@ -36,10 +36,11 @@ import type {
 	MarkerMove,
 	VisibleMapRegion,
 } from './map-viewport-types'
+import { HlmButtonGroup } from '@spartan-ng/helm/button-group'
 
 @Component({
 	selector: 'maps-viewport',
-	imports: [Button, MediaThumbnail, FormsModule, HlmSelectImports, HlmEmptyImports, HlmTooltip],
+	imports: [Button, HlmButtonGroup, MediaThumbnail, FormsModule, HlmSelectImports, HlmEmptyImports, HlmTooltip],
 	templateUrl: './map-viewport.html',
 	styleUrl: './map-viewport.css',
 	encapsulation: ViewEncapsulation.None,
@@ -60,6 +61,8 @@ export class MapViewport {
 	readonly fullscreenTarget = input<HTMLElement>()
 
 	readonly markerSelected = output<string>()
+	readonly emptyClicked = output<void>()
+	readonly viewportChanged = output<void>()
 	readonly markerPlaced = output<MapPoint>()
 	readonly markerMoved = output<MarkerMove>()
 
@@ -90,8 +93,11 @@ export class MapViewport {
 		this.styles().filter(style => style.status === 'ready' && style.tilesUrlTemplate),
 	)
 
-	protected readonly activeStyle = computed(() =>
-		this.readyStyles().find(style => style.id === this.selectedStyleId()),
+	protected readonly activeStyle = computed<MapViewStyle | undefined>(
+		() =>
+			this.readyStyles().find(style => style.id === this.selectedStyleId()) ??
+			this.readyStyles().find(style => style.id === this.defaultStyleId()) ??
+			this.readyStyles()[0],
 	)
 
 	constructor() {
@@ -130,6 +136,8 @@ export class MapViewport {
 
 						this.#engine = new MapEngine(this.canvas().nativeElement, geometry, {
 							select: id => this.markerSelected.emit(id),
+							emptyClick: () => this.emptyClicked.emit(),
+							viewportChanged: () => this.viewportChanged.emit(),
 							place: position => this.markerPlaced.emit(position),
 							move: movement => this.markerMoved.emit(movement),
 						})
@@ -159,8 +167,18 @@ export class MapViewport {
 		this.#destroy.onDestroy(() => this.#engine?.dispose())
 	}
 
-	revealMarker(id: string, region: VisibleMapRegion): void {
-		this.#engine?.reveal(id, region)
+	revealMarker(id: string, region: VisibleMapRegion, duration = 0): void {
+		this.#engine?.reveal(id, region, duration)
+	}
+
+	getPixel(position: MapPoint): { x: number; y: number } | null {
+		const coords = this.#engine?.getPixel([position.x, position.y])
+
+		return coords ? { x: coords[0], y: coords[1] } : null
+	}
+
+	onPostRender(callback: () => void): (() => void) | undefined {
+		return this.#engine?.onPostRender(callback)
 	}
 
 	getBounds(): DOMRect {

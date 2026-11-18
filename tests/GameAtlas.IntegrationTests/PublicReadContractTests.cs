@@ -66,6 +66,7 @@ public class PublicReadContractTests
 		Assert.False(style.TryGetProperty("progress", out _));
 		Assert.False(style.TryGetProperty("error", out _));
 		Assert.False(style.TryGetProperty("source", out _));
+		Assert.Equal("#/components/schemas/ImageAsset", style.GetProperty("preview").GetProperty("$ref").GetString());
 		Assert.True(schemas.GetProperty("Game").GetProperty("properties").TryGetProperty("status", out _));
 		Assert.True(paths.GetProperty("/games/{id}").TryGetProperty("get", out _));
 	}

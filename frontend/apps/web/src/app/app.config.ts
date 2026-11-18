@@ -27,6 +27,7 @@ import {
 import { APP_ROUTES } from './app.routes'
 import { WebTitleStrategy } from './web-title-strategy'
 import { withDevtools } from '@tanstack/angular-query-experimental/devtools'
+import { FullscreenOverlayContainer, OverlayContainer } from '@angular/cdk/overlay'
 
 const WEB_QUERY_CLIENT = new InjectionToken<QueryClient>('WEB_QUERY_CLIENT', {
 	factory: () =>
@@ -48,7 +49,8 @@ export const appConfig: ApplicationConfig = {
 		provideRouter(APP_ROUTES, withComponentInputBinding()),
 		{ provide: PageTitleStrategy, useClass: WebTitleStrategy },
 		{ provide: TitleStrategy, useExisting: PageTitleStrategy },
-		provideHttpClient(withFetch()),
+		{ provide: OverlayContainer, useClass: FullscreenOverlayContainer },
+		provideHttpClient(),
 		provideSpartanHlm(),
 		provideTanStackQuery(WEB_QUERY_CLIENT, withDevtools()),
 		provideAppInitializer(() => {

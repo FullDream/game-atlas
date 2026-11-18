@@ -1,0 +1,245 @@
+<div class="min-h-0 px-2 flex h-full flex-col">
+	<header class="-mx-2 bg-background relative shrink-0 overflow-hidden">
+		@if (gameBanner()) {
+			<img [src]="gameBanner()" alt="" class="inset-0 pointer-events-none absolute size-full object-cover" />
+			<div
+				class="inset-0 from-background via-background/85 to-background/70 pointer-events-none absolute bg-linear-to-t"
+				aria-hidden="true"
+			></div>
+		}
+
+		@if (mobile()) {
+			<div class="bg-foreground/30 mt-4 h-1.5 w-24 relative mx-auto rounded-full" aria-hidden="true"></div>
+		}
+
+		<div class="gap-1 p-4 relative flex items-center">
+			@if (gameCover()) {
+				<img [src]="gameCover()" [alt]="gameName()" class="size-10 rounded-lg shrink-0 object-cover" />
+			} @else {
+				<span class="size-10 rounded-lg bg-muted font-semibold flex shrink-0 items-center justify-center">
+					{{ gameName().charAt(0) }}
+				</span>
+			}
+			<div class="min-w-0 flex-1">
+				<h2 class="font-semibold ps-3 truncate">{{ gameName() }}</h2>
+				<button
+					ui-button
+					variant="ghost"
+					size="sm"
+					[hlmDropdownMenuTrigger]="mapMenu"
+					[disabled]="maps().length <= 1"
+					[attr.aria-label]="'Map: ' + mapName()"
+				>
+					@if (currentMap()?.preview; as preview) {
+						<ui-media-thumbnail
+							class="size-6 rounded-sm shrink-0 border"
+							[image]="preview"
+							fit="cover"
+							aria-hidden="true"
+						/>
+					}
+					<span class="min-w-0 flex-1 truncate text-start">{{ mapName() }}</span>
+					@if (maps().length > 1) {
+						<ng-icon name="matKeyboardArrowDownRound" aria-hidden="true" />
+					}
+				</button>
+			</div>
+			@if (!mobile()) {
+				<button
+					ui-button
+					variant="ghost"
+					size="icon-sm"
+					icon="matChevronLeftRound"
+					class="self-end"
+					aria-label="Collapse filters"
+					hlmTooltip="Collapse filters"
+					(click)="closed.emit()"
+				></button>
+			}
+		</div>
+	</header>
+
+	<ng-template #mapMenu>
+		<hlm-dropdown-menu class="w-64 max-w-[calc(100vw-2rem)]">
+			<div hlmDropdownMenuGroup>
+				@for (map of maps(); track map.id) {
+					<a
+						hlmDropdownMenuRadio
+						[checked]="map.slug === mapSlug()"
+						[keepOpen]="false"
+						[routerLink]="['/games', gameSlug(), 'maps', map.slug]"
+						[attr.aria-current]="map.slug === mapSlug() ? 'page' : null"
+					>
+						@if (map.preview; as preview) {
+							<ui-media-thumbnail
+								class="size-6 rounded-sm shrink-0 border"
+								[image]="preview"
+								fit="cover"
+								aria-hidden="true"
+							/>
+						} @else {
+							<span
+								class="size-6 rounded-sm bg-muted flex shrink-0 items-center justify-center border"
+								aria-hidden="true"
+							>
+								<ng-icon name="matMapRound" />
+							</span>
+						}
+						<span class="min-w-0 flex-1 truncate">{{ map.name }}</span>
+						<hlm-dropdown-menu-radio-indicator />
+					</a>
+				}
+			</div>
+		</hlm-dropdown-menu>
+	</ng-template>
+	<div class="gap-2 p-3 flex shrink-0 items-center justify-between border-y">
+		<nav hlmBreadcrumb aria-label="Map breadcrumb" class="min-w-0 w-full">
+			<ol hlmBreadcrumbList class="flex-nowrap">
+				<li hlmBreadcrumbItem class="shrink-0">
+					<a hlmBreadcrumbLink routerLink="/" aria-label="Home">
+						<ng-icon name="matHomeRound" aria-hidden="true" />
+					</a>
+				</li>
+				<li hlmBreadcrumbSeparator></li>
+				<li hlmBreadcrumbItem class="min-w-0">
+					<a hlmBreadcrumbLink [routerLink]="['/games', gameSlug()]" class="truncate">{{ gameName() }}</a>
+				</li>
+				<li hlmBreadcrumbSeparator></li>
+				<li hlmBreadcrumbItem class="min-w-0">
+					<span hlmBreadcrumbPage class="truncate">{{ mapName() }}</span>
+				</li>
+			</ol>
+		</nav>
+	</div>
+	<div class="p-3 shrink-0">
+		<div hlmInputGroup>
+			<div hlmInputGroupAddon><ng-icon name="matSearchRound" /></div>
+			<input
+				hlmInputGroupInput
+				type="search"
+				[(ngModel)]="searchQuery"
+				placeholder="Search categories..."
+				aria-label="Search categories"
+			/>
+		</div>
+	</div>
+	<div class="min-h-0 p-2 flex-1 overflow-y-auto">
+		<div hlmAccordion type="multiple">
+			@for (group of filteredGroups(); track group.id) {
+				<div
+					hlmAccordionItem
+					[isOpened]="groupConfigs().get(group.id)?.expanded ?? true"
+					(openedChange)="setGroup(group.id, { expanded: $event })"
+				>
+					<div class="relative">
+						<hlm-accordion-trigger
+							class="min-w-0 block"
+							triggerClass="grid grid-cols-[minmax(0,1fr)_3.5rem_2rem_1rem] gap-2 min-w-0 items-center border-0 px-3 py-2 [&>ng-icon]:col-start-4"
+						>
+							<span class="min-w-0 gap-2 flex items-center">
+								<span
+									class="size-3 bg-muted shrink-0 rounded-full"
+									[style.background-color]="group.color"
+								></span>
+								<span class="min-w-0 flex-1 truncate">{{ group.name }}</span>
+							</span>
+							<span class="text-xs text-muted-foreground text-right tabular-nums">
+								{{ getGroupCompletedCount(group) }}/{{ group.markersCount }}
+							</span>
+						</hlm-accordion-trigger>
+						<div class="right-9 absolute top-1/2 -translate-y-1/2">
+							<button
+								ui-button
+								variant="ghost"
+								size="icon-sm"
+								[icon]="isTargetHidden(group.id) ? 'matVisibilityOffRound' : 'matVisibilityRound'"
+								[attr.aria-label]="
+									isTargetHidden(group.id) ? 'Show group ' + group.name : 'Hide group ' + group.name
+								"
+								[hlmTooltip]="isTargetHidden(group.id) ? 'Show group' : 'Hide group'"
+								[attr.aria-pressed]="!isTargetHidden(group.id)"
+								(click)="setGroup(group.id, { visible: isTargetHidden(group.id) })"
+							></button>
+						</div>
+					</div>
+					<hlm-accordion-content class="px-3">
+						@for (category of group.categories; track category.id) {
+							<div class="gap-2 py-1 grid grid-cols-[minmax(0,1fr)_3.5rem_2rem_1rem] items-center">
+								<span class="min-w-0 gap-2 flex items-center">
+									@if (category.icon; as icon) {
+										<img [src]="icon.url" alt="" class="size-4 shrink-0 object-contain" />
+									} @else {
+										<span
+											class="size-2 bg-muted shrink-0 rounded-full"
+											[style.background-color]="category.color || group.color"
+										></span>
+									}
+									<span class="min-w-0 text-sm flex-1 truncate">{{ category.name }}</span>
+								</span>
+								<span class="text-xs text-muted-foreground text-right tabular-nums">
+									{{ getCategoryCompletedCount(category.id) }}/{{ category.markersCount }}
+								</span>
+								<button
+									ui-button
+									variant="ghost"
+									size="icon-sm"
+									[icon]="
+										isCategoryHidden(category, group.id)
+											? 'matVisibilityOffRound'
+											: 'matVisibilityRound'
+									"
+									[attr.aria-label]="
+										isCategoryHidden(category, group.id)
+											? 'Show category ' + category.name
+											: 'Hide category ' + category.name
+									"
+									[hlmTooltip]="
+										isCategoryHidden(category, group.id) ? 'Show category' : 'Hide category'
+									"
+									[attr.aria-pressed]="!isCategoryHidden(category, group.id)"
+									(click)="toggleCategory(category)"
+								></button>
+							</div>
+						}
+					</hlm-accordion-content>
+				</div>
+			} @empty {
+				<div hlmEmpty>
+					<div hlmEmptyHeader><p hlmEmptyTitle>No categories found</p></div>
+				</div>
+			}
+		</div>
+	</div>
+	<footer class="gap-3 p-3 flex shrink-0 flex-col border-t">
+		<div class="gap-2 flex">
+			<button
+				ui-button
+				variant="outline"
+				size="sm"
+				icon="matVisibilityRound"
+				class="flex-1"
+				(click)="setAllVisible(true)"
+			>
+				Show all
+			</button>
+			<button
+				ui-button
+				variant="outline"
+				size="sm"
+				icon="matVisibilityOffRound"
+				class="flex-1"
+				(click)="setAllVisible(false)"
+			>
+				Hide all
+			</button>
+		</div>
+		<div class="gap-3 text-sm flex items-center justify-between">
+			Hide completed
+			<hlm-switch
+				[checked]="config()?.hiddenCompleted ?? false"
+				(checkedChange)="setConfig({ hiddenCompleted: $event })"
+				aria-label="Hide completed markers"
+			/>
+		</div>
+	</footer>
+</div>

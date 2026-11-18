@@ -1,0 +1,13 @@
+{
+	"name": "maps-feature-public-map",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/maps/feature-public-map/src",
+	"prefix": "maps",
+	"projectType": "library",
+	"tags": ["type:feature", "scope:maps", "platform:web"],
+	"targets": {
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		}
+	}
+}

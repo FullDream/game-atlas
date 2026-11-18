@@ -55,7 +55,7 @@ import { injectQuery } from '@tanstack/angular-query-experimental'
 			matRefreshRound,
 		}),
 	],
-	host: { class: 'mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-6 sm:gap-10 sm:px-6 sm:py-8' },
+	host: { class: 'mx-auto flex w-full max-w-8xl flex-1 flex-col gap-8 px-4 py-6 sm:gap-10 sm:px-6 sm:py-8' },
 })
 export class GamesFeatureDetail {
 	readonly slug = input.required<string>()

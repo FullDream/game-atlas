@@ -3,6 +3,7 @@ import View from 'ol/View.js'
 import Projection from 'ol/proj/Projection.js'
 import { addCoordinateTransforms } from 'ol/proj.js'
 import { remove as removeTransform } from 'ol/proj/transforms.js'
+import { unByKey } from 'ol/Observable.js'
 import TileGrid from 'ol/tilegrid/TileGrid.js'
 import TileLayer from 'ol/layer/Tile.js'
 import XYZ from 'ol/source/XYZ.js'
@@ -64,6 +65,7 @@ export class MapEngine {
 
 		this.#observer = new ResizeObserver(() => {
 			this.#map.updateSize()
+			interactions.viewportChanged?.()
 
 			if (!this.#fitted && target.clientWidth && target.clientHeight) {
 				this.fit()
@@ -141,12 +143,26 @@ export class MapEngine {
 		this.#markers.setTool(tool)
 	}
 
-	reveal(id: string, region: VisibleMapRegion): void {
-		this.#markers.reveal(id, region)
+	reveal(id: string, region: VisibleMapRegion, duration = 0): void {
+		this.#markers.reveal(id, region, duration)
 	}
 
 	fit(): void {
 		this.#map.getView().fit(this.#extent, { size: this.#map.getSize(), padding: [24, 24, 24, 24] })
+	}
+
+	getPixel(coordinate: [number, number]): [number, number] | null {
+		const pixel = this.#map.getPixelFromCoordinate(coordinate)
+
+		if (!pixel || pixel.length < 2) return null
+
+		return [pixel[0], pixel[1]]
+	}
+
+	onPostRender(callback: () => void): () => void {
+		const key = this.#map.on('postrender', callback)
+
+		return () => unByKey(key)
 	}
 
 	dispose(): void {

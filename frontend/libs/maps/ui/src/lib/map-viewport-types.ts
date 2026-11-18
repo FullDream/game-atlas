@@ -13,6 +13,11 @@ export type MapTool = 'pan' | 'move' | 'add'
 
 export type MarkerDraftState = 'marker' | 'category' | 'group'
 
+export type MarkerBadge = {
+	color: string
+	text?: string
+}
+
 export type MapMarker = {
 	id: string
 	name: string
@@ -22,6 +27,8 @@ export type MapMarker = {
 	selected?: boolean
 	pending?: boolean
 	failed?: boolean
+	opacity?: number
+	badges?: readonly MarkerBadge[]
 	/** Draft levels ordered from most specific: marker, category, group. */
 	draftStates?: readonly MarkerDraftState[]
 }
@@ -30,6 +37,8 @@ export type MarkerMove = { id: string; position: MapPoint }
 export type VisibleMapRegion = { left: number; top: number; right: number; bottom: number }
 
 export type MarkerInteractions = {
+	emptyClick?: () => void
+	viewportChanged?: () => void
 	select: (id: string) => void
 	place: (position: MapPoint) => void
 	move: (movement: MarkerMove) => void

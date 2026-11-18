@@ -1,0 +1,112 @@
+@let map = data();
+
+<div class="bg-background relative h-[calc(100dvh-4rem)] w-full overflow-hidden">
+	<!-- Map fills the available space below the layout header. -->
+	@if (mapGeometry(); as geom) {
+		<maps-viewport
+			class="inset-0 absolute h-full w-full"
+			[geometry]="geom"
+			[styles]="mapStyles()"
+			[defaultStyleId]="map.defaultStyleId"
+			[markers]="mapMarkers()"
+			tool="pan"
+			(markerSelected)="onMarkerSelected($event)"
+			(emptyClicked)="closeMarkerInspection()"
+			(viewportChanged)="onViewportChanged()"
+		>
+			<button
+				mapLeadingToolbar
+				ui-button
+				variant="secondary"
+				size="icon"
+				icon="matMenuRound"
+				type="button"
+				aria-label="Map filters"
+				[attr.aria-expanded]="!isLeftPanelCollapsed()"
+				(click)="isLeftPanelCollapsed.set(!isLeftPanelCollapsed())"
+			></button>
+		</maps-viewport>
+	}
+
+	<hlm-drawer
+		[direction]="isMobile() ? 'bottom' : 'left'"
+		[state]="isLeftPanelCollapsed() ? 'closed' : 'open'"
+		[hasBackdrop]="isMobile()"
+		[closeOnOutsidePointerEvents]="isMobile()"
+		[autoFocus]="isMobile()"
+		[aria-modal]="isMobile()"
+		(closed)="isLeftPanelCollapsed.set(true)"
+	>
+		<hlm-drawer-content
+			*hlmDrawerPortal
+			class="p-2 data-[vaul-drawer-direction=left]:top-32 data-[vaul-drawer-direction=left]:w-80 overflow-hidden data-[vaul-drawer-direction=bottom]:h-[80dvh] data-[vaul-drawer-direction=left]:max-w-[85vw] [&>div:first-child]:hidden"
+		>
+			<h2 hlmDrawerTitle class="sr-only">Map filters</h2>
+			<maps-category-filter-panel
+				class="min-h-0 rounded-t-4xl flex-1"
+				[mobile]="isMobile()"
+				[gameSlug]="slug()"
+				[gameName]="gameName()"
+				[gameCover]="game()?.coverUrl ?? gameCover()"
+				[gameBanner]="game()?.bannerUrl ?? null"
+				[maps]="game()?.maps ?? []"
+				[mapSlug]="map.slug"
+				[mapName]="map.name"
+				[data]="map"
+				[visibleCategoryIds]="visibleCategoryIds()"
+				[groupConfigs]="groupConfigs()"
+				[config]="config()"
+				(closed)="isLeftPanelCollapsed.set(true)"
+			/>
+		</hlm-drawer-content>
+	</hlm-drawer>
+
+	<!-- DESKTOP HYBRID POPUP OVER MARKER -->
+	<span
+		#popupAnchor
+		class="size-0 pointer-events-none absolute block"
+		[style.left.px]="popupPixel().x"
+		[style.top.px]="popupPixel().y"
+	></span>
+
+	@if (selectedMarker() && !isRightDrawerOpen() && !isMobile()) {
+		<div
+			class="md:block size-0 pointer-events-auto absolute z-30 hidden"
+			[style.left.px]="popupPixel().x"
+			[style.top.px]="popupPixel().y"
+		>
+			<brn-popover
+				[positionStrategy]="popupPositionStrategy()"
+				state="open"
+				[autoFocus]="false"
+				[closeOnOutsidePointerEvents]="false"
+				(closed)="closeMarkerInspection()"
+			>
+				<div hlmPopoverContent *hlmPopoverPortal class="w-80 max-w-[calc(100vw-2rem)]">
+					<maps-marker-popup
+						[marker]="selectedMarker()"
+						[category]="selectedMarkerCategory()"
+						[isCompleted]="isCurrentMarkerCompleted()"
+						(closed)="closeMarkerInspection()"
+						(expand)="isRightDrawerOpen.set(true)"
+						(toggleCompleted)="toggleCurrentMarkerCompleted()"
+					/>
+				</div>
+			</brn-popover>
+		</div>
+	}
+
+	@if (selectedMarker() && (isMobile() || isRightDrawerOpen())) {
+		<maps-marker-drawer
+			[marker]="selectedMarker()"
+			[category]="selectedMarkerCategory()"
+			[isCompleted]="isCurrentMarkerCompleted()"
+			[mode]="isMobile() ? 'mobile-bottom' : 'desktop-right'"
+			(collapse)="isRightDrawerOpen.set(false)"
+			(heightChanged)="markerDrawerHeight.set($event)"
+			(widthChanged)="markerDrawerWidth.set($event)"
+			(closed)="closeMarkerInspection()"
+			(toggleCompleted)="toggleCurrentMarkerCompleted()"
+		/>
+	}
+</div>
