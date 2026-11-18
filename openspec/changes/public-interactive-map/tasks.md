@@ -11,10 +11,10 @@
 - [x] 2.2 Update `MapMarkers` vector styling in `libs/maps/ui/src/lib/map-markers.ts` to apply custom `opacity` to icon and fallback pin styles.
 - [x] 2.3 Update admin adapter `map-marker-presentation.ts` in `libs/maps/feature-editor` to adapt admin draft states to generic badges and verify admin editor builds without errors.
 
-## 3. Client Storage with TanStack DB (`@tanstack/db`)
+## 3. Client Storage with Dexie
 
-- [x] 3.1 Add `@tanstack/db` to `package.json`, install dependencies, and verify clean installation.
-- [x] 3.2 Define `completedMarkers` and `mapPreferences` collections backed by IndexedDB using `@tanstack/db`.
+- [x] 3.1 Add `dexie` to `package.json`, install dependencies, and verify clean installation.
+- [x] 3.2 Define tables for completed markers and map preferences backed by IndexedDB using Dexie.
 - [x] 3.3 Create reactive Angular signal wrappers for querying completed markers, calculating category progress, and persisting hidden category/group states.
 
 ## 4. Public Map Feature Scaffolding & Routing
@@ -26,7 +26,7 @@
 
 - [x] 5.1 Build the floating desktop filter card with Game icon, Game name, Map title, search input, and collapse button `<`.
 - [x] 5.2 Implement accordion tree of category groups and categories with counts and individual/group visibility toggles.
-- [x] 5.3 Implement sticky footer with "Show all", "Hide all", and "Hide completed" switch bound to TanStack DB persistence.
+- [x] 5.3 Implement sticky footer with "Show all", "Hide all", and "Hide completed" switch bound to Dexie persistence.
 - [x] 5.4 Implement mobile responsive mode opening the filter panel as a bottom drawer (`hlm-drawer`).
 
 ## 6. Desktop Marker Inspection (Hybrid Popup & Side Drawer)

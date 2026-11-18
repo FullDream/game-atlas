@@ -9,7 +9,7 @@ import { HlmAccordionImports } from '@spartan-ng/helm/accordion'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmSwitchImports } from '@spartan-ng/helm/switch'
-import { injectMutation } from '@tanstack/angular-query-experimental'
+import { injectMutation } from "@tanstack/angular-query"
 
 type MapSettingsForm = { name: string; slug: string; published: boolean }
 

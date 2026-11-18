@@ -30,7 +30,7 @@ import { HlmAlertImports } from '@spartan-ng/helm/alert'
 import { HlmBadge } from '@spartan-ng/helm/badge'
 import { HlmTabsImports } from '@spartan-ng/helm/tabs'
 import { toSignal } from '@angular/core/rxjs-interop'
-import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental'
+import { injectMutation, injectQuery } from "@tanstack/angular-query"
 import { defaultIfEmpty, firstValueFrom, filter, map, Observable, of, take } from 'rxjs'
 
 import { type FeatureEditorContext } from './feature-editor-context'

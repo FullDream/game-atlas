@@ -9,7 +9,7 @@ Visitors currently can browse published games and view map summary cards on the 
 - Add Orval OpenAPI code generation for the backend `Public Maps` tag, generating `PublicMapsService` for `GET /public/games/{gameSlug}/maps/{mapSlug}`.
 - Create `PublicMapsQueryOptions` using `@tanstack/angular-query-experimental` to query published map geometry, styles, category groups, and markers.
 - Refactor the core map engine marker model (`libs/maps/ui`) to use generic visual primitives (`opacity`, `badges`) instead of admin-specific lifecycle states (`draftStates`, `pending`, `failed`), decoupling the viewer from admin-specific concepts.
-- Integrate `@tanstack/db` with IndexedDB collections for client-side persistence:
+- Integrate Dexie with IndexedDB collections for client-side persistence:
   - `completedMarkers`: stores completed marker IDs with `categoryId`, `mapId`, `gameId`, and timestamp for instant category/map progress aggregation.
   - `mapPreferences`: stores hidden group/category IDs and map display settings (e.g. "hide completed markers" toggle).
 - Implement the public interactive map page (`libs/maps/feature-public-map` or `apps/web` route component) at `/games/:slug/maps/:mapSlug`:
@@ -21,9 +21,11 @@ Visitors currently can browse published games and view map summary cards on the 
 ## Capabilities
 
 ### New Capabilities
-- `web-map`: Public interactive map viewing, category/group visibility filtering, and offline-first marker completion tracking persisted via `@tanstack/db` and IndexedDB.
+
+- `web-map`: Public interactive map viewing, category/group visibility filtering, and offline-first marker completion tracking persisted via Dexie and IndexedDB.
 
 ### Modified Capabilities
+
 - `map-viewer`: Generalize marker presentation to support transport-independent visual primitives (`opacity`, `badges`) decoupling presentation styling from administration draft states while preserving draft indicators in admin.
 
 ## Impact
@@ -34,6 +36,6 @@ Visitors currently can browse published games and view map summary cards on the 
   - `libs/maps/data-access`: update `orval.config.ts` to include `Public Maps` tag, re-run code generation, and add `PublicMapsQueryOptions`.
   - New public map feature library / component under `libs/maps/feature-public-map` (or `apps/web`).
 - **Dependencies**:
-  - Add `@tanstack/db` to `package.json` for reactive IndexedDB persistence.
+  - Add `dexie` to `package.json` for reactive IndexedDB persistence.
 - **Routing**:
   - Wire route `games/:slug/maps/:mapSlug` in `apps/web/src/app/app.routes.ts`.

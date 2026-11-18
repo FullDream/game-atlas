@@ -5,7 +5,7 @@ import { MediaService, type MediaAsset, type PaginatedResultOfMediaItem } from '
 import { PendingChanges } from '@game-atlas/shared/ui'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
-import { provideTanStackQuery, QueryClient } from '@tanstack/angular-query-experimental'
+import { provideTanStackQuery, QueryClient } from "@tanstack/angular-query"
 import { of, Subject } from 'rxjs'
 import { imageAsset, mediaListing, videoAsset } from '../media-test-data'
 import { getTestButton, getTestElement } from '../media-test-elements'
@@ -25,7 +25,7 @@ describe('MediaDetails', () => {
 				provideRouter([]),
 				provideSpartanHlm(),
 				provideTanStackQuery(
-					new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } }),
+					() => new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } }),
 				),
 				PendingChanges,
 				{ provide: ROUTER_OUTLET_DATA, useValue: outletData },

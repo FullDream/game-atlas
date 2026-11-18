@@ -7,7 +7,7 @@ import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
 import { HlmInput } from '@spartan-ng/helm/input'
-import { injectMutation } from '@tanstack/angular-query-experimental'
+import { injectMutation } from "@tanstack/angular-query"
 import { getMediaErrorMessage } from '../get-media-error-message'
 
 type FolderEditorContext = {

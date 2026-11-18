@@ -10,7 +10,7 @@ The backend already exposes `GET /public/games/{gameSlug}/maps/{mapSlug}` return
 
 - Provide a responsive public map page supporting both wide desktop displays and mobile touch devices.
 - Decouple the reusable `libs/maps/ui` map engine from domain-specific lifecycle states into pure visual presentation primitives.
-- Persist player marker completion and category visibility preferences offline in IndexedDB via `@tanstack/db`.
+- Persist player marker completion and category visibility preferences offline in IndexedDB via Dexie.
 - Deliver rapid marker completion workflows: an anchored popup with a bottom toggle adjacent to the pin on desktop, and a non-modal peek bottom sheet on mobile.
 
 **Non-Goals:**
@@ -38,41 +38,15 @@ _Alternatives considered:_
 
 - Adding `completed?: boolean` directly to `MapMarker`: rejected because it pollutes the shared UI library with client-specific tracking concepts.
 
-### 2. Local-First Persistence with TanStack DB (`@tanstack/db` + IndexedDB)
+### 2. Local-First Persistence with Dexie and IndexedDB
 
-**Decision:** Use `@tanstack/db` with `createIndexedDB` and `createCollection` with `indexedDBCollectionOptions`.
-Two collections are defined:
+**Decision:** Use Dexie to access IndexedDB. MapClientDb stores completed markers in `completedMarkers` and display preferences in `visibleCategories`, `groupConfigs`, and `mapConfig`.
 
-1. `completedMarkers`:
-   ```ts
-   interface CompletedMarker {
-     id: string; // markerId
-     categoryId: string; // categoryId
-     mapId: string; // mapId
-     gameId: string; // gameId
-     completedAt: string; // ISO date
-   }
-   ```
-2. `mapPreferences`:
-   ```ts
-   interface MapVisibilityPreference {
-     id: string; // categoryId or groupId
-     mapId: string; // mapId
-     type: "group" | "category";
-     hidden: boolean;
-   }
-   interface MapDisplaySettings {
-     mapId: string;
-     hideCompleted: boolean;
-   }
-   ```
-
-**Rationale:** Including `categoryId` directly in `CompletedMarker` enables instant category progress counts (`completed / total`) without requiring expensive joins across the marker dataset. `@tanstack/db` preloads data into memory for synchronous signal reads and handles asynchronous write-behind to IndexedDB.
+**Rationale:** Including `categoryId` directly in `CompletedMarker` enables instant category progress counts (`completed / total`) without requiring expensive joins across the marker dataset. Dexie live queries expose changes to Angular signals.
 
 _Alternatives considered:_
 
 - Direct `localStorage`: rejected due to 5MB storage limits, lack of indexing by mapId, and blocking synchronous serialization.
-- Plain Dexie without TanStack DB: rejected because `@tanstack/db` offers standardized reactive live queries and cross-tab synchronization.
 
 ### 3. Desktop Hybrid Marker Inspection (Popup + Right Drawer)
 
@@ -111,9 +85,9 @@ _Alternatives considered:_
 
 ## Risks / Trade-offs
 
-- **[Risk] High marker count impact on reactivity** → **Mitigation:** In-memory `Set<string>` of completed marker IDs keyed by `mapId` updated reactively from `@tanstack/db`, enabling $O(1)$ visibility and dimming checks during marker rendering.
+- **[Risk] High marker count impact on reactivity** → **Mitigation:** In-memory `Set<string>` of completed marker IDs keyed by `mapId` updated reactively from Dexie, enabling $O(1)$ visibility and dimming checks during marker rendering.
 - **[Risk] OpenLayers canvas events blocked by floating UI** → **Mitigation:** Strict isolation with Tailwind `pointer-events-none` on container layers and `pointer-events-auto` on interactive floating cards.
-- **[Risk] Multiple open tabs modifying completion state** → **Mitigation:** `@tanstack/db` broadcast sync automatically updates collections across open tabs.
+- **[Risk] Multiple open tabs modifying completion state** → **Mitigation:** Dexie live queries observe writes from other tabs.
 
 ## Viewer review refinements
 

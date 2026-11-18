@@ -27,7 +27,7 @@ import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 import { HlmTooltip } from '@spartan-ng/helm/tooltip'
-import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental'
+import { injectMutation, injectQuery } from "@tanstack/angular-query"
 import { take } from 'rxjs'
 import { MapEditorDialog } from './map-editor-dialog/map-editor-dialog'
 

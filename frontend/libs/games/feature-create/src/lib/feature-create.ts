@@ -9,7 +9,7 @@ import { type PickerContext } from '@game-atlas/shared/util'
 import { BrnDialogService } from '@spartan-ng/brain/dialog'
 import { provideIcons } from '@ng-icons/core'
 import { matAddRound } from '@ng-icons/material-symbols/round'
-import { injectMutation } from '@tanstack/angular-query-experimental'
+import { injectMutation } from "@tanstack/angular-query"
 import { defaultIfEmpty, map, Observable, of, take } from 'rxjs'
 @Component({
 	selector: 'games-create',

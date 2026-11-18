@@ -4,7 +4,7 @@ import { PublicMapsQueryOptions } from '@game-atlas/maps/data-access'
 import { Button } from '@game-atlas/shared/ui'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSpinner } from '@spartan-ng/helm/spinner'
-import { injectQuery } from '@tanstack/angular-query-experimental'
+import { injectQuery } from "@tanstack/angular-query"
 import type { PublicMapChoice } from './category-filter-panel/category-filter-panel'
 import { PublicMapViewer } from './public-map-viewer/public-map-viewer'
 

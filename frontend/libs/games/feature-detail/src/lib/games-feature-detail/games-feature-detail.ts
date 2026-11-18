@@ -25,7 +25,7 @@ import { HlmBreadcrumbImports } from '@spartan-ng/helm/breadcrumb'
 import { HlmCardImports } from '@spartan-ng/helm/card'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
-import { injectQuery } from '@tanstack/angular-query-experimental'
+import { injectQuery } from "@tanstack/angular-query"
 
 @Component({
 	selector: 'games-detail',

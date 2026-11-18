@@ -8,28 +8,29 @@ import { provideSignalR } from '@game-atlas/shared/data-access'
 import { MediaPickerAdapter, provideMediaBaseUrl } from '@game-atlas/media/data-access'
 import { provideBrnDialogDefaultOptions } from '@spartan-ng/brain/dialog'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
-import { MutationCache, provideTanStackQuery, QueryClient } from '@tanstack/angular-query-experimental'
-import { withDevtools } from '@tanstack/angular-query-experimental/devtools'
+import { MutationCache, provideTanStackQuery, QueryClient } from '@tanstack/angular-query'
+import { withDevtools } from '@tanstack/angular-query-devtools'
 import { AdminTitleStrategy } from './admin-title-strategy'
 import { APP_ROUTES } from './app.routes'
 import { FullscreenOverlayContainer, OverlayContainer } from '@angular/cdk/overlay'
 
-const queryClient = new QueryClient({
-	mutationCache: new MutationCache({
-		onSuccess: async (data, variables, context, mutation): Promise<void> => {
-			const [domain, gameId, operation] = mutation.options.mutationKey ?? []
+const createQueryClient = (): QueryClient =>
+	new QueryClient({
+		mutationCache: new MutationCache({
+			onSuccess: async (data, variables, onMutateResult, mutation, { client }): Promise<void> => {
+				const [domain, gameId, operation] = mutation.options.mutationKey ?? []
 
-			if (domain !== 'maps' || typeof gameId !== 'string') return
+				if (domain !== 'maps' || typeof gameId !== 'string') return
 
-			if (!['create', 'update', 'delete', 'add-style', 'delete-style'].includes(String(operation))) return
+				if (!['create', 'update', 'delete', 'add-style', 'delete-style'].includes(String(operation))) return
 
-			await Promise.all([
-				queryClient.invalidateQueries({ queryKey: getGameQueryKey(gameId), exact: true }),
-				queryClient.invalidateQueries({ queryKey: gamesListKey }),
-			])
-		},
-	}),
-})
+				await Promise.all([
+					client.invalidateQueries({ queryKey: getGameQueryKey(gameId), exact: true }),
+					client.invalidateQueries({ queryKey: gamesListKey }),
+				])
+			},
+		}),
+	})
 
 export const appConfig: ApplicationConfig = {
 	providers: [
@@ -42,7 +43,7 @@ export const appConfig: ApplicationConfig = {
 		provideSignalR(),
 		provideSpartanHlm(),
 		provideBrnDialogDefaultOptions({ backdropClass: 'bg-black/30', ariaLabelledBy: null }),
-		provideTanStackQuery(queryClient, withDevtools()),
+		provideTanStackQuery(createQueryClient, withDevtools()),
 		{ provide: OverlayContainer, useClass: FullscreenOverlayContainer },
 		provideGamesBaseUrl('/api'),
 		provideMediaBaseUrl('/api'),

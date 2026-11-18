@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Provide a public interactive game map page with full-screen map navigation, offline-first client-side category visibility filtering, and marker completion tracking backed by TanStack DB and IndexedDB.
+Provide a public interactive game map page with full-screen map navigation, offline-first client-side category visibility filtering, and marker completion tracking backed by Dexie and IndexedDB.
 
 ## ADDED Requirements
 
@@ -36,7 +36,7 @@ The map page SHALL provide a category filter panel displaying category groups an
 
 ### Requirement: Persist visibility preferences in IndexedDB
 
-The application SHALL persist category and group hidden states in an IndexedDB collection managed by `@tanstack/db` under the current `mapId`.
+The application SHALL persist category and group hidden states in an IndexedDB collection managed by Dexie under the current `mapId`.
 
 #### Scenario: Restoring visibility preferences across reloads
 
@@ -45,7 +45,7 @@ The application SHALL persist category and group hidden states in an IndexedDB c
 
 ### Requirement: Track marker completion
 
-The user SHALL be able to toggle any marker as completed (found/done). Completed markers SHALL be persisted in an IndexedDB collection managed by `@tanstack/db` containing `id` (markerId), `categoryId`, `mapId`, `gameId`, and `completedAt`.
+The user SHALL be able to toggle any marker as completed (found/done). Completed markers SHALL be persisted in an IndexedDB collection managed by Dexie containing `id` (markerId), `categoryId`, `mapId`, `gameId`, and `completedAt`.
 
 #### Scenario: Marking a marker as completed
 

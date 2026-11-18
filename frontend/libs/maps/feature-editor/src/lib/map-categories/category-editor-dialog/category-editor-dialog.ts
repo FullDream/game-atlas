@@ -16,7 +16,7 @@ import { HlmFieldImports } from '@spartan-ng/helm/field'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmSelectImports } from '@spartan-ng/helm/select'
 import { HlmSwitchImports } from '@spartan-ng/helm/switch'
-import { injectMutation } from '@tanstack/angular-query-experimental'
+import { injectMutation } from "@tanstack/angular-query"
 import { take } from 'rxjs'
 import { HlmInputGroupImports } from '@spartan-ng/helm/input-group'
 import { NgIcon, provideIcons } from '@ng-icons/core'

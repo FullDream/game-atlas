@@ -16,7 +16,7 @@ import { MediaThumbnail } from '../media-thumbnail/media-thumbnail'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmAttachmentImports } from '@spartan-ng/helm/attachment'
 import { BrnDialogRef } from '@spartan-ng/brain/dialog'
-import { injectQuery } from '@tanstack/angular-query-experimental'
+import { injectQuery } from "@tanstack/angular-query"
 @Component({
 	selector: 'ui-media-picker-dialog',
 	imports: [Button, MediaThumbnail, FormsModule, HlmInput, HlmAttachmentImports, NgIcon, HlmSkeleton],

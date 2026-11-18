@@ -26,7 +26,7 @@ import { provideIcons } from '@ng-icons/core'
 import { matChevronLeftRound, matRefreshRound } from '@ng-icons/material-symbols/round'
 import { HlmTooltip } from '@spartan-ng/helm/tooltip'
 import { HlmAccordionImports } from '@spartan-ng/helm/accordion'
-import { injectMutationState, injectQuery } from '@tanstack/angular-query-experimental'
+import { injectMutationState, injectQuery } from "@tanstack/angular-query"
 import { MapCategories } from '../map-categories/map-categories'
 import { MapMarkers } from '../map-markers/map-markers'
 import { MapSettings } from '../map-settings/map-settings'

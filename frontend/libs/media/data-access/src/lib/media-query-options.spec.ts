@@ -1,10 +1,10 @@
 import { HttpErrorResponse, HttpEventType, provideHttpClient } from '@angular/common/http'
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing'
 import { TestBed } from '@angular/core/testing'
-import { QueryClient } from '@tanstack/angular-query-experimental'
+import { QueryClient } from "@tanstack/angular-query"
 import { firstValueFrom } from 'rxjs'
 import { MediaQueryOptions } from './media-query-options'
-import { MutationObserver } from '@tanstack/angular-query-experimental'
+import { MutationObserver } from "@tanstack/angular-query"
 import { reconcileMediaList } from './utils'
 import { MediaService } from './generated/media/media.service'
 import { provideMediaBaseUrl } from './generated/api.base-url'

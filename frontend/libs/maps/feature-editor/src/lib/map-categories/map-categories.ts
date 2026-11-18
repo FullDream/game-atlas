@@ -51,7 +51,7 @@ import { HlmTooltip } from '@spartan-ng/helm/tooltip'
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
-import { injectQuery, injectMutation, injectIsMutating } from '@tanstack/angular-query-experimental'
+import { injectQuery, injectMutation, injectIsMutating } from "@tanstack/angular-query"
 import { take } from 'rxjs'
 import { CategoryEditorDialog } from './category-editor-dialog/category-editor-dialog'
 
@@ -117,14 +117,14 @@ export class MapCategories {
 
 	protected readonly query = injectQuery(() => this.#options.getGroups(this.gameId(), this.mapId()))
 
-	readonly #pending = injectIsMutating({
+	readonly #pending = injectIsMutating(() => ({
 		mutationKey: ['categories'],
 		predicate: mutation => {
 			const variables = mutation.state.variables as CategoryMutationScope | undefined
 
 			return variables?.gameId === this.gameId() && variables.mapId === this.mapId()
 		},
-	})
+	}))
 
 	readonly #update = injectMutation(() => this.#options.update())
 	readonly #updateGroup = injectMutation(() => this.#options.updateGroup())
