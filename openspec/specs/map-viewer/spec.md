@@ -84,7 +84,7 @@ The viewer SHALL accept map geometry and style presentation data independently o
 
 ### Requirement: Render category-styled markers
 
-The viewer SHALL accept transport-independent marker presentation data with stable identity, name, X/Y position, category icon/color, and optional draft indicator metadata (`draftStates?: readonly ('marker' | 'category' | 'group')[]`). It SHALL render distinguishable selected and pending markers and use a colored pin fallback for missing icons. When `draftStates` is non-empty on a marker, the viewer SHALL draw a colored indicator dot with a contrasting outline in the top-right corner of the marker icon using the most specific draft level (`'marker'` `#F59E0B` > `'category'` `#0EA5E9` > `'group'` `#8B5CF6`), and the marker hover tooltip SHALL display a second line below the marker name listing every draft level (`Draft: marker`, `Draft: marker, category, group`, etc.). Marker updates and style switches SHALL preserve camera position and resolution.
+The viewer SHALL accept transport-independent marker presentation data with stable identity, name, X/Y position, category icon/color, optional explicit `opacity?: number`, and optional badges and admin draft, pending and failure state metadata. It SHALL render distinguishable selected and pending markers and use a colored pin fallback for missing icons. When an explicit `opacity` is provided on a marker, the viewer SHALL render the marker icon and fallback pin at that opacity (for example, `0.35` for completed markers or `0.5` for pending placements). When `draftStates` is non-empty on a marker, the viewer SHALL draw a colored indicator dot with a contrasting outline in the top-right corner of the marker icon using the most specific draft level, and the marker hover tooltip SHALL display a draft level line. Marker updates and style switches SHALL preserve camera position and resolution.
 
 #### Scenario: Render and update markers
 
@@ -104,6 +104,16 @@ The viewer SHALL accept transport-independent marker presentation data with stab
 - **WHEN** map geometry exists but no ready style exists
 - **THEN** marker rendering and interactions remain available in logical coordinate space
 - **AND** before geometry exists placement is unavailable without fabricated coordinates
+
+#### Scenario: Rendering marker with custom opacity
+
+- **WHEN** a marker is supplied with `opacity: 0.35`
+- **THEN** the marker icon on the vector layer SHALL be rendered with 35% opacity.
+
+#### Scenario: Preserving default opacity
+
+- **WHEN** a marker is supplied without an `opacity` property
+- **THEN** it SHALL be rendered at full opacity (1.0) unless `pending` is true (0.5).
 
 ### Requirement: Expose mode-specific marker interactions
 
