@@ -2,7 +2,7 @@
 
 Paths and commands in frontend documents are relative to `frontend/` unless stated otherwise. See the [system architecture](../architecture.md), [Angular conventions](angular.md), [data access](data-access.md) and [UI guidelines](ui.md).
 
-The workspace uses Angular 22, Nx 23, TypeScript 6, Tailwind CSS 4 and Spartan UI. Use npm from `frontend` and a Node.js version supported by the installed Angular build tools.
+The workspace uses Angular 22, Nx 24, TypeScript 6, Tailwind CSS 4 and Spartan UI. Use npm from `frontend` and a Node.js version supported by the installed Angular build tools.
 
 ## Applications
 

@@ -4,7 +4,7 @@
 	"peerDependencies": {
 		"@angular/core": "^22.1.0",
 		"@angular/cdk": "^22.2.3",
-		"@angular/forms": "~22.1.0",
+		"@angular/forms": "~22.2.0",
 		"@ng-icons/core": "33.4.0",
 		"@ng-icons/lucide": ">=32.0.0 <34.0.0",
 		"@spartan-ng/brain": "^1.8.0",

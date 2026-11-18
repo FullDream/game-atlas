@@ -9,15 +9,16 @@
 		"generate-api": {
 			"executor": "nx:run-commands",
 			"cache": false,
-			"options": { "command": "orval --config libs/maps/data-access/orval.config.ts" }
+			"options": {
+				"command": "orval --config libs/maps/data-access/orval.config.ts"
+			}
 		},
 		"typecheck": {
 			"executor": "nx:run-commands",
 			"cache": true,
-			"options": { "command": "tsc --project libs/maps/data-access/tsconfig.lib.json --noEmit" }
-		},
-		"lint": {
-			"executor": "@nx/eslint:lint"
+			"options": {
+				"command": "tsc --project libs/maps/data-access/tsconfig.lib.json --noEmit"
+			}
 		}
 	}
 }

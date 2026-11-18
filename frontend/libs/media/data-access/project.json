@@ -15,9 +15,6 @@
 				"watch": false
 			}
 		},
-		"lint": {
-			"executor": "@nx/eslint:lint"
-		},
 		"generate-api": {
 			"executor": "nx:run-commands",
 			"cache": false,

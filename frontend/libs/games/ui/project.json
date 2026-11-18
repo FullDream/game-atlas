@@ -5,9 +5,6 @@
 	"prefix": "games",
 	"projectType": "library",
 	"tags": ["type:ui", "scope:games", "platform:admin"],
-	"targets": {
-		"lint": {
-			"executor": "@nx/eslint:lint"
-		}
-	}
+	"// targets": "to see all targets run: nx show project games-ui --web",
+	"targets": {}
 }

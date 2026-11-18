@@ -50,6 +50,13 @@
 			"continuous": true,
 			"executor": "@nx/angular:dev-server",
 			"defaultConfiguration": "development",
+			"dependsOn": ["^build"],
+			"options": {
+				"port": 4201,
+				"proxyConfig": "apps/admin/proxy.conf.cjs",
+				"buildLibsFromSource": false,
+				"watchDependencies": false
+			},
 			"configurations": {
 				"production": {
 					"buildTarget": "admin:build:production"
@@ -58,16 +65,9 @@
 					"buildTarget": "admin:build:development"
 				}
 			},
-			"options": {
-				"port": 4201,
-				"proxyConfig": "apps/admin/proxy.conf.cjs",
-				"buildLibsFromSource": false,
-				"watchDependencies": false
-			},
-			"dependsOn": ["^build"]
-		},
-		"lint": {
-			"executor": "@nx/eslint:lint"
+			"readyWhen": {
+				"signal": true
+			}
 		},
 		"test": {
 			"executor": "@angular/build:unit-test",
@@ -78,6 +78,10 @@
 		"serve-static": {
 			"continuous": true,
 			"executor": "@nx/web:file-server",
+			"readyWhen": {
+				"signal": true
+			},
+			"dependsOn": ["build"],
 			"options": {
 				"buildTarget": "admin:build",
 				"port": 4301,

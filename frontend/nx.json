@@ -7,10 +7,6 @@
 		"sharedGlobals": ["{workspaceRoot}/.postcssrc.json", "{workspaceRoot}/libs/shared/ui/src/theme/styles.css"]
 	},
 	"targetDefaults": {
-		"@nx/eslint:lint": {
-			"cache": true,
-			"inputs": ["default", "^default", "{workspaceRoot}/eslint.config.mjs"]
-		},
 		"@angular/build:unit-test": {
 			"cache": true,
 			"inputs": ["default", "^production"]
@@ -60,5 +56,8 @@
 		"@spartan-ng/cli:ui": {
 			"tags": "type:ui,scope:shared,platform:shared"
 		}
+	},
+	"affected": {
+		"legacy": true
 	}
 }
