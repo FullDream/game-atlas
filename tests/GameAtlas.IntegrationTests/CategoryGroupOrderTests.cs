@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Categories.Groups;
 using GameAtlas.Infrastructure.Persistence;
@@ -23,16 +23,18 @@ public class CategoryGroupOrderTests
 		await factory.MigrateAsync();
 
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.EnsureMapAsync(factory, game.Id);
 
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var body = "{\"name\":\"New\",\"order\":" + value + "}";
 		using var content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
 		using var creation = await client.PostAsync(CategoryGroupApiTests.Path(game.Id), content);
+
 		using var update = await CategoryGroupApiTests.PatchAsync(client,
 			CategoryGroupApiTests.Path(game.Id, group.Id), body);
 
@@ -55,7 +57,7 @@ public class CategoryGroupOrderTests
 		var second = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Second", 2);
 
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, second.Id), new { beforeId = first.Id });
 
 		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, response.StatusCode);
@@ -71,6 +73,7 @@ public class CategoryGroupOrderTests
 		using var noOp = await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, second.Id), new { beforeId = first.Id });
 
 		CategoryGroupTestData.AssertSame(dto, await noOp.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions));
+
 		using var both = await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, second.Id),
 			new { name = " New ", beforeId = (Guid?)null });
 
@@ -112,7 +115,7 @@ public class CategoryGroupOrderTests
 			await context.SaveChangesAsync();
 		}
 
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var response = await client.GetFromJsonAsync<CategoryGroupDto[]>(CategoryGroupApiTests.Path(game.Id), MapTestData.JsonOptions);
 
@@ -131,10 +134,11 @@ public class CategoryGroupOrderTests
 
 		await MapTestData.EnsureMapAsync(factory, game.Id);
 
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var first = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id), new { name = "First" });
 
 		CategoryGroupTestData.AssertSame(1, (await CategoryGroupTestData.OrderAsync(factory, (await first.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions))!.Id)));
+
 		using var maximum = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id),
 			new { name = "Maximum" });
 
@@ -142,6 +146,7 @@ public class CategoryGroupOrderTests
 		using var exhausted = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id), new { name = "Next" });
 
 		CategoryGroupTestData.AssertSame(HttpStatusCode.OK, exhausted.StatusCode);
+
 		using var duplicate = await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id),
 			new { name = "Explicit", order = 1 });
 

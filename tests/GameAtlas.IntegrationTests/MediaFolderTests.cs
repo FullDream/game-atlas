@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Media;
 using GameAtlas.Domain.Media;
@@ -16,9 +16,10 @@ public class MediaFolderTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var first = await CreateAsync(client, "First");
 		var second = await CreateAsync(client, "Second");
+
 		var responses = await Task.WhenAll(
 			Task.Run(() => client.PatchAsJsonAsync($"/media/folders/{first.Id}", new { parentId = second.Id })),
 			Task.Run(() => client.PatchAsJsonAsync($"/media/folders/{second.Id}", new { parentId = first.Id })));
@@ -43,12 +44,14 @@ public class MediaFolderTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var parent = await CreateAsync(client, "Parent");
 		var child = await CreateAsync(client, "Child");
+
 		var creation = Task.Run(() => moveExisting
 			? client.PatchAsJsonAsync($"/media/folders/{child.Id}", new { parentId = parent.Id })
 			: client.PostAsJsonAsync("/media/folders", new { name = "New child", parentId = parent.Id }));
+
 		var deletion = Task.Run(() => client.DeleteAsync($"/media/folders/{parent.Id}"));
 
 		await Task.WhenAll(creation, deletion);
@@ -57,6 +60,7 @@ public class MediaFolderTests
 
 		Assert.True(created.StatusCode == HttpStatusCode.OK && deleted.StatusCode == HttpStatusCode.Conflict ||
 			created.StatusCode == HttpStatusCode.NotFound && deleted.StatusCode == HttpStatusCode.NoContent);
+
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
@@ -70,18 +74,22 @@ public class MediaFolderTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var parent = await CreateAsync(client, "Parent");
+
 		using var missingCreate = await client.PostAsJsonAsync("/media/folders",
 			new { name = "Child", parentId = Guid.NewGuid() });
+
 		using var missingMove = await client.PatchAsJsonAsync($"/media/folders/{parent.Id}",
 			new { parentId = Guid.NewGuid() });
 
 		Assert.Equal(HttpStatusCode.NotFound, missingCreate.StatusCode);
 		Assert.Equal(HttpStatusCode.NotFound, missingMove.StatusCode);
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
 			var image = ImageAsset.Create(Guid.CreateVersion7(), "No physical file", parent.Id,
 				"image/png", 10, 10, 10).Value!;
 
@@ -104,7 +112,7 @@ public class MediaFolderTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var folder = await CreateAsync(client, "Original");
 		using var body = new StringContent("{\"name\":\"Updated\"}");
 
@@ -120,17 +128,20 @@ public class MediaFolderTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var root = await CreateAsync(client, " Shared ");
 		var child = await CreateAsync(client, "Icons", root.Id);
 		var other = await CreateAsync(client, "Other");
 
 		Assert.Equal("Shared", root.Name);
 		using var duplicate = await client.PostAsJsonAsync("/media/folders", new { name = " shared " });
+
 		using var duplicateChild = await client.PostAsJsonAsync("/media/folders",
 			new { name = " icons ", parentId = root.Id });
+
 		using var cycle = await client.PatchAsJsonAsync($"/media/folders/{root.Id}",
 			new { name = "Wrong", parentId = child.Id });
+
 		using var nonempty = await client.DeleteAsync($"/media/folders/{root.Id}");
 
 		Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
@@ -166,8 +177,9 @@ public class MediaFolderTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var folder = await CreateAsync(client, "Icons");
+
 		using var response = await client.PatchAsync($"/media/folders/{folder.Id}",
 			new StringContent(json, System.Text.Encoding.UTF8, "application/merge-patch+json"));
 
@@ -217,6 +229,7 @@ public class MediaFolderTests
 		Assert.Equal(2, await context.MediaAssets.CountAsync());
 		await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 			context.MediaAssets.Where(asset => asset.Id == image.Id).ExecuteDeleteAsync());
+
 		await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 			context.MediaFolders.Where(folder => folder.Id == first.Id).ExecuteDeleteAsync());
 

@@ -1,4 +1,5 @@
-import { provideHttpClient, withXhr } from '@angular/common/http'
+import { authInterceptor, provideAuthBaseUrl } from '@game-atlas/auth/data-access'
+import { HttpErrorResponse, HttpStatusCode, provideHttpClient, withInterceptors, withXhr } from '@angular/common/http'
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core'
 import { provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router'
 import { getGameQueryKey, gamesListKey, provideGamesBaseUrl } from '@game-atlas/games/data-access'
@@ -16,6 +17,16 @@ import { FullscreenOverlayContainer, OverlayContainer } from '@angular/cdk/overl
 
 const createQueryClient = (): QueryClient =>
 	new QueryClient({
+		defaultOptions: {
+			queries: {
+				retry: (count, error) =>
+					!(
+						error instanceof HttpErrorResponse &&
+						(error.status === HttpStatusCode.Unauthorized || error.status === HttpStatusCode.Forbidden)
+					) && count < 3,
+			},
+			mutations: { retry: false },
+		},
 		mutationCache: new MutationCache({
 			onSuccess: async (data, variables, onMutateResult, mutation, { client }): Promise<void> => {
 				const [domain, gameId, operation] = mutation.options.mutationKey ?? []
@@ -39,7 +50,8 @@ export const appConfig: ApplicationConfig = {
 		provideRouter(APP_ROUTES, withComponentInputBinding()),
 		{ provide: PageTitleStrategy, useClass: AdminTitleStrategy },
 		{ provide: TitleStrategy, useExisting: PageTitleStrategy },
-		provideHttpClient(withXhr()),
+		provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
+		provideAuthBaseUrl('/api'),
 		provideSignalR(),
 		provideSpartanHlm(),
 		provideBrnDialogDefaultOptions({ backdropClass: 'bg-black/30', ariaLabelledBy: null }),

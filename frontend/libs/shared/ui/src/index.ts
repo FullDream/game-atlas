@@ -14,6 +14,7 @@ export { WorkspaceBreadcrumbs } from './lib/navigation/workspace-breadcrumbs'
 export type { WorkspaceBreadcrumb } from './lib/navigation/workspace-navigation'
 
 export { ColorPicker } from './lib/color-picker/color-picker'
+export { getErrorMessageFromFieldState } from './lib/field/get-error-message-from-field-state'
 export { Field } from './lib/field/field'
 export { TooltipOnOverflow } from './lib/tooltip/tooltip-on-overflow'
 export { ConfirmationDialog, type Confirmation } from './lib/confirmation-dialog/confirmation-dialog'

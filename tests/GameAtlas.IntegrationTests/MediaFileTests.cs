@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using GameAtlas.Application.Media.Storage;
 using GameAtlas.Domain.Media;
@@ -16,7 +16,7 @@ public sealed class MediaFileTests
 		await using var factory = new GameApiFactory(interceptor: capture);
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
 		var bytes = Enumerable.Range(0, 100).Select(value => (byte)value).ToArray();
 
 		"ftypisom"u8.CopyTo(bytes.AsSpan(4));
@@ -80,7 +80,7 @@ public sealed class MediaFileTests
 	public async Task StaticDeliveryRejectsNonAssetPaths(string url)
 	{
 		await using var factory = new GameApiFactory();
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
 		using var response = await client.GetAsync(url);
 
 		Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -93,8 +93,9 @@ public sealed class MediaFileTests
 		await using var factory = new GameApiFactory(interceptor: capture);
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
 		var bytes = "<svg xmlns='http://www.w3.org/2000/svg'/>"u8.ToArray();
+
 		var image = ImageAsset.Create(Guid.CreateVersion7(), "SVG", null, "image/svg+xml", bytes.Length, null, null)
 			.Value!;
 

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -19,7 +19,7 @@ public class AddMapStyleApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var initial = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, initial);
 		var map = await MapTestData.ReadAsync(created);
@@ -53,7 +53,8 @@ public class AddMapStyleApiTests
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		var map = await MapTestData.SeedAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var upload = new MultipartFormDataContent
 		{
 			{ new StringContent("Roads"), "name" },
@@ -95,8 +96,9 @@ public class AddMapStyleApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.SeedAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style(MapTestData.ImageBytes(1025, 513), name, color);
 		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
 		var problem = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -116,8 +118,9 @@ public class AddMapStyleApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.SeedAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style(MapTestData.ImageBytes(1025, 513));
 		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id));
@@ -135,8 +138,9 @@ public class AddMapStyleApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.SeedAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var bytes = invalidImage ? Encoding.UTF8.GetBytes("<svg></svg>") : MapTestData.ImageBytes(23, 17);
 		using var upload = MapTestData.Style(bytes, name: "Other");
 		using var response = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
@@ -152,7 +156,8 @@ public class AddMapStyleApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsync($"{MapTestData.PathFor(Guid.NewGuid())}/styles",
 			new StringContent("not a form", Encoding.UTF8, "text/plain"));
 

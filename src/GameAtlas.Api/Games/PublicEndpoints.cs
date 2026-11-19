@@ -1,4 +1,4 @@
-using GameAtlas.Api.Results;
+﻿using GameAtlas.Api.Results;
 using GameAtlas.Application.Common.Pagination;
 using GameAtlas.Application.Games;
 using GameAtlas.Application.Games.GetPublicGame;
@@ -11,10 +11,11 @@ public static class PublicEndpoints
 {
 	public static RouteGroupBuilder MapPublicGames(this RouteGroupBuilder group)
 	{
-		var games = group.MapGroup("/public/games").WithTags("Public Games");
+		var games = group.MapGroup("/public/games").WithTags("Public Games").AllowAnonymous();
 
 		games.MapGet("", ListAsync).WithName("ListPublicGames")
 			.WithSummary("List published game cards");
+
 		games.MapGet("/{gameSlug}", GetAsync).WithName("GetPublicGame")
 			.ProducesProblem(StatusCodes.Status404NotFound).WithSummary("Get a published game by slug");
 

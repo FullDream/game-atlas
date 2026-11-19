@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace GameAtlas.IntegrationTests;
 
@@ -8,7 +8,7 @@ public class DeleteGameOpenApiTests
 	public async Task DocumentsEmpty204GuidIdentifierAndProblemResponses()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var paths = document.RootElement.GetProperty("paths");
 		var operation = paths.GetProperty("/games/{id}").GetProperty("delete");
@@ -33,10 +33,13 @@ public class DeleteGameOpenApiTests
 
 		Assert.Equal("CreateGame", paths.GetProperty("/games").GetProperty("post")
 			.GetProperty("operationId").GetString());
+
 		Assert.Equal("ListGames", paths.GetProperty("/games").GetProperty("get")
 			.GetProperty("operationId").GetString());
+
 		Assert.Equal("UpdateGame", paths.GetProperty("/games/{id}").GetProperty("patch")
 			.GetProperty("operationId").GetString());
+
 		Assert.False(paths.GetProperty("/games/{id}").TryGetProperty("put", out _));
 	}
 }

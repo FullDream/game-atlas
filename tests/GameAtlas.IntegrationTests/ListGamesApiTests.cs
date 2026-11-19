@@ -1,4 +1,4 @@
-using GameAtlas.Domain.ValueObjects;
+﻿using GameAtlas.Domain.ValueObjects;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Net;
@@ -23,11 +23,13 @@ public class ListGamesApiTests
 		await using var factory = new GameApiFactory(interceptor: capture);
 		var games = await SeedAsync(factory, Enumerable.Range(0, 25).Select(index => $"Game {index:D2}").ToArray());
 		await using var scope = factory.Services.CreateAsyncScope();
+
 		var mapIds = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Maps
 			.ToDictionaryAsync(map => map.GameId, map => map.Id);
 
+		using var client = await factory.CreateHttpsClientAsync();
+
 		capture.Commands.Clear();
-		using var client = factory.CreateHttpsClient();
 		using var response = await client.GetAsync("/games");
 		var page = await ReadPageAsync(response);
 
@@ -36,6 +38,7 @@ public class ListGamesApiTests
 		Assert.Equal(25, page.GetProperty("total").GetInt32());
 		Assert.Equal(games.OrderBy(game => game.CreatedAt).ThenBy(game => game.Id).Take(20).Select(game => game.Id),
 			page.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()));
+
 		Assert.Equal(4, page.EnumerateObject().Count());
 		var items = page.GetProperty("items").EnumerateArray().ToArray();
 
@@ -72,20 +75,23 @@ public class ListGamesApiTests
 	{
 		await using var factory = new GameApiFactory();
 		var games = await SeedAsync(factory, ["Zulu", "Alpha", "Beta", "Other"]);
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 			var instant = DateTimeOffset.Parse("2026-01-01T00:00:00Z");
+
 			await context.Games.ExecuteUpdateAsync(setters => setters.SetProperty(game => game.CreatedAt, instant));
 		}
 
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var expected = games.OrderBy(game => game.Id).Select(game => game.Id).ToArray();
 
 		foreach (var offset in new[] { 0, 2, 0 })
 		{
 			using var response = await client.GetAsync($"/games?offset={offset}&limit=2");
 			var page = await ReadPageAsync(response);
+
 			Assert.Equal(expected.Skip(offset).Take(2), page.GetProperty("items").EnumerateArray()
 				.Select(item => item.GetProperty("id").GetGuid()));
 		}
@@ -113,8 +119,9 @@ public class ListGamesApiTests
 		await using var factory = new GameApiFactory(interceptor: capture);
 		var games = await SeedAsync(factory, ["Zulu", "Same", "Alpha", "Same", "Beta"]);
 
+		using var client = await factory.CreateHttpsClientAsync();
+
 		capture.Commands.Clear();
-		using var client = factory.CreateHttpsClient();
 		var url = $"/games?offset=1&limit=2&sortBy={field}";
 
 		if (direction is not null)
@@ -122,8 +129,10 @@ public class ListGamesApiTests
 
 		using var response = await client.GetAsync(url);
 		var page = await ReadPageAsync(response);
+
 		var descending = direction is not null &&
 			Enum.Parse<SortDirection>(direction, ignoreCase: true) == SortDirection.Desc;
+
 		IOrderedEnumerable<Game> expected = Enum.Parse<GameSortBy>(field, ignoreCase: true) switch
 		{
 			GameSortBy.Name => descending ? games.OrderByDescending(game => game.Name, StringComparer.Ordinal)
@@ -135,6 +144,7 @@ public class ListGamesApiTests
 
 		Assert.Equal(expected.ThenBy(game => game.Id).Skip(1).Take(2).Select(game => game.Id),
 			page.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()));
+
 		Assert.Equal(5, page.GetProperty("total").GetInt32());
 		var sql = capture.Commands.Single(command => command.Contains("LIMIT") && command.Contains("Games"));
 
@@ -158,7 +168,8 @@ public class ListGamesApiTests
 
 		await SeedAsync(factory, ["Elden Ring", "Other ring", "Percent %", "Under_score", "Back\\slash",
 			"Ведьмак", "Alpha", "Beta"]);
-		using var client = factory.CreateHttpsClient();
+
+		using var client = await factory.CreateHttpsClientAsync();
 		var url = "/games?limit=1&sortBy=name" + (search is null ? "" : "&search=" + Uri.EscapeDataString(search));
 		using var response = await client.GetAsync(url);
 		var page = await ReadPageAsync(response);
@@ -175,7 +186,7 @@ public class ListGamesApiTests
 		await using var factory = new GameApiFactory();
 
 		await SeedAsync(factory, seed ? ["Game"] : []);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await client.GetAsync("/games?offset=10&limit=100");
 		var page = await ReadPageAsync(response);
 
@@ -207,7 +218,7 @@ public class ListGamesApiTests
 	public async Task RejectsInvalidQueryWithProblemDetails(string query, int status, string? field)
 	{
 		await using var factory = new GameApiFactory();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await client.GetAsync("/games?" + query);
 
 		Assert.Equal(status, (int)response.StatusCode);
@@ -224,7 +235,11 @@ public class ListGamesApiTests
 	public async Task UnexpectedStorageFailureReturnsSafe500()
 	{
 		await using var factory = new GameApiFactory();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+		await using var scope = factory.Services.CreateAsyncScope();
+		var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+		await db.Database.ExecuteSqlRawAsync("DROP TABLE Games");
 		using var response = await client.GetAsync("/games");
 		var content = await response.Content.ReadAsStringAsync();
 
@@ -241,6 +256,7 @@ public class ListGamesApiTests
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var start = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
 		var games = names.Select((name, index) => Game.Create(name, Slug.Create("game-" + index).Value!, MediaTestData.CoverId).Value!)
 			.ToArray();
 

@@ -106,3 +106,11 @@ The checker's own regression tests use temporary fixtures and can be run indepen
 ```sh
 node --test scripts/check-docs.test.mjs
 ```
+
+### Administrator provisioning and production hosting
+
+Apply the SQLite migrations explicitly before starting the API. On an empty Identity store, supply Admin__Login and Admin__Password through deployment secrets (local development can use ASP.NET Core user secrets). Remove these bootstrap values after provisioning. Restarting the service preserves the account. Identity stores the password hash in SQLite.
+
+Serve admin at /admin/ on the same HTTPS origin as the public site at / and the API at /api/. Preserve the external Host header and forward the original HTTPS scheme from a trusted proxy so browser hub connections pass the same-origin check. The API receives paths without the /api prefix. Serve direct /admin/ routes through the admin SPA fallback while preserving real 404s for missing assets. Forward /media/files/ and /map-tiles/ without stripping their prefixes. They are public even for draft assets.
+
+Keep the ASP.NET Core Data Protection key ring across restarts and deployments under the same service identity, application name and content root. Persist the default service-profile key directory on durable storage, restrict its permissions to the service account and protect keys at rest with platform facilities. Losing the ring invalidates all sessions. Production requires HTTPS. For local development, run the API in Development and open the existing admin dev server at http://localhost:4201. Browsers allow Secure cookies on localhost. The API emits Secure cookies even on the loopback HTTP hop. For other hosts, verify using HTTPS.

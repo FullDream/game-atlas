@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Net;
 using System.Net.Http.Json;
@@ -30,14 +30,17 @@ public class MarkerTransactionTests
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var source = await CategoryTestData.SeedAsync(factory, group.Id, "Source");
 		var destination = await CategoryTestData.SeedAsync(factory, group.Id, "Destination", 2);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		var created = await MarkerTestData.CreateAsync(client, game.Id, source.Id,
 			media: JsonSerializer.Deserialize<JsonElement>(MarkerTestData.MixedMedia));
+
 		var id = created.GetProperty("id").GetGuid();
 		var before = await MarkerTestData.LoadAsync(factory, id);
 
 		writeFailure.Enabled = true;
 		saveFailure.Enabled = true;
+
 		using var response = operation switch
 		{
 			"create" => await client.PostAsJsonAsync(MarkerTestData.Path(game.Id),
@@ -98,11 +101,13 @@ public class MarkerTransactionTests
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		var created = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 			media: JsonSerializer.Deserialize<JsonElement>(MarkerTestData.MixedMedia));
 
 		interceptor.Enabled = true;
+
 		using var response = await client.PatchAsJsonAsync(
 			MarkerTestData.Path(game.Id) + "/" + created.GetProperty("id").GetGuid(),
 			new { position = new { }, media = created.GetProperty("media").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).ToArray() });
@@ -120,10 +125,11 @@ public class MarkerTransactionTests
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var first = await CategoryTestData.SeedAsync(factory, group.Id, "First");
 		var second = await CategoryTestData.SeedAsync(factory, group.Id, "Second", 2);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var created = await MarkerTestData.CreateAsync(client, game.Id, first.Id);
 		var id = created.GetProperty("id").GetGuid();
 		var path = MarkerTestData.Path(game.Id) + $"/{id}";
+
 		var requests = new[] { first.Id, second.Id }.Select(async destination =>
 		{
 			using var response = await client.PatchAsJsonAsync(path, new
@@ -163,7 +169,8 @@ public class MarkerTransactionTests
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 			media: JsonSerializer.Deserialize<JsonElement>(MarkerTestData.MixedMedia));
 
@@ -174,6 +181,7 @@ public class MarkerTransactionTests
 
 		Assert.Single(small.EnumerateArray());
 		Assert.InRange(smallQueries, 3, 4);
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

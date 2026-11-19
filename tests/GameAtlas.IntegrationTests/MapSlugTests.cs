@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using GameAtlas.Application.Games;
@@ -27,9 +27,10 @@ public class MapSlugTests
 	public async Task CreationRequiresValidNameAndSlug(string json)
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await client.PostAsync(MapTestData.CollectionFor(game.Id), new StringContent(json, Encoding.UTF8, "application/json"));
 
 		Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
@@ -44,9 +45,10 @@ public class MapSlugTests
 	public async Task PatchPreservesOmissionsNoOpsAndAtomicFailures(string mediaType)
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var creation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = " World ", slug = " world " });
 		var map = await MapTestData.ReadAsync(creation);
 		var path = MapTestData.PathFor(game.Id, map.Id);
@@ -68,6 +70,7 @@ public class MapSlugTests
 
 		Assert.Equal((map.Id, map.Name, map.Slug, map.CreatedAt, map.UpdatedAt),
 			(unchanged.Id, unchanged.Name, unchanged.Slug, unchanged.CreatedAt, unchanged.UpdatedAt));
+
 		using var renamed = await client.PatchAsJsonAsync(path, new { name = "Renamed" });
 
 		Assert.Equal("world", (await MapTestData.ReadAsync(renamed)).Slug);
@@ -90,10 +93,11 @@ public class MapSlugTests
 	public async Task UniqueSlugIsScopedToGameAndReusedAfterDeletion()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "other");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var first = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "World", slug = "world" });
 		var map = await MapTestData.ReadAsync(first);
 		using var duplicate = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "Other", slug = "world" });
@@ -119,9 +123,11 @@ public class MapSlugTests
 	public async Task CompetingCreatesLeaveExactlyOneOwner()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		var responses = await Task.WhenAll(Enumerable.Range(0, 2).Select(index =>
 			client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = $"Map {index}", slug = "shared" })));
 
@@ -144,11 +150,13 @@ public class MapSlugTests
 	public async Task ConverterQueriesAndDatabaseConstraintUseSlugValue()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var slug = Slug.Create("world").Value!;
+
 		context.Maps.Add(Map.Create(game.Id, "World", slug).Value!);
 		await context.SaveChangesAsync();
 		context.ChangeTracker.Clear();
@@ -170,12 +178,15 @@ public class MapSlugTests
 	{
 		var interceptor = new SaveFailure(slugConflict);
 		await using var factory = new GameApiFactory(interceptor: interceptor);
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var creation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "Existing", slug = "existing" });
 		var map = await MapTestData.ReadAsync(creation);
+
 		interceptor.Enabled = true;
+
 		using var response = update
 			? await client.PatchAsJsonAsync(MapTestData.PathFor(game.Id, map.Id), new { name = "Changed", slug = "world" })
 			: await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "World", slug = "world" });

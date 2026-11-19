@@ -13,7 +13,7 @@ The frontend SHALL provide a separately runnable and buildable `admin` applicati
 #### Scenario: Open administration without the backend
 
 - **WHEN** an operator starts administration while the backend is unavailable
-- **THEN** the application shell and foundation destinations render without fabricated API data or a blank screen
+- **THEN** the sign-in page shows a connection error and lets the operator try again
 - **AND** the public website is not a runtime dependency
 
 #### Scenario: Serve a built application
@@ -34,13 +34,13 @@ Administration SHALL expose Games and Media destinations within one persistent s
 
 #### Scenario: Reach a foundation page directly
 
-- **WHEN** an operator opens /games or /media directly
+- **WHEN** a signed-in operator opens /games or /media directly
 - **THEN** the Games list or Media manager renders inside the same shell
 - **AND** a visit to / resolves to Games
 
 #### Scenario: Open a game editor
 
-- **WHEN** an operator opens /games/new or /games/{id}
+- **WHEN** a signed-in operator opens /games/new or /games/{id}
 - **THEN** the matching editor renders within the persistent shell with Games active and appropriate breadcrumbs
 
 ### Requirement: Adapt navigation to the viewport
@@ -76,13 +76,20 @@ The shell and its owned Helm components SHALL use Material Symbols Rounded SVG i
 
 ### Requirement: Keep the initial shell limited to available capabilities
 
-The shell SHALL provide shared styling and navigational structure without introducing authentication, authorization, user accounts or role management. Resource mutations SHALL be exposed only through implemented features such as the Media manager. It SHALL NOT display invented user identity, business statistics or functional links to absent features.
+The shell SHALL provide shared styling and navigational structure for authenticated administrators with an accessible logout action. Resource mutations SHALL be exposed only through implemented features such as the Media manager. It SHALL NOT display invented user identity, business statistics or functional links to absent features.
 
 #### Scenario: Inspect initial navigation
 
-- **WHEN** an operator opens administration
+- **WHEN** a signed-in operator opens administration
 - **THEN** Games and Media destinations are present, with functional media management
-- **AND** no login flow, fake profile, dashboard statistics or nonfunctional user-management link is presented
+- **AND** logout is available and no fake profile, dashboard statistics or nonfunctional user-management link is presented
+
+#### Scenario: Confirm sign-out
+
+- **WHEN** the administrator selects the logout action
+- **THEN** the shell asks for confirmation before submitting the logout request
+- **AND** successful logout or an expired session takes the administrator to the sign-in page
+- **AND** a failed logout displays an error and allows another attempt
 
 ### Requirement: Choose and remember a color theme
 
@@ -166,3 +173,12 @@ Active workspace navigation or page-data requests SHALL display a thin indetermi
 
 - **WHEN** the progress line is visible
 - **THEN** assistive technology can identify its loading purpose without a misleading numeric progress value
+
+### Requirement: Host administration at a dedicated production path
+
+One HTTPS origin SHALL serve public web at /, admin at /admin/, and API at /api/. Admin deep links SHALL resolve within the SPA.
+
+#### Scenario: Restore an editor in production
+
+- **WHEN** a guest opens /admin/games/new and signs in
+- **THEN** the application returns to /admin/games/new while /games/new continues to resolve through public web

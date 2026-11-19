@@ -1,3 +1,5 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.OpenApi;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -34,11 +36,14 @@ public static class DependencyInjection
 		services.AddProblemDetails();
 		services.AddOpenApiValidationSource<Media.UpdateMediaAssetRequest,
 			Application.Media.Assets.UpdateMediaAsset.UpdateMediaAsset>();
+
 		services.AddOpenApiValidationSource<Media.ListMediaRequest, Application.Media.ListMedia.ListMedia>();
 		services.AddOpenApiValidationSource<Media.CreateMediaFolderRequest,
 			Application.Media.Folders.CreateMediaFolder.CreateMediaFolder>();
+
 		services.AddOpenApiValidationSource<Media.UpdateMediaFolderRequest,
 			Application.Media.Folders.UpdateMediaFolder.UpdateMediaFolder>();
+
 		services.AddExceptionHandler<MediaFolderConflictExceptionHandler>();
 		services.AddOpenApiValidationSource<Maps.CreateMapRequest, Application.Maps.CreateMap.CreateMap>();
 		services.AddOpenApiValidationSource<Maps.UpdateMapRequest, Application.Maps.UpdateMap.UpdateMap>();
@@ -82,6 +87,30 @@ public static class DependencyInjection
 			options.CreateSchemaReferenceId = PublicSchemaNames.CreateReferenceId;
 
 			options.AddOptionalSupport();
+			options.AddDocumentTransformer((document, _, _) =>
+			{
+				document.Components ??= new();
+				document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+				document.Components.SecuritySchemes["AdminCookie"] = new OpenApiSecurityScheme
+				{
+					Type = SecuritySchemeType.ApiKey,
+					In = ParameterLocation.Cookie,
+					Name = "__Host-GameAtlas.Session"
+				};
+
+				return Task.CompletedTask;
+			});
+
+			options.AddOperationTransformer((operation, context, _) =>
+			{
+				var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+
+				if (metadata.OfType<IAuthorizeData>().Any() && !metadata.OfType<IAllowAnonymous>().Any())
+					operation.Security = [new() { [new("AdminCookie", context.Document)] = [] }];
+
+				return Task.CompletedTask;
+			});
+
 			options.AddOperationTransformer<CamelCaseQueryParametersTransformer>();
 			options.AddSchemaTransformer<CamelCaseQueryEnumSchemaTransformer>();
 			options.AddSchemaTransformer<FluentValidationSchemaTransformer>();

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using GameAtlas.Application.Media.Storage;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Infrastructure.Maps.Processing;
@@ -15,7 +15,7 @@ public class MapAdmissionTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var created = await MapTestData.CreateWithStylesAsync(client, game.Id);
 		var map = await MapTestData.ReadAsync(created);
 		var styles = map.Styles.ToArray();
@@ -25,8 +25,10 @@ public class MapAdmissionTests
 
 		Assert.Equal(MapTestData.ImageBytes(), await File.ReadAllBytesAsync(
 			storage.AssetPath(styles[0].Source.Id)));
+
 		Assert.Equal(MapTestData.ImageBytes(color: 100), await File.ReadAllBytesAsync(
 			storage.AssetPath(styles[1].Source.Id)));
+
 		var processor = factory.Services.GetRequiredService<MapProcessor>();
 
 		Assert.True(await processor.RunNextAsync(CancellationToken.None));
@@ -53,7 +55,7 @@ public class MapAdmissionTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var initial = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, initial);
 		var map = await MapTestData.ReadAsync(created);
@@ -64,6 +66,7 @@ public class MapAdmissionTests
 		using var missing = await client.GetAsync(MapTestData.PathFor(game.Id));
 
 		var stored = await MapTestData.ReadAsync(missing);
+
 		Assert.Equal(map.Width, stored.Width);
 		Assert.Equal(map.Styles.Single(), stored.Styles.First());
 		Assert.Equal(differentDimensions ? 2 : 1, stored.Styles.Count);
@@ -76,7 +79,7 @@ public class MapAdmissionTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var first = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, first);
 		var map = await MapTestData.ReadAsync(created);

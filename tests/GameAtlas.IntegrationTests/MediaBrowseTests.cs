@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Common.Pagination;
@@ -17,7 +17,7 @@ public sealed class MediaBrowseTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var top = await MediaFolderTests.CreateAsync(client, "Top");
 		var middleResponse = await client.PostAsJsonAsync("/media/folders", new { name = "Middle", parentId = top.Id });
 		var middle = await middleResponse.Content.ReadFromJsonAsync<MediaFolderDto>();
@@ -25,6 +25,7 @@ public sealed class MediaBrowseTests
 		var leaf = await leafResponse.Content.ReadFromJsonAsync<MediaFolderDto>();
 
 		await client.PostAsJsonAsync("/media/folders", new { name = "Child", parentId = leaf!.Id });
+
 		var listing = await client.GetFromJsonAsync<PaginatedResult<MediaItemDto>>(
 			$"/media?folderId={leaf.Id}&search=absent&offset=100");
 
@@ -51,7 +52,7 @@ public sealed class MediaBrowseTests
 		await using var factory = new GameApiFactory(interceptor: capture);
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var folder = await MediaFolderTests.CreateAsync(client, "Folder");
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -63,6 +64,7 @@ public sealed class MediaBrowseTests
 		{
 			context.MediaAssets.Add(VideoAsset.Create(Guid.CreateVersion7(), $"Video {index:D2}", null,
 				"video/mp4", 64, image.Id).Value!);
+
 			context.MediaAssets.Add(ImageAsset.Create(Guid.CreateVersion7(), $"Child {index}", folder.Id,
 				"image/png", 64, 8, 8).Value!);
 		}
@@ -100,7 +102,7 @@ public sealed class MediaBrowseTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await client.GetAsync($"/media?{query}");
 
 		Assert.Equal(expected, (int)response.StatusCode);
@@ -112,12 +114,15 @@ public sealed class MediaBrowseTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var folder = await MediaFolderTests.CreateAsync(client, "Z folder");
 		var nested = await MediaFolderTests.CreateAsync(client, "Inside", folder.Id);
+
 		var image = ImageAsset.Create(Guid.CreateVersion7(), "B image", null, "image/png", 10, 16, 16,
 			"<script>plain text</script>").Value!;
+
 		var video = VideoAsset.Create(Guid.CreateVersion7(), "A video", null, "video/mp4", 20, image.Id).Value!;
+
 		var child = ImageAsset.Create(Guid.CreateVersion7(), "Missing original", folder.Id, "image/png", 10, 16, 16)
 			.Value!;
 
@@ -165,7 +170,7 @@ public sealed class MediaBrowseTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var folder = await MediaFolderTests.CreateAsync(client, "Images");
 		var image = ImageAsset.Create(Guid.CreateVersion7(), "Original", folder.Id, "image/png", 10, 32, 32).Value!;
 		var video = VideoAsset.Create(Guid.CreateVersion7(), "Video", null, "video/webm", 20).Value!;
@@ -180,6 +185,7 @@ public sealed class MediaBrowseTests
 
 		using var edited = await client.PatchAsJsonAsync($"/media/assets/{image.Id}",
 			new { name = " Renamed ", folderId = (Guid?)null, alt = "shared" });
+
 		var dto = await edited.Content.ReadFromJsonAsync<MediaAssetDto>();
 		var updated = Assert.IsType<ImageAssetDto>(dto);
 

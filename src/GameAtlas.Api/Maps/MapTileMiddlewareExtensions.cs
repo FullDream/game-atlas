@@ -1,4 +1,4 @@
-using GameAtlas.Application.Maps.Storage;
+﻿using GameAtlas.Application.Maps.Storage;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 
@@ -10,6 +10,7 @@ public static class MapTileMiddlewareExtensions
 	{
 		var storage = app.Services.GetRequiredService<IMapStorage>();
 		var files = new PhysicalFileProvider(storage.PublicTilesRoot);
+
 		var contentTypes = new FileExtensionContentTypeProvider(new Dictionary<string, string>
 		{
 			[".webp"] = "image/webp"
@@ -17,13 +18,12 @@ public static class MapTileMiddlewareExtensions
 
 		app.Lifetime.ApplicationStopped.Register(files.Dispose);
 
-		return app.UseStaticFiles(new StaticFileOptions
+		return app.Map("/map-tiles", branch => branch.UseStaticFiles(new StaticFileOptions
 		{
 			FileProvider = files,
-			RequestPath = "/map-tiles",
 			ContentTypeProvider = contentTypes,
 			OnPrepareResponse = context =>
 				context.Context.Response.Headers.CacheControl = "public,max-age=31536000,immutable"
-		});
+		}));
 	}
 }

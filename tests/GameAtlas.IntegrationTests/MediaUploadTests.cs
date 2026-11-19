@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Media;
 using NetVips;
@@ -17,8 +17,9 @@ public sealed class MediaUploadTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var image = Image.Black(64, 48, bands: 4);
+
 		var bytes = format switch
 		{
 			"png" => image.PngsaveBuffer(),
@@ -27,6 +28,7 @@ public sealed class MediaUploadTests
 			"avif" => image.HeifsaveBuffer(compression: Enums.ForeignHeifCompression.Av1),
 			_ => throw new ArgumentOutOfRangeException(nameof(format))
 		};
+
 		using var body = new MultipartFormDataContent();
 
 		body.Add(new ByteArrayContent(bytes), "file", "../../original.wrong");
@@ -57,7 +59,7 @@ public sealed class MediaUploadTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var body = new MultipartFormDataContent();
 
 		body.Add(new StringContent(text), "file", "icon.svg");

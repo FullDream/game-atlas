@@ -1,4 +1,4 @@
-using GameAtlas.Api.Categories.Groups;
+﻿using GameAtlas.Api.Categories.Groups;
 using GameAtlas.Api.Http;
 using GameAtlas.Api.Results;
 using GameAtlas.Application.Categories;
@@ -14,7 +14,8 @@ public static class Endpoints
 {
 	public static RouteGroupBuilder MapCategories(this RouteGroupBuilder api)
 	{
-		var groups = api.MapGroup("/games/{gameId}/maps/{mapId}/category-groups").WithTags("Categories");
+		var groups = api.MapGroup("/games/{gameId}/maps/{mapId}/category-groups").WithTags("Categories").RequireAuthorization();
+
 		groups.MapGet("", async (Guid gameId, Guid mapId, IMediator mediator, CancellationToken cancellationToken) =>
 			(OutcomeResult<IReadOnlyCollection<CategoryGroupDto>>)await mediator.Send(new ListCategoryGroups(gameId, mapId), cancellationToken))
 			.WithName("ListCategoryGroups").WithSummary("List category tree");
@@ -32,6 +33,7 @@ public static class Endpoints
 			.WithName("DeleteCategoryGroup").WithSummary("Delete category group");
 
 		var categories = groups.MapGroup("/{groupId}/categories");
+
 		categories.MapPost("", async (Guid gameId, Guid mapId, Guid groupId, CreateCategoryRequest request, IMediator mediator, CancellationToken cancellationToken) =>
 			(OutcomeResult<CategoryDto>)await mediator.Send(request.ToCommand(gameId, mapId, groupId), cancellationToken))
 			.WithName("CreateCategory").WithSummary("Create category");

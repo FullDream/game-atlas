@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using System.Net;
 using GameAtlas.Application.Media.Inspection;
 using GameAtlas.Domain.Media;
@@ -16,11 +16,12 @@ public sealed class MediaAdmissionFaultTests
 	public async Task CancelledInspectionReleasesItsAdmissionAndStagedOriginal()
 	{
 		var inspector = new PausedInspection();
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 			services.AddSingleton<IMediaInspector>(inspector));
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var cancellation = new CancellationTokenSource();
 		using var body = new MultipartFormDataContent();
 
@@ -49,7 +50,7 @@ public sealed class MediaAdmissionFaultTests
 		await using var factory = new GameApiFactory(interceptor: new CommitFault());
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var body = new MultipartFormDataContent();
 
 		body.Add(new StringContent("<svg xmlns='http://www.w3.org/2000/svg'/>"), "file", "icon.svg");

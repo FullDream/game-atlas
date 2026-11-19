@@ -24,7 +24,7 @@ The schema-only MapStyle upgrade SHALL refuse a database containing legacy maps,
 
 ### Requirement: Scope multiple maps and their styles to a game
 
-A game SHALL own zero or more independent maps. Map operations SHALL use /games/{gameId}/maps and /games/{gameId}/maps/{mapId}, without authentication for draft or published games. Styles SHALL belong to exactly one map. Valid requests for missing parents or resources outside the route game/map SHALL return HTTP 404 without changes. The former singular map routes SHALL NOT remain active aliases.
+A game SHALL own zero or more independent maps. Map operations SHALL use /games/{gameId}/maps and /games/{gameId}/maps/{mapId}, with authentication for draft or published games. Styles SHALL belong to exactly one map. Valid requests for missing parents or resources outside the route game/map SHALL return HTTP 404 without changes. The former singular map routes SHALL NOT remain active aliases.
 
 #### Scenario: Independent maps in one game
 
@@ -62,7 +62,7 @@ POST /games/{gameId}/maps SHALL accept application/json with required name and s
 
 ### Requirement: Publish a map and all owned draft content atomically
 
-Unauthenticated POST /games/{gameId}/maps/{mapId}/publish SHALL atomically transition the scoped map and all of its owned draft category groups, categories, and markers to `published`, and return HTTP 200 with the complete map representation. Only records whose status changes from `draft` to `published` SHALL update `updatedAt`. Missing or foreign game/map routes SHALL return HTTP 404 without changes.
+Authenticated POST /games/{gameId}/maps/{mapId}/publish SHALL atomically transition the scoped map and all of its owned draft category groups, categories, and markers to `published`, and return HTTP 200 with the complete map representation. Only records whose status changes from `draft` to `published` SHALL update `updatedAt`. Missing or foreign game/map routes SHALL return HTTP 404 without changes.
 
 #### Scenario: Publish a draft map with mixed draft and published content
 

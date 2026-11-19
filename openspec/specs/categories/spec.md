@@ -8,7 +8,7 @@ Manage categories within game-owned category groups, including recognizable icon
 
 ### Requirement: Scope category operations to a game map and current group
 
-Category operations SHALL use /games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories without authentication for draft or published games. Each category SHALL belong to one group of that map. Missing or foreign game/map/group/category scope SHALL return HTTP 404 without changes. Maps with zero styles SHALL support all category operations. Legacy game-wide category routes SHALL NOT remain active.
+Category operations SHALL use /games/{gameId}/maps/{mapId}/category-groups/{groupId}/categories with authentication for draft or published games. Each category SHALL belong to one group of that map. Missing or foreign game/map/group/category scope SHALL return HTTP 404 without changes. Maps with zero styles SHALL support all category operations. Legacy game-wide category routes SHALL NOT remain active.
 
 #### Scenario: Validate every ownership boundary
 
@@ -19,7 +19,7 @@ Category operations SHALL use /games/{gameId}/maps/{mapId}/category-groups/{grou
 #### Scenario: Existing parent in either game status
 
 - **WHEN** categories are managed in an existing group of the route map, whose game is draft or published
-- **THEN** the operation is permitted without authentication or requiring styles
+- **THEN** the operation is permitted for the administrator without requiring styles
 
 #### Scenario: Missing or foreign resource
 

@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using System.Net;
 using GameAtlas.Application.Media.Storage;
 using GameAtlas.Domain.Maps;
@@ -19,25 +19,26 @@ public class MapTileTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
 		var style = map.Styles.Single();
 		var prefix = MapTestData.TilesPath(map.Id, style.Id);
 		var url = $"{prefix}/0/0/0.webp";
-		using var queued = await client.GetAsync(url);
+		using var guest = factory.CreateGuestClient();
+		using var queued = await guest.GetAsync(url);
 
 		Assert.Equal(HttpStatusCode.NotFound, queued.StatusCode);
 		await factory.Services.GetRequiredService<MapProcessor>().RunNextAsync(CancellationToken.None);
 		queries.Armed = true;
-		using var tile = await client.GetAsync(url);
+		using var tile = await guest.GetAsync(url);
 		using var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
-		using var head = await client.SendAsync(headRequest);
+		using var head = await guest.SendAsync(headRequest);
 		using var conditional = new HttpRequestMessage(HttpMethod.Get, url);
 
 		conditional.Headers.IfNoneMatch.Add(tile.Headers.ETag!);
-		using var unchanged = await client.SendAsync(conditional);
+		using var unchanged = await guest.SendAsync(conditional);
 
 		Assert.Equal(HttpStatusCode.OK, tile.StatusCode);
 		Assert.Equal(HttpStatusCode.OK, head.StatusCode);
@@ -46,6 +47,7 @@ public class MapTileTests
 		Assert.Equal(HttpStatusCode.NotModified, unchanged.StatusCode);
 		Assert.Contains("immutable", tile.Headers.CacheControl!.ToString());
 		var storage = factory.Services.GetRequiredService<IMediaStorage>();
+
 		var privatePaths = new[]
 		{
 			$"{prefix}/manifest.json", prefix,
@@ -58,7 +60,7 @@ public class MapTileTests
 
 		foreach (var path in privatePaths)
 		{
-			using var missing = await client.GetAsync(path);
+			using var missing = await guest.GetAsync(path);
 
 			Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
 		}
@@ -107,7 +109,8 @@ public class MapTileTests
 		}
 
 		using var image = Image.NewFromMemory(pixels, width, height, 4, Enums.BandFormat.Uchar);
-		using var client = factory.CreateHttpsClient();
+		using var guest = factory.CreateGuestClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style(image.PngsaveBuffer());
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
@@ -123,7 +126,7 @@ public class MapTileTests
 			{
 				for (var y = 0; y < geometry.Rows(z); y++)
 				{
-					using var response = await client.GetAsync($"{tilesPath}/{z}/{x}/{y}.webp");
+					using var response = await guest.GetAsync($"{tilesPath}/{z}/{x}/{y}.webp");
 
 					Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 					using var encoded = Image.NewFromBuffer(await response.Content.ReadAsByteArrayAsync());
@@ -152,9 +155,9 @@ public class MapTileTests
 		}
 
 		var foreignPath = MapTestData.TilesPath(Guid.NewGuid(), style.Id);
-		using var foreign = await client.GetAsync($"{foreignPath}/0/0/0.webp");
-		using var outside = await client.GetAsync($"{tilesPath}/0/1/0.webp");
-		using var malformed = await client.GetAsync($"{tilesPath}/not-a-number/0/0.webp");
+		using var foreign = await guest.GetAsync($"{foreignPath}/0/0/0.webp");
+		using var outside = await guest.GetAsync($"{tilesPath}/0/1/0.webp");
+		using var malformed = await guest.GetAsync($"{tilesPath}/not-a-number/0/0.webp");
 
 		Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
 		Assert.Equal(HttpStatusCode.NotFound, outside.StatusCode);

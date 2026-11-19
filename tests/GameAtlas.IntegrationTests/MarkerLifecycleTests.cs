@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Domain.Markers;
@@ -25,7 +25,7 @@ public class MarkerLifecycleTests
 		var (foreignGame, foreignGroup) = await CategoryTestData.ParentAsync(factory);
 
 		var foreignCategory = await CategoryTestData.SeedAsync(factory, foreignGroup.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var empty = await client.GetAsync(MarkerTestData.Path(game.Id));
 
 		Assert.Empty((await MarkerTestData.ReadAsync(empty)).EnumerateArray());
@@ -94,7 +94,8 @@ public class MarkerLifecycleTests
 		var (_, foreignGroup) = await CategoryTestData.ParentAsync(factory);
 
 		var foreignCategory = await CategoryTestData.SeedAsync(factory, foreignGroup.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var defaults = await client.PostAsJsonAsync(MarkerTestData.Path(game.Id),
 			new { categoryId = category.Id, name = "Marker", position = new { x = 0, y = -0.5 } });
 
@@ -128,7 +129,8 @@ public class MarkerLifecycleTests
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsJsonAsync(MarkerTestData.Path(game.Id), new
 		{
 			categoryId = category.Id,
@@ -166,7 +168,7 @@ public class MarkerLifecycleTests
 		var (_, otherGroup) = await CategoryTestData.ParentAsync(factory);
 
 		var foreignCategory = await CategoryTestData.SeedAsync(factory, otherGroup.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var created = await MarkerTestData.CreateAsync(client, game.Id, source.Id,
 			media: JsonSerializer.Deserialize<JsonElement>(MarkerTestData.MixedMedia));
@@ -191,6 +193,7 @@ public class MarkerLifecycleTests
 		}
 
 		var reversed = created.GetProperty("media").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).Reverse().ToArray();
+
 		using var moved = await client.PatchAsJsonAsync(path,
 			new { categoryId = destination.Id, name = " Moved ", description = " New ", media = reversed });
 
@@ -203,6 +206,7 @@ public class MarkerLifecycleTests
 		Assert.Equal("New", persisted.Description);
 		Assert.Equal(new[] { "video", "image", "image" },
 			updated.GetProperty("media").EnumerateArray().Select(item => item.GetProperty("type").GetString()));
+
 		Assert.Equal(new[] { 0, 1, 2 }, persisted.Media.OrderBy(item => item.Order).Select(item => item.Order));
 
 		var counts = System.Text.Json.JsonSerializer.SerializeToElement(await CategoryTestData.ReadTreeCategoriesAsync(client, CategoryTestData.Path(game.Id, group.Id)), new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
@@ -225,6 +229,7 @@ public class MarkerLifecycleTests
 			new { name = "Empty", iconAssetId = MediaTestData.IconId, color = "#fff" });
 
 		Assert.Equal(0, (await MarkerTestData.ReadAsync(newCategoryResponse)).GetProperty("markersCount").GetInt32());
+
 		using var readOnly = await client.PatchAsJsonAsync(
 			CategoryTestData.Path(game.Id, destinationGroup.Id, destination.Id), new { markersCount = 0 });
 
@@ -235,6 +240,7 @@ public class MarkerLifecycleTests
 
 		Assert.Empty(cleared.GetProperty("media").EnumerateArray());
 		Assert.Equal(JsonValueKind.Null, cleared.GetProperty("description").ValueKind);
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 			Assert.Equal(0, await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
 				.Set<MarkerAsset>().CountAsync());
@@ -271,7 +277,7 @@ public class MarkerLifecycleTests
 			var (otherGame, otherGroup) = await CategoryTestData.ParentAsync(factory);
 
 			var otherCategory = await CategoryTestData.SeedAsync(factory, otherGroup.Id);
-			using var client = factory.CreateHttpsClient();
+			using var client = await factory.CreateHttpsClientAsync();
 
 			var original = System.IO.Path.Combine(factory.MediaStoragePath, "assets", MediaTestData.VideoId.ToString("N"));
 
@@ -328,12 +334,13 @@ public class MarkerLifecycleTests
 		var sourceCategory = await CategoryTestData.SeedAsync(factory, sourceGroup.Id, "Source");
 
 		var destinationCategory = await CategoryTestData.SeedAsync(factory, destinationGroup.Id, "Destination");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var created = await MarkerTestData.CreateAsync(client, game.Id, sourceCategory.Id,
 			media: JsonSerializer.Deserialize<JsonElement>(MarkerTestData.MixedMedia));
 
 		var id = created.GetProperty("id").GetGuid();
+
 		using var moved = moveCategory
 			? await client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, sourceGroup.Id, sourceCategory.Id),
 				new { categoryGroupId = destinationGroup.Id })

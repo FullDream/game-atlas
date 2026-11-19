@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Domain.Categories;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +16,7 @@ public class CategoryTransactionTests
 		await factory.MigrateAsync();
 
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var path = CategoryTestData.Path(game.Id, group.Id);
 
@@ -83,11 +83,12 @@ public class CategoryTransactionTests
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
 
 		var beforeDestination = await CategoryTestData.LoadAsync(factory, destination.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var path = CategoryTestData.Path(game.Id, group.Id, category.Id);
 
 		interceptor.Enabled = true;
+
 		using var response = operation switch
 		{
 			"create" => await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id),
@@ -133,11 +134,12 @@ public class CategoryTransactionTests
 		var before = await CategoryTestData.LoadAsync(factory, source.Id);
 
 		var beforeDestination = await CategoryTestData.LoadAsync(factory, destination.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var path = CategoryTestData.Path(game.Id, source.Id, category.Id);
 
 		interceptor.Enabled = true;
+
 		using var response = operation switch
 		{
 			"create" => await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, source.Id),
@@ -163,9 +165,10 @@ public class CategoryTransactionTests
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		interceptor.Enabled = true;
+
 		using var response = await client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, group.Id, category.Id),
 			new { name = " Category ", categoryGroupId = group.Id });
 

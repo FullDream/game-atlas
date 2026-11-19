@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Maps;
 using GameAtlas.Application.Maps.Images;
@@ -21,13 +21,15 @@ public class MapProcessingTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 
 		await MapTestData.ReadAsync(created);
+
 		using var service = new MapProcessingService(factory.Services.GetRequiredService<MapProcessor>(),
 			Microsoft.Extensions.Options.Options.Create(new Infrastructure.Maps.Storage.MapStorageOptions()));
+
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
 		await service.StartAsync(timeout.Token);
@@ -37,6 +39,7 @@ public class MapProcessingTests
 			while (true)
 			{
 				await using var scope = factory.Services.CreateAsyncScope();
+
 				var status = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().MapStyles
 					.Select(source => source.Status).SingleAsync(timeout.Token);
 
@@ -56,12 +59,13 @@ public class MapProcessingTests
 	public async Task FailedSiblingDoesNotBlockQueueAndRetryReusesOriginalAndSourceIdentity()
 	{
 		var images = new ControlledImages { FailuresRemaining = 1 };
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 			services.AddSingleton<IMapImageProcessor>(images));
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var initialUpload = MapTestData.Style();
 		using var initial = await MapTestData.UploadFirstStyleAsync(client, game.Id, initialUpload);
 		var map = await MapTestData.ReadAsync(initial);
@@ -105,12 +109,13 @@ public class MapProcessingTests
 	public async Task WorkerSerializesNativeWorkWhileMetadataCanChangeAndDeletionCannotResurrectMap()
 	{
 		var images = new ControlledImages { Pause = true };
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 			services.AddSingleton<IMapImageProcessor>(images));
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var initialUpload = MapTestData.Style();
 		using var initial = await MapTestData.UploadFirstStyleAsync(client, game.Id, initialUpload);
 		var map = await MapTestData.ReadAsync(initial);
@@ -121,6 +126,7 @@ public class MapProcessingTests
 
 		await images.Started.Task.WaitAsync(timeout.Token);
 		var second = processor.RunNextAsync(timeout.Token);
+
 		using var patch = await client.PatchAsJsonAsync($"{MapTestData.PathFor(game.Id)}/styles/{style.Id}",
 			new { name = "While processing" }, timeout.Token);
 
@@ -147,7 +153,7 @@ public class MapProcessingTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var initial = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(initial);
@@ -167,6 +173,7 @@ public class MapProcessingTests
 		var processor = factory.Services.GetRequiredService<MapProcessor>();
 
 		await processor.RecoverAsync(CancellationToken.None);
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

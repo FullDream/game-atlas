@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -23,7 +23,7 @@ public class CategoryApiTests
 		await factory.MigrateAsync();
 
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var path = CategoryTestData.Path(game.Id, group.Id);
 		using var content = new StringContent(body, Encoding.UTF8, "application/json");
 		using var created = await client.PostAsync(path, content);
@@ -69,7 +69,7 @@ public class CategoryApiTests
 		await MediaTestData.EnsureIconAsync(factory);
 
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var path = CategoryTestData.Path(game.Id, group.Id);
 		using var created = await client.PostAsJsonAsync(path, new { name = "Name", iconAssetId = MediaTestData.IconId, color });
@@ -109,7 +109,8 @@ public class CategoryApiTests
 		await MediaTestData.EnsureIconAsync(factory);
 
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsync(CategoryTestData.Path(game.Id, group.Id),
 			new StringContent(body, Encoding.UTF8, "application/json"));
 
@@ -134,7 +135,7 @@ public class CategoryApiTests
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var path = CategoryTestData.Path(game.Id, group.Id);
 
@@ -146,6 +147,7 @@ public class CategoryApiTests
 		};
 
 		using var created = await client.PostAsJsonAsync(path, body);
+
 		using var patched = await client.PatchAsJsonAsync(path + $"/{category.Id}",
 			body with { name = " " + new string('x', nameLength) + " " });
 
@@ -169,7 +171,8 @@ public class CategoryApiTests
 		await MediaTestData.EnsureIconAsync(factory);
 
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id),
 			new { name = "Name", icon, color = "#123456" });
 
@@ -189,7 +192,7 @@ public class CategoryApiTests
 		var otherGroup = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
 
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		foreach (var path in new[]
 		{
@@ -209,6 +212,7 @@ public class CategoryApiTests
 			new { name = "New" });
 
 		using var badDelete = await client.DeleteAsync(CategoryTestData.Path(game.Id, group.Id) + "/bad");
+
 		using var wrongPatch = await client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, otherGroup.Id, category.Id),
 			new { name = "New" });
 
@@ -233,7 +237,8 @@ public class CategoryApiTests
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game", status);
 
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id), new
 		{
 			name = " Ресурсы ",
@@ -276,11 +281,12 @@ public class CategoryApiTests
 		var category = await CategoryTestData.SeedAsync(factory, source.Id, name, 4);
 
 		await CategoryTestData.SeedAsync(factory, destination.Id, name, 4);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var path = CategoryTestData.Path(game.Id, source.Id, category.Id);
 
 		var before = await CategoryTestData.LoadAsync(factory, source.Id);
+
 		using var createConflict = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, source.Id),
 			Body(duplicate));
 
@@ -293,6 +299,7 @@ public class CategoryApiTests
 		using var own = await client.PatchAsJsonAsync(path, new { name = duplicate });
 
 		Assert.Equal(duplicate.Trim(), (await ReadAsync(own)).Name);
+
 		using var moved = await client.PatchAsJsonAsync(path, new
 		{
 			categoryGroupId = destination.Id,
@@ -316,6 +323,7 @@ public class CategoryApiTests
 
 		Assert.Equal(HttpStatusCode.NotFound, oldPatch.StatusCode);
 		Assert.Equal(HttpStatusCode.NotFound, oldDelete.StatusCode);
+
 		using var newPatch = await client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, destination.Id, category.Id),
 			new { beforeId = (Guid?)null });
 
@@ -337,11 +345,12 @@ public class CategoryApiTests
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var path = CategoryTestData.Path(game.Id, group.Id, category.Id);
 
 		var before = Assert.Single(await CategoryTestData.LoadAsync(factory, group.Id));
+
 		using var noOp = await PatchAsync(client, path,
 			$"{{\"name\":\" Category \",\"iconAssetId\":\"019a0000-0000-7000-8000-000000000111\",\"color\":\"#123456\"," +
 			$"\"categoryGroupId\":\"{group.Id}\"}}", mediaType);
@@ -399,7 +408,7 @@ public class CategoryApiTests
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await PatchAsync(client, CategoryTestData.Path(game.Id, group.Id, category.Id), body);
 
 		Assert.Equal(status, (int)response.StatusCode);
@@ -422,7 +431,8 @@ public class CategoryApiTests
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await PatchAsync(client, CategoryTestData.Path(game.Id, group.Id, category.Id),
 			"{\"name\":\"New\"}", mediaType);
 
@@ -445,7 +455,7 @@ public class CategoryApiTests
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
 
 		var before = await CategoryTestData.LoadAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		foreach (var (gameId, groupId) in new[]
 		{
@@ -495,7 +505,7 @@ public class CategoryApiTests
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 
 		var other = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Other", 2);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var path = CategoryTestData.Path(game.Id, group.Id);
 
@@ -510,6 +520,7 @@ public class CategoryApiTests
 		var last = await CategoryTestData.SeedAsync(factory, group.Id, "Last", 3);
 
 		await CategoryTestData.SeedAsync(factory, other.Id, "Other", 1);
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -547,7 +558,7 @@ public class CategoryApiTests
 		await MediaTestData.EnsureIconAsync(factory);
 
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var path = CategoryTestData.Path(game.Id, group.Id);
 		using var first = await client.PostAsJsonAsync(path, Body());
@@ -557,6 +568,7 @@ public class CategoryApiTests
 		using var overflow = await client.PostAsJsonAsync(path, Body("Overflow"));
 
 		Assert.Equal(HttpStatusCode.OK, overflow.StatusCode);
+
 		using var explicitOrder = await client.PostAsJsonAsync(path,
 			new { name = "Duplicate order", iconAssetId = MediaTestData.IconId, color = "#123456", order = 1 });
 

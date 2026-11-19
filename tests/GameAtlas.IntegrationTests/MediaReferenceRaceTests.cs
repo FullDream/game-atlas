@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -14,12 +14,13 @@ public sealed class MediaReferenceRaceTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var folder = await MediaFolderTests.CreateAsync(client, "Destination");
 		using var body = new MultipartFormDataContent();
 
 		body.Add(new StringContent("<svg xmlns='http://www.w3.org/2000/svg'/>"), "file", "icon.svg");
 		body.Add(new StringContent(folder.Id.ToString()), "folderId");
+
 		var responses = await Task.WhenAll(client.PostAsync("/media/assets", body),
 			client.DeleteAsync($"/media/folders/{folder.Id}"));
 
@@ -28,6 +29,7 @@ public sealed class MediaReferenceRaceTests
 
 		Assert.True(uploaded.StatusCode == HttpStatusCode.OK && deleted.StatusCode == HttpStatusCode.Conflict ||
 			uploaded.StatusCode == HttpStatusCode.NotFound && deleted.StatusCode == HttpStatusCode.NoContent);
+
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
@@ -47,12 +49,14 @@ public sealed class MediaReferenceRaceTests
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var image = await MediaTestData.UploadImageAsync(client, "svg");
+
 		var attaching = preview
 			? client.PatchAsJsonAsync($"/media/assets/{MediaTestData.VideoId}", new { previewAssetId = image.Id })
 			: client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, group.Id) + $"/{category.Id}",
 				new { iconAssetId = image.Id });
+
 		var deleting = client.DeleteAsync($"/media/assets/{image.Id}");
 		var responses = await Task.WhenAll(attaching, deleting);
 
@@ -61,6 +65,7 @@ public sealed class MediaReferenceRaceTests
 
 		Assert.True(attached.StatusCode == HttpStatusCode.OK && deleted.StatusCode == HttpStatusCode.Conflict ||
 			attached.StatusCode == HttpStatusCode.NotFound && deleted.StatusCode == HttpStatusCode.NoContent);
+
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 

@@ -15,10 +15,21 @@ internal sealed class MapHubViewer : IAsyncDisposable
 	internal bool HasProcessingEvents => events.Reader.TryPeek(out _);
 	internal bool HasStyleEvents => styles.Reader.TryPeek(out _);
 
-	internal MapHubViewer(GameApiFactory factory)
+	internal static async Task<MapHubViewer> CreateAsync(GameApiFactory factory)
+	{
+		if (factory.SessionCookie is null)
+		{
+			using var client = await factory.CreateHttpsClientAsync();
+		}
+
+		return new MapHubViewer(factory);
+	}
+
+	private MapHubViewer(GameApiFactory factory)
 	{
 		connection = new HubConnectionBuilder().WithUrl("https://localhost/hubs/map", options =>
 		{
+			options.Headers["Cookie"] = factory.SessionCookie!;
 			options.Transports = HttpTransportType.LongPolling;
 			options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
 		}).Build();

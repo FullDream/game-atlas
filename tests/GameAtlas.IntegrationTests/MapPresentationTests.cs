@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using GameAtlas.Application.Maps;
@@ -17,9 +17,10 @@ public class MapPresentationTests
 	public async Task DifferentResolutionsUseNativePyramidsWithoutChangingLogicalGeometry(int first, int second)
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "native");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var initial = MapTestData.Style(MapTestData.ImageBytes(first, 17));
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, initial);
 		var map = await MapTestData.ReadAsync(created);
@@ -40,8 +41,10 @@ public class MapPresentationTests
 		Assert.Equal(second / 2d, style.TileGeometry.Extent.ElementAt(2));
 		Assert.Equal(Math.Ceiling(Math.Log2(second / 512d)), style.TileGeometry.MaxZoom);
 		Assert.Equal(1d, style.TileGeometry.Resolutions.Last());
+
 		var lastTile = style.TilesUrlTemplate!.Replace("{z}", style.TileGeometry.MaxZoom.ToString())
 			.Replace("{x}", ((second - 1) / 512).ToString()).Replace("{y}", "0");
+
 		using var tile = await client.GetAsync(lastTile);
 
 		tile.EnsureSuccessStatusCode();
@@ -53,9 +56,10 @@ public class MapPresentationTests
 	public async Task DefaultAndOrderPersistIndependentlyAndInvalidPatchesAreAtomic(string mediaType)
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "presentation");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var created = await MapTestData.CreateWithStylesAsync(client, game.Id);
 		var map = await MapTestData.ReadAsync(created);
 		var ids = map.Styles.Select(style => style.Id).ToArray();
@@ -117,18 +121,21 @@ public class MapPresentationTests
 	public async Task ConcurrentFirstAttachmentsInitializeOnceAndFailuresLeaveNoGeometry()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "concurrent");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var creation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "World" });
 		var blank = await MapTestData.ReadAsync(creation);
 		var path = MapTestData.PathFor(game.Id, blank.Id);
+
 		using var invalid = await client.PostAsJsonAsync(path + "/styles", new
 		{
 			name = "Invalid",
 			backgroundColor = "red",
 			sourceAssetId = Guid.NewGuid()
 		});
+
 		var unchanged = (await client.GetFromJsonAsync<MapDto>(path, MapTestData.JsonOptions))!;
 
 		Assert.Null(unchanged.Width);

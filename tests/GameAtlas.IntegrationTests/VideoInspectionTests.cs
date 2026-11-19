@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Buffers.Binary;
 using System.Text;
@@ -36,6 +36,7 @@ public sealed class VideoInspectionTests
 			VideoInspectionBytes = 1,
 			ConcurrentVideoInspections = 1
 		}));
+
 		using var cancelled = new CancellationTokenSource();
 
 		cancelled.Cancel();
@@ -66,7 +67,7 @@ public sealed class VideoInspectionTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = new MultipartFormDataContent();
 
 		upload.Add(new ByteArrayContent(bytes), "file", "misleading.png");
@@ -109,6 +110,7 @@ public sealed class VideoInspectionTests
 		{
 			var media = Assert.Single(Boxes(bytes, track.Offset + 8, track.Offset + track.Size),
 				box => box.Type == "mdia");
+
 			var handler = Assert.Single(Boxes(bytes, media.Offset + 8, media.Offset + media.Size),
 				box => box.Type == "hdlr");
 
@@ -126,6 +128,7 @@ public sealed class VideoInspectionTests
 		{
 			await File.WriteAllBytesAsync(path, bytes);
 			await using var stream = File.OpenRead(path);
+
 			var analysis = await MediaInfoAnalyzer.CreateDefault().AnalyzeAsync(
 				new StreamMediaSource(stream, leaveOpen: true, name: "audio-only"), CancellationToken.None);
 

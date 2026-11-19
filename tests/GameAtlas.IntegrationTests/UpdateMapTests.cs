@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -12,9 +12,10 @@ public class UpdateMapTests
 	public async Task RenameReturnsFullMapAndPreservesOwnedContentAndNoOpTimestamp()
 	{
 		await using var factory = new GameApiFactory("Development");
+
 		await factory.MigrateAsync();
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var beforeRead = await client.GetAsync(MapTestData.PathFor(game.Id));
 		var before = await MapTestData.ReadAsync(beforeRead);
 		using var response = await client.PatchAsJsonAsync(MapTestData.PathFor(game.Id), new { name = " Renamed " });
@@ -56,11 +57,14 @@ public class UpdateMapTests
 	public async Task EnforcesPatchContract(string json, string mediaType, int status)
 	{
 		await using var factory = new GameApiFactory("Development");
+
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "patch-contract");
+
 		await MapTestData.EnsureMapAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var body = new StringContent(json, Encoding.UTF8);
+
 		body.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(mediaType);
 		using var response = await client.PatchAsync(MapTestData.PathFor(game.Id), body);
 
@@ -74,11 +78,12 @@ public class UpdateMapTests
 	public async Task RejectsForeignMapsAndConcurrentDuplicateNamesAndExposesOpenApi()
 	{
 		await using var factory = new GameApiFactory("Development");
+
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "rename-game");
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other-game");
 		var map = await MapTestData.EnsureMapAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var foreign = await client.PatchAsJsonAsync(MapTestData.PathFor(other.Id, map.Id), new { name = "Next" });
 		using var missing = await client.PatchAsJsonAsync(MapTestData.PathFor(game.Id, Guid.CreateVersion7()), new { name = "Next" });
 
@@ -86,6 +91,7 @@ public class UpdateMapTests
 		Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
 		using var siblingCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "Sibling" });
 		var sibling = await MapTestData.ReadAsync(siblingCreation);
+
 		var responses = await Task.WhenAll(
 			client.PatchAsJsonAsync(MapTestData.PathFor(game.Id, map.Id), new { name = "Shared" }),
 			client.PatchAsJsonAsync(MapTestData.PathFor(game.Id, sibling.Id), new { name = " shared " }));

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -19,12 +19,13 @@ public sealed class MarkerLibraryTests
 		var (secondGame, secondGroup) = await CategoryTestData.ParentAsync(factory);
 		var firstCategory = await CategoryTestData.SeedAsync(factory, firstGroup.Id);
 		var secondCategory = await CategoryTestData.SeedAsync(factory, secondGroup.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var image = await MediaTestData.UploadImageAsync(client, "svg");
 		var media = JsonSerializer.SerializeToElement(new[] { image.Id });
 		var first = await MarkerTestData.CreateAsync(client, firstGame.Id, firstCategory.Id, media: media);
 		var second = await MarkerTestData.CreateAsync(client, secondGame.Id, secondCategory.Id, media: media);
 		var folder = await MediaFolderTests.CreateAsync(client, "Not an asset");
+
 		using var invalid = await client.PatchAsJsonAsync(
 			MarkerTestData.Path(secondGame.Id) + $"/{second.GetProperty("id").GetGuid()}",
 			new { name = "Must not persist", media = new[] { folder.Id } });
@@ -59,11 +60,13 @@ public sealed class MarkerLibraryTests
 		await factory.MigrateAsync();
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var created = await MarkerTestData.CreateAsync(client, game.Id, category.Id);
 		var id = created.GetProperty("id").GetGuid();
+
 		using var body = new StringContent("{\"name\":\"Must not persist\",\"media\":" + media + "}",
 			Encoding.UTF8, "application/merge-patch+json");
+
 		using var response = await client.PatchAsync(MarkerTestData.Path(game.Id) + $"/{id}", body);
 
 		Assert.Equal(expected, (int)response.StatusCode);
@@ -81,7 +84,7 @@ public sealed class MarkerLibraryTests
 		await factory.MigrateAsync();
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var image = await MediaTestData.UploadImageAsync(client);
 		var bytes = await File.ReadAllBytesAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Media", "flower.mp4"));
 		using var upload = new MultipartFormDataContent();
@@ -90,6 +93,7 @@ public sealed class MarkerLibraryTests
 		upload.Add(new StringContent(image.Id.ToString()), "previewAssetId");
 		using var uploaded = await client.PostAsync("/media/assets", upload);
 		var video = Assert.IsType<VideoAssetDto>(await uploaded.Content.ReadFromJsonAsync<MediaAssetDto>());
+
 		using var creation = await client.PostAsJsonAsync(MarkerTestData.Path(game.Id), new
 		{
 			categoryId = category.Id,
@@ -97,6 +101,7 @@ public sealed class MarkerLibraryTests
 			position = new { x = 0, y = 0 },
 			media = new[] { image.Id, video.Id }
 		});
+
 		var marker = (await creation.Content.ReadFromJsonAsync<MarkerDto>(MapTestData.JsonOptions))!;
 
 		Assert.Equal(HttpStatusCode.OK, creation.StatusCode);
@@ -111,6 +116,7 @@ public sealed class MarkerLibraryTests
 		Assert.Equal(marker.UpdatedAt, current.UpdatedAt);
 		Assert.Equal("Shared entrance", Assert.IsType<ImageAssetDto>(current.Media.First()).Alt);
 		Assert.Equal("Shared entrance", Assert.IsType<VideoAssetDto>(current.Media.Last()).Preview!.Alt);
+
 		using var reorder = await client.PatchAsJsonAsync(MarkerTestData.Path(game.Id) + $"/{marker.Id}",
 			new { media = new[] { video.Id, image.Id } });
 
@@ -118,6 +124,7 @@ public sealed class MarkerLibraryTests
 		var reversed = (await reorder.Content.ReadFromJsonAsync<MarkerDto>(MapTestData.JsonOptions))!;
 
 		Assert.Equal(new[] { video.Id, image.Id }, reversed.Media.Select(asset => asset.Id));
+
 		using var noOp = await client.PatchAsJsonAsync(MarkerTestData.Path(game.Id) + $"/{marker.Id}",
 			new { media = new[] { video.Id, image.Id } });
 
@@ -134,6 +141,7 @@ public sealed class MarkerLibraryTests
 		using var previewProtected = await client.DeleteAsync($"/media/assets/{image.Id}");
 
 		Assert.Equal(HttpStatusCode.Conflict, previewProtected.StatusCode);
+
 		using var detachedPreview = await client.PatchAsJsonAsync($"/media/assets/{video.Id}",
 			new { previewAssetId = (Guid?)null });
 

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Infrastructure.Maps.Persistence;
@@ -20,9 +20,11 @@ public class MapLifecycleTests
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 			media: JsonDocument.Parse(MarkerTestData.MixedMedia).RootElement.Clone());
+
 		using var categoriesBefore = await client.GetAsync(CategoryTestData.Path(game.Id, group.Id));
 		var before = await categoriesBefore.Content.ReadAsStringAsync();
 		using var upload = MapTestData.Style();
@@ -57,7 +59,7 @@ public class MapLifecycleTests
 		await factory.MigrateAsync();
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		await MarkerTestData.CreateAsync(client, game.Id, category.Id);
 		using var upload = MapTestData.Style();
@@ -66,6 +68,7 @@ public class MapLifecycleTests
 		using var secondUpload = MapTestData.Style(name: "Roads");
 		using var added = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), secondUpload);
 		var styles = (await MapTestData.ReadAsync(added)).Styles.ToArray();
+
 		var deletions = await Task.WhenAll(styles.Select(style =>
 			client.DeleteAsync($"{MapTestData.PathFor(game.Id)}/styles/{style.Id}")));
 
@@ -83,6 +86,7 @@ public class MapLifecycleTests
 		using var gameDeleted = await client.DeleteAsync($"/games/{game.Id}");
 
 		Assert.Equal(HttpStatusCode.NoContent, gameDeleted.StatusCode);
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

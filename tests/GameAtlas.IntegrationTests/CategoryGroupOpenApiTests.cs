@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace GameAtlas.IntegrationTests;
 
@@ -8,7 +8,7 @@ public class CategoryGroupOpenApiTests
 	public async Task DocumentsFourOperationsWithoutReorderOrIndividualGet()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 
 		var root = document.RootElement;
@@ -65,7 +65,7 @@ public class CategoryGroupOpenApiTests
 	public async Task DocumentsRelativePlacementOptionalIconsAndNameValidation()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 
 		var root = document.RootElement;
@@ -83,6 +83,7 @@ public class CategoryGroupOpenApiTests
 		CategoryGroupTestData.AssertSame(2, patchContent.EnumerateObject().Count());
 		CategoryGroupTestData.AssertSame(patchSchema.GetRawText(), Resolve(root, patchContent.GetProperty("application/merge-patch+json")
 			.GetProperty("schema")).GetRawText());
+
 		Assert.False(patchSchema.GetProperty("additionalProperties").GetBoolean());
 
 		foreach (var operation in new[] { post, patch })
@@ -95,6 +96,7 @@ public class CategoryGroupOpenApiTests
 			var name = Resolve(root, properties.GetProperty("name"));
 
 			var order = Resolve(root, properties.GetProperty("beforeId"));
+
 			Assert.False(properties.TryGetProperty("order", out _));
 			Assert.Equal(GameAtlas.Domain.Categories.Category.ColorPattern, properties.GetProperty("color").GetProperty("pattern").GetString());
 
@@ -105,6 +107,7 @@ public class CategoryGroupOpenApiTests
 			CategoryGroupTestData.AssertSame("uuid", order.GetProperty("format").GetString());
 			Assert.False(schema.TryGetProperty("required", out var required) &&
 				required.EnumerateArray().Any(value => value.GetString() == "order"));
+
 			Assert.DoesNotContain("isSpecified", schema.GetRawText());
 		}
 
@@ -114,6 +117,7 @@ public class CategoryGroupOpenApiTests
 	private static void AssertDto(JsonElement root, JsonElement schema)
 	{
 		var properties = Resolve(root, schema).GetProperty("properties");
+
 		Assert.False(properties.TryGetProperty("order", out _));
 		Assert.True(properties.GetProperty("markersCount").GetProperty("readOnly").GetBoolean());
 

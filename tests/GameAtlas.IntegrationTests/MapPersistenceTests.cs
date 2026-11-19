@@ -1,4 +1,4 @@
-using GameAtlas.Domain.ValueObjects;
+﻿using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -43,10 +43,13 @@ public class MapPersistenceTests
 		Assert.Equal(1, await context.Maps.CountAsync());
 		Assert.Equal(1, await context.Database.SqlQueryRaw<int>(
 			"SELECT COUNT(*) AS Value FROM MapVariants").SingleAsync());
+
 		Assert.Equal(1, await context.Database.SqlQueryRaw<int>(
 			"SELECT COUNT(*) AS Value FROM MapSourceVersions WHERE Status = 'Ready' AND Progress = 100").SingleAsync());
+
 		Assert.DoesNotContain(await context.Database.GetAppliedMigrationsAsync(),
 			migration => migration.EndsWith("_SimplifyMapStyles"));
+
 		Assert.Equal(gameId, await context.Database.SqlQuery<Guid>($"SELECT Id AS Value FROM Games").SingleAsync());
 	}
 
@@ -57,18 +60,22 @@ public class MapPersistenceTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "legacy-id");
+
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 			media: System.Text.Json.JsonDocument.Parse(MarkerTestData.MixedMedia).RootElement.Clone());
+
 		var markerId = marker.GetProperty("id").GetGuid();
 		var map = await MapTestData.SeedAsync(factory, game.Id);
 
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
 			var stored = await context.Maps.Include(map => map.Styles)
 				.SingleAsync();
 

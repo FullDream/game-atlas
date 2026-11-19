@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Media;
 using GameAtlas.Application.Media.Storage;
@@ -15,7 +15,7 @@ public sealed class MediaByteLimitTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var maximum = new MediaLimits().MaximumBytes;
 		using var source = new PaddedImageStream(MapTestData.ImageBytes(), maximum + (exceed ? 1 : 0));
 		using var body = new MultipartFormDataContent();
@@ -78,8 +78,11 @@ public sealed class MediaByteLimitTests
 		}
 
 		public override void Flush() => throw new NotSupportedException();
+
 		public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
 		public override void SetLength(long value) => throw new NotSupportedException();
+
 		public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 	}
 }

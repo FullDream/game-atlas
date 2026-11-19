@@ -11,7 +11,7 @@ public static class Endpoints
 {
 	public static RouteGroupBuilder MapMarkers(this RouteGroupBuilder group)
 	{
-		var markers = group.MapGroup("/games/{gameId}/maps/{mapId}/markers").WithTags("Markers");
+		var markers = group.MapGroup("/games/{gameId}/maps/{mapId}/markers").WithTags("Markers").RequireAuthorization();
 
 		markers.MapGet("", ListMarkersAsync)
 			.WithName("ListMarkers").WithSummary("List markers")

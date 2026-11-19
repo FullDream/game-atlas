@@ -8,7 +8,7 @@ public class OptionalGuidSchemaTests
 	public async Task NullableGuidPatchFieldsPreserveNullForResetOperations()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
 

@@ -16,7 +16,7 @@ public sealed class MediaDeletionTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = new MultipartFormDataContent();
 
 		upload.Add(new StringContent("<svg xmlns='http://www.w3.org/2000/svg'/>"), "file", "preview.svg");

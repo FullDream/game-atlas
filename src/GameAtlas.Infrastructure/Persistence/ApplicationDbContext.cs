@@ -4,12 +4,14 @@ using GameAtlas.Domain.Games;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Domain.Markers;
 using GameAtlas.Domain.Media;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameAtlas.Infrastructure.Persistence;
 
 public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-	: DbContext(options), IApplicationDbContext
+	: IdentityUserContext<IdentityUser>(options), IApplicationDbContext
 {
 	public DbSet<Game> Games => Set<Game>();
 	public DbSet<CategoryGroup> CategoryGroups => Set<CategoryGroup>();
@@ -23,6 +25,9 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 	public async Task<IApplicationTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) =>
 		new ApplicationTransaction(await Database.BeginTransactionAsync(cancellationToken));
 
-	protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+	protected override void OnModelCreating(ModelBuilder modelBuilder)
+	{
+		base.OnModelCreating(modelBuilder);
 		modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+	}
 }

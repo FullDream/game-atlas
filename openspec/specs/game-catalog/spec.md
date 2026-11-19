@@ -8,7 +8,7 @@ Maintain the game catalog by creating identifiable draft games with validated me
 
 ### Requirement: Create a draft game
 
-POST /games SHALL accept unauthenticated name, slug, and required coverId input selecting an existing library image and return HTTP 200 with id, name, slug, cover, banner, releaseDate, developer, description, markersCount, categoriesCount, maps, createdAt, updatedAt, and string status. Response cover SHALL be the complete canonical ImageAsset object. The server SHALL assign draft status and generate identity/timestamps. Game representations SHALL NOT include mapId or a selected map; read-only map summaries SHALL be included. Additional server-owned creation properties SHALL NOT assign maps.
+POST /games SHALL accept authenticated requests with name, slug, and required coverId input selecting an existing library image and return HTTP 200 with id, name, slug, cover, banner, releaseDate, developer, description, markersCount, categoriesCount, maps, createdAt, updatedAt, and string status. Response cover SHALL be the complete canonical ImageAsset object. The server SHALL assign draft status and generate identity/timestamps. Game representations SHALL NOT include mapId or a selected map; read-only map summaries SHALL be included. Additional server-owned creation properties SHALL NOT assign maps.
 
 #### Scenario: Create a game before any maps
 
@@ -139,7 +139,7 @@ Created games SHALL survive application restarts, preserving persisted metadata 
 
 ### Requirement: Browse games with complete metadata
 
-Unauthenticated GET /games SHALL include draft and published games using the same expanded fields as creation: id, name, slug, cover, banner, releaseDate, developer, description, markersCount, categoriesCount, maps, createdAt, updatedAt, and string status. The response SHALL NOT include singular mapId or embed complete map representations; read-only map summaries SHALL be included. Existing offset/limit/search/sort behavior SHALL remain unchanged.
+Authenticated GET /games SHALL include draft and published games using the same expanded fields as creation: id, name, slug, cover, banner, releaseDate, developer, description, markersCount, categoriesCount, maps, createdAt, updatedAt, and string status. The response SHALL NOT include singular mapId or embed complete map representations; read-only map summaries SHALL be included. Existing offset/limit/search/sort behavior SHALL remain unchanged.
 
 #### Scenario: Browse games with zero or several maps
 
@@ -277,7 +277,7 @@ Negative offset, limit outside 1 through 100, undefined sorting enum values, and
 
 ### Requirement: Partially update an existing game
 
-Unauthenticated PATCH /games/{id} SHALL allow only name, slug, coverId, bannerId, releaseDate, developer, description, and status to change and return HTTP 200 with the complete expanded game representation with cover resolved to the canonical ImageAsset object. A valid request for a missing game SHALL return HTTP 404 without creating a game. Game updates SHALL NOT create, select, reassign, or remove maps.
+Authenticated PATCH /games/{id} SHALL allow only name, slug, coverId, bannerId, releaseDate, developer, description, and status to change and return HTTP 200 with the complete expanded game representation with cover resolved to the canonical ImageAsset object. A valid request for a missing game SHALL return HTTP 404 without creating a game. Game updates SHALL NOT create, select, reassign, or remove maps.
 
 #### Scenario: Update metadata independently of maps
 
@@ -479,7 +479,7 @@ OpenAPI SHALL document UpdateGame with eight optional mutable fields (name, slug
 
 ### Requirement: Permanently delete an existing game
 
-Unauthenticated DELETE /games/{id} SHALL physically delete an existing draft or published game and return empty HTTP 204 after persistence. All owned maps, styles, groups, categories, markers, and marker-media records SHALL be removed, with durable artifact cleanup for every map. Other games SHALL remain unchanged. Referenced marker-media files and the selected game image asset SHALL NOT be deleted.
+Authenticated DELETE /games/{id} SHALL physically delete an existing draft or published game and return empty HTTP 204 after persistence. All owned maps, styles, groups, categories, markers, and marker-media records SHALL be removed, with durable artifact cleanup for every map. Other games SHALL remain unchanged. Referenced marker-media files and the selected game image asset SHALL NOT be deleted.
 
 #### Scenario: Delete several maps with mixed processing states
 
@@ -494,7 +494,7 @@ Unauthenticated DELETE /games/{id} SHALL physically delete an existing draft or 
 
 #### Scenario: Delete a draft
 
-- **WHEN** an existing draft game is deleted without a body or authentication
+- **WHEN** an existing draft game is deleted by an authenticated administrator without a body
 - **THEN** empty HTTP 204 follows durable deletion, including every owned map hierarchy
 - **AND** other games and their metadata remain unchanged
 
@@ -640,7 +640,7 @@ The migration chain SHALL support a fresh empty database. Conversion of existing
 
 ### Requirement: Retrieve a game by identity
 
-Unauthenticated GET /games/{id} SHALL return HTTP 200 with the same expanded Game representation as listing, including canonical ImageAsset, for draft and published games. It SHALL include read-only map summaries and SHALL NOT change persisted data.
+Authenticated GET /games/{id} SHALL return HTTP 200 with the same expanded Game representation as listing, including canonical ImageAsset, for draft and published games. It SHALL include read-only map summaries and SHALL NOT change persisted data.
 
 #### Scenario: Read either status
 

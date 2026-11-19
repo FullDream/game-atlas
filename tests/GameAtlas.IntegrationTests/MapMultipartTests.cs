@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using System.Text.Json;
 using GameAtlas.Application.Media.Storage;
@@ -20,8 +20,10 @@ public class MapMultipartTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.EnsureMapAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var content = new MultipartFormDataContent
 		{
 			{ new ByteArrayContent(MapTestData.ImageBytes()), "file", "image.png" }
@@ -50,8 +52,9 @@ public class MapMultipartTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.EnsureMapAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var content = MapTestData.Style(name: name, color: color);
 		using var response = await MapTestData.UploadFirstStyleAsync(client, game.Id, content);
 		using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -73,7 +76,8 @@ public class MapMultipartTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsync($"{MapTestData.PathFor(Guid.NewGuid())}/styles",
 			new StringContent("{}", Encoding.UTF8, contentType));
 
@@ -92,8 +96,10 @@ public class MapMultipartTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.EnsureMapAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var content = new MultipartFormDataContent
 		{
 			{ new StringContent("Atlas"), "name" },
@@ -126,14 +132,17 @@ public class MapMultipartTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.EnsureMapAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		var image = mode switch
 		{
 			"unsupported" => Encoding.UTF8.GetBytes("<svg>this is not a supported raster image</svg>"),
 			"short" => new byte[3],
 			_ => MapTestData.ImageBytes(16385, 1)
 		};
+
 		using var content = MapTestData.Style(image);
 		using var response = await MapTestData.UploadFirstStyleAsync(client, game.Id, content);
 
@@ -146,6 +155,7 @@ public class MapMultipartTests
 	public async Task ExactFileByteBoundaryWorksWithoutContentLengthAndOneByteOverFails(bool exceed)
 	{
 		var image = MapTestData.ImageBytes();
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 			services.AddSingleton<IOptions<MediaLimits>>(Options.Create(new MediaLimits
 			{
@@ -154,11 +164,13 @@ public class MapMultipartTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.EnsureMapAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var multipart = new MultipartFormDataContent();
 
 		multipart.Add(new ByteArrayContent(exceed ? [.. image, 0] : image), "file", "original.png");
+
 		using var request = new HttpRequestMessage(HttpMethod.Post, "/media/assets")
 		{
 			Content = new StreamContent(await multipart.ReadAsStreamAsync())

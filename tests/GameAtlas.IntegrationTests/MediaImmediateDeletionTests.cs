@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using System.Net;
 using GameAtlas.Application.Media.Storage;
 using GameAtlas.Infrastructure.Media.Storage;
@@ -31,6 +31,7 @@ public sealed class MediaImmediateDeletionTests
 	public async Task PhysicalDeletionFailureRetainsMetadataAndASecondRequestDeletesImmediately()
 	{
 		var faults = new MapStorageFaults();
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 		{
 			services.AddSingleton<LocalMediaStorage>();
@@ -39,7 +40,7 @@ public sealed class MediaImmediateDeletionTests
 		});
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var image = await MediaTestData.UploadImageAsync(client, "svg");
 		var unrelated = await MediaTestData.UploadImageAsync(client, "svg");
 		var path = Path.Combine(factory.MediaStoragePath, "assets", image.Id.ToString("N"));
@@ -49,6 +50,7 @@ public sealed class MediaImmediateDeletionTests
 
 		Assert.Equal(HttpStatusCode.InternalServerError, failed.StatusCode);
 		Assert.True(File.Exists(path));
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -70,7 +72,7 @@ public sealed class MediaImmediateDeletionTests
 		await using var factory = new GameApiFactory(interceptor: new DeleteFault());
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var image = await MediaTestData.UploadImageAsync(client, "svg");
 		using var failed = await client.DeleteAsync($"/media/assets/{image.Id}");
 

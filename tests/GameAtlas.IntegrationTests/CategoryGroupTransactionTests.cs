@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Domain.Categories;
@@ -17,8 +17,9 @@ public class CategoryGroupTransactionTests
 		await factory.MigrateAsync();
 
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
+
 		await MapTestData.EnsureMapAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -78,9 +79,10 @@ public class CategoryGroupTransactionTests
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		interceptor.Arm(1);
+
 		using var response = operation switch
 		{
 			"create" => await client.PostAsJsonAsync(CategoryGroupApiTests.Path(game.Id), new { name = "New" }),
@@ -110,9 +112,10 @@ public class CategoryGroupTransactionTests
 		var target = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Target", 2);
 
 		var before = await CategoryGroupTestData.LoadAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		interceptor.Enabled = true;
+
 		using var response = rename
 			? await client.PatchAsJsonAsync(CategoryGroupApiTests.Path(game.Id, target.Id),
 				new { name = "Available", beforeId = (Guid?)null })

@@ -12,7 +12,8 @@ const typeDependencies = {
 }
 
 const scopeDependencies = {
-	'scope:app': ['scope:games', 'scope:maps', 'scope:media', 'scope:shared'],
+	'scope:auth': ['scope:auth', 'scope:shared'],
+	'scope:app': ['scope:auth', 'scope:games', 'scope:maps', 'scope:media', 'scope:shared'],
 	'scope:games': ['scope:games', 'scope:shared'],
 	'scope:maps': ['scope:maps', 'scope:shared'],
 	'scope:media': ['scope:media', 'scope:shared'],

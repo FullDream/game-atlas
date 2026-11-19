@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -22,7 +22,8 @@ public class MapApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PatchAsync($"{MapTestData.PathFor(Guid.NewGuid())}/styles/{Guid.NewGuid()}",
 			new StringContent("{\"name\":\"Atlas\"}", Encoding.UTF8, contentType));
 
@@ -36,14 +37,17 @@ public class MapApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var created = await MapTestData.CreateWithStylesAsync(client, game.Id);
 		var map = await MapTestData.ReadAsync(created);
 		var style = map.Styles.Last();
+
 		using var conflict = await client.PatchAsJsonAsync($"{MapTestData.PathFor(game.Id)}/styles/{style.Id}",
 			new { name = " atlas ", backgroundColor = "#123" });
+
 		using var missing = await client.PatchAsJsonAsync($"{MapTestData.PathFor(game.Id)}/styles/{Guid.NewGuid()}",
 			new { name = "Changed" });
+
 		using var foreign = await client.PatchAsJsonAsync(
 			$"{MapTestData.PathFor(Guid.NewGuid())}/styles/{style.Id}",
 			new { name = "Changed" });
@@ -65,7 +69,7 @@ public class MapApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "map-game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style(fileFirst: filesFirst);
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
@@ -84,6 +88,7 @@ public class MapApiTests
 		Assert.Equal("#FFFFFF", style.BackgroundColor);
 		Assert.Equal(MapTestData.ImageBytes(), await File.ReadAllBytesAsync(
 			storage.AssetPath(style.Source.Id)));
+
 		using var list = await client.GetAsync("/games");
 		var page = await list.Content.ReadFromJsonAsync<JsonElement>();
 
@@ -159,7 +164,8 @@ public class MapApiTests
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		var map = await MapTestData.SeedAsync(factory, game.Id);
 		var style = map.Styles.Single();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PatchAsync($"{MapTestData.PathFor(game.Id)}/styles/{style.Id}",
 			new StringContent(json, Encoding.UTF8, "application/merge-patch+json"));
 
@@ -183,16 +189,20 @@ public class MapApiTests
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		var map = await MapTestData.SeedAsync(factory, game.Id);
 		var style = map.Styles.Single();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var url = $"{MapTestData.PathFor(game.Id)}/styles/{style.Id}";
+
 		using var noOp = await client.PatchAsync(url,
 			new StringContent("{\"name\":\" Atlas \",\"backgroundColor\":\"#ffffff\"}", Encoding.UTF8, contentType));
+
 		var unchanged = await noOp.Content.ReadFromJsonAsync<MapStyleDto>(MapTestData.JsonOptions);
 
 		Assert.Equal(HttpStatusCode.OK, noOp.StatusCode);
 		Assert.Equal(style.UpdatedAt, unchanged!.UpdatedAt);
+
 		using var changed = await client.PatchAsync(url,
 			new StringContent("{\"name\":\" Roads \",\"backgroundColor\":\"#abc\"}", Encoding.UTF8, contentType));
+
 		var updated = await changed.Content.ReadFromJsonAsync<MapStyleDto>(MapTestData.JsonOptions);
 
 		Assert.Equal(HttpStatusCode.OK, changed.StatusCode);

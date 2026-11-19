@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Media.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,16 +14,18 @@ public class MapStyleApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
 		var style = map.Styles.Single();
 		var storage = factory.Services.GetRequiredService<IMediaStorage>();
+
 		using var replacement = new MultipartFormDataContent
 		{
 			{ new ByteArrayContent(MapTestData.ImageBytes(color: 200)), "file", "replacement.png" }
 		};
+
 		using var rejected = await client.PostAsync(
 			$"{MapTestData.PathFor(game.Id)}/styles/{style.Id}/image", replacement);
 

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Infrastructure.Persistence;
@@ -172,7 +172,8 @@ public class CategoryPersistenceTests
 		await CategoryTestData.SeedAsync(factory, otherGroup.Id, "Unrelated");
 
 		var unrelated = await CategoryTestData.LoadAsync(factory, otherGroup.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var transfer = await client.PatchAsJsonAsync(CategoryTestData.Path(game.Id, source.Id, moved.Id),
 			new { categoryGroupId = destination.Id });
 

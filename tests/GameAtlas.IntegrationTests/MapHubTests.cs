@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Maps;
 using GameAtlas.Application.Maps.Images;
@@ -16,11 +16,13 @@ public class MapHubTests
 	public async Task FailedNotificationsCannotFailCommittedStyleCreationOrProcessing()
 	{
 		var lifetime = new FailingLifetimeManager();
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 			services.AddSingleton<HubLifetimeManager<MapHub>>(lifetime));
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "send-failure");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 
@@ -38,20 +40,21 @@ public class MapHubTests
 	public async Task OneConnectionCanJoinSeveralMapsAndLeaveOneWithoutLosingTheOther()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var firstGame = await UpdateGameHandlerTests.SeedAsync(factory, "first-group");
 		var secondGame = await UpdateGameHandlerTests.SeedAsync(factory, "second-group");
 		var firstMap = await MapTestData.EnsureMapAsync(factory, firstGame.Id);
 		var secondMap = await MapTestData.EnsureMapAsync(factory, secondGame.Id);
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-		await using var first = new MapHubViewer(factory);
-		await using var second = new MapHubViewer(factory);
+		await using var first = await MapHubViewer.CreateAsync(factory);
+		await using var second = await MapHubViewer.CreateAsync(factory);
 
 		await first.StartAsync(firstMap.Id, timeout.Token);
 		await first.JoinAsync(secondMap.Id, timeout.Token);
 		await second.StartAsync(firstMap.Id, timeout.Token);
 		await first.UnwatchAsync(timeout.Token);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var firstUpload = MapTestData.Style();
 		using var addedFirst = await MapTestData.UploadFirstStyleAsync(client, firstGame.Id, firstUpload);
 
@@ -73,15 +76,16 @@ public class MapHubTests
 	public async Task JoinSendsNoInitialSnapshotAndHttpProvidesCurrentState()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "empty");
 		var map = await MapTestData.EnsureMapAsync(factory, game.Id);
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-		await using var viewer = new MapHubViewer(factory);
+		await using var viewer = await MapHubViewer.CreateAsync(factory);
 
 		await viewer.StartAsync(map.Id, timeout.Token);
 		await viewer.JoinAsync(map.Id, timeout.Token);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id), timeout.Token);
 
 		Assert.Empty((await MapTestData.ReadAsync(read)).Styles);
@@ -98,17 +102,19 @@ public class MapHubTests
 	public async Task IndependentViewersReceiveProgressAndCommittedStyleUpdates()
 	{
 		var images = new MapProcessingTests.ControlledImages { Pause = true };
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 			services.AddSingleton<IMapImageProcessor>(images));
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "viewers");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-		await using var first = new MapHubViewer(factory);
-		await using var second = new MapHubViewer(factory);
+		await using var first = await MapHubViewer.CreateAsync(factory);
+		await using var second = await MapHubViewer.CreateAsync(factory);
 
 		await first.StartAsync(map.Id, timeout.Token);
 		await second.StartAsync(map.Id, timeout.Token);
@@ -127,6 +133,7 @@ public class MapHubTests
 		Assert.Equal("processing", claimed.GetProperty("status").GetString());
 		Assert.False(first.HasStyleEvents);
 		await first.UnwatchAsync(timeout.Token);
+
 		using var patch = await client.PatchAsJsonAsync($"{MapTestData.PathFor(game.Id)}/styles/{map.Styles.Single().Id}",
 			new { name = "Changed while processing" }, timeout.Token);
 
@@ -141,6 +148,7 @@ public class MapHubTests
 		var ready = await second.UntilStyleAsync(data => data.GetProperty("status").GetString() == "ready", timeout.Token);
 
 		Assert.Equal(100, ready.GetProperty("progress").GetInt32());
+
 		using var terminalPatch = await client.PatchAsJsonAsync(
 			$"{MapTestData.PathFor(game.Id)}/styles/{map.Styles.Single().Id}",
 			new { name = "Changed after ready" }, timeout.Token);
@@ -152,7 +160,7 @@ public class MapHubTests
 			afterReady = await second.ReadStyleAsync(timeout.Token);
 
 		Assert.NotNull(afterReady.GetProperty("tilesUrlTemplate").GetString());
-		await using var reconnect = new MapHubViewer(factory);
+		await using var reconnect = await MapHubViewer.CreateAsync(factory);
 
 		await reconnect.StartAsync(map.Id, timeout.Token);
 		using var read = await client.GetAsync(MapTestData.PathFor(game.Id), timeout.Token);
@@ -167,14 +175,15 @@ public class MapHubTests
 	public async Task MissingMapsCanBeJoinedAndAreReportedByHttp(bool empty)
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "scope");
 		var mapId = empty ? Guid.Empty : Guid.NewGuid();
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-		await using var viewer = new MapHubViewer(factory);
+		await using var viewer = await MapHubViewer.CreateAsync(factory);
 
 		await viewer.StartAsync(mapId, timeout.Token);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await client.GetAsync(MapTestData.PathFor(game.Id, mapId), timeout.Token);
 
 		Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -187,14 +196,15 @@ public class MapHubTests
 	public async Task MapAndGameDeletionNotifyTheirOwnGroups(bool deleteGame)
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "delete");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-		await using var viewer = new MapHubViewer(factory);
+		await using var viewer = await MapHubViewer.CreateAsync(factory);
 
 		await viewer.StartAsync(map.Id, timeout.Token);
 		using var deleted = await client.DeleteAsync(deleteGame ? $"/games/{game.Id}" : MapTestData.PathFor(game.Id), timeout.Token);
@@ -210,14 +220,15 @@ public class MapHubTests
 	public async Task StyleDeletionSendsATombstoneWithoutRemovingOtherStyles()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "delete-style");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var created = await MapTestData.CreateWithStylesAsync(client, game.Id);
 		var map = await MapTestData.ReadAsync(created);
 		var styleId = map.Styles.First().Id;
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-		await using var viewer = new MapHubViewer(factory);
+		await using var viewer = await MapHubViewer.CreateAsync(factory);
 
 		await viewer.StartAsync(map.Id, timeout.Token);
 		using var deleted = await client.DeleteAsync($"{MapTestData.PathFor(game.Id)}/styles/{styleId}", timeout.Token);

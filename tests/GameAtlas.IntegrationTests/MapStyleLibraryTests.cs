@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Maps;
 using GameAtlas.Application.Maps.Images;
@@ -18,7 +18,7 @@ public sealed class MapStyleLibraryTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "missing-source");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
@@ -51,12 +51,13 @@ public sealed class MapStyleLibraryTests
 	public async Task DeletingStyleDoesNotLeaveAnIndependentSourceUseRegistration()
 	{
 		var images = new MapProcessingTests.ControlledImages { Pause = true };
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 			services.AddSingleton<IMapImageProcessor>(images));
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "active-reader");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
@@ -95,14 +96,18 @@ public sealed class MapStyleLibraryTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "shared-source");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var image = await MediaTestData.UploadImageAsync(client, format);
+
 		using var created = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
 			new { name = "World" });
+
 		var map = await MapTestData.ReadAsync(created);
 		var path = MapTestData.PathFor(game.Id, map.Id);
+
 		using var added = await client.PostAsJsonAsync(path + "/styles",
 			new { name = "Atlas", backgroundColor = "#fff", sourceAssetId = image.Id });
+
 		var style = Assert.Single((await MapTestData.ReadAsync(added)).Styles);
 
 		Assert.Equal(image, style.Source);
@@ -114,6 +119,7 @@ public sealed class MapStyleLibraryTests
 		var processed = (await client.GetFromJsonAsync<MapDto>(path, MapTestData.JsonOptions))!.Styles.Single();
 
 		Assert.Equal(MapProcessingStatus.Ready, processed.Status);
+
 		using var tile = await client.GetAsync(processed.TilesUrlTemplate!
 			.Replace("{z}", "0").Replace("{x}", "0").Replace("{y}", "0"));
 
@@ -147,7 +153,7 @@ public sealed class MapStyleLibraryTests
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "invalid-source");
 		var map = await MapTestData.EnsureMapAsync(factory, game.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var svg = await MediaTestData.UploadImageAsync(client, "svg");
 		var folder = await MediaFolderTests.CreateAsync(client, "Not a source");
@@ -165,6 +171,7 @@ public sealed class MapStyleLibraryTests
 
 		using var missing = await client.PostAsJsonAsync(path + "/styles",
 			new { name = "Atlas", backgroundColor = "#fff", sourceAssetId = Guid.NewGuid() });
+
 		using var multipart = MapTestData.Style();
 		using var unsupported = await client.PostAsync(path + "/styles", multipart);
 

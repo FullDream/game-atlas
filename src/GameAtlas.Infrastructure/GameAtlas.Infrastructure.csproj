@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="MediaInfo.Wrapper.Core" Version="26.10.0" />
     <PackageReference Include="MediaInfo.Core.Native" Version="26.10.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="11.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="11.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="11.0.0" />
     <PackageReference Include="NetVips" Version="3.2.0" />

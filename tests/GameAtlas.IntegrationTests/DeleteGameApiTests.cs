@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -23,12 +23,13 @@ public class DeleteGameApiTests
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "target", status);
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await client.DeleteAsync($"/games/{game.Id}");
 
 		Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 		Assert.Empty(await response.Content.ReadAsByteArrayAsync());
 		await using var reload = factory.Services.CreateAsyncScope();
+
 		var stored = Assert.Single(await reload.ServiceProvider.GetRequiredService<ApplicationDbContext>()
 			.Games.ToArrayAsync());
 
@@ -48,11 +49,12 @@ public class DeleteGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "existing");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await client.DeleteAsync($"/games/{id}");
 
 		await AssertProblemAsync(response, expected);
 		await using var reload = factory.Services.CreateAsyncScope();
+
 		var stored = Assert.Single(await reload.ServiceProvider.GetRequiredService<ApplicationDbContext>()
 			.Games.ToArrayAsync());
 
@@ -67,7 +69,7 @@ public class DeleteGameApiTests
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "target");
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var deletion = await client.DeleteAsync($"/games/{game.Id}");
 		using var listing = await client.GetAsync("/games");
 		using var page = JsonDocument.Parse(await listing.Content.ReadAsStringAsync());
@@ -82,6 +84,7 @@ public class DeleteGameApiTests
 
 		await AssertProblemAsync(update, HttpStatusCode.NotFound);
 		await using var reload = factory.Services.CreateAsyncScope();
+
 		var stored = Assert.Single(await reload.ServiceProvider.GetRequiredService<ApplicationDbContext>()
 			.Games.ToArrayAsync());
 
@@ -98,13 +101,15 @@ public class DeleteGameApiTests
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "available");
 		var other = await DeleteGameHandlerTests.SeedAsync(factory, "other");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var deletion = await client.DeleteAsync($"/games/{game.Id}");
 
 		Assert.Equal(HttpStatusCode.NoContent, deletion.StatusCode);
+
 		using var response = update
 			? await client.PatchAsJsonAsync($"/games/{other.Id}", new { slug = "available" })
 			: await client.PostAsJsonAsync("/games", new { name = "New", slug = "available", coverId = MediaTestData.CoverId });
+
 		using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 		var id = body.RootElement.GetProperty("id").GetGuid();
 
@@ -132,7 +137,7 @@ public class DeleteGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "target");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await client.DeleteAsync($"/games/{game.Id}");
 
 		await AssertProblemAsync(response, HttpStatusCode.InternalServerError);
@@ -142,6 +147,7 @@ public class DeleteGameApiTests
 		Assert.DoesNotContain("DELETE", content);
 		Assert.DoesNotContain("InvalidOperationException", content);
 		await using var reload = factory.Services.CreateAsyncScope();
+
 		var stored = Assert.Single(await reload.ServiceProvider.GetRequiredService<ApplicationDbContext>()
 			.Games.ToArrayAsync());
 

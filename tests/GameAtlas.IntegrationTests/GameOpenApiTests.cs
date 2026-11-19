@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace GameAtlas.IntegrationTests;
 
@@ -8,7 +8,7 @@ public class GameOpenApiTests
 	public async Task DocumentsCreateGameResponseStringStatusAndProblemDetails()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var operation = root.GetProperty("paths").GetProperty("/games").GetProperty("post");
@@ -25,10 +25,13 @@ public class GameOpenApiTests
 
 		Assert.All(statusSchema.GetProperty("enum").EnumerateArray(), value =>
 			Assert.Equal(JsonValueKind.String, value.ValueKind));
+
 		Assert.Contains(statusSchema.GetProperty("enum").EnumerateArray(), value => value.GetString() == "draft");
 		var dto = schemas.GetProperty("Game").GetProperty("properties");
+
 		Assert.Equal("#/components/schemas/ImageAsset", dto.GetProperty("cover").GetProperty("$ref").GetString());
 		var request = schemas.GetProperty("CreateGameRequest").GetProperty("properties");
+
 		Assert.Equal("uuid", request.GetProperty("coverId").GetProperty("format").GetString());
 		Assert.False(request.TryGetProperty("image", out _));
 
@@ -40,7 +43,7 @@ public class GameOpenApiTests
 	public async Task DocumentsSharedPublicationStatusReferencesForRequestSchemas()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
 

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Categories;
@@ -23,7 +23,7 @@ public class MapContentOwnershipTests
 		await MediaTestData.EnsureIconAsync(factory);
 
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var first = await CreateMapAsync(client, game.Id, "World");
 
@@ -49,24 +49,30 @@ public class MapContentOwnershipTests
 		var categoryPath = firstPath + $"/category-groups/{group.Id}/categories";
 
 		var otherCategoryPath = secondPath + $"/category-groups/{otherGroup.Id}/categories";
+
 		using var categoryCreation = await client.PostAsJsonAsync(categoryPath,
 			new { name = "Chest", iconAssetId = MediaTestData.IconId, color = "#fff" });
+
 		using var otherCategoryCreation = await client.PostAsJsonAsync(otherCategoryPath,
 			new { name = "Chest", iconAssetId = MediaTestData.IconId, color = "#fff" });
 
 		var category = (await categoryCreation.Content.ReadFromJsonAsync<CategoryDto>())!;
 
 		var otherCategory = (await otherCategoryCreation.Content.ReadFromJsonAsync<CategoryDto>())!;
+
 		using var markerCreation = await client.PostAsJsonAsync(firstPath + "/markers",
 			new { categoryId = category.Id, name = "Point", position = new { x = -2.5, y = 100000 } });
 
 		var marker = await markerCreation.Content.ReadFromJsonAsync<JsonElement>();
 
 		var markerId = marker.GetProperty("id").GetGuid();
+
 		using var categoryTransfer = await client.PatchAsJsonAsync(categoryPath + $"/{category.Id}",
 			new { categoryGroupId = otherGroup.Id, name = "Changed" });
+
 		using var markerTransfer = await client.PatchAsJsonAsync(firstPath + $"/markers/{markerId}",
 			new { categoryId = otherCategory.Id, name = "Changed" });
+
 		using var wrongMarker = await client.DeleteAsync(secondPath + $"/markers/{markerId}");
 		using var wrongGroup = await client.PatchAsJsonAsync(firstPath + $"/category-groups/{otherGroup.Id}/categories/{otherCategory.Id}", new { name = "Rejected" });
 
@@ -107,7 +113,7 @@ public class MapContentOwnershipTests
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "other");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var first = await CreateMapAsync(client, game.Id, "World");
 
@@ -126,6 +132,7 @@ public class MapContentOwnershipTests
 		using var deleted = await client.DeleteAsync($"/games/{game.Id}");
 
 		Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

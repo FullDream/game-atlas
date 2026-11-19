@@ -1,4 +1,4 @@
-using GameAtlas.Domain;
+﻿using GameAtlas.Domain;
 using GameAtlas.Domain.ValueObjects;
 using System.Net;
 using System.Net.Http.Json;
@@ -27,8 +27,9 @@ public class CreateGameApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var mapId = mapMode == "supplied" ? Guid.NewGuid() : (Guid?)null;
+
 		var input = new Dictionary<string, object?>
 		{
 			["name"] = " Elden Ring ",
@@ -93,7 +94,7 @@ public class CreateGameApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var input = new Dictionary<string, object?> { ["name"] = "Game", ["slug"] = "game", ["coverId"] = MediaTestData.CoverId };
 
 		input[field] = value;
@@ -111,10 +112,11 @@ public class CreateGameApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var invalid = await client.PostAsJsonAsync("/games", new { });
 
 		await AssertProblemAsync(invalid, HttpStatusCode.UnprocessableEntity);
+
 		using var valid = await client.PostAsJsonAsync("/games", new
 		{
 			name = new string('n', 200),
@@ -134,7 +136,8 @@ public class CreateGameApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsync("/games",
 			new StringContent(input, Encoding.UTF8, "application/json"));
 
@@ -149,13 +152,14 @@ public class CreateGameApiTests
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var input = new { name = "Game", slug = "game", coverId = MediaTestData.CoverId };
 		using var success = await client.PostAsJsonAsync("/games", input);
 		using var conflict = await client.PostAsJsonAsync("/games", input);
 
 		Assert.Equal(HttpStatusCode.OK, success.StatusCode);
 		await AssertProblemAsync(conflict, HttpStatusCode.Conflict);
+
 		var concurrent = await Task.WhenAll(Enumerable.Range(0, 2).Select(_ =>
 			client.PostAsJsonAsync("/games", new { name = "Game", slug = "raced-game", coverId = MediaTestData.CoverId })));
 
@@ -164,6 +168,7 @@ public class CreateGameApiTests
 			Assert.Single(concurrent, response => response.StatusCode == HttpStatusCode.OK);
 			await AssertProblemAsync(Assert.Single(concurrent, response => response.StatusCode != HttpStatusCode.OK),
 				HttpStatusCode.Conflict);
+
 			await AssertCountAsync(factory, 2);
 		}
 		finally
@@ -174,20 +179,18 @@ public class CreateGameApiTests
 	}
 
 	[Fact]
-	public async Task StartupDoesNotApplyMigrationsAndStorageFailureReturnsSafe500()
+	public async Task StartupRequiresExplicitIdentityMigration()
 	{
-		await using var factory = new GameApiFactory();
-		using var client = factory.CreateHttpsClient();
+		await using var factory = new GameApiFactory(migrateBeforeStartup: false);
 
-		Assert.False(File.Exists(factory.DatabasePath));
-		using var response = await client.PostAsJsonAsync("/games",
-			new { name = "Game", slug = "game", coverId = MediaTestData.CoverId });
+		Assert.Throws<Microsoft.Data.Sqlite.SqliteException>(() => factory.CreateGuestClient());
 
-		await AssertProblemAsync(response, HttpStatusCode.InternalServerError);
-		await using var scope = factory.Services.CreateAsyncScope();
-		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+		var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+			.UseSqlite($"Data Source={factory.DatabasePath};Pooling=False").Options;
 
-		Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
+		await using var db = new ApplicationDbContext(options);
+
+		Assert.Empty(await db.Database.GetAppliedMigrationsAsync());
 	}
 
 	[Fact]
@@ -232,13 +235,15 @@ public class CreateGameApiTests
 
 		await failing.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(failing);
-		using var client = failing.CreateHttpsClient();
+		using var client = await failing.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsJsonAsync("/games",
 			new { name = "New", slug = "new", coverId = MediaTestData.CoverId });
 
 		await AssertProblemAsync(response, HttpStatusCode.Conflict);
 		await AssertCountAsync(failing, 0);
 		context.ChangeTracker.Clear();
+
 		var unrelated = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
 			context.Database.ExecuteSqlRawAsync("INSERT INTO Games (Id) VALUES ('bad')"));
 

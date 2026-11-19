@@ -13,11 +13,11 @@ npm exec nx -- test admin
 npm exec nx -- lint admin
 ```
 
-Development uses `http://localhost:4201`. `/api/**` is proxied to `http://localhost:5041` with `/api` stripped. Thus `/api/games` calls the backend while `/games` is a page route. Do not proxy page routes directly. The shell needs no backend connection and does not display invented records or a simulated user.
+Development uses `http://localhost:4201`. `/api/**` is proxied to `http://localhost:5041` with `/api` stripped. Thus `/api/games` calls the backend while `/games` is a page route. Do not proxy page routes directly. Sign-in requires a reachable API and a secure browser context. See administrator provisioning in the development guide.
 
-Production output is `dist/apps/admin/browser`. Configure the host to serve `index.html` for application routes, including direct `/games` and `/media` navigation. Keep missing assets as 404. There is no production Node.js renderer. Configure a reverse proxy for `/api/` separately; the development proxy is not included in production output. A different deployment can change the `provideGamesBaseUrl` provider in application configuration without regenerating clients.
+Production output is `dist/apps/admin/browser`. Configure the host to serve `index.html` for application routes, under `/admin/`, including direct `/admin/games` and `/admin/media` navigation. Keep missing assets as 404. There is no production Node.js renderer. Configure a reverse proxy for `/api/` separately; the development proxy is not included in production output. A different deployment can change the `provideGamesBaseUrl` provider in application configuration without regenerating clients.
 
-`npm exec nx -- run admin:serve-static` previews production files on port 4301 with an SPA fallback. Use it for a local production preview.
+`npm exec nx -- run admin:serve-static` previews production files on port 4301 with an SPA fallback. For a production login preview, serve the output at its configured /admin/ mount on the same HTTPS origin as /api/.
 
 Production size budgets warn at 1.2 MB and fail at 1.5 MB for the initial bundle, and warn at 6 KB and fail at 8 KB for each component stylesheet. These thresholds accommodate the current roughly 1 MB administration bundle and 5.5 KB component styles while retaining growth checks. The map engine remains lazy loaded.
 

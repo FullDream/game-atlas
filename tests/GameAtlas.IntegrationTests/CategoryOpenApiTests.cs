@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace GameAtlas.IntegrationTests;
 
@@ -10,7 +10,7 @@ public class CategoryOpenApiTests
 	public async Task DocumentsCategoryMutationsAndTreeChildrenWithErrors()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 
 		var root = document.RootElement;
@@ -57,6 +57,7 @@ public class CategoryOpenApiTests
 		Assert.Equal("array", list.GetProperty("type").GetString());
 
 		var groupSchema = Resolve(root, list.GetProperty("items"));
+
 		AssertDto(root, groupSchema.GetProperty("properties").GetProperty("categories").GetProperty("items"));
 		AssertDto(root, ResponseSchema(root, collection.GetProperty("post")));
 		AssertDto(root, ResponseSchema(root, item.GetProperty("patch")));
@@ -66,7 +67,7 @@ public class CategoryOpenApiTests
 	public async Task DocumentsSharedValidationAndOptionalPatchFields()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 
 		var root = document.RootElement;
@@ -84,6 +85,7 @@ public class CategoryOpenApiTests
 		Assert.Equal(2, patchContent.EnumerateObject().Count());
 		Assert.Equal(patchSchema.GetRawText(), Resolve(root, patchContent.GetProperty("application/merge-patch+json")
 			.GetProperty("schema")).GetRawText());
+
 		Assert.False(patchSchema.GetProperty("additionalProperties").GetBoolean());
 		Assert.False(patchSchema.TryGetProperty("required", out var required) && required.GetArrayLength() > 0);
 		Assert.DoesNotContain("isSpecified", patchSchema.GetRawText());
@@ -112,10 +114,12 @@ public class CategoryOpenApiTests
 			Assert.Contains("null", color.GetProperty("type").EnumerateArray().Select(value => value.GetString()));
 
 			var order = Resolve(root, properties.GetProperty("beforeId"));
+
 			Assert.False(properties.TryGetProperty("order", out _));
 
 			Assert.Equal(@"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})(?![\s\S])",
 				color.GetProperty("pattern").GetString());
+
 			Assert.Equal(4, color.GetProperty("minLength").GetInt32());
 			Assert.Equal(7, color.GetProperty("maxLength").GetInt32());
 			Assert.Equal("uuid", order.GetProperty("format").GetString());
@@ -140,6 +144,7 @@ public class CategoryOpenApiTests
 				"categoryGroupId", "color", "createdAt", "icon", "id", "markersCount", "name", "status", "updatedAt"
 			},
 			properties.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
+
 		Assert.Equal("integer", Resolve(root, properties.GetProperty("markersCount")).GetProperty("type").GetString());
 		Assert.False(properties.TryGetProperty("order", out _));
 		Assert.True(properties.GetProperty("markersCount").GetProperty("readOnly").GetBoolean());

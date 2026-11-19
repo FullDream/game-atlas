@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -19,11 +19,14 @@ public class MultiMapApiTests
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "styles");
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "other-styles");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var firstCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
 			new { name = "World", slug = "world" });
+
 		using var secondCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
 			new { name = "Dungeon", slug = "dungeon" });
+
 		var first = await MapTestData.ReadAsync(firstCreation);
 		var second = await MapTestData.ReadAsync(secondCreation);
 		using var upload = MapTestData.Style();
@@ -59,10 +62,12 @@ public class MultiMapApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "boundaries");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var missingList = await client.GetAsync(MapTestData.CollectionFor(Guid.NewGuid()));
+
 		using var missingCreate = await client.PostAsJsonAsync(MapTestData.CollectionFor(Guid.NewGuid()),
 			new { name = "World", slug = "world" });
+
 		using var unsupported = await client.PostAsync(MapTestData.CollectionFor(game.Id),
 			new StringContent("{}", Encoding.UTF8, "text/plain"));
 
@@ -86,20 +91,27 @@ public class MultiMapApiTests
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "other");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var empty = await client.GetAsync(MapTestData.CollectionFor(game.Id));
 
 		Assert.Equal("[]", await empty.Content.ReadAsStringAsync());
+
 		using var first = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
 			new { name = " World ", slug = "world" });
+
 		var world = await MapTestData.ReadAsync(first);
+
 		using var second = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
 			new { name = "Dungeon", slug = "dungeon" });
+
 		var dungeon = await MapTestData.ReadAsync(second);
+
 		using var sameNameElsewhere = await client.PostAsJsonAsync(MapTestData.CollectionFor(other.Id),
 			new { name = "World", slug = "world" });
+
 		using var duplicate = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
 			new { name = " world ", slug = "world" });
+
 		using var foreign = await client.GetAsync(MapTestData.PathFor(other.Id, world.Id));
 		using var listing = await client.GetAsync(MapTestData.CollectionFor(game.Id));
 		var maps = (await listing.Content.ReadFromJsonAsync<MapDto[]>(MapTestData.JsonOptions))!;
@@ -142,7 +154,8 @@ public class MultiMapApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsync(MapTestData.CollectionFor(game.Id),
 			new StringContent(json, Encoding.UTF8, "application/json"));
 
@@ -160,7 +173,7 @@ public class MultiMapApiTests
 		await factory.MigrateAsync();
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id);
 		using var invalidFile = MapTestData.Style(MapTestData.ImageBytes(24, 17), name: "First");
 		using var first = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), invalidFile);

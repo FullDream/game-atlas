@@ -1,3 +1,4 @@
+import { authGuard } from '@game-atlas/auth/data-access'
 import { Route, Routes } from '@angular/router'
 
 const foundation: NonNullable<Route['loadComponent']> = () =>
@@ -5,7 +6,13 @@ const foundation: NonNullable<Route['loadComponent']> = () =>
 
 export const APP_ROUTES: Routes = [
 	{
+		path: 'auth/login',
+		title: 'Sign in',
+		loadComponent: () => import('@game-atlas/auth/feature-login').then(m => m.FeatureLogin),
+	},
+	{
 		path: '',
+		canMatch: [authGuard],
 		loadComponent: () => import('./layout/layout').then(module => module.Layout),
 		children: [
 			{ path: '', pathMatch: 'full', redirectTo: 'games' },

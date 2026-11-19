@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using System.Text.Json;
 using GameAtlas.Domain;
@@ -21,9 +21,11 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MediaTestData.EnsureIconAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var mapId = (await MapTestData.SeedAsync(factory, game.Id)).Id;
+
 		var input = JsonSerializer.Serialize(new
 		{
 			name = " Updated ",
@@ -31,6 +33,7 @@ public class UpdateGameApiTests
 			coverId = MediaTestData.IconId,
 			status = "published"
 		});
+
 		using var response = await PatchAsync(client, game.Id, input, mediaType);
 		using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 		var value = body.RootElement;
@@ -83,10 +86,13 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MediaTestData.EnsureIconAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await PatchAsync(client, game.Id,
 			JsonSerializer.Serialize(new Dictionary<string, string> { [field] = value }), "application/json");
+
 		var stored = await LoadAsync(factory, game.Id);
 
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -131,8 +137,9 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MediaTestData.EnsureIconAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await PatchAsync(client, game.Id, body, mediaType);
 
 		await AssertProblemAsync(response, (HttpStatusCode)status);
@@ -149,10 +156,13 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MediaTestData.EnsureIconAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await PatchAsync(client, game.Id,
 			JsonSerializer.Serialize(new { name = " Game ", slug = " game ", coverId = game.CoverId, status = "draft" }), mediaType);
+
 		using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
 		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -173,8 +183,9 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MediaTestData.EnsureIconAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var response = await PatchAsync(client, game.Id, body, mediaType);
 
 		await AssertProblemAsync(response, HttpStatusCode.UnsupportedMediaType);
@@ -187,10 +198,12 @@ public class UpdateGameApiTests
 		await using var factory = new GameApiFactory();
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var missing = await PatchAsync(client, Guid.NewGuid(), "{\"name\":\"New\"}", "application/json");
+
 		using var invalid = await client.PatchAsync("/games/not-a-guid",
 			new StringContent("{\"name\":\"New\"}", Encoding.UTF8, "application/json"));
+
 		using var put = await client.PutAsync($"/games/{Guid.NewGuid()}",
 			new StringContent("{\"name\":\"New\"}", Encoding.UTF8, "application/json"));
 
@@ -209,9 +222,11 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MediaTestData.EnsureIconAsync(factory);
 		var other = await UpdateGameHandlerTests.SeedAsync(factory, "taken");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await PatchAsync(client, game.Id,
 			"{\"name\":\"New\",\"slug\":\" taken \"}", "application/json");
 
@@ -230,11 +245,13 @@ public class UpdateGameApiTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
+
 		await MediaTestData.EnsureIconAsync(factory);
 		var rival = await UpdateGameHandlerTests.SeedAsync(factory, "rival");
 
 		interceptor.RivalId = rival.Id;
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await PatchAsync(client, game.Id,
 			"{\"name\":\"New\",\"slug\":\"raced\"}", "application/merge-patch+json");
 

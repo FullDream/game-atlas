@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Categories;
@@ -17,11 +17,12 @@ public sealed class MediaAcceptanceTests
 	public async Task SharedImageAndPreviewPropagateAcrossConsumersAndOutliveTheirGames()
 	{
 		var images = new MapProcessingTests.ControlledImages { FailuresRemaining = 1 };
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 			services.AddSingleton<IMapImageProcessor>(images));
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var image = await MediaTestData.UploadImageAsync(client);
 
@@ -49,6 +50,7 @@ public sealed class MediaAcceptanceTests
 			var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Resources", 1);
 
 			var categoryPath = CategoryTestData.Path(game.Id, group.Id);
+
 			using var createdCategory = await client.PostAsJsonAsync(categoryPath,
 				new { name = "Category", iconAssetId = image.Id, color = "#fff" });
 
@@ -58,6 +60,7 @@ public sealed class MediaAcceptanceTests
 				media: JsonSerializer.SerializeToElement(new[] { image.Id, video.Id }));
 
 			var mapPath = MapTestData.PathFor(game.Id, map.Id);
+
 			using var createdStyle = await client.PostAsJsonAsync(mapPath + "/styles",
 				new { name = "Atlas", backgroundColor = "#fff", sourceAssetId = image.Id });
 
@@ -79,10 +82,12 @@ public sealed class MediaAcceptanceTests
 
 		var folder = await MediaFolderTests.CreateAsync(client, "Shared originals");
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+
 		using var edited = await client.PatchAsJsonAsync($"/media/assets/{image.Id}",
 			new { name = "Shared world", alt = "Shared alt", folderId = folder.Id });
 
 		edited.EnsureSuccessStatusCode();
+
 		for (var index = 0; index < paths.Count; index++)
 		{
 			var categories = (await CategoryTestData.ReadTreeCategoriesAsync(client, paths[index].Category))!;

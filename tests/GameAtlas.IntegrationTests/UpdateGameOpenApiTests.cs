@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace GameAtlas.IntegrationTests;
 
@@ -8,7 +8,7 @@ public class UpdateGameOpenApiTests
 	public async Task DocumentsBothMediaTypesOptionalFieldsAndValidationConstraints()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var path = root.GetProperty("paths").GetProperty("/games/{id}");
@@ -28,6 +28,7 @@ public class UpdateGameOpenApiTests
 		Assert.Contains("at least one", operation.GetProperty("description").GetString());
 		Assert.Contains("read-only", operation.GetProperty("description").GetString());
 		Assert.Contains("Merge Patch", operation.GetProperty("description").GetString());
+
 		var id = operation.GetProperty("parameters").EnumerateArray().Single(parameter =>
 			parameter.GetProperty("name").GetString() == "id");
 
@@ -46,6 +47,7 @@ public class UpdateGameOpenApiTests
 
 		Assert.Equal(@"\A[a-z0-9]+(-[a-z0-9]+)*\z", Resolve(root, properties.GetProperty("slug"))
 			.GetProperty("pattern").GetString());
+
 		Assert.False(properties.TryGetProperty("mapId", out _));
 		Assert.False(properties.TryGetProperty("image", out _));
 		Assert.Equal("uuid", properties.GetProperty("coverId").GetProperty("format").GetString());
@@ -55,6 +57,7 @@ public class UpdateGameOpenApiTests
 
 		Assert.Equal(new[] { "draft", "published" }, status.GetProperty("enum").EnumerateArray()
 			.Select(value => value.GetString()));
+
 		Assert.DoesNotContain("isSpecified", schema.GetRawText());
 	}
 
@@ -62,11 +65,12 @@ public class UpdateGameOpenApiTests
 	public async Task DocumentsCompleteResponseAndEveryProblemStatusWithoutChangingExistingOperations()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var paths = root.GetProperty("paths");
 		var responses = paths.GetProperty("/games/{id}").GetProperty("patch").GetProperty("responses");
+
 		var dto = Resolve(root, responses.GetProperty("200").GetProperty("content")
 			.GetProperty("application/json").GetProperty("schema"));
 
@@ -79,14 +83,17 @@ public class UpdateGameOpenApiTests
 
 		Assert.Equal("CreateGame",
 			paths.GetProperty("/games").GetProperty("post").GetProperty("operationId").GetString());
+
 		Assert.Equal("ListGames",
 			paths.GetProperty("/games").GetProperty("get").GetProperty("operationId").GetString());
+
 		var createSchema = Resolve(root, paths.GetProperty("/games").GetProperty("post")
 			.GetProperty("requestBody").GetProperty("content").GetProperty("application/json").GetProperty("schema"));
 
 		Assert.Equal(7, createSchema.GetProperty("properties").EnumerateObject().Count());
 		Assert.Equal(new[] { "draft", "published" }, Resolve(root, dto.GetProperty("properties").GetProperty("status"))
 			.GetProperty("enum").EnumerateArray().Select(value => value.GetString()));
+
 		Assert.False(AllowsNull(root, dto.GetProperty("properties").GetProperty("status")));
 	}
 

@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace GameAtlas.IntegrationTests;
 
@@ -10,7 +10,7 @@ public class MarkerOpenApiTests
 	public async Task DocumentsOnlyFourOperationsCompleteDtosAndProblemDetails()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var collection = root.GetProperty("paths").GetProperty(CollectionPath);
@@ -40,9 +40,11 @@ public class MarkerOpenApiTests
 		Assert.Equal("array", list.GetProperty("type").GetString());
 		Assert.Equal(new[] { "categoryId", "createdAt", "description", "id", "media", "name", "position", "status", "updatedAt" },
 			dto.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
+
 		Assert.False(item.GetProperty("delete").GetProperty("responses").GetProperty("204").TryGetProperty("content", out _));
 		Assert.Equal(2, item.GetProperty("patch").GetProperty("requestBody").GetProperty("content")
 			.EnumerateObject().Count());
+
 		Assert.True(item.GetProperty("patch").GetProperty("responses").TryGetProperty("415", out _));
 	}
 
@@ -50,7 +52,7 @@ public class MarkerOpenApiTests
 	public async Task DocumentsValidationOptionalCoordinatesAndExactUnionMappings()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var collection = root.GetProperty("paths").GetProperty(CollectionPath);
@@ -62,8 +64,10 @@ public class MarkerOpenApiTests
 
 		Assert.Equal(new[] { "categoryId", "name", "position" },
 			create.GetProperty("required").EnumerateArray().Select(value => value.GetString()).Order());
+
 		Assert.Equal(new[] { "x", "y" },
 			position.GetProperty("required").EnumerateArray().Select(value => value.GetString()));
+
 		Assert.False(patch.TryGetProperty("required", out var required) && required.GetArrayLength() > 0);
 		var patchPosition = Resolve(root, patch.GetProperty("properties").GetProperty("position"));
 

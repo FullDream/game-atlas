@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace GameAtlas.IntegrationTests;
 
@@ -8,12 +8,14 @@ public class MapOpenApiTests
 	public async Task DocumentsNineOperationsAndStaticTileContractWithoutChangingMarkerUnions()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var paths = root.GetProperty("paths");
+
 		var mapPaths = paths.EnumerateObject().Where(path => path.Name.StartsWith("/games/{gameId}/maps"))
 			.Where(path => !path.Name.Contains("/markers") && !path.Name.Contains("/category-groups")).ToArray();
+
 		var operations = mapPaths.SelectMany(path => path.Value.EnumerateObject())
 			.Where(property => new[] { "get", "post", "patch", "delete", "put" }.Contains(property.Name)).ToArray();
 
@@ -24,21 +26,26 @@ public class MapOpenApiTests
 			"AddMapStyle", "CreateMap", "DeleteMap", "DeleteMapStyle", "GetMap", "ListMaps",
 			"PublishMap", "RetryMapStyle", "UpdateMap", "UpdateMapStyle"
 		}, operations.Select(operation => operation.Value.GetProperty("operationId").GetString()).Order());
+
 		var create = paths.GetProperty("/games/{gameId}/maps").GetProperty("post");
+
 		var form = Resolve(root, create.GetProperty("requestBody").GetProperty("content")
 			.GetProperty("application/json").GetProperty("schema"));
 
 		Assert.True(create.GetProperty("requestBody").GetProperty("required").GetBoolean());
 		Assert.Equal(new[] { "name", "slug", "status" },
 			form.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
+
 		Assert.Equal(new[] { "name", "slug" },
 			form.GetProperty("required").EnumerateArray().Select(item => item.GetString()).Order());
+
 		var creationSlug = form.GetProperty("properties").GetProperty("slug");
 
 		Assert.Equal("string", creationSlug.GetProperty("type").GetString());
 		Assert.Equal(1, creationSlug.GetProperty("minLength").GetInt32());
 		Assert.Equal(200, creationSlug.GetProperty("maxLength").GetInt32());
 		Assert.Equal(GameAtlas.Domain.ValueObjects.Slug.Pattern, creationSlug.GetProperty("pattern").GetString());
+
 		var mapPatch = Resolve(root, paths.GetProperty("/games/{gameId}/maps/{mapId}").GetProperty("patch")
 			.GetProperty("requestBody").GetProperty("content").GetProperty("application/json").GetProperty("schema"));
 
@@ -46,16 +53,20 @@ public class MapOpenApiTests
 		Assert.Equal("string", mapPatch.GetProperty("properties").GetProperty("slug").GetProperty("type").GetString());
 		Assert.Equal(200, mapPatch.GetProperty("properties").GetProperty("slug").GetProperty("maxLength").GetInt32());
 		var add = paths.GetProperty("/games/{gameId}/maps/{mapId}/styles").GetProperty("post");
+
 		var addSchema = Resolve(root, add.GetProperty("requestBody").GetProperty("content")
 			.GetProperty("application/json").GetProperty("schema"));
+
 		var addProperties = addSchema.GetProperty("properties");
 
 		Assert.Equal(new[] { "backgroundColor", "name", "sourceAssetId" },
 			addProperties.EnumerateObject().Select(property => property.Name).Order());
+
 		Assert.Equal("uuid", Resolve(root, addProperties.GetProperty("sourceAssetId")).GetProperty("format").GetString());
 		Assert.Equal(200, addProperties.GetProperty("name").GetProperty("maxLength").GetInt32());
 		Assert.Equal(new[] { "backgroundColor", "name", "sourceAssetId" },
 			addSchema.GetProperty("required").EnumerateArray().Select(item => item.GetString()).Order());
+
 		var responses = create.GetProperty("responses");
 
 		foreach (var status in new[] { "200", "400", "404", "409", "413", "415", "422", "500" })
@@ -75,13 +86,16 @@ public class MapOpenApiTests
 			"backgroundColor", "createdAt", "error", "id", "name", "progress",
 			"source", "status", "tileGeometry", "tilesUrlTemplate", "updatedAt"
 		}, style.GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
+
 		Assert.Equal(new[] { "queued", "processing", "ready", "failed" },
 			Resolve(root, style.GetProperty("properties").GetProperty("status")).GetProperty("enum")
 				.EnumerateArray().Select(item => item.GetString()));
+
 		Assert.False(paths.TryGetProperty("/games/{gameId}/maps/{mapId}/events", out _));
 		Assert.DoesNotContain(paths.EnumerateObject(), path => path.Name.Contains("/tiles/"));
 		Assert.Contains("without database checks", style.GetProperty("properties").GetProperty("tilesUrlTemplate")
 			.GetProperty("description").GetString());
+
 		var patch = paths.GetProperty("/games/{gameId}/maps/{mapId}/styles/{styleId}").GetProperty("patch");
 		var patchContent = patch.GetProperty("requestBody").GetProperty("content");
 

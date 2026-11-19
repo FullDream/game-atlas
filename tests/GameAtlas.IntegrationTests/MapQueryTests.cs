@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Net.Http.Json;
 using GameAtlas.Application.Maps;
@@ -19,12 +19,13 @@ public class MapQueryTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "listing");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		for (var index = 0; index < 10; index++)
 		{
 			using var created = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
 				new { name = $"Map {index}" });
+
 			var map = await MapTestData.ReadAsync(created);
 			using var upload = MapTestData.Style();
 			using var styled = await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id, map.Id), upload);
@@ -62,10 +63,12 @@ public class MapQueryTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		for (var index = 0; index < 100; index++)
 		{
 			using var upload = MapTestData.Style(name: $"Style {index}");
+
 			using var response = index == 0
 				? await MapTestData.UploadFirstStyleAsync(client, game.Id, upload)
 				: await MapTestData.AddStyleAsync(client, MapTestData.PathFor(game.Id), upload);
@@ -75,7 +78,7 @@ public class MapQueryTests
 
 		capture.Contexts.Clear();
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-		await using var viewer = new MapHubViewer(factory);
+		await using var viewer = await MapHubViewer.CreateAsync(factory);
 
 		await viewer.StartAsync(MapTestData.MapIdFor(game.Id), timeout.Token);
 		await viewer.JoinAsync(MapTestData.MapIdFor(game.Id), timeout.Token);

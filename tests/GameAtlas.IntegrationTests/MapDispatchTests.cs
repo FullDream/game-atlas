@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using GameAtlas.Application.Maps;
 using GameAtlas.Application.Maps.Images;
 using GameAtlas.Application.Maps.AddMapStyle;
@@ -20,8 +20,10 @@ public class MapDispatchTests
 	public async Task QueueAdmissionSendsNothingAndWorkerNotifiesOnlyAfterReleasingMutationLock()
 	{
 		var notifications = new RecordingNotifications();
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 			services.AddSingleton<IMapNotifications>(notifications));
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "explicit-flow");
 		var map = await MapTestData.SeedAsync(factory, game.Id);
@@ -40,6 +42,7 @@ public class MapDispatchTests
 		Assert.True(await factory.Services.GetRequiredService<MapProcessor>().RunNextAsync(CancellationToken.None));
 		Assert.Equal(new[] { MapProcessingStatus.Processing, MapProcessingStatus.Ready },
 			notifications.Styles.Select(item => item.Status));
+
 		Assert.All(notifications.Progress, item =>
 		{
 			Assert.Equal(MapProcessingStatus.Processing, item.Status);
@@ -52,16 +55,18 @@ public class MapDispatchTests
 	{
 		var sql = new SqlCounter();
 		var images = new MapProcessingTests.ControlledImages { Pause = true };
+
 		await using var factory = new GameApiFactory(interceptor: sql, configureServices: services =>
 			services.AddSingleton<IMapImageProcessor>(images));
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "no-poll");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-		await using var viewer = new MapHubViewer(factory);
+		await using var viewer = await MapHubViewer.CreateAsync(factory);
 
 		await viewer.StartAsync(map.Id, timeout.Token);
 		var processor = factory.Services.GetRequiredService<MapProcessor>();
@@ -69,6 +74,7 @@ public class MapDispatchTests
 
 		await images.Started.Task.WaitAsync(timeout.Token);
 		var before = sql.Count;
+
 		await Task.Delay(1300, timeout.Token);
 		Assert.Equal(before, sql.Count);
 		images.Release.TrySetResult();
@@ -88,6 +94,7 @@ public class MapDispatchTests
 	public async Task StartupRestoresCommittedButUndispatchedQueuedWorkAndDispatchIsDeduplicated()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "restore");
 		var map = await MapTestData.SeedAsync(factory, game.Id);
@@ -108,14 +115,15 @@ public class MapDispatchTests
 	public async Task JoinBeforeHttpReadStillReceivesCommittedTerminalChanges()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "race");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
 		var map = await MapTestData.ReadAsync(created);
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-		await using var viewer = new MapHubViewer(factory);
+		await using var viewer = await MapHubViewer.CreateAsync(factory);
 
 		await viewer.StartAsync(map.Id, timeout.Token);
 		var running = factory.Services.GetRequiredService<MapProcessor>().RunNextAsync(timeout.Token);
@@ -136,6 +144,7 @@ public class MapDispatchTests
 	{
 		var faults = new MapStorageFaults();
 		var images = new MapProcessingTests.ControlledImages { FailuresRemaining = 1 };
+
 		await using var factory = new GameApiFactory(configureServices: services =>
 		{
 			services.AddSingleton<IMapImageProcessor>(images);
@@ -146,7 +155,7 @@ public class MapDispatchTests
 
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "cleanup-retry");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var firstUpload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, firstUpload);
 		var map = await MapTestData.ReadAsync(created);
@@ -194,10 +203,12 @@ public class MapDispatchTests
 		var map = await MapTestData.SeedAsync(factory, game.Id);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
 		var handler = new AddMapStyleHandler(context, factory.Services.GetRequiredService<IMapProgress>(),
 			factory.Services.GetRequiredService<IMapMutationLock>(),
 			factory.Services.GetRequiredService<IMapProcessingQueue>(),
 			factory.Services.GetRequiredService<IMapNotifications>());
+
 		var command = new AddMapStyle(game.Id, map.Id, "Other", "#fff", map.Styles.Single().SourceAssetId);
 
 		fault.Armed = true;

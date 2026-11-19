@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -24,9 +24,11 @@ public class MarkerApiTests
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, Guid.NewGuid().ToString(), status);
 		var group = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Group", 1);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		var created = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 			media: JsonSerializer.Deserialize<JsonElement>(MarkerTestData.MixedMedia));
+
 		var id = created.GetProperty("id").GetGuid();
 		var before = await MarkerTestData.LoadAsync(factory, id);
 
@@ -35,8 +37,10 @@ public class MarkerApiTests
 		Assert.Equal("Description", created.GetProperty("description").GetString());
 		Assert.Equal(created.GetProperty("createdAt").GetDateTimeOffset(),
 			created.GetProperty("updatedAt").GetDateTimeOffset());
+
 		Assert.Equal(new[] { "image", "image", "video" },
 			created.GetProperty("media").EnumerateArray().Select(item => item.GetProperty("type").GetString()));
+
 		Assert.Equal("", created.GetProperty("media")[0].GetProperty("alt").GetString());
 		Assert.Equal(MediaTestData.PreviewId, created.GetProperty("media")[2].GetProperty("preview").GetProperty("id").GetGuid());
 		Assert.DoesNotContain("markerId", created.GetRawText());
@@ -44,6 +48,7 @@ public class MarkerApiTests
 
 		using var noOpResponse = await client.PatchAsJsonAsync(MarkerTestData.Path(game.Id) + $"/{id}",
 			new { name = " Marker ", position = new { }, media = created.GetProperty("media").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).ToArray() });
+
 		var noOp = await MarkerTestData.ReadAsync(noOpResponse);
 		var unchanged = await MarkerTestData.LoadAsync(factory, id);
 
@@ -53,13 +58,16 @@ public class MarkerApiTests
 		using var xResponse = await client.PatchAsync(MarkerTestData.Path(game.Id) + $"/{id}",
 			new StringContent("""{"position":{"x":200},"description":null}""", Encoding.UTF8,
 				"application/merge-patch+json"));
+
 		var updated = await MarkerTestData.ReadAsync(xResponse);
 
 		Assert.Equal(200, updated.GetProperty("position").GetProperty("x").GetDouble());
 		Assert.Equal(0, updated.GetProperty("position").GetProperty("y").GetDouble());
 		Assert.Equal(JsonValueKind.Null, updated.GetProperty("description").ValueKind);
+
 		using var yResponse = await client.PatchAsJsonAsync(MarkerTestData.Path(game.Id) + $"/{id}",
 			new { position = new { y = -50.25 } });
+
 		var yUpdated = await MarkerTestData.ReadAsync(yResponse);
 
 		Assert.Equal(200, yUpdated.GetProperty("position").GetProperty("x").GetDouble());
@@ -71,6 +79,7 @@ public class MarkerApiTests
 		var counted = await MarkerTestData.ReadAsync(categories);
 
 		Assert.Equal(1, counted[0].GetProperty("markersCount").GetInt32());
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -134,11 +143,14 @@ public class MarkerApiTests
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		var created = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 			media: JsonSerializer.Deserialize<JsonElement>(MarkerTestData.MixedMedia));
+
 		var id = created.GetProperty("id").GetGuid();
 		var before = await MarkerTestData.LoadAsync(factory, id);
+
 		using var response = await client.PatchAsync(MarkerTestData.Path(game.Id) + $"/{id}",
 			new StringContent(body, Encoding.UTF8, "application/json"));
 
@@ -165,7 +177,8 @@ public class MarkerApiTests
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, _) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsync(MarkerTestData.Path(game.Id),
 			new StringContent(body, Encoding.UTF8, "application/json"));
 
@@ -185,8 +198,9 @@ public class MarkerApiTests
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var created = await MarkerTestData.CreateAsync(client, game.Id, category.Id);
+
 		using var response = await client.PatchAsync(MarkerTestData.Path(game.Id) + "/" + created.GetProperty("id").GetGuid(),
 			new StringContent("""{"position":{}}""", Encoding.UTF8, mediaType));
 

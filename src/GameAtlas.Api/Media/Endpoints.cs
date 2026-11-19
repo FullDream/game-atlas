@@ -15,7 +15,7 @@ public static class Endpoints
 {
 	public static RouteGroupBuilder MapMedia(this RouteGroupBuilder group)
 	{
-		var media = group.MapGroup("/media").WithTags("Media");
+		var media = group.MapGroup("/media").WithTags("Media").RequireAuthorization();
 
 		media.MapGet("", ListAsync).WithName("ListMedia").WithSummary("List media");
 		media.MapGet("/folders/{id}", GetFolderAsync).WithName("GetMediaFolder").WithSummary("Get media folder");
@@ -27,8 +27,7 @@ public static class Endpoints
 			.ProducesProblem(StatusCodes.Status404NotFound)
 			.ProducesProblem(StatusCodes.Status413PayloadTooLarge)
 			.ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
-			.ProducesProblem(StatusCodes.Status500InternalServerError)
-			.DisableAntiforgery();
+			.ProducesProblem(StatusCodes.Status500InternalServerError);
 
 		media.MapPatch("/folders/{id}", UpdateFolderAsync).WithName("UpdateMediaFolder")
 			.WithSummary("Update media folder").WithMergePatch<UpdateMediaFolderRequest>();

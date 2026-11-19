@@ -59,6 +59,22 @@
 					}
 				</ul>
 			</nav>
+			<div hlmSidebarGroup class="mt-auto">
+				<ul hlmSidebarMenu>
+					<li hlmSidebarMenuItem>
+						<button
+							hlmSidebarMenuButton
+							type="button"
+							aria-label="Sign out"
+							tooltip="Sign out"
+							[hlmAlertDialogTriggerFor]="signOutDialog"
+						>
+							<ng-icon name="matLogoutRound" aria-hidden="true" />
+							<span>Sign out</span>
+						</button>
+					</li>
+				</ul>
+			</div>
 		</div>
 
 		<div hlmSidebarFooter class="h-16 px-2 py-0 shrink-0 items-center justify-center border-t">
@@ -108,3 +124,30 @@
 		</div>
 	</main>
 </div>
+
+<hlm-alert-dialog #signOutDialog="hlmAlertDialog">
+	<hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx" size="sm">
+		<hlm-alert-dialog-header>
+			<hlm-alert-dialog-media>
+				<ng-icon name="matLogoutRound" aria-hidden="true" />
+			</hlm-alert-dialog-media>
+			<h2 hlmAlertDialogTitle>Sign out?</h2>
+			<p hlmAlertDialogDescription>You will need to sign in again to access the administration workspace.</p>
+		</hlm-alert-dialog-header>
+		<hlm-alert-dialog-footer>
+			<button hlmAlertDialogCancel [disabled]="logout.isPending()">Cancel</button>
+			<button
+				hlmAlertDialogAction
+				class="relative inline-grid place-items-center"
+				[disabled]="logout.isPending()"
+				[attr.aria-busy]="logout.isPending() || null"
+				(click)="signOut(ctx.close)"
+			>
+				<span class="col-start-1 row-start-1" [class.invisible]="logout.isPending()">Sign out</span>
+				@if (logout.isPending()) {
+					<hlm-spinner class="absolute" />
+				}
+			</button>
+		</hlm-alert-dialog-footer>
+	</hlm-alert-dialog-content>
+</hlm-alert-dialog>

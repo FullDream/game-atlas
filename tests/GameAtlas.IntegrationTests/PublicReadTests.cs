@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Games;
@@ -23,11 +23,12 @@ public class PublicReadTests(ITestOutputHelper output)
 	public async Task CatalogFiltersBeforePagingAndKeepsManagementReadsUnchanged()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		await DeleteGameHandlerTests.SeedAsync(factory, "draft");
 		var first = await DeleteGameHandlerTests.SeedAsync(factory, "first", PublicationStatus.Published);
 		var second = await DeleteGameHandlerTests.SeedAsync(factory, "second", PublicationStatus.Published);
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
 
 		var page = (await client.GetFromJsonAsync<PaginatedResult<PublicGameCardDto>>(
 			"/public/games?sortBy=NAME&limit=1&offset=1"))!;
@@ -37,7 +38,9 @@ public class PublicReadTests(ITestOutputHelper output)
 		Assert.Empty((await client.GetFromJsonAsync<PaginatedResult<PublicGameCardDto>>("/public/games?offset=10"))!.Items);
 		Assert.Empty((await client.GetFromJsonAsync<PaginatedResult<PublicGameCardDto>>("/public/games?search=%25"))!.Items);
 		Assert.Equal(2, (await client.GetFromJsonAsync<PaginatedResult<PublicGameCardDto>>("/public/games?search=+gAmE+"))!.Total);
-		Assert.Equal(3, (await client.GetFromJsonAsync<JsonElement>("/games")).GetProperty("total").GetInt32());
+		using var administrator = await factory.CreateHttpsClientAsync();
+
+		Assert.Equal(3, (await administrator.GetFromJsonAsync<JsonElement>("/games")).GetProperty("total").GetInt32());
 		var json = await client.GetFromJsonAsync<JsonElement>("/public/games");
 		var card = json.GetProperty("items")[0];
 
@@ -58,8 +61,9 @@ public class PublicReadTests(ITestOutputHelper output)
 	public async Task PublicListValidatesQuery(string query, int status)
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
 		using var response = await client.GetAsync("/public/games?" + query);
 
 		Assert.Equal(status, (int)response.StatusCode);
@@ -70,6 +74,7 @@ public class PublicReadTests(ITestOutputHelper output)
 	public async Task HierarchyVisibilityControlsDetailsCountsAndInternalPreview()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "visible", PublicationStatus.Published);
 		var draftGame = await DeleteGameHandlerTests.SeedAsync(factory, "hidden");
@@ -78,22 +83,27 @@ public class PublicReadTests(ITestOutputHelper output)
 		var map = Map.Create(game.Id, "World", Slug.Create("world").Value!, PublicationStatus.Published).Value!;
 		var hiddenMap = Map.Create(game.Id, "Draft", Slug.Create("draft").Value!).Value!;
 		var hiddenParentMap = Map.Create(draftGame.Id, "World", Slug.Create("world").Value!, PublicationStatus.Published).Value!;
+
 		db.Maps.AddRange(map, hiddenMap, hiddenParentMap);
 		var visibleGroup = CategoryGroup.Create(map.Id, "Visible", 2, status: PublicationStatus.Published).Value!;
 		var hiddenGroup = CategoryGroup.Create(map.Id, "Hidden", 1).Value!;
 		var emptyGroup = CategoryGroup.Create(map.Id, "Empty", 3, status: PublicationStatus.Published).Value!;
+
 		db.CategoryGroups.AddRange(visibleGroup, hiddenGroup, emptyGroup);
 		var visible = Category.Create(visibleGroup.Id, "Visible", null, null, 2, PublicationStatus.Published).Value!;
 		var hidden = Category.Create(visibleGroup.Id, "Hidden", null, null, 1).Value!;
 		var hiddenAncestor = Category.Create(hiddenGroup.Id, "Hidden ancestor", null, null, 1, PublicationStatus.Published).Value!;
+
 		db.Categories.AddRange(visible, hidden, hiddenAncestor);
 		var point = Position.Create(1, 2).Value!;
+
 		db.Markers.AddRange(Marker.Create(visible.Id, "Visible", point, status: PublicationStatus.Published).Value!,
 			Marker.Create(visible.Id, "Draft marker", point).Value!,
 			Marker.Create(hidden.Id, "Hidden category", point, status: PublicationStatus.Published).Value!,
 			Marker.Create(hiddenAncestor.Id, "Hidden group", point, status: PublicationStatus.Published).Value!);
+
 		await db.SaveChangesAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
 
 		var detail = (await client.GetFromJsonAsync<PublicGameDto>("/public/games/visible"))!;
 
@@ -145,11 +155,14 @@ public class PublicReadTests(ITestOutputHelper output)
 	public async Task GameSummariesKeepPerMapCountsAndEmptyMaps()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "counts", PublicationStatus.Published);
+
 		await DeleteGameHandlerTests.SeedAsync(factory, "empty", PublicationStatus.Published);
 		await using var scope = factory.Services.CreateAsyncScope();
 		var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
 		var maps = Enumerable.Range(0, 3).Select(index => Map.Create(game.Id, $"Map {index}",
 			Slug.Create($"map-{index}").Value!, PublicationStatus.Published).Value!).ToArray();
 
@@ -167,11 +180,12 @@ public class PublicReadTests(ITestOutputHelper output)
 		}
 
 		await db.SaveChangesAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
 		var detail = (await client.GetFromJsonAsync<PublicGameDto>("/public/games/counts"))!;
 
 		Assert.Equal(maps.OrderBy(map => map.CreatedAt).ThenBy(map => map.Id).Select(map => map.Id),
 			detail.Maps.Select(map => map.Id));
+
 		Assert.Equal(3, detail.MarkersCount);
 		Assert.Equal(2, detail.CategoriesCount);
 		Assert.Equal(detail.MarkersCount, detail.Maps.Sum(map => map.MarkersCount));
@@ -191,6 +205,7 @@ public class PublicReadTests(ITestOutputHelper output)
 	{
 		var capture = new SqlReadCapture();
 		await using var factory = new GameApiFactory(interceptor: capture);
+
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "large", PublicationStatus.Published);
 		await using var scope = factory.Services.CreateAsyncScope();
@@ -198,25 +213,31 @@ public class PublicReadTests(ITestOutputHelper output)
 		var map = Map.Create(game.Id, "World", Slug.Create("world").Value!, PublicationStatus.Published).Value!;
 		var group = CategoryGroup.Create(map.Id, "Locations", 1, status: PublicationStatus.Published).Value!;
 		var category = Category.Create(group.Id, "Chests", null, null, 1, PublicationStatus.Published).Value!;
+
 		db.Maps.Add(map);
 		db.CategoryGroups.Add(group);
 		db.Categories.Add(category);
 		db.Markers.Add(Marker.Create(category.Id, "First", Position.Create(0, 0).Value!, status: PublicationStatus.Published).Value!);
 		await db.SaveChangesAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
+
 		capture.Enabled = true;
 		using var small = await client.GetAsync("/public/games/large/maps/world");
+
 		small.EnsureSuccessStatusCode();
 		capture.Enabled = false;
 		var smallReads = capture.Commands.Count;
+
 		capture.Commands.Clear();
 
 		db.Markers.AddRange(Enumerable.Range(1, 1999).Select(index => Marker.Create(category.Id,
 			$"Marker {index}", Position.Create(index, index).Value!, description: "A representative marker description.",
 			status: PublicationStatus.Published).Value!));
+
 		await db.SaveChangesAsync();
 		capture.Enabled = true;
 		using var response = await client.GetAsync("/public/games/large/maps/world");
+
 		response.EnsureSuccessStatusCode();
 		capture.Enabled = false;
 		var bytes = await response.Content.ReadAsByteArrayAsync();

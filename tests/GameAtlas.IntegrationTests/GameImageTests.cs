@@ -1,4 +1,4 @@
-using GameAtlas.Domain.ValueObjects;
+﻿using GameAtlas.Domain.ValueObjects;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -23,7 +23,7 @@ public sealed class GameImageTests
 		await using var factory = new GameApiFactory(interceptor: capture);
 
 		await factory.MigrateAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var image = await MediaTestData.UploadImageAsync(client);
 		var next = await MediaTestData.UploadImageAsync(client, "svg");
 		using var created = await client.PostAsJsonAsync("/games", new { name = "Game", slug = "game", coverId = image.Id });
@@ -37,6 +37,7 @@ public sealed class GameImageTests
 
 		Assert.Equal(1, payload.RootElement
 			.GetProperty("cover").EnumerateObject().Count(property => property.Name == "type"));
+
 		using var second = await client.PostAsJsonAsync("/games", new { name = "Other", slug = "other", coverId = image.Id });
 
 		second.EnsureSuccessStatusCode();
@@ -106,11 +107,13 @@ public sealed class GameImageTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "existing");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var image = await MediaTestData.UploadImageAsync(client, "svg");
+
 		var assignment = update
 			? client.PatchAsJsonAsync($"/games/{game.Id}", new { coverId = image.Id })
 			: client.PostAsJsonAsync("/games", new { name = "New", slug = "new", coverId = image.Id });
+
 		var responses = await Task.WhenAll(assignment, client.DeleteAsync($"/media/assets/{image.Id}"));
 		using var assigned = responses[0];
 		using var deleted = responses[1];
@@ -131,7 +134,7 @@ public sealed class GameImageTests
 
 		await factory.MigrateAsync();
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "game");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var page = await client.GetFromJsonAsync<GamePage>("/games", MapTestData.JsonOptions);
 
 		Assert.Equal(game.CoverId, Assert.Single(page!.Items).Cover.Id);
@@ -157,8 +160,9 @@ public sealed class GameImageTests
 
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "existing");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		var folder = await MediaFolderTests.CreateAsync(client, "Folder");
+
 		object? id = kind switch
 		{
 			"video" => MediaTestData.VideoId,
@@ -168,6 +172,7 @@ public sealed class GameImageTests
 			"malformed" => "bad",
 			_ => Guid.NewGuid()
 		};
+
 		using var created = await client.PostAsJsonAsync("/games", new { name = "New", slug = "new", coverId = id });
 		using var patched = await client.PatchAsJsonAsync($"/games/{game.Id}", new { name = "Changed", coverId = id });
 
@@ -176,6 +181,7 @@ public sealed class GameImageTests
 
 		await using var scope = factory.Services.CreateAsyncScope();
 		var stored = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Games.SingleAsync();
+
 		DeleteGameHandlerTests.AssertSameGame(game, stored);
 	}
 

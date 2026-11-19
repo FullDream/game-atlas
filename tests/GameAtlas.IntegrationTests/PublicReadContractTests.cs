@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Games;
 using GameAtlas.Application.Maps;
@@ -20,7 +20,7 @@ public class PublicReadContractTests
 	public async Task PublicSchemasAndTagsAreIndependentAndReuseCanonicalMedia()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var paths = document.RootElement.GetProperty("paths");
 		var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
@@ -53,6 +53,7 @@ public class PublicReadContractTests
 
 		Assert.Equal("#/components/schemas/ImageAsset", schemas.GetProperty("PublicGame")
 			.GetProperty("properties").GetProperty("cover").GetProperty("$ref").GetString());
+
 		var map = schemas.GetProperty("PublicMapDetails").GetProperty("properties");
 		var summary = schemas.GetProperty("PublicGameMap").GetProperty("properties");
 
@@ -75,6 +76,7 @@ public class PublicReadContractTests
 	public async Task ReadyStylesPreviewsAndMixedMediaAreReturnedWithoutOperationalFields()
 	{
 		await using var factory = new GameApiFactory();
+
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
 		var game = await DeleteGameHandlerTests.SeedAsync(factory, "styled", PublicationStatus.Published);
@@ -85,6 +87,7 @@ public class PublicReadContractTests
 		var first = map.AddStyle(new MapStyleInput("First", "#123456", image)).Value!;
 		var unfinished = map.AddStyle(new MapStyleInput("Pending", "#654321", image)).Value!;
 		var second = map.AddStyle(new MapStyleInput("Second", "#abcdef", image)).Value!;
+
 		Assert.True(first.Claim(first.AttemptId).IsSuccess);
 		Assert.True(first.Publish(first.AttemptId).IsSuccess);
 		Assert.True(second.Claim(second.AttemptId).IsSuccess);
@@ -93,12 +96,14 @@ public class PublicReadContractTests
 		db.Maps.Add(map);
 		var group = CategoryGroup.Create(map.Id, "Group", 1, image.Id, status: PublicationStatus.Published).Value!;
 		var category = Category.Create(group.Id, "Category", image.Id, "#123456", 1, PublicationStatus.Published).Value!;
+
 		db.CategoryGroups.Add(group);
 		db.Categories.Add(category);
 		db.Markers.Add(Marker.Create(category.Id, "Media", Position.Create(0, 0).Value!,
 			media: new Guid?[] { MediaTestData.VideoId, image.Id }, status: PublicationStatus.Published).Value!);
+
 		await db.SaveChangesAsync();
-		using var client = factory.CreateHttpsClient();
+		using var client = factory.CreateGuestClient();
 		var detail = (await client.GetFromJsonAsync<PublicGameDto>("/public/games/styled"))!;
 
 		Assert.Equal(image.Id, Assert.Single(detail.Maps).Preview!.Id);

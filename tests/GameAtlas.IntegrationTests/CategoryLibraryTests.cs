@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Categories;
 using GameAtlas.Domain.Media;
@@ -21,7 +21,7 @@ public sealed class CategoryLibraryTests
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
 
 		await CategoryTestData.SeedAsync(factory, group.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		capture.Enabled = true;
 		using var small = await client.GetAsync(CategoryGroupApiTests.Path(game.Id));
@@ -54,9 +54,10 @@ public sealed class CategoryLibraryTests
 		await factory.MigrateAsync();
 
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		var image = await MediaTestData.UploadImageAsync(client, format);
+
 		using var created = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id),
 			new { name = "Category", iconAssetId = image.Id, color = "#fff" });
 
@@ -80,7 +81,8 @@ public sealed class CategoryLibraryTests
 		await factory.MigrateAsync();
 
 		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
+
 		using var response = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id),
 			new { name = "Category", iconAssetId, color = "#fff" });
 
@@ -102,10 +104,11 @@ public sealed class CategoryLibraryTests
 		var first = await CategoryTestData.SeedAsync(factory, firstGroup.Id);
 
 		var second = await CategoryTestData.SeedAsync(factory, secondGroup.Id);
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var protectedDelete = await client.DeleteAsync($"/media/assets/{MediaTestData.IconId}");
 
 		Assert.Equal(HttpStatusCode.Conflict, protectedDelete.StatusCode);
+
 		using var metadata = await client.PatchAsJsonAsync($"/media/assets/{MediaTestData.IconId}",
 			new { name = "Shared renamed icon", alt = "Shared description" });
 
@@ -134,6 +137,7 @@ public sealed class CategoryLibraryTests
 		using var deleteSecond = await client.DeleteAsync(CategoryTestData.Path(secondGame.Id, secondGroup.Id, second.Id));
 
 		Assert.Equal(HttpStatusCode.NoContent, deleteSecond.StatusCode);
+
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
 			Assert.True(await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().MediaAssets
@@ -169,7 +173,7 @@ public sealed class CategoryLibraryTests
 			await context.SaveChangesAsync();
 		}
 
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 
 		foreach (var (id, expected) in new[] { (video.Id, 422), (folder.Id, 422), (Guid.NewGuid(), 404) })
 		{

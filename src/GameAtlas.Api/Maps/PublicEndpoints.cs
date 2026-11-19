@@ -9,7 +9,7 @@ public static class PublicEndpoints
 {
 	public static RouteGroupBuilder MapPublicMaps(this RouteGroupBuilder group)
 	{
-		var maps = group.MapGroup("/public/games/{gameSlug}/maps").WithTags("Public Maps");
+		var maps = group.MapGroup("/public/games/{gameSlug}/maps").WithTags("Public Maps").AllowAnonymous();
 
 		maps.MapGet("/{mapSlug}", GetAsync).WithName("GetPublicMap")
 			.ProducesProblem(StatusCodes.Status404NotFound)

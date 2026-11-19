@@ -1,0 +1,19 @@
+{
+	"name": "auth-data-access",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/auth/data-access/src",
+	"prefix": "lib",
+	"projectType": "library",
+	"tags": ["type:data-access", "scope:auth", "platform:admin"],
+	"// targets": "to see all targets run: nx show project auth-data-access --web",
+	"targets": {
+		"generate-api": {
+			"cache": false,
+			"options": {
+				"command": "orval --config libs/auth/data-access/orval.config.ts",
+				"cwd": "{workspaceRoot}"
+			},
+			"executor": "nx:run-commands"
+		}
+	}
+}

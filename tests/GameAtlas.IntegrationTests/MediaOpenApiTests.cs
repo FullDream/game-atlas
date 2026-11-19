@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace GameAtlas.IntegrationTests;
 
@@ -8,7 +8,7 @@ public sealed class MediaOpenApiTests
 	public async Task NativeDiscriminatorsDescribeMixedItemsAndAssetOnlyResponses()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var schemas = root.GetProperty("components").GetProperty("schemas");
@@ -35,11 +35,13 @@ public sealed class MediaOpenApiTests
 
 		Assert.True(upload.GetProperty("requestBody").GetProperty("content")
 			.TryGetProperty("multipart/form-data", out _));
+
 		Assert.Contains("MediaAsset", upload.GetProperty("responses").GetProperty("200").GetRawText());
 		Assert.True(paths.GetProperty("/media/folders/{id}").TryGetProperty("patch", out _));
 		Assert.True(paths.GetProperty("/media/folders/{id}").TryGetProperty("delete", out _));
 		Assert.Equal(["get", "patch", "delete"], paths.GetProperty("/media/folders/{id}").EnumerateObject()
 			.Select(operation => operation.Name).ToArray());
+
 		var parent = schemas.GetProperty("CreateMediaFolderRequest").GetProperty("properties").GetProperty("parentId");
 
 		Assert.Contains("\"null\"", parent.GetRawText());
@@ -49,7 +51,7 @@ public sealed class MediaOpenApiTests
 	public async Task CanonicalSchemasPreserveMappingsLiteralTypesNullabilityAndReferences()
 	{
 		await using var factory = new GameApiFactory("Development");
-		using var client = factory.CreateHttpsClient();
+		using var client = await factory.CreateHttpsClientAsync();
 		using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
 		var root = document.RootElement;
 		var schemas = root.GetProperty("components").GetProperty("schemas");
@@ -76,8 +78,10 @@ public sealed class MediaOpenApiTests
 
 				Assert.Equal(reference, union.GetProperty("discriminator").GetProperty("mapping")
 					.GetProperty(value).GetString());
+
 				Assert.Contains(union.GetProperty("anyOf").EnumerateArray(),
 					variant => variant.GetProperty("$ref").GetString() == reference);
+
 				Assert.False(schemas.TryGetProperty(unionName + name, out _));
 			}
 
@@ -90,8 +94,10 @@ public sealed class MediaOpenApiTests
 		Assert.Equal(2, alternatives.Length);
 		Assert.Contains(alternatives, alternative => alternative.TryGetProperty("type", out var type) &&
 			type.GetString() == "null");
+
 		Assert.Contains(alternatives, alternative => alternative.TryGetProperty("$ref", out var reference) &&
 			reference.GetString() == "#/components/schemas/ImageAsset");
+
 		Assert.False(preview.TryGetProperty("discriminator", out _));
 		Assert.False(preview.TryGetProperty("anyOf", out _));
 		AssertLocalReferences(root, schemas);

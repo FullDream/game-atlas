@@ -8,7 +8,7 @@ Maintain game-owned category groups with validated unique names, complete CRUD, 
 
 ### Requirement: Scope category groups to an existing map
 
-Group operations SHALL use /games/{gameId}/maps/{mapId}/category-groups without authentication for draft or published games. Each group SHALL belong to exactly one map through immutable mapId. Valid requests for a missing game/map/group, a map outside the game, or a group outside the map SHALL return HTTP 404. A map SHALL NOT need any style before group operations.
+Group operations SHALL use /games/{gameId}/maps/{mapId}/category-groups with authentication for draft or published games. Each group SHALL belong to exactly one map through immutable mapId. Valid requests for a missing game/map/group, a map outside the game, or a group outside the map SHALL return HTTP 404. A map SHALL NOT need any style before group operations.
 
 #### Scenario: Empty map and isolated ownership
 
@@ -19,7 +19,7 @@ Group operations SHALL use /games/{gameId}/maps/{mapId}/category-groups without 
 #### Scenario: Manage either game status
 
 - **WHEN** an existing map belongs to a draft or published game
-- **THEN** the group operation is permitted without authentication or a style prerequisite
+- **THEN** the group operation is permitted for the administrator without a style prerequisite
 
 #### Scenario: Missing parent
 
