@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Categories;
@@ -35,9 +35,9 @@ public class MapContentOwnershipTests
 		using var groupCreation = await client.PostAsJsonAsync(firstPath + "/category-groups", new { name = "Resources" });
 		using var otherCreation = await client.PostAsJsonAsync(secondPath + "/category-groups", new { name = "Resources" });
 
-		var group = (await groupCreation.Content.ReadFromJsonAsync<CategoryGroupDto>())!;
+		var group = (await groupCreation.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions))!;
 
-		var otherGroup = (await otherCreation.Content.ReadFromJsonAsync<CategoryGroupDto>())!;
+		var otherGroup = (await otherCreation.Content.ReadFromJsonAsync<CategoryGroupDto>(MapTestData.JsonOptions))!;
 
 		Assert.Equal(HttpStatusCode.OK, groupCreation.StatusCode);
 		Assert.Equal(HttpStatusCode.OK, otherCreation.StatusCode);
@@ -56,9 +56,9 @@ public class MapContentOwnershipTests
 		using var otherCategoryCreation = await client.PostAsJsonAsync(otherCategoryPath,
 			new { name = "Chest", iconAssetId = MediaTestData.IconId, color = "#fff" });
 
-		var category = (await categoryCreation.Content.ReadFromJsonAsync<CategoryDto>())!;
+		var category = (await categoryCreation.Content.ReadFromJsonAsync<CategoryDto>(MapTestData.JsonOptions))!;
 
-		var otherCategory = (await otherCategoryCreation.Content.ReadFromJsonAsync<CategoryDto>())!;
+		var otherCategory = (await otherCategoryCreation.Content.ReadFromJsonAsync<CategoryDto>(MapTestData.JsonOptions))!;
 
 		using var markerCreation = await client.PostAsJsonAsync(firstPath + "/markers",
 			new { categoryId = category.Id, name = "Point", position = new { x = -2.5, y = 100000 } });
@@ -154,7 +154,7 @@ public class MapContentOwnershipTests
 	private static async Task<MapDto> CreateMapAsync(HttpClient client, Guid gameId, string name)
 	{
 		using var response = await client.PostAsJsonAsync(MapTestData.CollectionFor(gameId),
-			new { name });
+			new { name, slug = name.ToLowerInvariant() });
 
 		return await MapTestData.ReadAsync(response);
 	}

@@ -1,4 +1,4 @@
-﻿using GameAtlas.Domain.ValueObjects;
+using GameAtlas.Domain.ValueObjects;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Net;
@@ -62,7 +62,7 @@ public class ListGamesApiTests
 		var commands = capture.Commands.ToArray();
 
 		Assert.Equal(6, commands.Length);
-		Assert.Contains("COUNT(*)", commands[0]);
+		Assert.Contains("COUNT(*)", commands[0], StringComparison.OrdinalIgnoreCase);
 		Assert.Contains("LIMIT", commands[1]);
 		Assert.Contains("OFFSET", commands[1]);
 		Assert.Contains("ORDER BY", commands[1]);
@@ -239,13 +239,13 @@ public class ListGamesApiTests
 		await using var scope = factory.Services.CreateAsyncScope();
 		var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-		await db.Database.ExecuteSqlRawAsync("DROP TABLE Games");
+		await db.Database.ExecuteSqlRawAsync("DROP TABLE \"Games\" CASCADE");
 		using var response = await client.GetAsync("/games");
 		var content = await response.Content.ReadAsStringAsync();
 
 		Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 		Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-		Assert.DoesNotContain("SQLite", content);
+		Assert.DoesNotContain("PostgreSQL", content);
 		Assert.DoesNotContain("SELECT", content);
 	}
 
@@ -267,8 +267,8 @@ public class ListGamesApiTests
 			context.Maps.Add(Domain.Maps.Map.Create(games[index].Id,
 				"World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!);
 
-			entry.Property(game => game.CreatedAt).CurrentValue = start.AddTicks(index);
-			entry.Property(game => game.UpdatedAt).CurrentValue = start.AddTicks(games.Length - index);
+			entry.Property(game => game.CreatedAt).CurrentValue = start.AddMicroseconds(index);
+			entry.Property(game => game.UpdatedAt).CurrentValue = start.AddMicroseconds(games.Length - index);
 			entry.Property(game => game.Status).CurrentValue = index % 2 == 0 ? PublicationStatus.Draft : PublicationStatus.Published;
 		}
 

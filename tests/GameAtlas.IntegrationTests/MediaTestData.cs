@@ -13,17 +13,6 @@ internal static class MediaTestData
 {
 	internal static readonly Guid CoverId = Guid.Parse("019a0000-0000-7000-8000-000000000115");
 
-	internal static async Task<Guid> SeedLegacyGameAsync(ApplicationDbContext context)
-	{
-		var id = Guid.CreateVersion7();
-		var now = DateTimeOffset.UtcNow.UtcTicks;
-		await context.Database.ExecuteSqlAsync($"""
-			INSERT INTO Games (Id, Name, Slug, Image, CreatedAt, UpdatedAt, Status)
-			VALUES ({id}, 'Game', 'legacy', 'cover', {now}, {now}, 'Draft')
-			""");
-		return id;
-	}
-
 	internal static async Task EnsureCoverAsync(GameApiFactory factory)
 	{
 		await using var scope = factory.Services.CreateAsyncScope();
@@ -97,6 +86,6 @@ internal static class MediaTestData
 		context.MediaAssets.Add(image);
 		await context.SaveChangesAsync();
 
-		return image;
+		return await context.MediaAssets.OfType<ImageAsset>().SingleAsync(asset => asset.Id == IconId);
 	}
 }

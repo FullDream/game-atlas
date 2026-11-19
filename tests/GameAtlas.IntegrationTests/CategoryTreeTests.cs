@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Categories;
 using GameAtlas.Application.Categories.Groups;
@@ -51,28 +51,6 @@ public class CategoryTreeTests
 		Assert.Equal("#F59E0B", tree.Single(item => item.Id == parent.Id).Color);
 		Assert.Equal("Colored", tree.Single(item => item.Id == group.Id).Name);
 		Assert.Equal("#123456", tree.Single(item => item.Id == group.Id).Color);
-	}
-
-	[Fact]
-	public async Task GroupColorMigrationBackfillsExistingGroupsWithoutChangingMetadata()
-	{
-		await using var factory = new GameApiFactory();
-
-		await factory.MigrateAsync();
-		var (_, group) = await CategoryTestData.ParentAsync(factory);
-		await using var scope = factory.Services.CreateAsyncScope();
-		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var migrator = context.GetService<IMigrator>();
-
-		await migrator.MigrateAsync("20261101172032_CategoryTree");
-		await migrator.MigrateAsync();
-		context.ChangeTracker.Clear();
-		var stored = await context.CategoryGroups.SingleAsync(item => item.Id == group.Id);
-
-		Assert.Equal("#F59E0B", stored.Color);
-		Assert.Equal(group.Name, stored.Name);
-		Assert.Equal(group.CreatedAt, stored.CreatedAt);
-		Assert.Equal(group.UpdatedAt, stored.UpdatedAt);
 	}
 
 	[Fact]
@@ -210,70 +188,6 @@ public class CategoryTreeTests
 
 		Assert.Equal(HttpStatusCode.NotFound, foreignAnchor.StatusCode);
 		Assert.Equal(rows, await CategoryTestData.LoadAsync(factory, destination.Id));
-	}
-
-	[Fact]
-	public async Task ForwardMigrationNormalizesLegacyOrderWithoutChangingIdentityOrTimestamps()
-	{
-		await using var factory = new GameApiFactory();
-
-		await factory.MigrateAsync();
-
-		var (game, group) = await CategoryTestData.ParentAsync(factory);
-
-		var first = await CategoryTestData.SeedAsync(factory, group.Id, "First", 2);
-
-		var tied = await CategoryTestData.SeedAsync(factory, group.Id, "Tied", 2);
-
-		var last = await CategoryTestData.SeedAsync(factory, group.Id, "Last", int.MaxValue);
-
-		var tiedGroup = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Tied group", 1);
-
-		var lastGroup = await CategoryGroupTestData.SeedAsync(factory, game.Id, "Last group", int.MaxValue);
-		await using var scope = factory.Services.CreateAsyncScope();
-
-		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-		var migrator = context.GetService<IMigrator>();
-
-		await migrator.MigrateAsync("20261101112354_MapStylePresentation");
-		await migrator.MigrateAsync();
-		context.ChangeTracker.Clear();
-
-		var rows = await context.Categories.OrderBy(category => category.Order).ToArrayAsync();
-
-		Assert.Equal(new[] { first.Id, tied.Id, last.Id }, rows.Select(category => category.Id));
-		Assert.Equal(new[] { 1, 2, 3 }, rows.Select(category => category.Order));
-		Assert.Equal(first.UpdatedAt, rows[0].UpdatedAt);
-		Assert.Equal(last.CreatedAt, rows[2].CreatedAt);
-
-		var groups = await context.CategoryGroups.OrderBy(item => item.Order).ToArrayAsync();
-
-		Assert.Equal(new[] { group.Id, tiedGroup.Id, lastGroup.Id }, groups.Select(item => item.Id));
-		Assert.Equal(tiedGroup.UpdatedAt, groups[1].UpdatedAt);
-	}
-
-	[Fact]
-	public async Task IconlessCategoryBlocksUnsafeDowngradeWithoutLosingData()
-	{
-		await using var factory = new GameApiFactory();
-
-		await factory.MigrateAsync();
-
-		var (game, group) = await CategoryTestData.ParentAsync(factory);
-		using var client = await factory.CreateHttpsClientAsync();
-		using var created = await client.PostAsJsonAsync(CategoryTestData.Path(game.Id, group.Id), new { name = "No icon", color = "#fff" });
-
-		var category = await CategoryApiTests.ReadAsync(created);
-		await using var scope = factory.Services.CreateAsyncScope();
-
-		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-		var error = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() => context.GetService<IMigrator>().MigrateAsync("20261101112354_MapStylePresentation"));
-
-		Assert.Contains("CategoryTree_RequiresCategoryIcons", error.Message);
-		Assert.True(await context.Categories.AnyAsync(item => item.Id == category.Id));
-		Assert.Contains("20261101172032_CategoryTree", await context.Database.GetAppliedMigrationsAsync());
 	}
 
 	[Fact]

@@ -21,7 +21,7 @@ Applies to backend implementation and backend tests. Read the [system architectu
 
 ## Persistence
 
-- Use SQLite initially. PostgreSQL is a future addition; do not introduce a second provider preemptively.
+- Use PostgreSQL via `Npgsql.EntityFrameworkCore.PostgreSQL`.
 - Keep EF Core migrations in Infrastructure, without a separate migrations project. Apply them explicitly through EF CLI rather than automatically at API startup.
 - Store enums as strings in the database.
 

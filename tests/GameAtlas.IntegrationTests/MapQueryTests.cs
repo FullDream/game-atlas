@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Net.Http.Json;
 using GameAtlas.Application.Maps;
@@ -24,7 +24,7 @@ public class MapQueryTests
 		for (var index = 0; index < 10; index++)
 		{
 			using var created = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-				new { name = $"Map {index}" });
+				new { name = $"Map {index}", slug = $"map-{index}" });
 
 			var map = await MapTestData.ReadAsync(created);
 			using var upload = MapTestData.Style();

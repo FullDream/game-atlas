@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Common.Pagination;
@@ -93,7 +93,7 @@ public sealed class MediaBrowseTests
 	[Theory]
 	[InlineData("offset=-1", 422)]
 	[InlineData("limit=0", 422)]
-	[InlineData("limit=101", 422)]
+	[InlineData("limit=121", 422)]
 	[InlineData("offset=invalid", 400)]
 	[InlineData("limit=invalid", 400)]
 	[InlineData("offset=2147483647&limit=100", 200)]

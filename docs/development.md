@@ -109,7 +109,7 @@ node --test scripts/check-docs.test.mjs
 
 ### Administrator provisioning and production hosting
 
-Apply the SQLite migrations explicitly before starting the API. On an empty Identity store, supply Admin__Login and Admin__Password through deployment secrets (local development can use ASP.NET Core user secrets). Remove these bootstrap values after provisioning. Restarting the service preserves the account. Identity stores the password hash in SQLite.
+Apply the PostgreSQL migrations explicitly before starting the API. On an empty Identity store, supply Admin__Login and Admin__Password through deployment secrets (local development can use ASP.NET Core user secrets). Remove these bootstrap values after provisioning. Restarting the service preserves the account. Identity stores the password hash in PostgreSQL.
 
 Serve admin at /admin/ on the same HTTPS origin as the public site at / and the API at /api/. Preserve the external Host header and forward the original HTTPS scheme from a trusted proxy so browser hub connections pass the same-origin check. The API receives paths without the /api prefix. Serve direct /admin/ routes through the admin SPA fallback while preserving real 404s for missing assets. Forward /media/files/ and /map-tiles/ without stripping their prefixes. They are public even for draft assets.
 

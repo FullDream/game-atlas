@@ -1,7 +1,6 @@
 using GameAtlas.Application.Categories.Groups;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Maps;
-using GameAtlas.Infrastructure.Persistence.Converters;
 using GameAtlas.Domain.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -24,7 +23,5 @@ public sealed class CategoryGroupConfiguration : IEntityTypeConfiguration<Catego
 		builder.Property(group => group.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
 		builder.HasIndex(group => new { group.MapId, group.NormalizedName }).IsUnique();
 		builder.HasIndex(group => new { group.MapId, group.Order });
-		builder.Property(group => group.CreatedAt).HasConversion<UtcTimestampConverter>();
-		builder.Property(group => group.UpdatedAt).HasConversion<UtcTimestampConverter>();
 	}
 }

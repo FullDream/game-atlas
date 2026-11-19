@@ -1,10 +1,8 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GameAtlas.IntegrationTests;
@@ -12,21 +10,14 @@ namespace GameAtlas.IntegrationTests;
 public class CategoryPersistenceTests
 {
 	[Fact]
-	public async Task NullableColorMigrationPreservesExistingCategoryAndAllowsClearing()
+	public async Task NullableColorAllowsClearingExistingCategoryColor()
 	{
 		await using var factory = new GameApiFactory();
 
-		await using (var scope = factory.Services.CreateAsyncScope())
-		{
-			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-			await context.GetService<IMigrator>().MigrateAsync("20261101185456_CategoryGroupColor");
-		}
+		await factory.MigrateAsync();
 
 		var (_, group) = await CategoryTestData.ParentAsync(factory);
 		var category = await CategoryTestData.SeedAsync(factory, group.Id, "Preserved", 1);
-
-		await factory.MigrateAsync();
 
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{
@@ -48,16 +39,9 @@ public class CategoryPersistenceTests
 	}
 
 	[Fact]
-	public async Task MigrationUpgradeRoundTripAndRollbackPreserveParents()
+	public async Task MigrationPersistsCategoriesAndParents()
 	{
 		await using var factory = new GameApiFactory();
-
-		await using (var scope = factory.Services.CreateAsyncScope())
-		{
-			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-			await context.GetService<IMigrator>().MigrateAsync("20261023100000_CategoryGroups");
-		}
 
 		await factory.MigrateAsync();
 
@@ -70,7 +54,7 @@ public class CategoryPersistenceTests
 		Assert.Equal(category.Id, dto.Id);
 		Assert.Equal(category.CategoryGroupId, dto.CategoryGroupId);
 		Assert.Equal(category.Name, dto.Name);
-		Assert.Equal(category.IconAssetId, dto.Icon.Id);
+		Assert.Equal(category.IconAssetId, dto.Icon!.Id);
 		Assert.Equal(category.Color, dto.Color);
 		Assert.Equal(category.Order, await CategoryTestData.OrderAsync(factory, dto.Id));
 		Assert.Equal(category.CreatedAt, dto.CreatedAt);
@@ -84,12 +68,6 @@ public class CategoryPersistenceTests
 		Assert.NotNull(entityType);
 		Assert.Null(entityType.FindProperty("MarkersCount"));
 		Assert.False(reloaded.Database.HasPendingModelChanges());
-
-		var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
-			reloaded.GetService<IMigrator>().MigrateAsync("20261023100000_CategoryGroups"));
-
-		Assert.Contains("MapStylePresentation_RestoreBackupForNonemptyMaps", rollback.Message);
-		await reloaded.Database.MigrateAsync();
 
 		DeleteGameHandlerTests.AssertSameGame(game, await reloaded.Games.SingleAsync());
 		Assert.Equal(group.Id, (await reloaded.CategoryGroups.SingleAsync()).Id);
@@ -114,7 +92,7 @@ public class CategoryPersistenceTests
 
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-		var classifier = new SqlitePersistenceFailureClassifier();
+		var classifier = new PostgresPersistenceFailureClassifier();
 
 		context.Categories.Add(Assert.IsType<Category>(
 			Category.Create(group.Id, duplicate, MediaTestData.IconId, "#123456", 1).Value));

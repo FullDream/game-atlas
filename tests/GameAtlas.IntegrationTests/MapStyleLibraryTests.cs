@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Maps;
 using GameAtlas.Application.Maps.Images;
@@ -100,7 +100,7 @@ public sealed class MapStyleLibraryTests
 		var image = await MediaTestData.UploadImageAsync(client, format);
 
 		using var created = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "World" });
+			new { name = "World", slug = "world" });
 
 		var map = await MapTestData.ReadAsync(created);
 		var path = MapTestData.PathFor(game.Id, map.Id);

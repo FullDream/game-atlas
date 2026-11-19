@@ -83,7 +83,7 @@ public class DeleteGameHandlerTests
 		context.Games.Add(game);
 		await context.SaveChangesAsync();
 
-		return game;
+		return await context.Games.SingleAsync(item => item.Id == game.Id);
 	}
 
 	internal static void AssertSameGame(Game expected, Game actual)

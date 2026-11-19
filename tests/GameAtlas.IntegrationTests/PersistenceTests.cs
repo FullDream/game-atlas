@@ -1,5 +1,7 @@
 using GameAtlas.Application;
 using GameAtlas.Application.Abstractions.Persistence;
+using GameAtlas.Application.Maps;
+using GameAtlas.Application.Maps.Processing;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure;
@@ -48,18 +50,19 @@ public class PersistenceTests
 	}
 
 	[Fact]
-	public async Task RegisteredContextUsesSqliteAndSharesTheScopedInstance()
+	public async Task RegisteredContextUsesPostgresAndSharesTheScopedInstance()
 	{
 		var configuration = new ConfigurationBuilder()
 			.AddInMemoryCollection(new Dictionary<string, string?>
 			{
-				["ConnectionStrings:GameAtlas"] = "Data Source=:memory:"
+				["ConnectionStrings:GameAtlas"] = "Host=localhost;Port=5432;Database=game_atlas;Username=game_atlas;Password=game_atlas"
 			})
 			.Build();
 
 		var services = new ServiceCollection();
 
 		services.AddLogging();
+		services.AddSingleton<IMapNotifications, NoOpMapNotifications>();
 		services.AddApplication().AddInfrastructure(configuration);
 		await using var provider = services.BuildServiceProvider(new ServiceProviderOptions
 		{
@@ -75,7 +78,7 @@ public class PersistenceTests
 
 		Assert.Same(context, applicationContext);
 		Assert.NotNull(scope.ServiceProvider.GetRequiredService<IMediator>());
-		Assert.True(context.Database.IsSqlite());
+		Assert.True(context.Database.IsNpgsql());
 
 		var gameType = context.Model.FindEntityType(typeof(Game));
 
@@ -87,7 +90,7 @@ public class PersistenceTests
 		await using var command = context.Database.GetDbConnection().CreateCommand();
 
 		command.CommandText = "SELECT 1";
-		Assert.Equal(1L, await command.ExecuteScalarAsync());
+		Assert.Equal(1, await command.ExecuteScalarAsync());
 		Assert.Equal(0, await applicationContext.SaveChangesAsync());
 
 		await using var anotherScope = provider.CreateAsyncScope();
@@ -112,5 +115,14 @@ public class PersistenceTests
 			new ServiceCollection().AddInfrastructure(configuration));
 
 		Assert.Contains("GameAtlas", exception.Message);
+	}
+
+	private sealed class NoOpMapNotifications : IMapNotifications
+	{
+		public Task StyleUpdatedAsync(Guid mapId, MapStyleDto style) =>
+			Task.CompletedTask;
+
+		public Task ProcessingUpdatedAsync(MapProcessingDto processing) =>
+			Task.CompletedTask;
 	}
 }

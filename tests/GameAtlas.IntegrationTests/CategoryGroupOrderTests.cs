@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Categories.Groups;
 using GameAtlas.Infrastructure.Persistence;
@@ -110,7 +110,7 @@ public class CategoryGroupOrderTests
 
 			foreach (var group in groups)
 				context.Entry(group).Property(item => item.CreatedAt).CurrentValue =
-					group.Id == third.Id ? instant.AddTicks(-1) : instant;
+					group.Id == third.Id ? instant.AddMicroseconds(-1) : instant;
 
 			await context.SaveChangesAsync();
 		}

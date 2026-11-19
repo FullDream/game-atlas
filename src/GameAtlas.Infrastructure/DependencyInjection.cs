@@ -30,11 +30,11 @@ public static class DependencyInjection
 			throw new InvalidOperationException("Connection string 'GameAtlas' is required.");
 
 		services.AddDbContext<ApplicationDbContext>(options => options
-			.UseSqlite(connectionString, sqlite => sqlite.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+			.UseNpgsql(connectionString, npgsql => npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
 			.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
 		services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-		services.AddSingleton<IPersistenceFailureClassifier, SqlitePersistenceFailureClassifier>();
+		services.AddSingleton<IPersistenceFailureClassifier, PostgresPersistenceFailureClassifier>();
 		services.AddOptions<MediaStorageOptions>().Bind(configuration.GetSection("Media")).ValidateOnStart();
 		services.AddOptions<MediaLimits>().Bind(configuration.GetSection("Media:Limits")).ValidateOnStart();
 		services.AddSingleton<IValidateOptions<MediaStorageOptions>, MediaOptionsValidation>();

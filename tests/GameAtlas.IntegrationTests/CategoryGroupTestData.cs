@@ -32,7 +32,7 @@ internal static class CategoryGroupTestData
 		context.CategoryGroups.Add(result.Value);
 		await context.SaveChangesAsync();
 
-		return result.Value;
+		return await context.CategoryGroups.SingleAsync(item => item.Id == result.Value.Id);
 	}
 
 	internal static async Task<CategoryGroupDto[]> LoadAsync(GameApiFactory factory, Guid gameId)

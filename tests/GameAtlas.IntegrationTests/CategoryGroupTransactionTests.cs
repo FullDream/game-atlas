@@ -1,4 +1,4 @@
-﻿using System.Data.Common;
+using System.Data.Common;
 using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Domain.Categories;
@@ -133,7 +133,7 @@ public class CategoryGroupTransactionTests
 
 		Assert.DoesNotContain("private write failure", body);
 		Assert.DoesNotContain("CategoryGroups", body);
-		Assert.DoesNotContain("SQLite", body);
+		Assert.DoesNotContain("Npgsql", body);
 		Assert.DoesNotContain("InvalidOperationException", body);
 	}
 

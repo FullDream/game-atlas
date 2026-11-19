@@ -1,8 +1,6 @@
 using GameAtlas.Domain.Markers;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GameAtlas.IntegrationTests;
@@ -13,12 +11,6 @@ public class MarkerPersistenceTests
 	public async Task UpgradeRoundTripsImmutablePositionAndAllMediaThenRollbackPreservesParents()
 	{
 		await using var factory = new GameApiFactory();
-
-		await using (var scope = factory.Services.CreateAsyncScope())
-		{
-			await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
-				.GetService<IMigrator>().MigrateAsync("20261023114301_Categories");
-		}
 
 		await factory.MigrateAsync();
 		await MediaTestData.EnsureMarkerAssetsAsync(factory);
@@ -58,7 +50,7 @@ public class MarkerPersistenceTests
 		Assert.False(reloaded.Database.HasPendingModelChanges());
 		reloaded.Markers.Add(Assert.IsType<Marker>(Marker.Create(Guid.NewGuid(), "Orphan", position).Value));
 		var failure = await Assert.ThrowsAsync<DbUpdateException>(() => reloaded.SaveChangesAsync());
-		var classifier = new SqlitePersistenceFailureClassifier();
+		var classifier = new PostgresPersistenceFailureClassifier();
 
 		Assert.False(classifier.IsCategoryNameConflict(failure));
 		Assert.False(classifier.IsGameSlugConflict(failure));
@@ -69,11 +61,6 @@ public class MarkerPersistenceTests
 		reloaded.Set<MarkerAsset>().Add(orphanMedia);
 		await Assert.ThrowsAsync<DbUpdateException>(() => reloaded.SaveChangesAsync());
 		reloaded.ChangeTracker.Clear();
-		var rollback = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
-			reloaded.GetService<IMigrator>().MigrateAsync("20261023114301_Categories"));
-
-		Assert.Contains("GameImages_RestoreBackupForNonemptyGames", rollback.Message);
-		await reloaded.Database.MigrateAsync();
 
 		Assert.Equal(game.Id, (await reloaded.Games.SingleAsync()).Id);
 		Assert.Equal(group.Id, (await reloaded.CategoryGroups.SingleAsync()).Id);

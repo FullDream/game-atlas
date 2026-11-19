@@ -23,7 +23,7 @@ Transport errors and ProblemDetails propagate unchanged; user-facing message for
 
 Deletion waits for server success before removing cached items; refusals keep the item visible and propagate the error to the feature.
 
-Feature-local reconciliation helpers live in src/lib/utils.ts. Remeda pipelines handle immutable replacements, deduplication and sorting, preserving SQLite UTF-8 BINARY name order and targeted invalidation for incomplete pages.
+Feature-local reconciliation helpers live in src/lib/utils.ts. Remeda pipelines handle immutable replacements, deduplication and sorting, preserving UTF-8 byte name order and targeted invalidation for incomplete pages.
 
 Lists use PaginatedResultOfMediaItem (items, limit, offset, total), default limit 24 and API maximum 120. MediaFolderDetails comes from the independent folder(id) query and is cached by folder ID, without search or pagination in its key. Optimistic snapshots and rollback cover both list items and folder metadata/ancestor names; moving a folder invalidates only affected ancestor paths.
 

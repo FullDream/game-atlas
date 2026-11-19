@@ -35,13 +35,7 @@ coverage/
 !.env.example
 !.env.sample
 
-# SQLite databases and sidecar files
-*.db
-*.db-*
-*.sqlite
-*.sqlite-*
-*.sqlite3
-*.sqlite3-*
+# Local storage directories
 **/storage/maps/
 **/storage/media/
 

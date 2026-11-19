@@ -22,7 +22,7 @@ GET `/games` requires no authentication and includes all statuses, including Dra
 
 The HTTP 200 response is `{ "items": [], "limit": 20, "offset": 0, "total": 0 }`. Each item has the complete game shape shown below for creation. Total counts search matches before pagination; an offset beyond the matches returns an empty array with the actual Total. Empty search means no filter. Percent, underscore, and backslash are literal search characters, not wildcard syntax.
 
-SQLite search ignores ASCII letter case. Cyrillic input is allowed but matching across Cyrillic letter cases is not guaranteed. Without sortBy games are ordered by createdAt ascending, then Id ascending. Explicit sorting occurs before pagination, with Id used to break ties. Name ordering follows SQLite's default collation. Count and page are separate reads; concurrent changes may affect their consistency.
+PostgreSQL search uses `ToLower()` + `EF.Functions.Like` for case-insensitive matching. Without sortBy games are ordered by createdAt ascending, then Id ascending. Explicit sorting occurs before pagination, with Id used to break ties. Name ordering follows PostgreSQL's default collation. Count and page are separate reads; concurrent changes may affect their consistency.
 
 Invalid pagination ranges, undefined sorting enum values, or a direction without a field return 422 validation ProblemDetails. Inputs that cannot bind to integers or enums, including unknown enum names and empty sorting values, return 400 ProblemDetails. Unexpected storage errors use the built-in safe 500 response. See `GameAtlas.Api.http` for default, search, and sorted examples.
 
@@ -40,7 +40,7 @@ A valid patch for a missing game returns 404; it never creates a game. Keeping t
 
 ## Create game
 
-Apply SQLite migrations before starting the API (see Infrastructure/Persistence/README.md). POST `/games` requires no authentication yet. Run the example in `GameAtlas.Api.http` using the API's HTTPS launch profile.
+Apply PostgreSQL migrations before starting the API (see Infrastructure/Persistence/README.md). POST `/games` requires no authentication yet. Run the example in `GameAtlas.Api.http` using the API's HTTPS launch profile.
 
 The request accepts `name`, `slug`, and required UUID `coverId` selecting an existing library image. Additional `mapId` input is ignored without parsing, like other server-owned creation metadata; new games have no maps. Required strings are trimmed and must remain nonempty. Name and slug allow up to 200 characters. Missing/null/empty image IDs return 422; malformed IDs return 400, missing assets 404, and video/folder IDs 422. Slugs contain lowercase ASCII letters or digits separated by single hyphens. Create maps separately through POST /games/{gameId}/maps.
 

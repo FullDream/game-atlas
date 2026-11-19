@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Infrastructure.Maps.Persistence;
@@ -25,7 +25,7 @@ public class MapLifecycleTests
 		var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 			media: JsonDocument.Parse(MarkerTestData.MixedMedia).RootElement.Clone());
 
-		using var categoriesBefore = await client.GetAsync(CategoryTestData.Path(game.Id, group.Id));
+		using var categoriesBefore = await client.GetAsync(CategoryGroupApiTests.Path(game.Id));
 		var before = await categoriesBefore.Content.ReadAsStringAsync();
 		using var upload = MapTestData.Style();
 		using var created = await MapTestData.UploadFirstStyleAsync(client, game.Id, upload);
@@ -36,13 +36,15 @@ public class MapLifecycleTests
 		var next = await MapTestData.ReadAsync(recreated);
 		using var markersRead = await client.GetAsync(MarkerTestData.Path(game.Id));
 		var markers = await markersRead.Content.ReadFromJsonAsync<JsonElement>();
-		using var categoriesAfter = await client.GetAsync(CategoryTestData.Path(game.Id, group.Id));
+		using var categoriesAfter = await client.GetAsync(CategoryGroupApiTests.Path(game.Id));
+		var groupsAfter = await categoriesAfter.Content.ReadFromJsonAsync<JsonElement>();
 
 		Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
 		Assert.NotEqual(map.Id, next.Id);
 		Assert.Equal(17, next.Width);
 		Assert.Equal(0, markers.GetArrayLength());
-		Assert.Equal(HttpStatusCode.NotFound, categoriesAfter.StatusCode);
+		Assert.Equal(HttpStatusCode.OK, categoriesAfter.StatusCode);
+		Assert.Equal(0, groupsAfter.GetArrayLength());
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 

@@ -1,7 +1,6 @@
 using GameAtlas.Application.Categories;
 using GameAtlas.Domain.Categories;
 using GameAtlas.Domain.Media;
-using GameAtlas.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -26,7 +25,5 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
 		builder.Property(category => category.Status).HasConversion<string>().HasMaxLength(32).IsRequired();
 		builder.HasIndex(category => new { category.CategoryGroupId, category.NormalizedName }).IsUnique();
 		builder.HasIndex(category => new { category.CategoryGroupId, category.Order });
-		builder.Property(category => category.CreatedAt).HasConversion<UtcTimestampConverter>();
-		builder.Property(category => category.UpdatedAt).HasConversion<UtcTimestampConverter>();
 	}
 }

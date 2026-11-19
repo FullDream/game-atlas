@@ -24,10 +24,10 @@ public sealed class ListMediaHandler(IApplicationDbContext context)
 
 		if (!string.IsNullOrEmpty(search))
 		{
-			var pattern = "%" + search.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+			var pattern = "%" + search.ToLower().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
 
-			folders = folders.Where(folder => EF.Functions.Like(folder.Name, pattern, "\\"));
-			assets = assets.Where(asset => EF.Functions.Like(asset.Name, pattern, "\\"));
+			folders = folders.Where(folder => EF.Functions.Like(folder.Name.ToLower(), pattern, "\\"));
+			assets = assets.Where(asset => EF.Functions.Like(asset.Name.ToLower(), pattern, "\\"));
 		}
 
 		var folderCount = await folders.CountAsync(cancellationToken);

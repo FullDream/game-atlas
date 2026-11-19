@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Application.Media;
 using GameAtlas.Domain.Media;
@@ -192,7 +192,7 @@ public class MediaFolderTests
 	}
 
 	[Fact]
-	public async Task SqliteEnforcesRootSiblingAndPreviewRestrictionsWithoutUniqueAssetNames()
+	public async Task PostgresEnforcesRootSiblingAndPreviewRestrictionsWithoutUniqueAssetNames()
 	{
 		await using var factory = new GameApiFactory();
 
@@ -200,7 +200,7 @@ public class MediaFolderTests
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var first = MediaFolder.Create("Иконки").Value!;
-		var classifier = new SqlitePersistenceFailureClassifier();
+		var classifier = new PostgresPersistenceFailureClassifier();
 
 		context.MediaFolders.Add(first);
 		await context.SaveChangesAsync();
@@ -227,10 +227,10 @@ public class MediaFolderTests
 		await context.SaveChangesAsync();
 
 		Assert.Equal(2, await context.MediaAssets.CountAsync());
-		await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
+		await Assert.ThrowsAsync<Npgsql.PostgresException>(() =>
 			context.MediaAssets.Where(asset => asset.Id == image.Id).ExecuteDeleteAsync());
 
-		await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
+		await Assert.ThrowsAsync<Npgsql.PostgresException>(() =>
 			context.MediaFolders.Where(folder => folder.Id == first.Id).ExecuteDeleteAsync());
 
 		Assert.False(context.Database.HasPendingModelChanges());

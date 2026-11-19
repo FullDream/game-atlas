@@ -1,14 +1,11 @@
-﻿using GameAtlas.Domain.ValueObjects;
+using GameAtlas.Domain.ValueObjects;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Games;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GameAtlas.IntegrationTests;
@@ -124,7 +121,7 @@ public sealed class GameImageTests
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-		Assert.Equal(0, await context.Database.SqlQueryRaw<int>("SELECT COUNT(*) AS Value FROM pragma_foreign_key_check").SingleAsync());
+		Assert.Equal(assigned.IsSuccessStatusCode, await context.MediaAssets.AnyAsync(asset => asset.Id == image.Id));
 	}
 
 	[Fact]
@@ -186,38 +183,23 @@ public sealed class GameImageTests
 	}
 
 	[Fact]
-	public async Task MigrationGuardsLegacyRowsAndRollbackAndRestrictsAssetDeletion()
+	public async Task ForeignKeyRestrictsReferencedCoverDeletion()
 	{
 		await using var factory = new GameApiFactory();
 
+		await factory.MigrateAsync();
 		await using var scope = factory.Services.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-		var previous = context.Database.GetMigrations().Last(name => string.CompareOrdinal(name, "20261028202100") < 0);
-		var migrator = context.GetService<IMigrator>();
-
-		await migrator.MigrateAsync(previous);
-		var legacy = await MediaTestData.SeedLegacyGameAsync(context);
-		var refusal = await Assert.ThrowsAsync<SqliteException>(() => migrator.MigrateAsync());
-
-		Assert.Contains("GameImages_RequiresEmptyLegacyGames", refusal.Message);
-		Assert.Equal("cover", await context.Database.SqlQuery<string>($"SELECT Image AS Value FROM Games").SingleAsync());
-
-		await context.Database.ExecuteSqlAsync($"DELETE FROM Games WHERE Id = {legacy}");
-
-		await migrator.MigrateAsync();
 
 		Assert.False(context.Database.HasPendingModelChanges());
 
 		await MediaTestData.EnsureCoverAsync(context);
 		context.Games.Add(Game.Create("Game", Slug.Create("game").Value!, MediaTestData.CoverId).Value!);
-
 		await context.SaveChangesAsync();
 
-		await Assert.ThrowsAsync<SqliteException>(() => context.MediaAssets.Where(asset => asset.Id == MediaTestData.CoverId).ExecuteDeleteAsync());
-		var rollback = await Assert.ThrowsAsync<SqliteException>(() => migrator.MigrateAsync(previous));
+		await Assert.ThrowsAsync<Npgsql.PostgresException>(() =>
+			context.MediaAssets.Where(asset => asset.Id == MediaTestData.CoverId).ExecuteDeleteAsync());
 
-		Assert.Contains("GameImages_RestoreBackupForNonemptyGames", rollback.Message);
-		await context.Database.MigrateAsync();
 		Assert.Equal(MediaTestData.CoverId, (await context.Games.Include(game => game.Cover).SingleAsync()).Cover.Id);
 	}
 

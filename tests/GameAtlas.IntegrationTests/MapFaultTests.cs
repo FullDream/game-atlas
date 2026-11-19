@@ -1,4 +1,4 @@
-﻿using System.Data.Common;
+using System.Data.Common;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -38,7 +38,7 @@ public class MapFaultTests
 			media: JsonDocument.Parse(MarkerTestData.MixedMedia).RootElement.Clone());
 
 		using var siblingCreated = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "Dungeon" });
+			new { name = "Dungeon", slug = "dungeon" });
 
 		var sibling = await MapTestData.ReadAsync(siblingCreated);
 

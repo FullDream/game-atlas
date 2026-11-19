@@ -19,13 +19,11 @@ public sealed class MediaMigrationTests
 
 		Assert.False(context.Database.HasPendingModelChanges());
 		Assert.Equal(0, await context.Database.SqlQueryRaw<int>("""
-			SELECT COUNT(*) AS Value FROM sqlite_master
-			WHERE type = 'table' AND name IN ('MediaAdmissionSessions', 'MediaFileLeases', 'MediaCleanupIntents',
+			SELECT COUNT(*)::int AS "Value" FROM information_schema.tables
+			WHERE table_schema = current_schema() AND table_name IN ('MediaAdmissionSessions', 'MediaFileLeases', 'MediaCleanupIntents',
 			    '__MediaCategoryIcons', '__MediaMarkerAssets', '__MediaMapStyleSources')
 			""").SingleAsync());
 
-		Assert.Equal(0, await context.Database.SqlQueryRaw<int>(
-			"SELECT COUNT(*) AS Value FROM pragma_foreign_key_check").SingleAsync());
 		await context.GetService<IMigrator>().MigrateAsync("0");
 
 		Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
@@ -33,7 +31,5 @@ public sealed class MediaMigrationTests
 
 		Assert.False(await context.MediaAssets.AnyAsync());
 		Assert.False(await context.MediaFolders.AnyAsync());
-		Assert.Equal(0, await context.Database.SqlQueryRaw<int>(
-			"SELECT COUNT(*) AS Value FROM pragma_foreign_key_check").SingleAsync());
 	}
 }

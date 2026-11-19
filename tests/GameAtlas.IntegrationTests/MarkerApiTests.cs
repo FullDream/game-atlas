@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -75,10 +75,9 @@ public class MarkerApiTests
 		Assert.Equal(created.GetProperty("createdAt").GetDateTimeOffset(),
 			yUpdated.GetProperty("createdAt").GetDateTimeOffset());
 
-		using var categories = await client.GetAsync(CategoryTestData.Path(game.Id, group.Id));
-		var counted = await MarkerTestData.ReadAsync(categories);
+		var counted = await CategoryTestData.ReadTreeCategoriesAsync(client, CategoryTestData.Path(game.Id, group.Id));
 
-		Assert.Equal(1, counted[0].GetProperty("markersCount").GetInt32());
+		Assert.Equal(1, counted[0].MarkersCount);
 
 		await using (var scope = factory.Services.CreateAsyncScope())
 		{

@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -89,7 +89,7 @@ public class UpdateMapTests
 
 		Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
 		Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
-		using var siblingCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "Sibling" });
+		using var siblingCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "Sibling", slug = "sibling" });
 		var sibling = await MapTestData.ReadAsync(siblingCreation);
 
 		var responses = await Task.WhenAll(

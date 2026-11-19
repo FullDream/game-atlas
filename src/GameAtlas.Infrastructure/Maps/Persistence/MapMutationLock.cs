@@ -4,7 +4,7 @@ namespace GameAtlas.Infrastructure.Maps.Persistence;
 
 public sealed class MapMutationLock : IMapMutationLock
 {
-	// SQLite has one writer. Callers release this lock before awaiting notification delivery.
+	// Callers release this lock before awaiting notification delivery.
 	private readonly SemaphoreSlim semaphore = new(1, 1);
 
 	public async ValueTask<IDisposable> EnterAsync(CancellationToken cancellationToken)

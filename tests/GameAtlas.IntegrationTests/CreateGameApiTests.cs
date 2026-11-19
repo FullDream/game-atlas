@@ -1,4 +1,4 @@
-﻿using GameAtlas.Domain;
+using GameAtlas.Domain;
 using GameAtlas.Domain.ValueObjects;
 using System.Net;
 using System.Net.Http.Json;
@@ -183,10 +183,10 @@ public class CreateGameApiTests
 	{
 		await using var factory = new GameApiFactory(migrateBeforeStartup: false);
 
-		Assert.Throws<Microsoft.Data.Sqlite.SqliteException>(() => factory.CreateGuestClient());
+		Assert.Throws<Npgsql.PostgresException>(() => factory.CreateGuestClient());
 
 		var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-			.UseSqlite($"Data Source={factory.DatabasePath};Pooling=False").Options;
+			.UseNpgsql(factory.ConnectionString).Options;
 
 		await using var db = new ApplicationDbContext(options);
 
@@ -228,7 +228,7 @@ public class CreateGameApiTests
 		await context.SaveChangesAsync();
 		context.Games.Add(Game.Create("Other", Slug.Create("game").Value!, MediaTestData.CoverId).Value!);
 		var exception = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
-		var classifier = new SqlitePersistenceFailureClassifier();
+		var classifier = new PostgresPersistenceFailureClassifier();
 
 		Assert.True(classifier.IsGameSlugConflict(exception));
 		await using var failing = new GameApiFactory(interceptor: new ThrowOnSave(exception));
@@ -244,8 +244,8 @@ public class CreateGameApiTests
 		await AssertCountAsync(failing, 0);
 		context.ChangeTracker.Clear();
 
-		var unrelated = await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() =>
-			context.Database.ExecuteSqlRawAsync("INSERT INTO Games (Id) VALUES ('bad')"));
+		var unrelated = await Assert.ThrowsAsync<Npgsql.PostgresException>(() =>
+			context.Database.ExecuteSqlRawAsync("INSERT INTO \"Games\" (\"Id\") VALUES ('bad')"));
 
 		Assert.False(classifier.IsGameSlugConflict(new DbUpdateException("unrelated", unrelated)));
 		Assert.False(classifier.IsGameSlugConflict(new InvalidOperationException("unexpected")));
@@ -268,9 +268,9 @@ public class CreateGameApiTests
 		using var document = JsonDocument.Parse(text);
 
 		Assert.Equal((int)expected, document.RootElement.GetProperty("status").GetInt32());
-		Assert.DoesNotContain("SQLite", text);
+		Assert.DoesNotContain("Npgsql", text);
 		Assert.DoesNotContain("SELECT", text);
-		Assert.DoesNotContain("Data Source", text);
+		Assert.DoesNotContain("Host=", text);
 
 		return document.RootElement.Clone();
 	}

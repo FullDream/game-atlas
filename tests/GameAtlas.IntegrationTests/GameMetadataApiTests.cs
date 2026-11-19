@@ -1,4 +1,4 @@
-﻿using GameAtlas.Domain.ValueObjects;
+using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Application.Common.Pagination;
 using System.Net;
 using System.Net.Http.Json;
@@ -162,45 +162,5 @@ public class GameMetadataApiTests
 		var empty = (await client.GetFromJsonAsync<GameDto>($"/games/{game.Id}", MapTestData.JsonOptions))!;
 
 		Assert.Null(empty.Maps[0].Preview);
-	}
-
-	[Fact]
-	public async Task UpgradePreservesExistingGameAndMaps()
-	{
-		await using var factory = new GameApiFactory();
-		await using var scope = factory.Services.CreateAsyncScope();
-
-		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-		var previous = context.Database.GetMigrations().Last(name => name.EndsWith("GameImageAssets"));
-
-		await context.GetService<IMigrator>().MigrateAsync(previous);
-		await MediaTestData.EnsureCoverAsync(context);
-
-		var id = Guid.CreateVersion7();
-
-		var timestamp = DateTimeOffset.UtcNow;
-
-		var storedTimestamp = timestamp.ToString("yyyy-MM-dd HH:mm:ss.FFFFFFFzzz", System.Globalization.CultureInfo.InvariantCulture);
-
-		await context.Database.ExecuteSqlAsync($"INSERT INTO Games (Id, Name, Slug, ImageAssetId, CreatedAt, UpdatedAt, Status) VALUES ({id}, 'Game', 'game', {MediaTestData.CoverId}, {storedTimestamp}, {storedTimestamp}, 'Draft')");
-
-		var map = Map.Create(id, "World", Slug.Create("map-" + Guid.NewGuid().ToString("N")).Value!).Value!;
-
-		await context.Database.ExecuteSqlInterpolatedAsync($"""
-			INSERT INTO Maps (Id, GameId, Name, NormalizedName, Width, Height, LastCreationSequence, CreatedAt, UpdatedAt)
-			VALUES ({map.Id}, {id}, 'World', 'WORLD', 64, 48, 0, {storedTimestamp}, {storedTimestamp});
-			""");
-
-		await context.Database.MigrateAsync();
-		context.ChangeTracker.Clear();
-
-		var game = await context.Games.SingleAsync();
-
-		Assert.Equal(MediaTestData.CoverId, game.CoverId);
-		Assert.Equal(timestamp, game.UpdatedAt);
-		Assert.Null(game.BannerId);
-		Assert.Null(game.Developer);
-		Assert.Equal(map.Id, (await context.Maps.SingleAsync()).Id);
 	}
 }

@@ -62,7 +62,7 @@ public class CategoryGroupPersistenceTests
 
 		var failure = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 
-		var classifier = new SqlitePersistenceFailureClassifier();
+		var classifier = new PostgresPersistenceFailureClassifier();
 
 		Assert.True(classifier.IsCategoryGroupNameConflict(failure));
 		Assert.False(classifier.IsGameSlugConflict(failure));
@@ -97,7 +97,7 @@ public class CategoryGroupPersistenceTests
 
 			var failure = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 
-			Assert.False(new SqlitePersistenceFailureClassifier().IsCategoryGroupNameConflict(failure));
+			Assert.False(new PostgresPersistenceFailureClassifier().IsCategoryGroupNameConflict(failure));
 		}
 
 		Assert.Empty(await CategoryGroupTestData.LoadAsync(factory, game.Id));

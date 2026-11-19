@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using GameAtlas.Application.Games;
@@ -6,12 +6,10 @@ using GameAtlas.Application.Maps;
 using GameAtlas.Domain.Maps;
 using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Infrastructure.Persistence;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace GameAtlas.IntegrationTests;
 
@@ -165,8 +163,8 @@ public class MapSlugTests
 		context.Maps.Add(Map.Create(game.Id, "Other", Slug.Create("world").Value!).Value!);
 		var failure = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 
-		Assert.True(new SqlitePersistenceFailureClassifier().IsMapSlugConflict(failure));
-		Assert.False(new SqlitePersistenceFailureClassifier().IsMapNameConflict(failure));
+		Assert.True(new PostgresPersistenceFailureClassifier().IsMapSlugConflict(failure));
+		Assert.False(new PostgresPersistenceFailureClassifier().IsMapNameConflict(failure));
 	}
 
 	[Theory]
@@ -207,7 +205,7 @@ public class MapSlugTests
 		{
 			if (Enabled)
 				throw slugConflict
-					? new DbUpdateException("Conflict", new SqliteException("SQLite Error 19: 'UNIQUE constraint failed: Maps.GameId, Maps.Slug'.", 19, 2067))
+					? new DbUpdateException("Conflict", new PostgresException("duplicate key value violates unique constraint", "ERROR", "ERROR", PostgresErrorCodes.UniqueViolation, constraintName: "IX_Maps_GameId_Slug"))
 					: new InvalidOperationException("Unrelated failure");
 
 			return base.SavingChangesAsync(eventData, result, cancellationToken);

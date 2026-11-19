@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -34,8 +34,6 @@ public sealed class MediaReferenceRaceTests
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		Assert.Equal(uploaded.IsSuccessStatusCode, await context.MediaAssets.AnyAsync());
-		Assert.Equal(0, await context.Database.SqlQueryRaw<int>(
-			"SELECT COUNT(*) AS Value FROM pragma_foreign_key_check").SingleAsync());
 	}
 
 	[Theory]
@@ -70,7 +68,5 @@ public sealed class MediaReferenceRaceTests
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		Assert.Equal(attached.IsSuccessStatusCode, await context.MediaAssets.AnyAsync(asset => asset.Id == image.Id));
-		Assert.Equal(0, await context.Database.SqlQueryRaw<int>(
-			"SELECT COUNT(*) AS Value FROM pragma_foreign_key_check").SingleAsync());
 	}
 }

@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -7,20 +7,32 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace GameAtlas.IntegrationTests;
 
 public sealed class GameApiFactory(string environment = "Production", IInterceptor? interceptor = null,
-	Action<IServiceCollection>? configureServices = null, string? databasePath = null, bool migrateBeforeStartup = true)
+	Action<IServiceCollection>? configureServices = null, string? schema = null, bool migrateBeforeStartup = true)
 	: WebApplicationFactory<Program>
 {
-	public string DatabasePath { get; } = databasePath ?? Path.Combine(Path.GetTempPath(), $"game-api-{Guid.NewGuid():N}.db");
+	private const string BaseConnectionString = "Host=localhost;Port=5432;Database=game_atlas;Username=game_atlas;Password=game_atlas;Pooling=true;Maximum Pool Size=10";
+
+	public string Schema { get; } = schema ?? $"test_{Guid.NewGuid():N}";
+	public string ConnectionString => $"{BaseConnectionString};Search Path={Schema}";
 	public string MapStoragePath { get; } = Path.Combine(Path.GetTempPath(), $"game-maps-{Guid.NewGuid():N}");
 	public string MediaStoragePath { get; } = Path.Combine(Path.GetTempPath(), $"game-media-{Guid.NewGuid():N}");
 
 	protected override void ConfigureWebHost(IWebHostBuilder builder)
 	{
-		var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite($"Data Source={DatabasePath};Pooling=False").Options;
+		using (var connection = new NpgsqlConnection(BaseConnectionString))
+		{
+			connection.Open();
+			using var command = connection.CreateCommand();
+			command.CommandText = $"CREATE SCHEMA IF NOT EXISTS {Schema}";
+			command.ExecuteNonQuery();
+		}
+
+		var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseNpgsql(ConnectionString).Options;
 
 		if (migrateBeforeStartup)
 		{
@@ -33,14 +45,14 @@ public sealed class GameApiFactory(string environment = "Production", IIntercept
 		builder.UseSetting("Admin:Password", "Test-only-password7!");
 		builder.UseEnvironment(environment);
 		builder.ConfigureLogging(logging => logging.ClearProviders());
-		builder.UseSetting("ConnectionStrings:GameAtlas", $"Data Source={DatabasePath};Pooling=False");
+		builder.UseSetting("ConnectionStrings:GameAtlas", ConnectionString);
 		builder.UseSetting("Maps:WorkerEnabled", "false");
 		builder.UseSetting("Maps:StorageRoot", MapStoragePath);
 		builder.UseSetting("Media:StorageRoot", MediaStoragePath);
 		builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
 			new Dictionary<string, string?>
 			{
-				["ConnectionStrings:GameAtlas"] = $"Data Source={DatabasePath};Pooling=False",
+				["ConnectionStrings:GameAtlas"] = ConnectionString,
 				["Logging:LogLevel:Default"] = "None",
 				["Maps:WorkerEnabled"] = "false",
 				["Maps:StorageRoot"] = MapStoragePath,
@@ -51,7 +63,7 @@ public sealed class GameApiFactory(string environment = "Production", IIntercept
 		{
 			services.AddDbContext<ApplicationDbContext>(options =>
 			{
-				options.UseSqlite($"Data Source={DatabasePath};Pooling=False");
+				options.UseNpgsql(ConnectionString);
 
 				if (interceptor is not null)
 					options.AddInterceptors(interceptor);
@@ -105,11 +117,18 @@ public sealed class GameApiFactory(string environment = "Production", IIntercept
 	{
 		await base.DisposeAsync();
 
-		if (databasePath is null)
+		await using (var schemaConnection = new NpgsqlConnection(ConnectionString))
 		{
-			File.Delete(DatabasePath);
-			File.Delete(DatabasePath + "-wal");
-			File.Delete(DatabasePath + "-shm");
+			NpgsqlConnection.ClearPool(schemaConnection);
+		}
+
+		if (schema is null)
+		{
+			await using var connection = new NpgsqlConnection(BaseConnectionString);
+			await connection.OpenAsync();
+			await using var command = connection.CreateCommand();
+			command.CommandText = $"DROP SCHEMA IF EXISTS {Schema} CASCADE";
+			await command.ExecuteNonQueryAsync();
 		}
 
 		if (Directory.Exists(MapStoragePath))

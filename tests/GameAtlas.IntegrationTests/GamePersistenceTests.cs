@@ -3,30 +3,29 @@ using GameAtlas.Domain.ValueObjects;
 using GameAtlas.Domain.Games;
 using GameAtlas.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GameAtlas.IntegrationTests;
 
-public sealed class GamePersistenceTests : IDisposable
+public sealed class GamePersistenceTests
 {
-	private readonly string databasePath = Path.Combine(Path.GetTempPath(), $"game-atlas-{Guid.NewGuid():N}.db");
-
-	private ApplicationDbContext CreateContext() => new(new DbContextOptionsBuilder<ApplicationDbContext>()
-		.UseSqlite($"Data Source={databasePath};Pooling=False").Options);
-
 	[Fact]
 	public async Task MigrationPersistsMetadataAcrossConnectionsWithStringStatus()
 	{
+		await using var factory = new GameApiFactory();
 		var game = Game.Create(" Game ", Slug.Create(" game ").Value!, MediaTestData.CoverId).Value!;
 
-		await using (var context = CreateContext())
+		await using (var scope = factory.Services.CreateAsyncScope())
 		{
+			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 			await context.Database.MigrateAsync();
 			await MediaTestData.EnsureCoverAsync(context);
 			context.Games.Add(game);
 			await context.SaveChangesAsync();
 		}
 
-		await using var reopened = CreateContext();
+		await using var reopenedScope = factory.Services.CreateAsyncScope();
+		var reopened = reopenedScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		var stored = await reopened.Games.SingleAsync();
 
 		Assert.Equal(game.Id, stored.Id);
@@ -39,14 +38,16 @@ public sealed class GamePersistenceTests : IDisposable
 		await reopened.Database.OpenConnectionAsync();
 		await using var command = reopened.Database.GetDbConnection().CreateCommand();
 
-		command.CommandText = "SELECT Status FROM Games";
+		command.CommandText = "SELECT \"Status\" FROM \"Games\"";
 		Assert.Equal("Draft", await command.ExecuteScalarAsync());
 	}
 
 	[Fact]
 	public async Task UniqueIndexRejectsDuplicateSlugButAllowsDuplicateName()
 	{
-		await using var context = CreateContext();
+		await using var factory = new GameApiFactory();
+		await using var scope = factory.Services.CreateAsyncScope();
+		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		await context.Database.MigrateAsync();
 		await MediaTestData.EnsureCoverAsync(context);
@@ -57,6 +58,4 @@ public sealed class GamePersistenceTests : IDisposable
 		await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 		Assert.Equal(2, await context.Games.CountAsync());
 	}
-
-	public void Dispose() => File.Delete(databasePath);
 }

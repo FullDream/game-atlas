@@ -7,12 +7,12 @@ GameAtlas is a platform for interactive video game maps. Paths in this document 
 - Start with a layered monolith using the Api, Application, Domain, and Infrastructure projects. Group functionality by feature within these projects. Consider separate module projects when feature areas become large enough to justify them.
 - Keep domain rules in Domain and use-case orchestration in Application. Keep HTTP concerns in Api and persistence implementations and EF Core configurations in Infrastructure.
 
-| Project                        | Responsibility                                                 | Project dependencies                |
-| ------------------------------ | -------------------------------------------------------------- | ----------------------------------- |
-| `src/GameAtlas.Domain`         | Domain entities, rules and domain errors                       | None                                |
-| `src/GameAtlas.Application`    | Use cases, validation and persistence contracts                | Domain                              |
-| `src/GameAtlas.Infrastructure` | EF Core, SQLite, migrations and infrastructure implementations | Application                         |
-| `src/GameAtlas.Api`            | HTTP contracts, endpoints and composition                      | Application, Infrastructure, Domain |
+| Project                        | Responsibility                                                     | Project dependencies                |
+| ------------------------------ | ------------------------------------------------------------------ | ----------------------------------- |
+| `src/GameAtlas.Domain`         | Domain entities, rules and domain errors                           | None                                |
+| `src/GameAtlas.Application`    | Use cases, validation and persistence contracts                    | Domain                              |
+| `src/GameAtlas.Infrastructure` | EF Core, PostgreSQL, migrations and infrastructure implementations | Application                         |
+| `src/GameAtlas.Api`            | HTTP contracts, endpoints and composition                          | Application, Infrastructure, Domain |
 
 Keep dependencies directed inward. Domain must not depend on API DTOs or infrastructure. See [backend conventions](backend.md) for feature organization, mapping, validation and persistence, and [API conventions](api-conventions.md) for HTTP contracts.
 

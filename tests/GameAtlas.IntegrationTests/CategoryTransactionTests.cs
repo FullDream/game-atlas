@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Domain.Categories;
 using Microsoft.EntityFrameworkCore;
@@ -105,7 +105,7 @@ public class CategoryTransactionTests
 
 		Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
 		Assert.DoesNotContain("private category write failure", body);
-		Assert.DoesNotContain("SQLite", body);
+		Assert.DoesNotContain("Npgsql", body);
 		Assert.DoesNotContain("InvalidOperationException", body);
 		Assert.Equal(before, await CategoryTestData.LoadAsync(factory, group.Id));
 		Assert.Equal(beforeDestination, await CategoryTestData.LoadAsync(factory, destination.Id));

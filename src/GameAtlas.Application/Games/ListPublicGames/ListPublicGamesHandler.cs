@@ -21,9 +21,9 @@ public sealed class ListPublicGamesHandler(IApplicationDbContext context)
 
 		if (!string.IsNullOrEmpty(search))
 		{
-			var pattern = "%" + search.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+			var pattern = "%" + search.ToLower().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
 
-			query = query.Where(game => EF.Functions.Like(game.Name, pattern, "\\"));
+			query = query.Where(game => EF.Functions.Like(game.Name.ToLower(), pattern, "\\"));
 		}
 
 		var total = await query.CountAsync(cancellationToken);

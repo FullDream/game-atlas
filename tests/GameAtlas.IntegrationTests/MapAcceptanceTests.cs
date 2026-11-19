@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Maps;
@@ -25,7 +25,7 @@ public class MapAcceptanceTests
 		using var client = await factory.CreateHttpsClientAsync();
 
 		using var siblingCreation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "Dungeon" });
+			new { name = "Dungeon", slug = "dungeon" });
 
 		var sibling = await MapTestData.ReadAsync(siblingCreation);
 
@@ -93,13 +93,12 @@ public class MapAcceptanceTests
 		using var deleted = await client.DeleteAsync(MapTestData.PathFor(game.Id));
 
 		using var recreated = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id),
-			new { name = "World" });
+			new { name = "World", slug = "world" });
 
 		var next = await MapTestData.ReadAsync(recreated);
 		using var markerRead = await client.GetAsync(MapTestData.PathFor(game.Id, next.Id) + "/markers");
 		var markers = await markerRead.Content.ReadFromJsonAsync<JsonElement>();
-		using var categoryRead = await client.GetAsync(CategoryTestData.Path(game.Id, group.Id));
-		var categories = await categoryRead.Content.ReadFromJsonAsync<JsonElement>();
+		using var categoryRead = await client.GetAsync(CategoryGroupApiTests.Path(game.Id));
 
 		Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
 		Assert.NotEqual(map.Id, next.Id);

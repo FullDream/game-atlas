@@ -14,8 +14,8 @@ from the topmost to the nearest, excluding the current folder and synthetic root
 Search and pagination never filter this navigation context. It can be cached independently of list pages.
 
 Only immediate contents are returned. Folders come first, then image and video assets together;
-each group is ordered by name and ID. Search is a trimmed literal name substring, ignoring ASCII case.
-It does not recurse, search other folders, or implement Cyrillic case folding.
+each group is ordered by name and ID. Search is a trimmed case-insensitive literal name substring (`ToLower()` + `EF.Functions.Like`).
+It does not recurse or search other folders.
 `total` counts matches before pagination. Folder `itemsCount` includes immediate child folders and files,
 independently of the search filter or physical file availability.
 
@@ -93,7 +93,7 @@ SVG responses include `sandbox; default-src 'none'; base-uri 'none'; form-action
 
 `DELETE /media/assets/{id}` returns 409 for category icons, marker attachments, map-style sources, or video previews. An unused asset's physical original is deleted immediately, then its record is removed before 204. Repeated deletion returns 404; missing bytes do not prevent deleting an unused record. Storage deletion failures return safe 500 and retain metadata, without scheduling retries. Once a style is deleted, an ongoing native reader does not independently protect the asset: platform file locks can cause a storage error, or disappearance can fail that attempt.
 
-There are no media admission sessions, file leases, cleanup-intent tables, hosted/background maintenance services, periodic checks, startup staging scans, expiry, or automatic recovery. Capability checks still run explicitly at API startup. Process crashes may leave temporary or orphaned files. Filesystem operations and SQLite commits are not atomic: DB failure after physical deletion can leave metadata pointing at missing bytes, and an interrupted promotion can leave an orphan. These accepted limitations do not trigger automatic reconciliation. There is no automatic detachment, unused-file expiry, or missing-file scanner.
+There are no media admission sessions, file leases, cleanup-intent tables, hosted/background maintenance services, periodic checks, startup staging scans, expiry, or automatic recovery. Capability checks still run explicitly at API startup. Process crashes may leave temporary or orphaned files. Filesystem operations and PostgreSQL commits are not atomic: DB failure after physical deletion can leave metadata pointing at missing bytes, and an interrupted promotion can leave an orphan. These accepted limitations do not trigger automatic reconciliation. There is no automatic detachment, unused-file expiry, or missing-file scanner.
 
 ## Game covers
 

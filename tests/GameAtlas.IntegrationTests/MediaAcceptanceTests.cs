@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GameAtlas.Application.Categories;
@@ -54,7 +54,7 @@ public sealed class MediaAcceptanceTests
 			using var createdCategory = await client.PostAsJsonAsync(categoryPath,
 				new { name = "Category", iconAssetId = image.Id, color = "#fff" });
 
-			var category = (await createdCategory.Content.ReadFromJsonAsync<CategoryDto>())!;
+			var category = (await createdCategory.Content.ReadFromJsonAsync<CategoryDto>(MapTestData.JsonOptions))!;
 
 			var marker = await MarkerTestData.CreateAsync(client, game.Id, category.Id,
 				media: JsonSerializer.SerializeToElement(new[] { image.Id, video.Id }));

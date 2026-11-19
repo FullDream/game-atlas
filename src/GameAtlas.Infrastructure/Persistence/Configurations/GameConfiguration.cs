@@ -21,7 +21,5 @@ public sealed class GameConfiguration : IEntityTypeConfiguration<Game>
 		builder.HasOne(game => game.Banner).WithMany().HasForeignKey(game => game.BannerId)
 			.OnDelete(DeleteBehavior.Restrict);
 		builder.Property(game => game.Status).HasConversion<string>().IsRequired();
-		builder.Property(game => game.CreatedAt).HasConversion<UtcTimestampConverter>();
-		builder.Property(game => game.UpdatedAt).HasConversion<UtcTimestampConverter>();
 	}
 }

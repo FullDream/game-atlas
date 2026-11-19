@@ -17,7 +17,7 @@ Maps:StorageRoot defaults to storage/maps against API content root and is Git-ig
     work/{mapId:N}/{styleId:N}/{attemptId:N}/
     tiles/{mapId:N}/{styleId:N}/{z}/{x}/{y}.webp
 
-Originals live only in the independent media volume under generated asset IDs. Existing legacy content/staging directories are not runtime upload targets. Back up SQLite, media originals and derived tiles consistently. No source bytes are copied when attaching an image to a style.
+Originals live only in the independent media volume under generated asset IDs. Existing legacy content/staging directories are not runtime upload targets. Back up PostgreSQL, media originals and derived tiles consistently. No source bytes are copied when attaching an image to a style.
 
 Only the trusted tiles subtree is exposed through /map-tiles with a physical file provider and WebP-only content mapping. Do not expose the root, work paths, JSON manifests, or directory listings. Generated IDs determine paths; storage operations reject links/junctions and path escape. Static GET/HEAD/304 performs no database lookup; deleted files may remain accessible until cleanup and cached bytes may survive longer. Common original GET/HEAD uses `/media/files/{assetId}` through static-file middleware without database access or Mediator; crash-orphaned originals can remain accessible by known URL.
 
@@ -25,7 +25,7 @@ Upload limits and native inspection are configured through Media:Limits; see the
 
 ## Explicit migrations
 
-Initialize a fresh empty database through the full EF migration chain. No legacy ownership or media preparation commands are provided. Historical migrations remain unchanged; populated legacy upgrades are unsupported. See ../Persistence/README.md for schema and rollback constraints.
+Initialize a fresh empty database through the full EF migration chain. No legacy ownership or media preparation commands are provided. See ../Persistence/README.md for schema and rollback constraints.
 
 ```sh
 dotnet ef database update --project src/GameAtlas.Infrastructure --startup-project src/GameAtlas.Api
@@ -39,7 +39,7 @@ Name-only blank maps have null geometry and create no upload work and may own co
 
 The worker reads the shared source directly from media storage without file leases or an active-reader registry. Removing a style detaches its source; explicit asset deletion can then affect an ongoing attempt. Missing sources fail safely, and stale attempts cannot restore deleted style metadata. Shared metadata changes never requeue jobs or change source bytes. Media has no startup/periodic recovery or cleanup service.
 
-Queue admission, write coordination, notifications, and file cleanup have separate responsibilities. MapWorkQueue implements IMapProcessingQueue and only enqueues exact identities; IMapMutationLock is implemented by MapMutationLock and only serializes SQLite mutation boundaries. Handlers and MapProcessor explicitly call IMapNotifications after releasing that lock. MapCleanup only schedules known durable file-cleanup intents and does not publish resource events. MapProcessingRuntime has been removed.
+Queue admission, write coordination, notifications, and file cleanup have separate responsibilities. MapWorkQueue implements IMapProcessingQueue and only enqueues exact identities; IMapMutationLock is implemented by MapMutationLock and only serializes database mutation boundaries. Handlers and MapProcessor explicitly call IMapNotifications after releasing that lock. MapCleanup only schedules known durable file-cleanup intents and does not publish resource events. MapProcessingRuntime has been removed.
 
 Queued MapStyles durably record accepted work. After commit, creation and retry enqueue the exact style/attempt in memory. One native job runs outside transactions, independently of viewers. The worker waits for messages instead of scanning the database. Native callbacks update an attempt-aware thread-safe buffer; percentages never write SQL or change timestamps. HTTP representations derive ready=100 and queued=0; processing/failed use the retained transient percentage or 0 when absent. Failed percentages are bounded to the latest 4096 attempts and disappear on restart.
 

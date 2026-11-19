@@ -59,7 +59,7 @@ internal static class CategoryTestData
 		context.Categories.Add(category);
 		await context.SaveChangesAsync();
 
-		return category;
+		return await context.Categories.SingleAsync(item => item.Id == category.Id);
 	}
 
 	internal static async Task<CategoryDto[]> LoadAsync(GameApiFactory factory, Guid groupId)

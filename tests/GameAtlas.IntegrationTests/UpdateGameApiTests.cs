@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using GameAtlas.Domain;
@@ -291,10 +291,10 @@ public class UpdateGameApiTests
 		using var document = JsonDocument.Parse(text);
 
 		Assert.Equal((int)status, document.RootElement.GetProperty("status").GetInt32());
-		Assert.DoesNotContain("SQLite", text);
+		Assert.DoesNotContain("Npgsql", text);
 		Assert.DoesNotContain("private storage", text);
 		Assert.DoesNotContain("UPDATE Games", text);
-		Assert.DoesNotContain("Data Source", text);
+		Assert.DoesNotContain("Host=", text);
 	}
 
 	private sealed class UpdateFailureInterceptor(bool slugRace) : SaveChangesInterceptor
@@ -313,7 +313,7 @@ public class UpdateGameApiTests
 
 				// Simulate a competing writer claiming the slug after the handler's uniqueness check.
 				await context.Database.ExecuteSqlInterpolatedAsync(
-					$"UPDATE Games SET Slug = {"raced"} WHERE Id = {RivalId}", cancellationToken);
+					$"UPDATE \"Games\" SET \"Slug\" = {"raced"} WHERE \"Id\" = {RivalId}", cancellationToken);
 			}
 
 			return result;

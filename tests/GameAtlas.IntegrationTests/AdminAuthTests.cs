@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using GameAtlas.Api.Auth;
 using GameAtlas.Infrastructure.Identity;
@@ -96,7 +96,7 @@ public class AdminAuthTests
 		Assert.True(options.Cookie.HttpOnly);
 		Assert.Equal(Microsoft.AspNetCore.Http.SameSiteMode.Strict, options.Cookie.SameSite);
 		Assert.Equal(Microsoft.AspNetCore.Http.CookieSecurePolicy.Always, options.Cookie.SecurePolicy);
-		await using var second = new GameApiFactory(databasePath: first.DatabasePath);
+		await using var second = new GameApiFactory(schema: first.Schema);
 		using var restored = second.CreateGuestClient();
 
 		restored.DefaultRequestHeaders.Add("Cookie", first.SessionCookie);

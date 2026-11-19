@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using GameAtlas.Application.Maps;
@@ -125,7 +125,7 @@ public class MapPresentationTests
 		await factory.MigrateAsync();
 		var game = await UpdateGameHandlerTests.SeedAsync(factory, "concurrent");
 		using var client = await factory.CreateHttpsClientAsync();
-		using var creation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "World" });
+		using var creation = await client.PostAsJsonAsync(MapTestData.CollectionFor(game.Id), new { name = "World", slug = "world" });
 		var blank = await MapTestData.ReadAsync(creation);
 		var path = MapTestData.PathFor(game.Id, blank.Id);
 

@@ -6,56 +6,64 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace GameAtlas.Infrastructure.Persistence.Migrations;
 
 [DbContext(typeof(ApplicationDbContext))]
-[Migration("20261113202720_MapSlugs")]
-partial class _20261113202720_MapSlugs
+[Migration("20261119190553_Initial")]
+partial class _20261119190553_Initial
 {
     /// <inheritdoc />
     protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
-        modelBuilder.HasAnnotation("ProductVersion", "11.0.0");
+        modelBuilder
+            .HasAnnotation("ProductVersion", "11.0.0")
+            .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+        NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
         modelBuilder.Entity("GameAtlas.Domain.Categories.Category", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("CategoryGroupId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Color")
                     .HasMaxLength(7)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(7)");
 
-                b.Property<string>("CreatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("CreatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<Guid?>("IconAssetId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Name")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<string>("NormalizedName")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<int>("Order")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
-                b.Property<string>("UpdatedAt")
+                b.Property<string>("Status")
                     .IsRequired()
-                    .HasColumnType("TEXT");
+                    .HasMaxLength(32)
+                    .HasColumnType("character varying(32)");
+
+                b.Property<DateTimeOffset>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.HasKey("Id");
 
@@ -72,41 +80,44 @@ partial class _20261113202720_MapSlugs
         modelBuilder.Entity("GameAtlas.Domain.Categories.CategoryGroup", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Color")
                     .IsRequired()
                     .ValueGeneratedOnAdd()
                     .HasMaxLength(7)
-                    .HasColumnType("TEXT")
+                    .HasColumnType("character varying(7)")
                     .HasDefaultValue("#F59E0B");
 
-                b.Property<string>("CreatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("CreatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<Guid?>("IconAssetId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("MapId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Name")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<string>("NormalizedName")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<int>("Order")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
-                b.Property<string>("UpdatedAt")
+                b.Property<string>("Status")
                     .IsRequired()
-                    .HasColumnType("TEXT");
+                    .HasMaxLength(32)
+                    .HasColumnType("character varying(32)");
+
+                b.Property<DateTimeOffset>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.HasKey("Id");
 
@@ -123,44 +134,42 @@ partial class _20261113202720_MapSlugs
         modelBuilder.Entity("GameAtlas.Domain.Games.Game", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid?>("BannerId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("CoverId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
-                b.Property<string>("CreatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("CreatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<string>("Description")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<string>("Developer")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<string>("Name")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<DateOnly?>("ReleaseDate")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("date");
 
                 b.Property<string>("Slug")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<string>("Status")
                     .IsRequired()
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
-                b.Property<string>("UpdatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.HasKey("Id");
 
@@ -177,45 +186,48 @@ partial class _20261113202720_MapSlugs
         modelBuilder.Entity("GameAtlas.Domain.Maps.Map", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
-                b.Property<string>("CreatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("CreatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<Guid?>("DefaultStyleId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("GameId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<int?>("Height")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
                 b.Property<long>("LastCreationSequence")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("bigint");
 
                 b.Property<string>("Name")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<string>("NormalizedName")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<string>("Slug")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
-                b.Property<string>("UpdatedAt")
+                b.Property<string>("Status")
                     .IsRequired()
-                    .HasColumnType("TEXT");
+                    .HasMaxLength(32)
+                    .HasColumnType("character varying(32)");
+
+                b.Property<DateTimeOffset>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<int?>("Width")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
                 b.HasKey("Id");
 
@@ -233,59 +245,57 @@ partial class _20261113202720_MapSlugs
         modelBuilder.Entity("GameAtlas.Domain.Maps.MapStyle", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("AttemptId")
                     .IsConcurrencyToken()
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("BackgroundColor")
                     .IsRequired()
                     .HasMaxLength(7)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(7)");
 
-                b.Property<string>("CreatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("CreatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<long>("CreationSequence")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("bigint");
 
                 b.Property<long>("DisplayOrder")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("bigint");
 
                 b.Property<string>("ErrorCode")
                     .HasMaxLength(100)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(100)");
 
                 b.Property<string>("ErrorMessage")
                     .HasMaxLength(300)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(300)");
 
                 b.Property<Guid>("MapId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Name")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<string>("NormalizedName")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<Guid>("SourceAssetId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Status")
                     .IsConcurrencyToken()
                     .IsRequired()
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
-                b.Property<string>("UpdatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.HasKey("Id");
 
@@ -305,38 +315,41 @@ partial class _20261113202720_MapSlugs
         modelBuilder.Entity("GameAtlas.Domain.Markers.Marker", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("CategoryId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
-                b.Property<string>("CreatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("CreatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<string>("Description")
                     .HasMaxLength(5000)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(5000)");
 
                 b.Property<string>("Name")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
-                b.Property<string>("UpdatedAt")
+                b.Property<string>("Status")
                     .IsRequired()
-                    .HasColumnType("TEXT");
+                    .HasMaxLength(32)
+                    .HasColumnType("character varying(32)");
+
+                b.Property<DateTimeOffset>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.ComplexProperty(typeof(Dictionary<string, object>), "Position", "GameAtlas.Domain.Markers.Marker.Position#Position", b1 =>
                     {
                         b1.IsRequired();
 
                         b1.Property<double>("X")
-                            .HasColumnType("REAL")
+                            .HasColumnType("double precision")
                             .HasColumnName("PositionX");
 
                         b1.Property<double>("Y")
-                            .HasColumnType("REAL")
+                            .HasColumnType("double precision")
                             .HasColumnName("PositionY");
                     });
 
@@ -350,13 +363,13 @@ partial class _20261113202720_MapSlugs
         modelBuilder.Entity("GameAtlas.Domain.Markers.MarkerAsset", b =>
             {
                 b.Property<Guid>("MarkerId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("AssetId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<int>("Order")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
                 b.HasKey("MarkerId", "AssetId");
 
@@ -370,36 +383,34 @@ partial class _20261113202720_MapSlugs
         modelBuilder.Entity("GameAtlas.Domain.Media.MediaAsset", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<long>("ByteLength")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("bigint");
 
                 b.Property<string>("ContentType")
                     .IsRequired()
                     .HasMaxLength(64)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(64)");
 
-                b.Property<string>("CreatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("CreatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<Guid?>("FolderId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Name")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<string>("Type")
                     .IsRequired()
                     .HasMaxLength(13)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(13)");
 
-                b.Property<string>("UpdatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.HasKey("Id");
 
@@ -415,34 +426,32 @@ partial class _20261113202720_MapSlugs
         modelBuilder.Entity("GameAtlas.Domain.Media.MediaFolder", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
-                b.Property<string>("CreatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("CreatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<string>("Name")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<string>("NormalizedName")
                     .IsRequired()
                     .HasMaxLength(200)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(200)");
 
                 b.Property<Guid?>("ParentId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
-                b.Property<string>("UpdatedAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.HasKey("Id");
 
                 b.HasIndex("NormalizedName")
                     .IsUnique()
-                    .HasFilter("ParentId IS NULL");
+                    .HasFilter("\"ParentId\" IS NULL");
 
                 b.HasIndex("ParentId", "NormalizedName")
                     .IsUnique();
@@ -455,23 +464,22 @@ partial class _20261113202720_MapSlugs
         modelBuilder.Entity("GameAtlas.Infrastructure.Maps.Persistence.MapCleanupIntent", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<int>("Attempts")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
                 b.Property<Guid?>("MapId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<bool>("OutputsOnly")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("boolean");
 
-                b.Property<string>("RetryAt")
-                    .IsRequired()
-                    .HasColumnType("TEXT");
+                b.Property<DateTimeOffset>("RetryAt")
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<Guid?>("StyleId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.HasKey("Id");
 
@@ -480,22 +488,152 @@ partial class _20261113202720_MapSlugs
                 b.ToTable("MapCleanupIntents");
             });
 
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
+            {
+                b.Property<string>("Id")
+                    .HasColumnType("text");
+
+                b.Property<int>("AccessFailedCount")
+                    .HasColumnType("integer");
+
+                b.Property<string>("ConcurrencyStamp")
+                    .IsConcurrencyToken()
+                    .HasColumnType("text");
+
+                b.Property<string>("Email")
+                    .HasMaxLength(256)
+                    .HasColumnType("character varying(256)");
+
+                b.Property<bool>("EmailConfirmed")
+                    .HasColumnType("boolean");
+
+                b.Property<bool>("LockoutEnabled")
+                    .HasColumnType("boolean");
+
+                b.Property<DateTimeOffset?>("LockoutEnd")
+                    .HasColumnType("timestamp with time zone");
+
+                b.Property<string>("NormalizedEmail")
+                    .HasMaxLength(256)
+                    .HasColumnType("character varying(256)");
+
+                b.Property<string>("NormalizedUserName")
+                    .HasMaxLength(256)
+                    .HasColumnType("character varying(256)");
+
+                b.Property<string>("PasswordHash")
+                    .HasColumnType("text");
+
+                b.Property<string>("PhoneNumber")
+                    .HasColumnType("text");
+
+                b.Property<bool>("PhoneNumberConfirmed")
+                    .HasColumnType("boolean");
+
+                b.Property<string>("SecurityStamp")
+                    .HasColumnType("text");
+
+                b.Property<bool>("TwoFactorEnabled")
+                    .HasColumnType("boolean");
+
+                b.Property<string>("UserName")
+                    .HasMaxLength(256)
+                    .HasColumnType("character varying(256)");
+
+                b.HasKey("Id");
+
+                b.HasIndex("NormalizedEmail")
+                    .HasDatabaseName("EmailIndex");
+
+                b.HasIndex("NormalizedUserName")
+                    .IsUnique()
+                    .HasDatabaseName("UserNameIndex");
+
+                b.ToTable("AspNetUsers");
+            });
+
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            {
+                var id = b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
+
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(id);
+
+                b.Property<string>("ClaimType")
+                    .HasColumnType("text");
+
+                b.Property<string>("ClaimValue")
+                    .HasColumnType("text");
+
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("text");
+
+                b.HasKey("Id");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("AspNetUserClaims");
+            });
+
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            {
+                b.Property<string>("LoginProvider")
+                    .HasColumnType("text");
+
+                b.Property<string>("ProviderKey")
+                    .HasColumnType("text");
+
+                b.Property<string>("ProviderDisplayName")
+                    .HasColumnType("text");
+
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("text");
+
+                b.HasKey("LoginProvider", "ProviderKey");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("AspNetUserLogins");
+            });
+
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            {
+                b.Property<string>("UserId")
+                    .HasColumnType("text");
+
+                b.Property<string>("LoginProvider")
+                    .HasColumnType("text");
+
+                b.Property<string>("Name")
+                    .HasColumnType("text");
+
+                b.Property<string>("Value")
+                    .HasColumnType("text");
+
+                b.HasKey("UserId", "LoginProvider", "Name");
+
+                b.ToTable("AspNetUserTokens");
+            });
+
         modelBuilder.Entity("GameAtlas.Domain.Media.ImageAsset", b =>
             {
                 b.HasBaseType("GameAtlas.Domain.Media.MediaAsset");
 
                 b.Property<string>("Alt")
                     .IsRequired()
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<double?>("Height")
-                    .HasColumnType("REAL");
+                    .HasColumnType("double precision");
 
                 b.Property<string>("Placeholder")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<double?>("Width")
-                    .HasColumnType("REAL");
+                    .HasColumnType("double precision");
 
                 b.HasDiscriminator().HasValue("image");
             });
@@ -505,7 +643,7 @@ partial class _20261113202720_MapSlugs
                 b.HasBaseType("GameAtlas.Domain.Media.MediaAsset");
 
                 b.Property<Guid?>("PreviewAssetId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.HasIndex("PreviewAssetId");
 
@@ -622,6 +760,33 @@ partial class _20261113202720_MapSlugs
                     .WithMany()
                     .HasForeignKey("ParentId")
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
+
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
+
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
             });
 
         modelBuilder.Entity("GameAtlas.Domain.Media.VideoAsset", b =>

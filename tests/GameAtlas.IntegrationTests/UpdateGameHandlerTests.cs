@@ -120,7 +120,7 @@ public class UpdateGameHandlerTests
 			Assert.True(tracked.Update("New", Slug.Create("taken").Value!).IsSuccess);
 			var exception = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
 
-			Assert.True(new SqlitePersistenceFailureClassifier().IsGameSlugConflict(exception));
+			Assert.True(new PostgresPersistenceFailureClassifier().IsGameSlugConflict(exception));
 		}
 
 		await using var reloadScope = factory.Services.CreateAsyncScope();
@@ -157,7 +157,7 @@ public class UpdateGameHandlerTests
 		context.Games.Add(game);
 		await context.SaveChangesAsync();
 
-		return game;
+		return await context.Games.SingleAsync(item => item.Id == game.Id);
 	}
 
 	internal sealed class UpdateSaveObserver : SaveChangesInterceptor

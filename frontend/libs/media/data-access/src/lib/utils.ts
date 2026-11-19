@@ -41,7 +41,7 @@ export function reconcileMediaList(
 				? sortBy(
 						items,
 						item => Number(item.type !== 'folder'),
-						// Match SQLite BINARY's UTF-8 byte order rather than locale or UTF-16 ordering.
+						// Match UTF-8 byte order rather than locale or UTF-16 ordering.
 						item => String.fromCharCode(...encoder.encode(item.name)),
 						item => item.id,
 					)

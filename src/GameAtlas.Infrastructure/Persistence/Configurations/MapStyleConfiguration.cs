@@ -1,6 +1,5 @@
 using GameAtlas.Domain.Maps;
 using GameAtlas.Domain.Media;
-using GameAtlas.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,8 +17,6 @@ public sealed class MapStyleConfiguration : IEntityTypeConfiguration<MapStyle>
 		builder.Property(style => style.BackgroundColor).HasMaxLength(7).IsRequired();
 		builder.HasIndex(style => new { style.MapId, style.NormalizedName }).IsUnique();
 		builder.HasIndex(style => new { style.MapId, style.CreationSequence }).IsUnique();
-		builder.Property(style => style.CreatedAt).HasConversion<UtcTimestampConverter>();
-		builder.Property(style => style.UpdatedAt).HasConversion<UtcTimestampConverter>();
 		builder.Ignore(style => style.Format);
 		builder.Ignore(style => style.Width);
 		builder.Ignore(style => style.Height);

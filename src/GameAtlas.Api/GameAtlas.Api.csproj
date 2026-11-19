@@ -23,4 +23,17 @@
         <ProjectReference Include="..\GameAtlas.Domain\GameAtlas.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a194aa2a327083bff8137c960f3c4f\01a197147e8e754eba49ac2ce11959fb\manifest.json" />
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a194aa2a327083bff8137c960f3c4f\01a19715194e79fda403010961787e01\manifest.json" />
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a194aa2a327083bff8137c960f3c4f\01a197821fbe7bf09b438bca470fa78f\manifest.json" />
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a194aa2a327083bff8137c960f3c4f\01a19782e1897bc3a7c3b9427ce5dfe5\manifest.json" />
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a194aa2a327083bff8137c960f3c4f\01a19783072b72dbb49a4df0fcceb6c2\manifest.json" />
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a194aa2a327083bff8137c960f3c4f\01a19783c0b5783baea7fe551b92d4b4\manifest.json" />
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a194aa2a327083bff8137c960f3c4f\01a19788160b75fb8c187d7611c97b9f\manifest.json" />
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a194aa2a327083bff8137c960f3c4f\01a198bef4017cf584b320864601f1df\manifest.json" />
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a19733861c71688854dd400d6db1ef\01a19733c3637edb8ea544659efd5f9f\manifest.json" />
+      <_ContentIncludedByDefault Remove="storage\maps\tiles\01a19733861c71688854dd400d6db1ef\01a19734a28d72af893773325e50da38\manifest.json" />
+    </ItemGroup>
+
 </Project>

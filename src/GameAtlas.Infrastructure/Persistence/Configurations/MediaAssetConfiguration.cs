@@ -1,5 +1,4 @@
 using GameAtlas.Domain.Media;
-using GameAtlas.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,8 +17,6 @@ public sealed class MediaAssetConfiguration : IEntityTypeConfiguration<MediaAsse
 		builder.HasOne<MediaFolder>().WithMany().HasForeignKey(asset => asset.FolderId)
 			.OnDelete(DeleteBehavior.Restrict);
 
-		builder.Property(asset => asset.CreatedAt).HasConversion<UtcTimestampConverter>();
-		builder.Property(asset => asset.UpdatedAt).HasConversion<UtcTimestampConverter>();
 		builder.HasDiscriminator<string>("Type").HasValue<ImageAsset>("image").HasValue<VideoAsset>("video");
 	}
 }
