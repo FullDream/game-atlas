@@ -74,12 +74,12 @@ Only name and order may change in ordinary PATCH. Returning current DTOs for no-
 
 HTTP response expectations:
 
-| Operation | Success | Specific expected failures |
-| --- | --- | --- |
-| Create | 200 DTO | 404 missing game; 409 name conflict; 422 name validation |
-| List | 200 array | 404 missing game |
-| Update | 200 DTO | 404 missing/foreign resource; 409 name conflict; 422 empty patch/invalid name or order |
-| Delete | 204 | 404 missing/foreign resource or repeated deletion |
+| Operation | Success   | Specific expected failures                                                             |
+| --------- | --------- | -------------------------------------------------------------------------------------- |
+| Create    | 200 DTO   | 404 missing game; 409 name conflict; 422 name validation                               |
+| List      | 200 array | 404 missing game                                                                       |
+| Update    | 200 DTO   | 404 missing/foreign resource; 409 name conflict; 422 empty patch/invalid name or order |
+| Delete    | 204       | 404 missing/foreign resource or repeated deletion                                      |
 
 All operations retain binding 400 and safe 500 responses; the PATCH operation also document 415. Shared metadata may include its established additional error responses. No global metadata rewrite is needed.
 

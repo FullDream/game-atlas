@@ -6,27 +6,27 @@ import {
 	computed,
 	input,
 	signal,
-} from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
+} from '@angular/core'
+import { NgIcon, provideIcons } from '@ng-icons/core'
 import { matColorizeFillRound } from '@ng-icons/material-symbols/round'
-import { BrnSliderImports } from '@spartan-ng/brain/slider';
-import { type ButtonVariants, HlmButtonImports } from '@spartan-ng/helm/button';
-import { classes } from '@spartan-ng/helm/utils';
-import { injectColorPicker } from './color-picker.token';
-import { formatColor, parseColor } from './utils';
+import { BrnSliderImports } from '@spartan-ng/brain/slider'
+import { type ButtonVariants, HlmButtonImports } from '@spartan-ng/helm/button'
+import { classes } from '@spartan-ng/helm/utils'
+import { injectColorPicker } from './color-picker.token'
+import { formatColor, parseColor } from './utils'
 
 interface EyeDropperResult {
-	sRGBHex: string;
+	sRGBHex: string
 }
 
 interface EyeDropperInstance {
-	open(): Promise<EyeDropperResult>;
+	open(): Promise<EyeDropperResult>
 }
 
-type EyeDropperConstructor = new () => EyeDropperInstance;
+type EyeDropperConstructor = new () => EyeDropperInstance
 
 function getEyeDropperConstructor(): EyeDropperConstructor | null {
-	return (globalThis as typeof globalThis & { EyeDropper?: EyeDropperConstructor }).EyeDropper ?? null;
+	return (globalThis as typeof globalThis & { EyeDropper?: EyeDropperConstructor }).EyeDropper ?? null
 }
 
 @Component({

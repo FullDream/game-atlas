@@ -28,7 +28,7 @@ import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmNumberedPaginationQueryParams } from '@spartan-ng/helm/pagination'
 import { HlmTooltip } from '@spartan-ng/helm/tooltip'
-import { injectMutation, injectMutationState, injectQuery } from "@tanstack/angular-query"
+import { injectMutation, injectMutationState, injectQuery } from '@tanstack/angular-query'
 import { linkedQueryParam } from 'ngxtension/linked-query-param'
 import { filter, map, take } from 'rxjs'
 import { ConfirmationDialog } from './confirmation-dialog/confirmation-dialog'

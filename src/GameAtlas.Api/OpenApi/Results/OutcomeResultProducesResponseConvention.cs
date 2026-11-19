@@ -23,9 +23,9 @@ public class OutcomeResultProducesResponseConvention : IApplicationModelConventi
 			foreach (var response in responses)
 			{
 				if (action
-				    .Filters
-				    .OfType<ProducesResponseTypeAttribute>()
-				    .Any(a => a.StatusCode == response.StatusCode))
+					.Filters
+					.OfType<ProducesResponseTypeAttribute>()
+					.Any(a => a.StatusCode == response.StatusCode))
 					continue;
 
 				action.Filters.Add(

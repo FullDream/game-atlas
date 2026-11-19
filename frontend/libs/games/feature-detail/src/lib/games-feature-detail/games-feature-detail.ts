@@ -1,3 +1,4 @@
+import { HttpStatusCode } from '@angular/common/http'
 import { Component, computed, effect, inject, input } from '@angular/core'
 import { RouterLink } from '@angular/router'
 import { PublicGamesQueryOptions } from '@game-atlas/games/data-access'
@@ -25,7 +26,7 @@ import { HlmBreadcrumbImports } from '@spartan-ng/helm/breadcrumb'
 import { HlmCardImports } from '@spartan-ng/helm/card'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
-import { injectQuery } from "@tanstack/angular-query"
+import { injectQuery } from '@tanstack/angular-query'
 
 @Component({
 	selector: 'games-detail',
@@ -65,6 +66,7 @@ export class GamesFeatureDetail {
 
 	protected readonly detail = injectQuery(() => this.#options.getDetail(this.slug()))
 
+	protected readonly httpStatusCode = HttpStatusCode
 	protected readonly countLabel = formatCount
 	protected readonly game = computed(() => this.detail.data())
 	protected readonly partial = computed(() => this.detail.isLoading() || this.detail.isPlaceholderData())

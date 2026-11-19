@@ -1,6 +1,6 @@
 import { InjectionToken } from '@angular/core'
 import type { HttpErrorResponse } from '@angular/common/http'
-import type { CreateQueryOptions } from "@tanstack/angular-query"
+import type { CreateQueryOptions } from '@tanstack/angular-query'
 export type LibraryImage = {
 	type: 'image'
 	id: string

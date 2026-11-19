@@ -29,7 +29,7 @@ import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmSelectImports } from '@spartan-ng/helm/select'
 import { HlmSwitchImports } from '@spartan-ng/helm/switch'
 import { HlmTextarea } from '@spartan-ng/helm/textarea'
-import { injectMutation } from "@tanstack/angular-query"
+import { injectMutation } from '@tanstack/angular-query'
 import { firstValueFrom, map, take } from 'rxjs'
 
 import {

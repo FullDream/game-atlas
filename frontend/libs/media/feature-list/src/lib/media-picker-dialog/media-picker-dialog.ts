@@ -14,7 +14,7 @@ import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmAttachmentImports } from '@spartan-ng/helm/attachment'
 import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
-import { injectQuery, injectMutation } from "@tanstack/angular-query"
+import { injectQuery, injectMutation } from '@tanstack/angular-query'
 type FolderPickerContext = { item: MediaItem; folderId: string | null }
 @Component({
 	selector: 'media-folder-picker-dialog',

@@ -1,10 +1,10 @@
-import { HttpErrorResponse, HttpEventType, provideHttpClient } from '@angular/common/http'
+import { HttpErrorResponse, HttpEventType, HttpStatusCode, provideHttpClient } from '@angular/common/http'
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing'
 import { TestBed } from '@angular/core/testing'
-import { QueryClient } from "@tanstack/angular-query"
+import { QueryClient } from '@tanstack/angular-query'
 import { firstValueFrom } from 'rxjs'
 import { MediaQueryOptions } from './media-query-options'
-import { MutationObserver } from "@tanstack/angular-query"
+import { MutationObserver } from '@tanstack/angular-query'
 import { reconcileMediaList } from './utils'
 import { MediaService } from './generated/media/media.service'
 import { provideMediaBaseUrl } from './generated/api.base-url'
@@ -78,7 +78,10 @@ describe('Media data access', () => {
 		const checked = expect(pending).rejects.toBeInstanceOf(HttpErrorResponse)
 		const rejectedRequest = http.expectOne(req => req.url === '/api/media')
 
-		rejectedRequest.flush({ detail: 'Folder not found' }, { status: 404, statusText: 'Not found' })
+		rejectedRequest.flush(
+			{ detail: 'Folder not found' },
+			{ status: HttpStatusCode.NotFound, statusText: 'Not found' },
+		)
 		await checked
 	})
 
@@ -178,7 +181,7 @@ describe('Media data access', () => {
 		const checked = expect(pending).rejects.toBeInstanceOf(HttpErrorResponse)
 		const rejectedRequest = await vi.waitFor(() => http.expectOne('/api/media/assets/image-id'))
 
-		rejectedRequest.flush({ detail: 'In use' }, { status: 409, statusText: 'Conflict' })
+		rejectedRequest.flush({ detail: 'In use' }, { status: HttpStatusCode.Conflict, statusText: 'Conflict' })
 
 		await checked
 		expect(client.getQueryData<PaginatedResultOfMediaItem>(key)?.items).toEqual([image])
@@ -186,7 +189,7 @@ describe('Media data access', () => {
 
 		const successfulRequest = await vi.waitFor(() => http.expectOne('/api/media/assets/image-id'))
 
-		successfulRequest.flush(null, { status: 204, statusText: 'No content' })
+		successfulRequest.flush(null, { status: HttpStatusCode.NoContent, statusText: 'No content' })
 		await success
 		expect(client.getQueryData<PaginatedResultOfMediaItem>(key)?.items).toEqual([])
 		expect(client.getQueryData<PaginatedResultOfMediaItem>(key)?.total).toBe(0)

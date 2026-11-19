@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http'
+import { HttpStatusCode, provideHttpClient } from '@angular/common/http'
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing'
 import { TestBed } from '@angular/core/testing'
 import { firstValueFrom } from 'rxjs'
@@ -79,15 +79,15 @@ describe('Generated Games client', () => {
 		const invalid: UpdateGameRequest = { name: null }
 		const pending = firstValueFrom(TestBed.inject(GamesService).updateGame(game.id, invalid))
 		const rejected = expect(pending).rejects.toMatchObject({
-			status: 422,
+			status: HttpStatusCode.UnprocessableEntity,
 			error: { errors: { Name: ['Required'] } },
 		})
 		const request = TestBed.inject(HttpTestingController).expectOne(`/api/games/${game.id}`)
 
 		expect(request.request.body).toEqual({ name: null })
 		request.flush(
-			{ status: 422, errors: { Name: ['Required'] } },
-			{ status: 422, statusText: 'Unprocessable Entity' },
+			{ status: HttpStatusCode.UnprocessableEntity, errors: { Name: ['Required'] } },
+			{ status: HttpStatusCode.UnprocessableEntity, statusText: 'Unprocessable Entity' },
 		)
 		await rejected
 	})
@@ -109,7 +109,7 @@ describe('Generated Games client', () => {
 		const request = TestBed.inject(HttpTestingController).expectOne(`/api/games/${game.id}`)
 
 		expect(request.request.method).toBe('DELETE')
-		request.flush(null, { status: 204, statusText: 'No Content' })
+		request.flush(null, { status: HttpStatusCode.NoContent, statusText: 'No Content' })
 		await pending
 	})
 

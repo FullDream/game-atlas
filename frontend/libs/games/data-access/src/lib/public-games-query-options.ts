@@ -1,6 +1,6 @@
-import { HttpErrorResponse } from '@angular/common/http'
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http'
 import { inject, Service } from '@angular/core'
-import { CreateQueryOptions, keepPreviousData, QueryClient, queryOptions } from "@tanstack/angular-query"
+import { CreateQueryOptions, keepPreviousData, QueryClient, queryOptions } from '@tanstack/angular-query'
 import { toPromise } from '@game-atlas/shared/util'
 import { PublicGamesService } from './generated/public-games/public-games.service'
 import type {
@@ -35,7 +35,7 @@ export class PublicGamesQueryOptions {
 	getDetail(slug: string): CreateQueryOptions<PublicGameDetailData, HttpErrorResponse> {
 		return queryOptions<PublicGameDetailData, HttpErrorResponse>({
 			queryKey: ['public-games', 'detail', slug],
-			retry: (failureCount, error) => error.status !== 404 && failureCount < 3,
+			retry: (failureCount, error) => error.status !== HttpStatusCode.NotFound && failureCount < 3,
 			queryFn: ({ signal }) => toPromise(this.#api.getPublicGame(slug), signal),
 			placeholderData: () => {
 				const lists = this.#client.getQueriesData<PaginatedResultOfPublicGameCard>({

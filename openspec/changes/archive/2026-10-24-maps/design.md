@@ -30,17 +30,17 @@ Group name uniqueness and default-order allocation are scoped to MapId. Category
 
 Base collection: /games/{gameId}/maps. Specific map: /games/{gameId}/maps/{mapId}.
 
-| Method | Path relative to collection | Operation | Success |
-| --- | --- | --- | --- |
-| GET | empty | ListMaps | 200 MapDto[] |
-| GET | /{mapId} | GetMap | 200 MapDto |
-| GET | /{mapId}/events | StreamMapProgress | text/event-stream |
-| POST | empty | CreateMap | 200 MapDto |
-| POST | /{mapId}/styles | AddMapStyle | 200 MapDto |
-| POST | /{mapId}/styles/{styleId}/retry | RetryMapStyle | 200 MapStyleDto |
-| PATCH | /{mapId}/styles/{styleId} | UpdateMapStyle | 200 MapStyleDto |
-| DELETE | /{mapId}/styles/{styleId} | DeleteMapStyle | empty 204 |
-| DELETE | /{mapId} | DeleteMap | empty 204 |
+| Method | Path relative to collection     | Operation         | Success           |
+| ------ | ------------------------------- | ----------------- | ----------------- |
+| GET    | empty                           | ListMaps          | 200 MapDto[]      |
+| GET    | /{mapId}                        | GetMap            | 200 MapDto        |
+| GET    | /{mapId}/events                 | StreamMapProgress | text/event-stream |
+| POST   | empty                           | CreateMap         | 200 MapDto        |
+| POST   | /{mapId}/styles                 | AddMapStyle       | 200 MapDto        |
+| POST   | /{mapId}/styles/{styleId}/retry | RetryMapStyle     | 200 MapStyleDto   |
+| PATCH  | /{mapId}/styles/{styleId}       | UpdateMapStyle    | 200 MapStyleDto   |
+| DELETE | /{mapId}/styles/{styleId}       | DeleteMapStyle    | empty 204         |
+| DELETE | /{mapId}                        | DeleteMap         | empty 204         |
 
 CreateMap uses application/json with required name, width, and height and no upload session/file/processing. Invalid required values return 422; malformed JSON and incompatible types return 400; unsupported media return 415. Dimensions are integers in 1..16384. Duplicate normalized names within one game return 409, including specifically recognized database conflicts.
 

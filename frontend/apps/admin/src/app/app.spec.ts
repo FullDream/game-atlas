@@ -4,7 +4,7 @@ import { Router, provideRouter, TitleStrategy, withComponentInputBinding } from 
 import { MediaService } from '@game-atlas/media/data-access'
 import { HlmSidebarService } from '@spartan-ng/helm/sidebar'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
-import { provideTanStackQuery, QueryClient } from "@tanstack/angular-query"
+import { provideTanStackQuery, QueryClient } from '@tanstack/angular-query'
 import { provideLocalStorageImpl } from 'ngxtension/inject-local-storage'
 import { of } from 'rxjs'
 import { AdminTitleStrategy } from './admin-title-strategy'

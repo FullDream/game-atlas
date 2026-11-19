@@ -8,13 +8,13 @@ The `apps/web` application is currently a placeholder static-prerendered shell w
 
 - Configure `apps/web` for full SSR (`outputMode: "server"`, `RenderMode.Server` on `**`) using a lightweight **Hono** (`hono` + `@hono/node-server`) server entry (`server.ts`) backed by `AngularAppEngine`, static browser asset delivery, and trusted proxy headers for deployment behind Caddy.
 - Configure `apps/web` HTTP, TanStack Query, Spartan UI, and routing foundations:
-  - Per-request isolated `QueryClient` with `TransferState` dehydration/hydration so SSR API reads (`GAME_ATLAS_API_URL` / `http://localhost:5041`) transfer cleanly to browser hydration (`/api` via dev `proxy.conf.cjs` or Caddy in production).
-  - Cookie-backed `ThemeSettings` (`game-atlas.theme`) evaluated on the server via Angular `REQUEST` so `<meta name="color-scheme">`, `<meta name="theme-color">`, and header `ThemeSwitcher` (`[compact]="true"`) render accurately before HTML is flushed.
-  - Public top header (logo + `GameAtlas` wordmark + compact `ThemeSwitcher`), `WebTitleStrategy`, and a minimal SSR placeholder route `/games/:slug` for card navigation.
+    - Per-request isolated `QueryClient` with `TransferState` dehydration/hydration so SSR API reads (`GAME_ATLAS_API_URL` / `http://localhost:5041`) transfer cleanly to browser hydration (`/api` via dev `proxy.conf.cjs` or Caddy in production).
+    - Cookie-backed `ThemeSettings` (`game-atlas.theme`) evaluated on the server via Angular `REQUEST` so `<meta name="color-scheme">`, `<meta name="theme-color">`, and header `ThemeSwitcher` (`[compact]="true"`) render accurately before HTML is flushed.
+    - Public top header (logo + `GameAtlas` wordmark + compact `ThemeSwitcher`), `WebTitleStrategy`, and a minimal SSR placeholder route `/games/:slug` for card navigation.
 - Generate the missing `@spartan-ng/helm/card` primitive in `libs/shared/ui-helm/card`.
 - Add `libs/games/feature-catalog` (`type:feature, scope:games, platform:web`) consuming `GamesQueryOptions.getList`:
-  - Hero banner with a static `.webp` key-art asset + blur placeholder, theme-adaptive gradient fade, headline/subtitle, two feature callouts (`Unlimited markers`, `Multiple maps`), and a floating pill search field (`HlmInputGroup`) with debounced URL-synced search.
-  - Games catalog section with URL-synced (`linkedQueryParam`) search, all 6 API sort options (`HlmSelect`), responsive 1/2/3/4-column card grid (`HlmCard`, `MediaThumbnail`, styled fallback when `banner === null`, map/marker counts, chevron link to `/games/:slug`, no draft/published status badges), loading skeletons (`HlmSkeleton`), empty/error states (`HlmEmpty`, `ErrorState`), and `HlmNumberedPaginationQueryParams` with `[24, 48, 72, 96]` page-size presets.
+    - Hero banner with a static `.webp` key-art asset + blur placeholder, theme-adaptive gradient fade, headline/subtitle, two feature callouts (`Unlimited markers`, `Multiple maps`), and a floating pill search field (`HlmInputGroup`) with debounced URL-synced search.
+    - Games catalog section with URL-synced (`linkedQueryParam`) search, all 6 API sort options (`HlmSelect`), responsive 1/2/3/4-column card grid (`HlmCard`, `MediaThumbnail`, styled fallback when `banner === null`, map/marker counts, chevron link to `/games/:slug`, no draft/published status badges), loading skeletons (`HlmSkeleton`), empty/error states (`HlmEmpty`, `ErrorState`), and `HlmNumberedPaginationQueryParams` with `[24, 48, 72, 96]` page-size presets.
 
 ### Out of Scope
 

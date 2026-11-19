@@ -1,63 +1,86 @@
 {
-	"$schema": "./node_modules/nx/schemas/nx-schema.json",
-	"analytics": true,
-	"namedInputs": {
-		"default": ["{projectRoot}/**/*", "sharedGlobals"],
-		"production": ["default", "!{projectRoot}/.eslintrc.json", "!{projectRoot}/eslint.config.mjs"],
-		"sharedGlobals": ["{workspaceRoot}/.postcssrc.json", "{workspaceRoot}/libs/shared/ui/src/theme/styles.css"]
-	},
-	"targetDefaults": {
-		"@angular/build:unit-test": {
-			"cache": true,
-			"inputs": ["default", "^production"]
-		},
-		"@nx/angular:ng-packagr-lite": {
-			"cache": true,
-			"dependsOn": ["^build"],
-			"inputs": ["production", "^production"]
-		},
-		"@nx/angular:application": {
-			"cache": true,
-			"dependsOn": ["^build"],
-			"inputs": ["production", "^production"],
-			"options": {
-				"buildLibsFromSource": false
-			}
-		}
-	},
-	"plugins": [
-		{
-			"plugin": "@nx/playwright/plugin",
-			"options": {
-				"targetName": "e2e"
-			}
-		},
-		{
-			"plugin": "@nx/eslint/plugin",
-			"options": {
-				"targetName": "lint"
-			}
-		}
-	],
-	"generators": {
-		"@nx/angular:application": {
-			"e2eTestRunner": "none",
-			"linter": "eslint",
-			"style": "css",
-			"unitTestRunner": "vitest-angular"
-		},
-		"@nx/angular:component": {
-			"style": "css"
-		},
-		"@nx/angular:library": {
-			"linter": "eslint",
-			"unitTestRunner": "none"
-		},
-		"@spartan-ng/cli:ui": {
-			"tags": "type:ui,scope:shared,platform:shared"
-		}
-	},
-	"affected": {
-		"legacy": true
-	}
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "analytics": true,
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.mjs"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/.postcssrc.json",
+      "{workspaceRoot}/libs/shared/ui/src/theme/styles.css"
+    ]
+  },
+  "targetDefaults": {
+    "@angular/build:unit-test": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "^production"
+      ]
+    },
+    "@nx/angular:ng-packagr-lite": {
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
+    },
+    "@nx/angular:application": {
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "options": {
+        "buildLibsFromSource": false
+      }
+    }
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/playwright/plugin",
+      "options": {
+        "targetName": "e2e"
+      }
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    }
+  ],
+  "generators": {
+    "@nx/angular:application": {
+      "e2eTestRunner": "none",
+      "linter": "eslint",
+      "style": "css",
+      "unitTestRunner": "vitest-angular"
+    },
+    "@nx/angular:component": {
+      "style": "css"
+    },
+    "@nx/angular:library": {
+      "linter": "eslint",
+      "unitTestRunner": "none"
+    },
+    "@spartan-ng/cli:ui": {
+      "tags": "type:ui,scope:shared,platform:shared"
+    }
+  },
+  "affected": {
+    "legacy": true
+  }
 }

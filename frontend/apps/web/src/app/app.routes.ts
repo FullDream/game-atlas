@@ -2,7 +2,7 @@ import { Routes } from '@angular/router'
 import { PublicGamesQueryOptions } from '@game-atlas/games/data-access'
 import { publicMapGameResolver } from './public-map-game-resolver'
 import { inject } from '@angular/core'
-import { QueryClient } from "@tanstack/angular-query"
+import { QueryClient } from '@tanstack/angular-query'
 
 export const APP_ROUTES: Routes = [
 	{

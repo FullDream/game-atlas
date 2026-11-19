@@ -28,7 +28,7 @@ import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmInputGroupImports } from '@spartan-ng/helm/input-group'
 import { HlmNumberedPaginationQueryParams } from '@spartan-ng/helm/pagination'
 import { HlmSelectImports } from '@spartan-ng/helm/select'
-import { injectQuery } from "@tanstack/angular-query"
+import { injectQuery } from '@tanstack/angular-query'
 import { linkedQueryParam } from 'ngxtension/linked-query-param'
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs'
 import { GameCard } from './game-card/game-card'

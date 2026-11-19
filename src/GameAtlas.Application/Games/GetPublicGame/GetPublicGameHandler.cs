@@ -39,11 +39,11 @@ public sealed class GetPublicGameHandler(IApplicationDbContext context) : IQuery
 			.ToArrayAsync(cancellationToken);
 
 		var visibleCategories = from category in context.Categories
-						  join categoryGroup in context.CategoryGroups on category.CategoryGroupId equals categoryGroup.Id
-						  join map in context.Maps on categoryGroup.MapId equals map.Id
-						  where map.GameId == game.Id && map.Status == PublicationStatus.Published
-						&& categoryGroup.Status == PublicationStatus.Published && category.Status == PublicationStatus.Published
-						  select new { category.Id, MapId = map.Id };
+								join categoryGroup in context.CategoryGroups on category.CategoryGroupId equals categoryGroup.Id
+								join map in context.Maps on categoryGroup.MapId equals map.Id
+								where map.GameId == game.Id && map.Status == PublicationStatus.Published
+							  && categoryGroup.Status == PublicationStatus.Published && category.Status == PublicationStatus.Published
+								select new { category.Id, MapId = map.Id };
 
 		var categoryCounts = await visibleCategories.GroupBy(category => category.MapId)
 			.ToDictionaryAsync(group => group.Key, group => group.Count(), cancellationToken);

@@ -35,16 +35,16 @@ Logical moves update metadata only. Shared alt is intentionally global: later re
 
 ### 3. Proposed HTTP contract
 
-| Method | Route | Input | Success |
-| --- | --- | --- | --- |
-| GET | /media | folderId?, offset=0, limit=20, search? | 200 PaginatedResult<MediaItemDto> |
-| GET / HEAD | /media/files/{id} | validators or video Range | bytes / 206 / 304 |
-| POST | /media/folders | name, parentId? JSON | 200 folder |
-| POST | /media/assets | file, folderId?, name?, image alt? or video previewAssetId? multipart | 200 image/video asset |
-| PATCH | /media/folders/{id} | optional name, parentId | 200 folder |
-| PATCH | /media/assets/{id} | optional name, folderId, image alt or video previewAssetId | 200 image/video asset |
-| DELETE | /media/folders/{id} | none | empty 204, or 409 if nonempty |
-| DELETE | /media/assets/{id} | none | empty 204, or 409 if referenced/in active use |
+| Method     | Route               | Input                                                                 | Success                                       |
+| ---------- | ------------------- | --------------------------------------------------------------------- | --------------------------------------------- |
+| GET        | /media              | folderId?, offset=0, limit=20, search?                                | 200 PaginatedResult<MediaItemDto>             |
+| GET / HEAD | /media/files/{id}   | validators or video Range                                             | bytes / 206 / 304                             |
+| POST       | /media/folders      | name, parentId? JSON                                                  | 200 folder                                    |
+| POST       | /media/assets       | file, folderId?, name?, image alt? or video previewAssetId? multipart | 200 image/video asset                         |
+| PATCH      | /media/folders/{id} | optional name, parentId                                               | 200 folder                                    |
+| PATCH      | /media/assets/{id}  | optional name, folderId, image alt or video previewAssetId            | 200 image/video asset                         |
+| DELETE     | /media/folders/{id} | none                                                                  | empty 204, or 409 if nonempty                 |
+| DELETE     | /media/assets/{id}  | none                                                                  | empty 204, or 409 if referenced/in active use |
 
 Use the existing shared PATCH media/shape rules. All mutable fields are optional. Null parentId/folderId moves to root; null previewAssetId clears preview. Names/alt cannot be null. Metadata patches reject fields belonging to a different subtype, read-only fields, and bytes/type changes. Missing destination/entity IDs return 404; folder cycles, invalid names, duplicate marker asset IDs, and incompatible types return 422. Existing resources retain their map-scoped 404 checks independently of globally reusable assets.
 

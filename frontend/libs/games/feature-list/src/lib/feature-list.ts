@@ -27,7 +27,7 @@ import { Button, ErrorState, PageHeaderPortal } from '@game-atlas/shared/ui'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZES } from '@game-atlas/shared/util'
 import { HlmInput } from '@spartan-ng/helm/input'
 import { HlmNumberedPaginationQueryParams } from '@spartan-ng/helm/pagination'
-import { injectQuery } from "@tanstack/angular-query"
+import { injectQuery } from '@tanstack/angular-query'
 import { linkedQueryParam } from 'ngxtension/linked-query-param'
 
 import { GameCard } from './game-card/game-card'

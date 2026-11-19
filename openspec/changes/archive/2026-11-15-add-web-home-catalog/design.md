@@ -32,10 +32,10 @@
 ### 2. Per-Request `QueryClient`, Base URL Resolution, and `TransferState` Hydration
 
 - **Decision**:
-  - Register `provideHttpClient(withFetch())` in `apps/web/src/app/app.config.ts`.
-  - Provide `QueryClient` using an `InjectionToken<QueryClient>` factory (`new QueryClient(...)`) via `provideTanStackQuery(WEB_QUERY_CLIENT)` instead of a module-level singleton so concurrent SSR requests never share query cache state.
-  - Provide `provideGamesBaseUrl('/api')` in `app.config.ts` and override it in `apps/web/src/app/app.config.server.ts` with `provideGamesBaseUrl(process.env['GAME_ATLAS_API_URL'] ?? GAMES_SERVER_URL)` (overriding `GAMES_BASE_URL` directly because `api.base-url.ts` gives direct values precedence over `GAMES_BASE_URL_RESOLVER`).
-  - Dehydrate `QueryClient` on the server via `TransferState.onSerialize` (`@tanstack/query-core`'s `dehydrate`) and rehydrate on client initialization (`hydrate`) inside an environment initializer.
+    - Register `provideHttpClient(withFetch())` in `apps/web/src/app/app.config.ts`.
+    - Provide `QueryClient` using an `InjectionToken<QueryClient>` factory (`new QueryClient(...)`) via `provideTanStackQuery(WEB_QUERY_CLIENT)` instead of a module-level singleton so concurrent SSR requests never share query cache state.
+    - Provide `provideGamesBaseUrl('/api')` in `app.config.ts` and override it in `apps/web/src/app/app.config.server.ts` with `provideGamesBaseUrl(process.env['GAME_ATLAS_API_URL'] ?? GAMES_SERVER_URL)` (overriding `GAMES_BASE_URL` directly because `api.base-url.ts` gives direct values precedence over `GAMES_BASE_URL_RESOLVER`).
+    - Dehydrate `QueryClient` on the server via `TransferState.onSerialize` (`@tanstack/query-core`'s `dehydrate`) and rehydrate on client initialization (`hydrate`) inside an environment initializer.
 - **Rationale**: Angular's built-in `HttpTransferCache` keys cached responses by full request URL. Because SSR requests target `http://localhost:5041/games?...` while the browser targets `/api/games?...`, `HttpTransferCache` alone would miss on hydration and trigger a redundant `/api/games` request. Dehydrating the TanStack `QueryClient` by query key (`['games', 'list', normalizedParams]`) bridges the URL difference cleanly and preserves `staleTime: 30_000`.
 
 ### 3. Pre-Flush Cookie-Driven SSR Theme (`game-atlas.theme`)
@@ -47,19 +47,19 @@
 ### 4. Nx Module Topology and Shared Helm Card Generation
 
 - **Decision**:
-  - Generate `@spartan-ng/helm/card` via Spartan CLI into `libs/shared/ui-helm/card` (`type:ui, scope:shared, platform:shared`).
-  - Create feature library `libs/games/feature-catalog` (`type:feature, scope:games, platform:web`, selector prefix `games`) rather than modifying or relaxing module boundaries on `libs/games/feature-list` (`platform:admin`).
+    - Generate `@spartan-ng/helm/card` via Spartan CLI into `libs/shared/ui-helm/card` (`type:ui, scope:shared, platform:shared`).
+    - Create feature library `libs/games/feature-catalog` (`type:feature, scope:games, platform:web`, selector prefix `games`) rather than modifying or relaxing module boundaries on `libs/games/feature-list` (`platform:admin`).
 - **Rationale**: Keeps `platform:admin` and `platform:web` strictly isolated under `frontend/eslint.config.mjs` while sharing `@game-atlas/games/data-access`, `@game-atlas/shared/ui`, and `@spartan-ng/helm/*`.
 
 ### 5. Home Catalog Layout, Debounced Search, and Pagination
 
 - **Decision**:
-  - Generate and optimize the approved hero key-art illustration into a single `.webp` asset under `apps/web/public/` accompanied by a compact base64 blur placeholder (`data:image/webp;base64,...`) rendered with `NgOptimizedImage` (`priority` / `fill` / `[placeholder]`) and directional `bg-background` gradients for legibility in both light and dark modes.
-  - Omit the `Multilingual` feature callout; display `Unlimited markers` and `Multiple maps`.
-  - Synchronize `search`, `offset`, `limit` (`[24, 48, 72, 96]`, default `24`), `sortBy` (`name | createdAt | updatedAt`), and `sortDirection` (`asc | desc`) with URL query params using `linkedQueryParam`, mirroring [`FeatureList`](file:///D:/projects/game-atlas/frontend/libs/games/feature-list/src/lib/feature-list.ts).
-  - Debounce (`250ms`) interactive typing from the hero search input before writing `search` and resetting `offset` to `0`, keeping the displayed input responsive without firing intermediate API calls per keystroke.
-  - Render the grid with `1 -> 2 -> 3 -> 4` columns so full pages of `24`, `48`, `72`, or `96` cards leave zero trailing grid holes at every column count.
-  - Build `games-catalog-card` with `HlmCard`, top `banner` (`ui-media-thumbnail` or styled gradient + Material icon fallback when `null`), bottom `cover` + title + `<maps.length> map(s) · <markersCount> markers` + trailing icon link to `['/games', game.slug]`, and no status badge.
+    - Generate and optimize the approved hero key-art illustration into a single `.webp` asset under `apps/web/public/` accompanied by a compact base64 blur placeholder (`data:image/webp;base64,...`) rendered with `NgOptimizedImage` (`priority` / `fill` / `[placeholder]`) and directional `bg-background` gradients for legibility in both light and dark modes.
+    - Omit the `Multilingual` feature callout; display `Unlimited markers` and `Multiple maps`.
+    - Synchronize `search`, `offset`, `limit` (`[24, 48, 72, 96]`, default `24`), `sortBy` (`name | createdAt | updatedAt`), and `sortDirection` (`asc | desc`) with URL query params using `linkedQueryParam`, mirroring [`FeatureList`](file:///D:/projects/game-atlas/frontend/libs/games/feature-list/src/lib/feature-list.ts).
+    - Debounce (`250ms`) interactive typing from the hero search input before writing `search` and resetting `offset` to `0`, keeping the displayed input responsive without firing intermediate API calls per keystroke.
+    - Render the grid with `1 -> 2 -> 3 -> 4` columns so full pages of `24`, `48`, `72`, or `96` cards leave zero trailing grid holes at every column count.
+    - Build `games-catalog-card` with `HlmCard`, top `banner` (`ui-media-thumbnail` or styled gradient + Material icon fallback when `null`), bottom `cover` + title + `<maps.length> map(s) · <markersCount> markers` + trailing icon link to `['/games', game.slug]`, and no status badge.
 
 ## Risks / Trade-offs
 

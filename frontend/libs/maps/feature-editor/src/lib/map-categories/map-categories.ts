@@ -51,7 +51,7 @@ import { HlmTooltip } from '@spartan-ng/helm/tooltip'
 import { HlmDropdownMenuImports } from '@spartan-ng/helm/dropdown-menu'
 import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
-import { injectQuery, injectMutation, injectIsMutating } from "@tanstack/angular-query"
+import { injectQuery, injectMutation, injectIsMutating } from '@tanstack/angular-query'
 import { take } from 'rxjs'
 import { CategoryEditorDialog } from './category-editor-dialog/category-editor-dialog'
 

@@ -6,7 +6,7 @@ import {
 	type CreateQueryOptions,
 	mutationOptions,
 	queryOptions,
-} from "@tanstack/angular-query"
+} from '@tanstack/angular-query'
 import { toPromise } from '@game-atlas/shared/util'
 import { MarkersService } from '../generated/markers/markers.service'
 import type { Marker } from '../generated/models'

@@ -44,7 +44,7 @@ import { HlmEmptyImports } from '@spartan-ng/helm/empty'
 import { HlmTooltip } from '@spartan-ng/helm/tooltip'
 import { HlmBadge } from '@spartan-ng/helm/badge'
 import { HlmProgressImports } from '@spartan-ng/helm/progress'
-import { injectMutation } from "@tanstack/angular-query"
+import { injectMutation } from '@tanstack/angular-query'
 import { take } from 'rxjs'
 import { StyleEditorDialog } from './style-editor-dialog/style-editor-dialog'
 

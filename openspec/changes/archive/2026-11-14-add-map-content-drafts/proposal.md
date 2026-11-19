@@ -14,10 +14,10 @@ Games already support `draft` and `published` states, but maps, category groups,
 - Refactor the map editor `Settings & Tools` form to replace per-field inline save icon buttons with a single form-level `Save changes` submit button covering `name`, `slug`, and `status`.
 - Replace the `Back to maps` header action in the map editor with a `Publish` / `Publish changes` action button wired to `POST /games/{gameId}/maps/{mapId}/publish`.
 - Render draft status indicators across the admin UI:
-  - Colored corner indicator dots and multiline hover tooltips on map canvas markers when the marker, its category, or its category group is `draft`.
-  - `Draft` badges on draft groups, categories, and markers in the map editor left panel and inside category/group select dropdowns.
-  - `Published` and `Draft` status badges on map cards in the game editor `Maps` tab.
-  - A compact top-right draft icon badge with a `Draft` tooltip on draft map preview thumbnails inside game catalog cards.
+    - Colored corner indicator dots and multiline hover tooltips on map canvas markers when the marker, its category, or its category group is `draft`.
+    - `Draft` badges on draft groups, categories, and markers in the map editor left panel and inside category/group select dropdowns.
+    - `Published` and `Draft` status badges on map cards in the game editor `Maps` tab.
+    - A compact top-right draft icon badge with a `Draft` tooltip on draft map preview thumbnails inside game catalog cards.
 
 ### Out of Scope
 
@@ -31,6 +31,7 @@ Games already support `draft` and `published` states, but maps, category groups,
 ### New Capabilities
 
 ### Modified Capabilities
+
 - `game-catalog`: Include `status` (`draft` | `published`) in lightweight map summaries (`GameMapDto`) returned with game responses.
 - `maps`: Add `status` (`draft` | `published`, default `draft` on create) to map creation, retrieval, and merge patch contracts, backfill existing maps as `published`, and add `POST /games/{gameId}/maps/{mapId}/publish` to publish a map and all of its draft category groups, categories, and markers atomically.
 - `category-groups`: Add `status` (`draft` | `published`, default `draft` on create) to category group creation, retrieval, and merge patch contracts.
@@ -43,10 +44,10 @@ Games already support `draft` and `published` states, but maps, category groups,
 ## Impact
 
 - **Backend (`src/GameAtlas.Domain`, `src/GameAtlas.Infrastructure`, `src/GameAtlas.Api`)**:
-  - Domain entities (`Map`, `CategoryGroup`, `Category`, `Marker`), EF Core entity configurations, and a new SQLite migration adding `Status` columns.
-  - `Games`, `Maps`, `CategoryGroups`, `Categories`, and `Markers` vertical slices, DTOs, validators, OpenAPI metadata, and a new `PublishMap` endpoint in `Maps`.
-  - Integration tests in `tests/GameAtlas.Api.Tests`.
+    - Domain entities (`Map`, `CategoryGroup`, `Category`, `Marker`), EF Core entity configurations, and a new SQLite migration adding `Status` columns.
+    - `Games`, `Maps`, `CategoryGroups`, `Categories`, and `Markers` vertical slices, DTOs, validators, OpenAPI metadata, and a new `PublishMap` endpoint in `Maps`.
+    - Integration tests in `tests/GameAtlas.Api.Tests`.
 - **Frontend (`frontend/`)**:
-  - Regenerated Orval OpenAPI clients and models in `libs/games/data-access`, `libs/maps/data-access`, `libs/categories/data-access`, and `libs/markers/data-access`.
-  - New Spartan UI switch helm wrapper in `libs/shared/ui-helm/switch`.
-  - Admin UI updates in `libs/games/feature-list`, `libs/maps/feature-list`, `libs/maps/feature-editor`, and `libs/maps/ui`.
+    - Regenerated Orval OpenAPI clients and models in `libs/games/data-access`, `libs/maps/data-access`, `libs/categories/data-access`, and `libs/markers/data-access`.
+    - New Spartan UI switch helm wrapper in `libs/shared/ui-helm/switch`.
+    - Admin UI updates in `libs/games/feature-list`, `libs/maps/feature-list`, `libs/maps/feature-editor`, and `libs/maps/ui`.

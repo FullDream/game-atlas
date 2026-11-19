@@ -1,4 +1,4 @@
-import type { ColorPickerPreset } from './type';
+import type { ColorPickerPreset } from './type'
 
 export const COLOR_PICKER_DEFAULT_PRESETS: readonly ColorPickerPreset[] = [
 	'#ffffff',
@@ -11,7 +11,7 @@ export const COLOR_PICKER_DEFAULT_PRESETS: readonly ColorPickerPreset[] = [
 	'#7f56d9',
 	'#d946ef',
 	'#111827',
-] as const;
+] as const
 
-export const COLOR_PICKER_KEYBOARD_STEP = 1;
-export const COLOR_PICKER_KEYBOARD_LARGE_STEP = 10;
+export const COLOR_PICKER_KEYBOARD_STEP = 1
+export const COLOR_PICKER_KEYBOARD_LARGE_STEP = 10

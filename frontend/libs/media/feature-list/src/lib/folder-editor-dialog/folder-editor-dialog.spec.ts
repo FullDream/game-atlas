@@ -6,7 +6,7 @@ import { MediaService, type MediaFolder } from '@game-atlas/media/data-access'
 import { BrnDialogRef } from '@spartan-ng/brain/dialog'
 import { toast } from '@spartan-ng/brain/sonner'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
-import { provideTanStackQuery, QueryClient } from "@tanstack/angular-query"
+import { provideTanStackQuery, QueryClient } from '@tanstack/angular-query'
 import { of, Subject, throwError } from 'rxjs'
 import { mediaFolder } from '../media-test-data'
 import { FolderEditorDialog } from './folder-editor-dialog'

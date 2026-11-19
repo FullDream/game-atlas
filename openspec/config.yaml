@@ -1,49 +1,49 @@
 schema: spec-driven
 
 context: |
-  GameAtlas is a platform for interactive video game maps.
+    GameAtlas is a platform for interactive video game maps.
 
-  Backend:
-  - ASP.NET Core
-  - EF Core
-  - SQLite initially; PostgreSQL is a future addition, not part of the initial scope
-  - Layered monolith initially; consider separate modules when feature areas grow
-  - DDD, Vertical Slice Architecture, and pragmatic Clean Architecture
+    Backend:
+    - ASP.NET Core
+    - EF Core
+    - SQLite initially; PostgreSQL is a future addition, not part of the initial scope
+    - Layered monolith initially; consider separate modules when feature areas grow
+    - DDD, Vertical Slice Architecture, and pragmatic Clean Architecture
 
-  Frontend:
-  - Angular/Nx workspace in frontend, with separate admin SPA and public web
-  - Tailwind CSS and Spartan UI with Material Symbols Rounded icons, with shared semantic theme tokens
-  - TanStack Query Angular with handwritten query-options classes
-  - Orval Angular HttpClient generation per domain through OpenAPI tag filtering
-  - Shared games/data-access for admin and web; union enums and type aliases
-  - Frontend guidance starts at frontend/AGENTS.md; module boundaries are in docs/frontend/architecture.md
+    Frontend:
+    - Angular/Nx workspace in frontend, with separate admin SPA and public web
+    - Tailwind CSS and Spartan UI with Material Symbols Rounded icons, with shared semantic theme tokens
+    - TanStack Query Angular with handwritten query-options classes
+    - Orval Angular HttpClient generation per domain through OpenAPI tag filtering
+    - Shared games/data-access for admin and web; union enums and type aliases
+    - Frontend guidance starts at frontend/AGENTS.md; module boundaries are in docs/frontend/architecture.md
 
-  Architectural principles:
-  - Separate domain logic from infrastructure.
-  - Avoid generic repositories.
-  - Avoid unnecessary abstractions.
-  - Do not introduce microservices.
-  - Keep implementations simple.
-  - Do not invent business requirements.
-  - Use PATCH for resource updates, accepting application/merge-patch+json and
-    application/json with identical JSON Merge Patch semantics (RFC 7396);
-    allow charset parameters for both and reject other media types with HTTP 415.
-    Do not use PUT. All mutable request fields are optional: omission preserves
-    the current value, explicit null clears only nullable fields, objects merge
-    recursively, and arrays are replaced as a whole.
-  - Follow the HTTP updates conventions in docs/api-conventions.md, including Optional<T>,
-    atomic updates, and rejection of empty patches, unknown or read-only fields,
-    and unsupported media types.
-  - Follow docs/backend.md and docs/styleguide.md for implementation conventions, including feature organization,
-    persistence access, mapping, validation, error handling, and migration execution.
+    Architectural principles:
+    - Separate domain logic from infrastructure.
+    - Avoid generic repositories.
+    - Avoid unnecessary abstractions.
+    - Do not introduce microservices.
+    - Keep implementations simple.
+    - Do not invent business requirements.
+    - Use PATCH for resource updates, accepting application/merge-patch+json and
+      application/json with identical JSON Merge Patch semantics (RFC 7396);
+      allow charset parameters for both and reject other media types with HTTP 415.
+      Do not use PUT. All mutable request fields are optional: omission preserves
+      the current value, explicit null clears only nullable fields, objects merge
+      recursively, and arrays are replaced as a whole.
+    - Follow the HTTP updates conventions in docs/api-conventions.md, including Optional<T>,
+      atomic updates, and rejection of empty patches, unknown or read-only fields,
+      and unsupported media types.
+    - Follow docs/backend.md and docs/styleguide.md for implementation conventions, including feature organization,
+      persistence access, mapping, validation, error handling, and migration execution.
 
 rules:
-  proposal:
-    - Keep changes small and focused.
-    - Explicitly state what is out of scope.
-  design:
-    - Explain significant architectural decisions.
-    - Prefer existing patterns over new abstractions.
-  tasks:
-    - Break implementation into small verifiable tasks.
-    - Do not include unrelated improvements.
+    proposal:
+        - Keep changes small and focused.
+        - Explicitly state what is out of scope.
+    design:
+        - Explain significant architectural decisions.
+        - Prefer existing patterns over new abstractions.
+    tasks:
+        - Break implementation into small verifiable tasks.
+        - Do not include unrelated improvements.

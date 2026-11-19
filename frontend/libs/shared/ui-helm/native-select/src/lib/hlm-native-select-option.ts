@@ -1,5 +1,5 @@
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
+import { Directive } from '@angular/core'
+import { classes } from '@spartan-ng/helm/utils'
 
 @Directive({
 	selector: 'option[hlmNativeSelectOption]',
@@ -8,6 +8,6 @@ import { classes } from '@spartan-ng/helm/utils';
 })
 export class HlmNativeSelectOption {
 	constructor() {
-		classes(() => 'bg-[Canvas] text-[CanvasText]');
+		classes(() => 'bg-[Canvas] text-[CanvasText]')
 	}
 }

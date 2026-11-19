@@ -1,4 +1,4 @@
-﻿namespace GameAtlas.Domain.Result;
+namespace GameAtlas.Domain.Result;
 
 public interface IFailureFactory<TSelf>
 	where TSelf : IFailureFactory<TSelf>

@@ -48,34 +48,34 @@ Success is HTTP 200 with all stored fields, for example:
 
 ```json
 {
-  "id": "019a0000-0000-7000-8000-000000000001",
-  "name": "Elden Ring",
-  "slug": "elden-ring",
-  "cover": {
-    "type": "image",
-    "id": "019a0000-0000-7000-8000-000000000112",
-    "folderId": null,
-    "name": "Cover",
-    "url": "/media/files/019a0000-0000-7000-8000-000000000112",
-    "contentType": "image/png",
-    "byteLength": 1024,
-    "width": 32,
-    "height": 24,
-    "alt": "",
-    "placeholder": null,
-    "createdAt": "2026-10-22T18:00:00+00:00",
-    "updatedAt": "2026-10-22T18:00:00+00:00"
-  },
-  "banner": null,
-  "releaseDate": null,
-  "developer": null,
-  "description": null,
-  "markersCount": 0,
-  "categoriesCount": 0,
-  "maps": [],
-  "createdAt": "2026-10-22T18:00:00+00:00",
-  "updatedAt": "2026-10-22T18:00:00+00:00",
-  "status": "draft"
+	"id": "019a0000-0000-7000-8000-000000000001",
+	"name": "Elden Ring",
+	"slug": "elden-ring",
+	"cover": {
+		"type": "image",
+		"id": "019a0000-0000-7000-8000-000000000112",
+		"folderId": null,
+		"name": "Cover",
+		"url": "/media/files/019a0000-0000-7000-8000-000000000112",
+		"contentType": "image/png",
+		"byteLength": 1024,
+		"width": 32,
+		"height": 24,
+		"alt": "",
+		"placeholder": null,
+		"createdAt": "2026-10-22T18:00:00+00:00",
+		"updatedAt": "2026-10-22T18:00:00+00:00"
+	},
+	"banner": null,
+	"releaseDate": null,
+	"developer": null,
+	"description": null,
+	"markersCount": 0,
+	"categoriesCount": 0,
+	"maps": [],
+	"createdAt": "2026-10-22T18:00:00+00:00",
+	"updatedAt": "2026-10-22T18:00:00+00:00",
+	"status": "draft"
 }
 ```
 

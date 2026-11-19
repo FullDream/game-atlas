@@ -1,4 +1,4 @@
-import type { MutationStatus, Mutation, MutationFilters } from "@tanstack/angular-query"
+import type { MutationStatus, Mutation, MutationFilters } from '@tanstack/angular-query'
 
 export type UploadMediaVariables = {
 	key: string

@@ -11,7 +11,7 @@ import { getDirtyValues, type LibraryImage, type PickerContext } from '@game-atl
 import { BrnDialogRef, BrnDialogService, injectBrnDialogContext } from '@spartan-ng/brain/dialog'
 import { HlmFieldImports } from '@spartan-ng/helm/field'
 import { HlmInput } from '@spartan-ng/helm/input'
-import { injectMutation } from "@tanstack/angular-query"
+import { injectMutation } from '@tanstack/angular-query'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { take } from 'rxjs'
 import { HlmInputGroup, HlmInputGroupAddon, HlmInputGroupButton } from '@spartan-ng/helm/input-group'

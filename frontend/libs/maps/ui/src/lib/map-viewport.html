@@ -6,7 +6,9 @@
 	aria-label="Interactive map. Use arrow keys to pan and plus or minus to zoom."
 ></div>
 
-<div class="inset-x-2 top-3 gap-1 sm:inset-x-3 sm:gap-2 absolute flex items-start justify-between **:[[ui-button]]:bg-background  **:[[ui-button]:hover]:bg-accent">
+<div
+	class="inset-x-2 top-3 gap-1 sm:inset-x-3 sm:gap-2 **:[[ui-button]]:bg-background **:[[ui-button]:hover]:bg-accent absolute flex items-start justify-between"
+>
 	<div class="min-w-0 gap-1 sm:gap-2 flex flex-1 items-center">
 		<ng-content select="[mapLeadingToolbar]" />
 		@if (styles().length > 1) {
@@ -17,7 +19,10 @@
 				(ngModelChange)="selectedStyleId.set($event)"
 				[disabled]="!readyStyles().length"
 			>
-				<hlm-select-trigger aria-label="Map style" class="min-w-0 w-full [&>button]:bg-background [&>button:hover]:bg-accent">
+				<hlm-select-trigger
+					aria-label="Map style"
+					class="min-w-0 [&>button]:bg-background [&>button:hover]:bg-accent w-full"
+				>
 					@if (activeStyle(); as style) {
 						<span *hlmSelectValueTemplate class="min-w-0 gap-2 flex flex-1 items-center">
 							<ui-media-thumbnail

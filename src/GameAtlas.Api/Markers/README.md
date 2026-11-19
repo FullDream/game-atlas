@@ -3,12 +3,12 @@
 Markers belong to one category in one map. The four unauthenticated operations work for draft and published games,
 including maps without styles. A map and category must exist before marker creation.
 
-| Method | Route | Success |
-| --- | --- | --- |
-| GET | /games/{gameId}/maps/{mapId}/markers | 200, complete array |
-| POST | /games/{gameId}/maps/{mapId}/markers | 200, complete marker |
-| PATCH | /games/{gameId}/maps/{mapId}/markers/{id} | 200, complete marker |
-| DELETE | /games/{gameId}/maps/{mapId}/markers/{id} | 204, no body |
+| Method | Route                                     | Success              |
+| ------ | ----------------------------------------- | -------------------- |
+| GET    | /games/{gameId}/maps/{mapId}/markers      | 200, complete array  |
+| POST   | /games/{gameId}/maps/{mapId}/markers      | 200, complete marker |
+| PATCH  | /games/{gameId}/maps/{mapId}/markers/{id} | 200, complete marker |
+| DELETE | /games/{gameId}/maps/{mapId}/markers/{id} | 204, no body         |
 
 There is no individual-marker GET, PUT, pagination, search, or server-side category filter. Lists contain all markers
 of the route map, ordered by createdAt then id ascending. An existing empty map returns []; a missing or foreign game/map returns 404.
@@ -19,14 +19,11 @@ POST accepts categoryId, name, and position, plus optional description and media
 
 ```json
 {
-  "categoryId": "019a0d00-0000-7000-8000-000000000001",
-  "name": "Chest",
-  "description": "Behind the waterfall",
-  "position": { "x": -120.5, "y": 200 },
-  "media": [
-    "019a0000-0000-7000-8000-000000000112",
-    "019a0000-0000-7000-8000-000000000113"
-  ]
+	"categoryId": "019a0d00-0000-7000-8000-000000000001",
+	"name": "Chest",
+	"description": "Behind the waterfall",
+	"position": { "x": -120.5, "y": 200 },
+	"media": ["019a0000-0000-7000-8000-000000000112", "019a0000-0000-7000-8000-000000000113"]
 }
 ```
 
@@ -57,8 +54,7 @@ video preview is a shared image DTO or null. There are no marker-owned copies of
 Update alt, names or video previews through the library; subsequent marker reads see those changes without changing
 marker timestamps. Reordering the same IDs changes attachment order while retaining existing relationships.
 
-Null arrays, null elements, empty GUIDs and duplicate IDs return 422; malformed GUIDs and legacy object items return
-400. Missing assets return 404; folder IDs return 422. Attachment validation is atomic with scalar and position changes.
+Null arrays, null elements, empty GUIDs and duplicate IDs return 422; malformed GUIDs and legacy object items return 400. Missing assets return 404; folder IDs return 422. Attachment validation is atomic with scalar and position changes.
 Asset deletion returns 409 while any marker or other consumer uses it. Removing an attachment does not delete the asset.
 
 ## Atomic updates
@@ -81,9 +77,9 @@ desired array, with complete subtype fields for every element. [] clears all med
 
 ```json
 {
-  "categoryId": "019a0d00-0000-7000-8000-000000000002",
-  "description": null,
-  "media": []
+	"categoryId": "019a0d00-0000-7000-8000-000000000002",
+	"description": null,
+	"media": []
 }
 ```
 

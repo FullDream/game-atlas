@@ -5,7 +5,7 @@ import {
 	type CreateQueryOptions,
 	mutationOptions,
 	queryOptions,
-} from "@tanstack/angular-query"
+} from '@tanstack/angular-query'
 import { reorder, toPromise } from '@game-atlas/shared/util'
 import { CategoriesService } from '../generated'
 import type { Category, CategoryGroup } from '../generated/models'

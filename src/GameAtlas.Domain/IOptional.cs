@@ -1,4 +1,4 @@
-﻿namespace GameAtlas.Domain;
+namespace GameAtlas.Domain;
 
 public interface IOptional
 {

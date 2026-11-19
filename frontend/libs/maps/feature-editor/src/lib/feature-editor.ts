@@ -35,7 +35,7 @@ import { HlmSeparator } from '@spartan-ng/helm/separator'
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton'
 import { HlmToggleGroupImports } from '@spartan-ng/helm/toggle-group'
 import { HlmTooltip } from '@spartan-ng/helm/tooltip'
-import { injectMutation, injectMutationState, injectQuery } from "@tanstack/angular-query"
+import { injectMutation, injectMutationState, injectQuery } from '@tanstack/angular-query'
 import { MapContentPanel } from './map-content-panel/map-content-panel'
 import { createMapMarkers, type MarkerMovementVariables, type PlacementState } from './map-marker-presentation'
 import { MarkerEditor, type MarkerEditorSession } from './marker-editor/marker-editor'

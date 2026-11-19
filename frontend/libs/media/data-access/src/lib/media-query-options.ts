@@ -10,7 +10,7 @@ import {
 	type CreateQueryOptions,
 	type Query,
 	type QueryKey,
-} from "@tanstack/angular-query"
+} from '@tanstack/angular-query'
 import { omit, uniqueBy } from 'remeda'
 import { filter, map, tap } from 'rxjs'
 import { MediaService } from './generated/media/media.service'

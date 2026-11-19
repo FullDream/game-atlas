@@ -21,7 +21,7 @@
 </nav>
 
 @if (detail.isError()) {
-	@if (detail.error().status === 404) {
+	@if (detail.error().status === httpStatusCode.NotFound) {
 		<div hlmEmpty class="my-12 border">
 			<div hlmEmptyHeader>
 				<div hlmEmptyMedia variant="icon"><ng-icon name="matMapRound" aria-hidden="true" /></div>

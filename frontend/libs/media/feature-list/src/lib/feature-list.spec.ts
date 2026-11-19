@@ -14,7 +14,7 @@ import {
 import { PageHeaderOutlet, WorkspaceBreadcrumbs } from '@game-atlas/shared/ui'
 import { toast } from '@spartan-ng/brain/sonner'
 import { provideSpartanHlm } from '@spartan-ng/helm/utils'
-import { provideTanStackQuery, QueryClient } from "@tanstack/angular-query"
+import { provideTanStackQuery, QueryClient } from '@tanstack/angular-query'
 import { of, Subject, throwError } from 'rxjs'
 import { MediaCard } from './media-card/media-card'
 import { imageAsset, mediaFolder, mediaListing } from './media-test-data'

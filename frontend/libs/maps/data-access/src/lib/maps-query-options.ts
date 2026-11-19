@@ -5,7 +5,7 @@ import {
 	queryOptions,
 	type CreateMutationOptions,
 	type CreateQueryOptions,
-} from "@tanstack/angular-query"
+} from '@tanstack/angular-query'
 import { toPromise } from '@game-atlas/shared/util'
 import { MapsService } from './generated/maps/maps.service'
 import type {

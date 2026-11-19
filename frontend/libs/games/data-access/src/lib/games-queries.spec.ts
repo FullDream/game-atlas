@@ -1,7 +1,7 @@
-import { provideHttpClient } from '@angular/common/http'
+import { HttpStatusCode, provideHttpClient } from '@angular/common/http'
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing'
 import { TestBed } from '@angular/core/testing'
-import { QueryClient } from "@tanstack/angular-query"
+import { QueryClient } from '@tanstack/angular-query'
 import { GamesQueryOptions } from './games-query-options'
 import { provideGamesBaseUrl } from './generated/api.base-url'
 
@@ -59,15 +59,18 @@ describe('GamesQueries', () => {
 		expect(await client.fetchQuery({ ...options, staleTime: Infinity })).toEqual(result)
 	})
 
-	it.each([422, 500])('retains HTTP %s as a rejected query with ProblemDetails', async status => {
-		const pending = client.fetchQuery(TestBed.inject(GamesQueryOptions).getList())
-		const problem = { status, title: 'Request failed', errors: { Search: ['Invalid'] } }
-		const rejected = expect(pending).rejects.toMatchObject({ status, error: problem })
-		const request = TestBed.inject(HttpTestingController).expectOne(req => req.url === '/api/games')
+	it.each([HttpStatusCode.UnprocessableEntity, HttpStatusCode.InternalServerError])(
+		'retains HTTP %s as a rejected query with ProblemDetails',
+		async status => {
+			const pending = client.fetchQuery(TestBed.inject(GamesQueryOptions).getList())
+			const problem = { status, title: 'Request failed', errors: { Search: ['Invalid'] } }
+			const rejected = expect(pending).rejects.toMatchObject({ status, error: problem })
+			const request = TestBed.inject(HttpTestingController).expectOne(req => req.url === '/api/games')
 
-		request.flush(problem, { status, statusText: 'Request failed' })
-		await rejected
-	})
+			request.flush(problem, { status, statusText: 'Request failed' })
+			await rejected
+		},
+	)
 
 	it('cancels the underlying HTTP subscription when the query is cancelled', async () => {
 		const options = TestBed.inject(GamesQueryOptions).getList()
