@@ -6,13 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameAtlas.Application.Maps.RetryMapStyle;
 
-public sealed class RetryMapStyleHandler(IApplicationDbContext context, IMapProgress progress, IMapMutationLock mutationLock,
+public sealed class RetryMapStyleHandler(IApplicationDbContext context, IMapProgress progress,
 	IMapProcessingQueue queue, IMapNotifications notifications)
 	: ICommandHandler<RetryMapStyle, Result<MapStyleDto>>
 {
 	public async ValueTask<Result<MapStyleDto>> Handle(RetryMapStyle command, CancellationToken cancellationToken)
 	{
-		using var mutationLease = await mutationLock.EnterAsync(cancellationToken);
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
 		var style = await (
 			from candidate in context.MapStyles.AsTracking()
@@ -35,7 +34,6 @@ public sealed class RetryMapStyleHandler(IApplicationDbContext context, IMapProg
 		var response = style.ToDto(progress);
 
 		queue.Enqueue(style.MapId, style.Id, style.AttemptId);
-		mutationLease.Dispose();
 		await notifications.StyleUpdatedAsync(style.MapId, response);
 
 		return response;

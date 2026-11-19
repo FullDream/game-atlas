@@ -20,5 +20,7 @@ public interface IApplicationDbContext
 
 	Task<IApplicationTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 
+	Task LockMapAsync(Guid mapId, CancellationToken cancellationToken = default);
+
 	Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

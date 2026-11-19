@@ -7,13 +7,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameAtlas.Application.Games.DeleteGame;
 
-public sealed class DeleteGameHandler(IApplicationDbContext context, IMapCleanup cleanup, IMapMutationLock mutationLock,
+public sealed class DeleteGameHandler(IApplicationDbContext context, IMapCleanup cleanup,
 	IMapNotifications notifications)
 	: ICommandHandler<DeleteGame, Result>
 {
 	public async ValueTask<Result> Handle(DeleteGame command, CancellationToken cancellationToken)
 	{
-		using var mutationLease = await mutationLock.EnterAsync(cancellationToken);
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
 		var mapIds = await context.Maps.Where(map => map.GameId == command.Id).Select(map => map.Id)
 			.ToArrayAsync(cancellationToken);
@@ -28,7 +27,6 @@ public sealed class DeleteGameHandler(IApplicationDbContext context, IMapCleanup
 		await transaction.CommitAsync(cancellationToken);
 
 		cleanup.Dispatch();
-		mutationLease.Dispose();
 
 		foreach (var mapId in mapIds)
 			await notifications.ProcessingUpdatedAsync(new MapProcessingDto(mapId, null, null, null, 0, null, Deleted: true));

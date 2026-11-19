@@ -1,4 +1,4 @@
-﻿using System.Data.Common;
+using System.Data.Common;
 using GameAtlas.Application.Maps;
 using GameAtlas.Application.Maps.Images;
 using GameAtlas.Application.Maps.AddMapStyle;
@@ -30,10 +30,13 @@ public class MapDispatchTests
 		var style = map.Styles.Single();
 		var queue = factory.Services.GetRequiredService<IMapProcessingQueue>();
 
-		notifications.VerifyUnlocked = async () =>
+		notifications.VerifyUnlocked = async notified =>
 		{
-			using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-			using var lease = await factory.Services.GetRequiredService<IMapMutationLock>().EnterAsync(timeout.Token);
+			await using var scope = factory.Services.CreateAsyncScope();
+			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+			var persisted = await context.MapStyles.SingleAsync(item => item.Id == notified.Id);
+
+			Assert.Equal(notified.Status, persisted.Status);
 		};
 
 		queue.Enqueue(map.Id, style.Id, style.AttemptId);
@@ -205,7 +208,6 @@ public class MapDispatchTests
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 		var handler = new AddMapStyleHandler(context, factory.Services.GetRequiredService<IMapProgress>(),
-			factory.Services.GetRequiredService<IMapMutationLock>(),
 			factory.Services.GetRequiredService<IMapProcessingQueue>(),
 			factory.Services.GetRequiredService<IMapNotifications>());
 
@@ -233,12 +235,12 @@ public class MapDispatchTests
 	{
 		public List<MapStyleDto> Styles { get; } = [];
 		public List<MapProcessingDto> Progress { get; } = [];
-		public Func<Task>? VerifyUnlocked { get; set; }
+		public Func<MapStyleDto, Task>? VerifyUnlocked { get; set; }
 
 		public async Task StyleUpdatedAsync(Guid mapId, MapStyleDto style)
 		{
 			if (VerifyUnlocked is { } verify)
-				await verify();
+				await verify(style);
 
 			Styles.Add(style);
 		}

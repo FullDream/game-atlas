@@ -9,13 +9,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameAtlas.Application.Maps.AddMapStyle;
 
-public sealed class AddMapStyleHandler(IApplicationDbContext context, IMapProgress progress, IMapMutationLock mutationLock,
+public sealed class AddMapStyleHandler(IApplicationDbContext context, IMapProgress progress,
 	IMapProcessingQueue queue, IMapNotifications notifications) : ICommandHandler<AddMapStyle, Result<MapDto>>
 {
 	public async ValueTask<Result<MapDto>> Handle(AddMapStyle command, CancellationToken cancellationToken)
 	{
-		using var mutationLease = await mutationLock.EnterAsync(cancellationToken);
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
+		await context.LockMapAsync(command.MapId, cancellationToken);
 		var map = await context.Maps.AsTracking().ForMap(command.GameId, command.MapId).WithStyles()
 			.SingleOrDefaultAsync(cancellationToken);
 
@@ -45,7 +45,6 @@ public sealed class AddMapStyleHandler(IApplicationDbContext context, IMapProgre
 		var response = map.ToDto(progress);
 
 		queue.Enqueue(style.MapId, style.Id, style.AttemptId);
-		mutationLease.Dispose();
 		await notifications.StyleUpdatedAsync(map.Id, response.Styles.Single(item => item.Id == style.Id));
 
 		return response;

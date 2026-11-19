@@ -9,13 +9,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameAtlas.Application.Maps.UpdateMap;
 
-public sealed class UpdateMapHandler(IApplicationDbContext context, IMapProgress progress, IMapMutationLock mutationLock)
+public sealed class UpdateMapHandler(IApplicationDbContext context, IMapProgress progress)
 	: ICommandHandler<UpdateMap, Result<MapDto>>
 {
 	public async ValueTask<Result<MapDto>> Handle(UpdateMap command, CancellationToken cancellationToken)
 	{
-		using var lease = await mutationLock.EnterAsync(cancellationToken);
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
+		await context.LockMapAsync(command.MapId, cancellationToken);
 
 		var map = await context.Maps.AsTracking().ForMap(command.GameId, command.MapId).WithStyles()
 			.SingleOrDefaultAsync(cancellationToken);

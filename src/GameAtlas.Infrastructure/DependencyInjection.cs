@@ -54,7 +54,6 @@ public static class DependencyInjection
 		services.AddSingleton<IMapProgress>(provider => provider.GetRequiredService<MapProgressStore>());
 		services.AddSingleton<MapWorkQueue>();
 		services.AddSingleton<IMapProcessingQueue>(provider => provider.GetRequiredService<MapWorkQueue>());
-		services.AddSingleton<IMapMutationLock, MapMutationLock>();
 		services.AddHostedService<MapProcessingService>();
 
 		return services;

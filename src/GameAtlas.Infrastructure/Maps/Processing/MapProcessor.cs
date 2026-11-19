@@ -14,7 +14,7 @@ namespace GameAtlas.Infrastructure.Maps.Processing;
 
 public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storage, IMapImageProcessor images,
 	ILogger<MapProcessor> logger, IMediaStorage mediaStorage, MapProgressStore progressStore,
-	MapWorkQueue queue, IMapMutationLock mutationLock, IMapNotifications notifications)
+	MapWorkQueue queue, IMapNotifications notifications)
 {
 	private readonly SemaphoreSlim writer = new(1, 1);
 
@@ -23,7 +23,6 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 	public async Task RecoverAsync(CancellationToken cancellationToken)
 	{
 		images.CheckCapabilities();
-		using var lease = await mutationLock.EnterAsync(cancellationToken);
 		await using var scope = scopes.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
@@ -241,7 +240,6 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 	{
 		while (queue.TryTake(out var item))
 		{
-			using var lease = await mutationLock.EnterAsync(cancellationToken);
 			await using var scope = scopes.CreateAsyncScope();
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 			await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
@@ -263,7 +261,6 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 
 			var dto = target.ToDto(progressStore);
 
-			lease.Dispose();
 			await notifications.StyleUpdatedAsync(target.MapId, dto);
 
 			return new Claim(target.MapId, target.Id, target.AttemptId, target.SourceAssetId, target.Width, target.Height);
@@ -274,10 +271,10 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 
 	private async Task PublishAsync(Claim claim, CancellationToken cancellationToken)
 	{
-		using var lease = await mutationLock.EnterAsync(cancellationToken);
 		await using var scope = scopes.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+		await context.LockMapAsync(claim.MapId, cancellationToken);
 		var style = await LoadAsync(context, claim, cancellationToken);
 
 		MapCleanupIntent? cleanup = null;
@@ -313,13 +310,11 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 
 		var dto = style!.ToDto(progressStore);
 
-		lease.Dispose();
 		await notifications.StyleUpdatedAsync(claim.MapId, dto);
 	}
 
 	private async Task FailAsync(Claim claim, CancellationToken cancellationToken)
 	{
-		using var lease = await mutationLock.EnterAsync(cancellationToken);
 		await using var scope = scopes.CreateAsyncScope();
 		var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
@@ -347,7 +342,6 @@ public sealed class MapProcessor(IServiceScopeFactory scopes, IMapStorage storag
 		queue.ScheduleCleanup(cleanup.Id, claim.MapId, claim.StyleId, cleanup.RetryAt);
 		var dto = style.ToDto(progressStore);
 
-		lease.Dispose();
 		await notifications.StyleUpdatedAsync(claim.MapId, dto);
 	}
 

@@ -64,7 +64,7 @@ Only complete validated pyramids move into the public root atomically. A complet
 Creation and retry follow this order:
 
 ```text
-HTTP handler -> commit queued -> enqueue identity -> release mutation lock -> StyleUpdated
+HTTP handler -> commit queued -> enqueue identity -> StyleUpdated
 ```
 
 The worker owns the remaining transitions:
@@ -75,7 +75,7 @@ native progress -> memory buffer -> ProcessingUpdated (about once per second)
 validated tiles -> commit ready/failed -> StyleUpdated
 ```
 
-Handlers and the worker call IMapNotifications directly; its API implementation sends through the typed IHubContext to map:{mapId}. Enqueue only schedules work. IMapMutationLock only coordinates database writes. Deletion handlers commit metadata and cleanup intent, dispatch known cleanup work, then send a deletion notification. File cleanup itself never sends events. Startup recovery restores queued identities without notifying clients before the server starts accepting requests.
+Handlers and the worker call IMapNotifications directly; its API implementation sends through the typed IHubContext to map:{mapId}. Enqueue only schedules work. PostgreSQL transactions and per-map row locks (`SELECT ... FOR UPDATE`) coordinate concurrent map aggregate writes. Deletion handlers commit metadata and cleanup intent, dispatch known cleanup work, then send a deletion notification. File cleanup itself never sends events. Startup recovery restores queued identities without notifying clients before the server starts accepting requests.
 
 ## SignalR map notifications
 
@@ -88,7 +88,7 @@ Only two client methods are implemented:
 - `StyleUpdated(MapStyleDto style)` sends a complete style after committed creation, metadata changes, retry, and processing lifecycle transitions, including the ready tile URL. Percentage ticks do not resend full styles.
 - `ProcessingUpdated(MapProcessingDto processing)` sends a single change: `{mapId,styleId,attemptId,status,progress,error,deleted}`. It is a delta, not a complete styles list. A percentage tick includes the current attempt ID and processing status. Lifecycle status changes are delivered once through StyleUpdated, rather than duplicated as ProcessingUpdated events. Style deletion uses `deleted:true` with a styleId; map/game deletion uses `deleted:true` with styleId:null. Removal payloads have null attemptId/status/error and progress 0.
 
-API's small notification adapter implements the Application notification contract using `IHubContext<MapHub, IMapHubClient>`. MapProcessor and HTTP handlers call it explicitly after commit; no viewer state, per-map snapshots, replay channels, or background notification dispatcher are retained. Percentages come from .NET memory and are sent about once per second. Lifecycle and metadata changes bypass that throttle. Notifications perform no SQL. The database coordination gate is released before sending; each send is awaited with a five-second timeout. Delivery failures are logged and do not change committed jobs or HTTP operation results. Notifications are best effort, without delivery acknowledgement or replay.
+API's small notification adapter implements the Application notification contract using `IHubContext<MapHub, IMapHubClient>`. MapProcessor and HTTP handlers call it explicitly after commit; no viewer state, per-map snapshots, replay channels, or background notification dispatcher are retained. Percentages come from .NET memory and are sent about once per second. Lifecycle and metadata changes bypass that throttle. Notifications perform no SQL. The database transaction commits before sending; each send is awaited with a five-second timeout. Delivery failures are logged and do not change committed jobs or HTTP operation results. Notifications are best effort, without delivery acknowledgement or replay.
 
 A future frontend client should register handlers, await JoinMap, then fetch current state through the existing HTTP GET. Buffer events during that read and reconcile them with the response: use style updatedAt for metadata, track attemptId for progress and discard obsolete attempts, retain deletion tombstones, and avoid status/progress regression. HTTP reads and events are not an atomic versioned snapshot. Reconcile through an HTTP read on reconnect and lifecycle completion, including default-style selection, and after ambiguous overlap or transport failure. This is event-triggered reconciliation, not a polling loop. No frontend SignalR client is installed in this change.
 

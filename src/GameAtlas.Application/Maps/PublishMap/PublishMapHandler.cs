@@ -9,13 +9,12 @@ namespace GameAtlas.Application.Maps.PublishMap;
 
 public sealed class PublishMapHandler(
 	IApplicationDbContext context,
-	IMapProgress progress,
-	IMapMutationLock mutationLock) : ICommandHandler<PublishMap, Result<MapDto>>
+	IMapProgress progress) : ICommandHandler<PublishMap, Result<MapDto>>
 {
 	public async ValueTask<Result<MapDto>> Handle(PublishMap command, CancellationToken cancellationToken)
 	{
-		using var lease = await mutationLock.EnterAsync(cancellationToken);
 		await using var transaction = await context.BeginTransactionAsync(cancellationToken);
+		await context.LockMapAsync(command.MapId, cancellationToken);
 
 		var map = await context.Maps.AsTracking().ForMap(command.GameId, command.MapId).WithStyles()
 			.SingleOrDefaultAsync(cancellationToken);
